@@ -4,3 +4,7 @@ vedit_add_test(tst_timelineeditor SOURCES tst_timelineeditor.cpp ProjectFixture.
 vedit_add_test(tst_projectdata SOURCES tst_projectdata.cpp ProjectFixture.h LIBRARIES vedit_core)
 vedit_add_test(tst_serialization SOURCES tst_serialization.cpp ProjectFixture.h LIBRARIES vedit_core)
 vedit_add_test(tst_theme SOURCES tst_theme.cpp LIBRARIES vedit_theme)
+add_executable(fake_gpuprobe fake_gpuprobe.cpp)
+vedit_add_test(tst_gpu SOURCES tst_gpu.cpp LIBRARIES vedit_gpu)
+add_dependencies(tst_gpu fake_gpuprobe vedit-gpuprobe)
+target_compile_definitions(tst_gpu PRIVATE VEDIT_GPUPROBE_PATH="$<TARGET_FILE:vedit-gpuprobe>")

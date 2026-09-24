@@ -1,0 +1,4 @@
+# LeakSanitizer suppressions for leaks inside system libraries (not vedit code).
+# libavcodec 63 (FFmpeg 9.0): avcodec_open2() of a hardware-capable decoder leaks one small av_strdup
+# allocation that avcodec_free_context() never frees. Seen in vedit-gpuprobe --video (short-lived).
+leak:libavcodec.so
