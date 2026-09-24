@@ -1,0 +1,11 @@
+# Probe programs (SPEC §9 rule 5): small programs that observe the real behaviour of MLT, Qt and the desktop.
+option(VEDIT_BUILD_PROBES "Build the probe programs in tools/probes" OFF)
+if(VEDIT_BUILD_PROBES)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(MLTPP REQUIRED IMPORTED_TARGET mlt++-7)
+    add_executable(mlt_probe probes/mlt_probe.cpp)
+    target_link_libraries(mlt_probe PRIVATE PkgConfig::MLTPP)
+    add_executable(appearance_probe probes/appearance_probe.cpp)
+    target_link_libraries(appearance_probe PRIVATE vedit_theme)
+    vedit_target_options(appearance_probe)
+endif()

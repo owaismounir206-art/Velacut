@@ -1,0 +1,370 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+#include "ThemeManager.h"
+
+#include <QEasingCurve>
+#include <QFontDatabase>
+#include <QJSEngine>
+#include <QLoggingCategory>
+#include <QMetaEnum>
+#include <QSettings>
+
+using namespace Qt::StringLiterals;
+
+Q_LOGGING_CATEGORY(lcTheme, "vedit.theme")
+
+namespace vedit::theme {
+
+namespace {
+
+ThemeManager *s_instance = nullptr;
+QString s_fontFamily;
+QString s_iconFontFamily;
+
+template<typename E>
+QString enumKey(E value)
+{
+    return QString::fromLatin1(QMetaEnum::fromType<E>().valueToKey(static_cast<int>(value)));
+}
+
+template<typename E>
+E enumFromKey(const QString &key, E fallback)
+{
+    bool ok = false;
+    const int value = QMetaEnum::fromType<E>().keyToValue(key.toLatin1().constData(), &ok);
+    return ok ? static_cast<E>(value) : fallback;
+}
+
+SchemeVariant toSchemeVariant(ThemeManager::Variant variant)
+{
+    switch (variant) {
+    case ThemeManager::Variant::TonalSpot:
+        return SchemeVariant::TonalSpot;
+    case ThemeManager::Variant::Vibrant:
+        return SchemeVariant::Vibrant;
+    case ThemeManager::Variant::Expressive:
+        return SchemeVariant::Expressive;
+    case ThemeManager::Variant::Neutral:
+        return SchemeVariant::Neutral;
+    case ThemeManager::Variant::Fidelity:
+        return SchemeVariant::Fidelity;
+    case ThemeManager::Variant::Content:
+        return SchemeVariant::Content;
+    case ThemeManager::Variant::Monochrome:
+        return SchemeVariant::Monochrome;
+    }
+    return SchemeVariant::TonalSpot;
+}
+
+QEasingCurve emphasizedCurve()
+{
+    // M3 "emphasized" as two cubic segments (same points as ThemeMotion::emphasized()).
+    QEasingCurve curve(QEasingCurve::BezierSpline);
+    curve.addCubicBezierSegment({0.05, 0.0}, {0.133333, 0.06}, {0.166666, 0.4});
+    curve.addCubicBezierSegment({0.208333, 0.82}, {0.25, 1.0}, {1.0, 1.0});
+    return curve;
+}
+
+} // namespace
+
+ThemeManager::ThemeManager(SystemAppearance *appearance, QObject *parent)
+    : QObject(parent)
+    , m_appearance(appearance)
+{
+    m_animation.setStartValue(0.0);
+    m_animation.setEndValue(1.0);
+    m_animation.setEasingCurve(emphasizedCurve());
+    connect(&m_animation, &QVariantAnimation::valueChanged, this, [this](const QVariant &value) {
+        m_colors.setScheme(ColorScheme::interpolate(m_from, m_target, value.toDouble()));
+    });
+    if (m_appearance) {
+        connect(m_appearance, &SystemAppearance::changed, this, [this] { update(true); });
+    }
+    m_typography.configure(fontFamily(), 1.0);
+    update(false);
+}
+
+ThemeManager::~ThemeManager()
+{
+    if (s_instance == this) {
+        s_instance = nullptr;
+    }
+}
+
+void ThemeManager::setInstance(ThemeManager *instance)
+{
+    s_instance = instance;
+}
+
+ThemeManager *ThemeManager::instance()
+{
+    return s_instance;
+}
+
+ThemeManager *ThemeManager::create(QQmlEngine *, QJSEngine *)
+{
+    Q_ASSERT_X(s_instance, "ThemeManager::create", "ThemeManager::setInstance() must be called before QML loads");
+    QJSEngine::setObjectOwnership(s_instance, QJSEngine::CppOwnership);
+    return s_instance;
+}
+
+void ThemeManager::loadFonts()
+{
+    const auto load = [](const QString &resource) -> QString {
+        const int id = QFontDatabase::addApplicationFont(resource);
+        const QStringList families = QFontDatabase::applicationFontFamilies(id);
+        if (id < 0 || families.isEmpty()) {
+            qCWarning(lcTheme) << "cannot load bundled font" << resource;
+            return {};
+        }
+        return families.constFirst();
+    };
+    s_fontFamily = load(u":/vedit/fonts/InterVariable.ttf"_s);
+    load(u":/vedit/fonts/InterVariable-Italic.woff2"_s);
+    s_iconFontFamily = load(u":/vedit/icons/MaterialSymbolsRounded.woff2"_s);
+    if (s_instance) {
+        s_instance->m_typography.configure(s_instance->fontFamily(), 1.0);
+    }
+}
+
+QString ThemeManager::fontFamily() const
+{
+    return s_fontFamily.isEmpty() ? u"sans-serif"_s : s_fontFamily;
+}
+
+QString ThemeManager::iconFontFamily() const
+{
+    return s_iconFontFamily;
+}
+
+void ThemeManager::setMode(Mode mode)
+{
+    if (mode != m_mode) {
+        m_mode = mode;
+        emit settingsChanged();
+        update(true);
+    }
+}
+
+void ThemeManager::setContrast(Contrast contrast)
+{
+    if (contrast != m_contrast) {
+        m_contrast = contrast;
+        emit settingsChanged();
+        update(true);
+    }
+}
+
+void ThemeManager::setVariant(Variant variant)
+{
+    if (variant != m_variant) {
+        m_variant = variant;
+        emit settingsChanged();
+        update(true);
+    }
+}
+
+void ThemeManager::setSeedSource(SeedSource source)
+{
+    if (source != m_seedSource) {
+        m_seedSource = source;
+        emit settingsChanged();
+        update(true);
+    }
+}
+
+void ThemeManager::setManualSeed(const QColor &color)
+{
+    if (color.isValid() && color.rgb() != m_manualSeed.rgb()) {
+        m_manualSeed = QColor::fromRgb(color.rgb());
+        emit settingsChanged();
+        update(true);
+    }
+}
+
+void ThemeManager::setDensity(Density density)
+{
+    if (density != m_density) {
+        m_density = density;
+        m_space.setDensity(density == Density::Compact ? -1 : 0);
+        emit settingsChanged();
+    }
+}
+
+void ThemeManager::setMotionPreference(Motion preference)
+{
+    if (preference != m_motionPreference) {
+        m_motionPreference = preference;
+        emit settingsChanged();
+        update(false);
+    }
+}
+
+void ThemeManager::setSoftwareRendering(bool software)
+{
+    if (software != m_softwareRendering) {
+        m_softwareRendering = software;
+        emit softwareRenderingChanged();
+    }
+}
+
+void ThemeManager::setWallpaperSeed(const std::optional<QColor> &color)
+{
+    m_wallpaperSeed = color;
+    update(true);
+}
+
+void ThemeManager::setProjectCoverSeed(const std::optional<QColor> &color)
+{
+    m_coverSeed = color;
+    update(true);
+}
+
+QString ThemeManager::systemAccentOrigin() const
+{
+    return m_appearance ? m_appearance->accentSource() : QString();
+}
+
+bool ThemeManager::systemAccentAvailable() const
+{
+    return m_appearance && m_appearance->accentColor().has_value();
+}
+
+std::pair<QColor, ThemeManager::SeedSource> ThemeManager::resolveSeed() const
+{
+    const std::optional<QColor> system = m_appearance ? m_appearance->accentColor() : std::nullopt;
+    switch (m_seedSource) {
+    case SeedSource::Manual:
+        return {m_manualSeed, SeedSource::Manual};
+    case SeedSource::Wallpaper:
+        if (m_wallpaperSeed) {
+            return {*m_wallpaperSeed, SeedSource::Wallpaper};
+        }
+        break;
+    case SeedSource::ProjectCover:
+        if (m_coverSeed) {
+            return {*m_coverSeed, SeedSource::ProjectCover};
+        }
+        break;
+    case SeedSource::System:
+    case SeedSource::Default:
+        break;
+    }
+    // Unavailable sources fall back to the system accent, then to the built-in palette.
+    if (m_seedSource != SeedSource::Default && system) {
+        return {*system, SeedSource::System};
+    }
+    return {QColor::fromRgb(kDefaultSeed), SeedSource::Default};
+}
+
+void ThemeManager::update(bool animate)
+{
+    // Dark by default, as suits a video editor (SPEC §4), unless the user or the system says otherwise.
+    bool dark = true;
+    if (m_mode == Mode::Light) {
+        dark = false;
+    } else if (m_mode == Mode::Auto && m_appearance &&
+               m_appearance->colorScheme() == SystemAppearance::ColorSchemePreference::Light) {
+        dark = false;
+    }
+    ContrastLevel contrast = ContrastLevel::Standard;
+    switch (m_contrast) {
+    case Contrast::System:
+        contrast = (m_appearance && m_appearance->highContrast()) ? ContrastLevel::High : ContrastLevel::Standard;
+        break;
+    case Contrast::Standard:
+        contrast = ContrastLevel::Standard;
+        break;
+    case Contrast::Medium:
+        contrast = ContrastLevel::Medium;
+        break;
+    case Contrast::High:
+        contrast = ContrastLevel::High;
+        break;
+    }
+    const bool reduced = m_motionPreference == Motion::Reduced ||
+                         (m_motionPreference == Motion::System && m_appearance && m_appearance->reducedMotion());
+    m_motion.setReduced(reduced);
+
+    const auto [seed, source] = resolveSeed();
+    const ColorScheme target = generateScheme(seed, toSchemeVariant(m_variant), dark, contrast);
+    const bool changed = !m_initialized || target != m_target || dark != m_dark || seed != m_seed ||
+                         source != m_effectiveSource;
+    m_dark = dark;
+    m_seed = seed;
+    m_effectiveSource = source;
+    if (target != m_target || !m_initialized) {
+        m_from = m_colors.scheme();
+        m_target = target;
+        m_animation.stop();
+        if (animate && m_initialized && !reduced) {
+            m_animation.setDuration(m_motion.medium4());
+            m_animation.start();
+        } else {
+            m_colors.setScheme(target);
+        }
+    }
+    m_initialized = true;
+    if (changed) {
+        emit schemeChanged();
+    }
+}
+
+QColor ThemeManager::surfaceAt(int level) const
+{
+    const ColorScheme &scheme = m_colors.scheme();
+    switch (level) {
+    case 0:
+        return scheme[ColorRole::Surface];
+    case 1:
+        return scheme[ColorRole::SurfaceContainerLow];
+    case 2:
+        return scheme[ColorRole::SurfaceContainer];
+    case 3:
+        return scheme[ColorRole::SurfaceContainerHigh];
+    default:
+        return scheme[ColorRole::SurfaceContainerHighest];
+    }
+}
+
+QColor ThemeManager::alpha(const QColor &color, qreal opacity) const
+{
+    QColor result = color;
+    result.setAlphaF(static_cast<float>(std::clamp(opacity, 0.0, 1.0) * color.alphaF()));
+    return result;
+}
+
+void ThemeManager::loadSettings()
+{
+    QSettings settings;
+    settings.beginGroup(u"theme"_s);
+    m_mode = enumFromKey(settings.value(u"mode"_s).toString(), Mode::Auto);
+    m_contrast = enumFromKey(settings.value(u"contrast"_s).toString(), Contrast::System);
+    m_variant = enumFromKey(settings.value(u"variant"_s).toString(), Variant::TonalSpot);
+    m_seedSource = enumFromKey(settings.value(u"seedSource"_s).toString(), SeedSource::System);
+    const QColor manual(settings.value(u"manualSeed"_s).toString());
+    if (manual.isValid()) {
+        m_manualSeed = manual;
+    }
+    m_density = enumFromKey(settings.value(u"density"_s).toString(), Density::Default);
+    m_space.setDensity(m_density == Density::Compact ? -1 : 0);
+    m_motionPreference = enumFromKey(settings.value(u"motion"_s).toString(), Motion::System);
+    settings.endGroup();
+    emit settingsChanged();
+    update(false);
+}
+
+void ThemeManager::saveSettings() const
+{
+    QSettings settings;
+    settings.beginGroup(u"theme"_s);
+    settings.setValue(u"mode"_s, enumKey(m_mode));
+    settings.setValue(u"contrast"_s, enumKey(m_contrast));
+    settings.setValue(u"variant"_s, enumKey(m_variant));
+    settings.setValue(u"seedSource"_s, enumKey(m_seedSource));
+    settings.setValue(u"manualSeed"_s, m_manualSeed.name(QColor::HexRgb));
+    settings.setValue(u"density"_s, enumKey(m_density));
+    settings.setValue(u"motion"_s, enumKey(m_motionPreference));
+    settings.endGroup();
+}
+
+} // namespace vedit::theme

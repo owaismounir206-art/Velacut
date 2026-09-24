@@ -22,11 +22,14 @@ include(VeditCompilerOptions)
 option(VEDIT_DEV_SANDBOX "Redirect XDG directories to <build>/dev-home" ON)
 set(VEDIT_DEV_HOME "${CMAKE_BINARY_DIR}/dev-home")
 
-find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui Test)
+find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui DBus Qml Quick QuickControls2 ShaderTools Test)
 qt_standard_project_setup(REQUIRES 6.7)
+# QML modules are laid out as <build>/qml/Vedit/<Module> so that qmllint and the QML engine find them.
+set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml")
 
 enable_testing()
 
 add_subdirectory(third_party/material-color-utilities)
 add_subdirectory(src)
 add_subdirectory(tests)
+add_subdirectory(tools)

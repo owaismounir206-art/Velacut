@@ -30,12 +30,30 @@ inline QString applyDevSandbox()
     for (const auto &dir : dirs) {
         const QString path = root + QLatin1Char('/') + QLatin1StringView(dir.subdir);
         QDir().mkpath(path);
+        // Remember the user's real value: reading desktop settings (accent color, wallpaper) must still
+        // look at the real configuration. Only the first call records it.
+        const QByteArray hostVariable = QByteArray("VEDIT_HOST_") + dir.variable;
+        if (!qEnvironmentVariableIsSet(hostVariable.constData())) {
+            qputenv(hostVariable.constData(), qgetenv(dir.variable));
+        }
         qputenv(dir.variable, QFile::encodeName(path));
     }
     return root;
 #else
     return {};
 #endif
+}
+
+// The user's real XDG config directory, even when the development sandbox redirected XDG_CONFIG_HOME.
+// Used only to *read* desktop settings; the app never writes there.
+inline QString hostConfigHome()
+{
+    const QByteArray host = qgetenv("VEDIT_HOST_XDG_CONFIG_HOME");
+    const QByteArray value = qEnvironmentVariableIsSet("VEDIT_HOST_XDG_CONFIG_HOME") ? host : qgetenv("XDG_CONFIG_HOME");
+    if (!value.isEmpty()) {
+        return QFile::decodeName(value);
+    }
+    return QDir::homePath() + QLatin1StringView("/.config");
 }
 
 } // namespace vedit
