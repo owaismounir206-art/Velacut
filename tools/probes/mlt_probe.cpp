@@ -143,6 +143,22 @@ int run(const char *path)
         consumer.stop();
         std::printf("       frames shown in 1 s: %d\n", shownFrames.load());
         check(shownFrames.load() >= 20, "consumer-frame-show delivers frames in real time");
+
+        // 7. Start paused (speed 0), then play: what the player does.
+        shownFrames = 0;
+        producer.set_speed(0.0);
+        producer.seek(0);
+        consumer.start();
+        consumer.set("refresh", 1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        const int pausedFrames = shownFrames.load();
+        producer.set_speed(1.0);
+        consumer.set("refresh", 1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::printf("       paused: %d frames in 0.5 s; after play: %d frames in 1 s\n", pausedFrames,
+                    shownFrames.load() - pausedFrames);
+        check(shownFrames.load() - pausedFrames >= 20, "play after starting paused delivers frames");
+        consumer.stop();
     }
 
     return failures;

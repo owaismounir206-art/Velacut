@@ -22,8 +22,12 @@ include(VeditCompilerOptions)
 option(VEDIT_DEV_SANDBOX "Redirect XDG directories to <build>/dev-home" ON)
 set(VEDIT_DEV_HOME "${CMAKE_BINARY_DIR}/dev-home")
 
-find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui DBus Qml Quick QuickControls2 ShaderTools Test)
+# GuiPrivate: QRhi headers (<rhi/qrhi.h>) for the video preview, a semi-public API with limited
+# compatibility guarantees (docs/ARCHITECTURE.md D-17). The warning is known and accepted.
+set(QT_NO_PRIVATE_MODULE_WARNING ON)
+find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui GuiPrivate DBus Qml Quick QuickControls2 ShaderTools Test)
 qt_standard_project_setup(REQUIRES 6.7)
+qt_policy(SET QTP0004 NEW)
 # QML modules are laid out as <build>/qml/Vedit/<Module> so that qmllint and the QML engine find them.
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml")
 

@@ -2,3 +2,12 @@
 # libavcodec 63 (FFmpeg 9.0): avcodec_open2() of a hardware-capable decoder leaks one small av_strdup
 # allocation that avcodec_free_context() never frees. Seen in vedit-gpuprobe --video (short-lived).
 leak:libavcodec.so
+# MLT 7.40 framework and modules, SDL3 (through sdl2-compat) and glib keep small global allocations until
+# exit; modules unloaded by Mlt::Factory::close() appear as "<unknown module>" but the stacks always contain
+# one of these libraries. None of these stacks pass through vedit code (checked with ASan full stacks).
+leak:libmlt-7.so
+leak:libmlt++-7.so
+leak:/usr/lib/mlt-7/
+leak:libSDL3.so
+leak:libglib-2.0.so
+leak:ld-linux-x86-64.so
