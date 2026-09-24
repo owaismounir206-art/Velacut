@@ -3,13 +3,24 @@
 Editor video desktop per Linux (Arch), completamente offline, con interfaccia Material 3.
 Specifica: `SPEC-editor-video.md`. Architettura: `docs/ARCHITECTURE.md`. Stato: `docs/PROGRESS.md`.
 
-> Stato attuale: **Fase 0 (fondamenta) in corso** — non ancora un'applicazione utilizzabile.
+> Stato attuale: **Fase 0 (fondamenta) completata** — riproduzione di un video e galleria dei componenti; l'editor
+> arriva con la Fase 1. Dettagli in `docs/PROGRESS.md`.
 
 ## Dipendenze (Arch)
 ```bash
-sudo pacman -S --needed qt6-base qt6-declarative qt6-multimedia qt6-shadertools qt6-svg qt6-5compat \
+sudo pacman -S --needed qt6-base qt6-declarative qt6-multimedia qt6-shadertools qt6-svg qt6-5compat qt6-tools \
     mlt ffmpeg sdl2 cmake ninja git frei0r-plugins ladspa rubberband vulkan-headers
 ```
+
+## Uso (Fase 0)
+```bash
+./build/vedit video.mp4              # apre e riproduce un video (Spazio, ←/→, Home/Fine, Ctrl+O)
+./build/vedit --component-gallery    # galleria dei componenti Material 3
+./build/vedit --safe-mode            # nessuna accelerazione GPU
+QT_QUICK_BACKEND=software LIBGL_ALWAYS_SOFTWARE=1 ./build/vedit video.mp4
+```
+Lingua: quella del sistema (italiano o inglese). Documentazione: `docs/ARCHITECTURE.md`, `docs/FILE_FORMAT.md`,
+`docs/DESIGN_SYSTEM.md`, `docs/GPU_COMPATIBILITY.md`, `docs/SHORTCUTS.md`, `docs/USABILITY.md`.
 
 ## Compilazione e test
 ```bash

@@ -1,6 +1,7 @@
 # vedit — Architettura
 
-> Stato: **proposta per la Fase 0, in attesa di approvazione.** Nessun codice è stato scritto.
+> Stato: **approvata** (2026-09-24) e implementata per la Fase 0. Le modifiche emerse durante l'implementazione sono
+> nel registro delle decisioni (§15, D-17 in poi) e nella sezione "Esiti delle verifiche" (§18).
 > Riferimenti: `SPEC-editor-video.md` (vincolante), `docs/FILE_FORMAT.md` (formato `.vproj`).
 > Le decisioni prese in autonomia (regola 9 della sezione 9) sono numerate `D-xx` nella sezione 15.
 > I punti marcati **[verifica]** sono comportamenti di MLT/Qt/FFmpeg da confermare con un piccolo programma di prova
@@ -102,10 +103,11 @@ della sezione 2 della specifica, motivate in §15: `third_party/`, `cmake/`, `to
 │   │   ├── controllers/       # QObject esposti a QML
 │   │   ├── models/            # QAbstractItemModel per timeline, media, librerie
 │   │   ├── items/             # QQuickItem C++: PreviewItem, ThumbnailStrip, WaveformItem
-│   │   └── qml/               # moduli QML: Vedit.Style (componenti M3), Vedit.App (schermate), Vedit.Gallery
+│   │   └── qml/               # moduli QML: Vedit.UI (schermate: Main, Gallery), style/ = Vedit.Style,
+│   │                          #   components/ = Vedit.Components (D-18)
 │   └── assets/                # icone SVG originali, font, preset
 ├── resources/                 # librerie locali (transizioni, effetti, sticker, template)
-├── tools/                     # script di sviluppo (es. generazione media di test)
+├── tools/probes/              # programmi di prova (regola 5): MLT, aspetto del desktop (-DVEDIT_BUILD_PROBES=ON)
 └── tests/ (unit/, integration/, render/)
 ```
 
@@ -229,7 +231,7 @@ ricostruisce l'intero grafo da zero a partire dal modello: viene usato all'apert
 | Effetti della clip | `Mlt::Filter` attaccati al cut, nell'ordine del modello |
 | Trasformazione, maschere, sfondo della clip | filtro proprio `vedit.transform` (produce un fotogramma RGBA del canvas con alfa); modalità di fusione e opacità passate come proprietà del frame e lette da `vedit.composite` |
 | Keyframe | filtri propri: la lista di keyframe (JSON) viene valutata dalla **stessa** funzione del core; filtri MLT/frei0r: stringa animata MLT, campionata fotogramma per fotogramma quando l'easing non esiste in MLT |
-| Transizione sulla traccia | `Playlist::mix()` con la transizione `vedit.transition` (id del tipo + parametri); le maniglie oltre il taglio sono calcolate dalla proiezione **[verifica]** |
+| Transizione sulla traccia | `Playlist::mix()` con la transizione `vedit.transition` (id del tipo + parametri); le maniglie oltre il taglio sono calcolate dalla proiezione (**verificato**: `mix` accorcia la playlist della durata del mix, quindi per le transizioni centrate la proiezione estende le clip oltre il taglio) |
 | Transizione in ingresso/uscita di una clip sovrapposta | filtro `vedit.transition` sulla clip, con A = trasparente |
 | Testo e sottotitoli | producer proprio `vedit.text` (QPainter/QTextLayout su QImage, CPU) |
 | Sticker | producer `avformat`/`qimage` (PNG, GIF, WebP); Lottie da valutare in Fase 5 |
@@ -239,7 +241,7 @@ ricostruisce l'intero grafo da zero a partire dal modello: viene usato all'apert
 | Volume, dissolvenze audio, pan | filtro proprio `vedit.gain` (guadagno in dB con keyframe) + `panner` |
 
 Servizi propri (`vedit.composite`, `vedit.transform`, `vedit.transition`, `vedit.text`, `vedit.gain`, …) sono registrati
-nel repository MLT all'avvio con `Mlt::Repository::register_service` **[verifica]**, sia in `vedit` sia in
+nel repository MLT all'avvio con `Mlt::Repository::register_service` (**verificato** con `tools/probes/mlt_probe.cpp`), sia in `vedit` sia in
 `vedit-render`, da un unico codice (`engine/mlt/services`). Il loro calcolo delega ai kernel di `vedit_fx`.
 
 ### 5.3 Riproduzione e anteprima
@@ -257,7 +259,13 @@ nel repository MLT all'avvio con `Mlt::Repository::register_service` **[verifica
 - Skimming: l'engine separa la **posizione mostrata** dal **playhead**. Al passaggio del mouse mostra il fotogramma sotto
   il cursore e, quando il mouse esce, torna al playhead. Nel pannello media usa un `FrameGrabber` separato
   (producer dedicato + cache LRU) su un worker, senza toccare la timeline.
-- Scrubbing audio: proprietà `scrub_audio` del consumer **[verifica]**.
+- Scrubbing audio: proprietà `scrub_audio` del consumer (accettata dal consumer; comportamento durante il trascinamento
+  da verificare quando esisterà la timeline, Fase 1).
+- **Esiti della Fase 0** (programmi di prova e test): il profilo va impostato *prima* di creare i producer (le durate
+  sono calcolate con i fps del profilo); tutti gli oggetti MLT vanno distrutti prima di `Mlt::Factory::close()`;
+  al `play()` serve un `purge()` del consumer (altrimenti fotogrammi a velocità 0 già letti in anticipo bloccano
+  `sdl2_audio`, race condition); un frame MLT ancora vivo dopo la chiusura del consumer impedisce di liberarlo, quindi
+  il `FrameSink` riceve una copia dei pixel (D-19).
 - Modifiche durante la riproduzione: la proiezione aggiorna le playlist con il tractor bloccato (`lock`/`unlock`),
   poi `purge` del consumer e ri-seek alla posizione corrente.
 - Avvio veloce: `Mlt::Factory::init` (carica tutti i moduli) gira su un thread in background mentre si mostra la schermata
@@ -340,7 +348,8 @@ all'avvio si legge solo la cache.
 
 Scelta del backend UI all'avvio, in ordine: preferenza forzata dall'utente → safe mode → cache del probe →
 primo backend utilizzabile della catena. Se esiste solo un rasterizzatore software (llvmpipe/lavapipe) si usa OpenGL
-su llvmpipe o il backend software di Qt Quick, in base a una misura reale da fare in Fase 0 **[verifica]**.
+su llvmpipe (provato: funziona, con effetti GPU disattivati); il backend software di Qt Quick resta l'ultimo anello.
+La misura delle prestazioni in solo software con un vero progetto è rimandata alla Fase 1 (serve la timeline).
 
 ### 7.4 Safe mode e crash all'avvio
 - `--safe-mode`: backend software, nessun kernel GPU, decodifica ed encoding solo software.
@@ -377,7 +386,9 @@ su llvmpipe o il backend software di Qt Quick, in base a una misura reale da far
 
 ### 8.2 Componenti QML
 - Modulo `Vedit.Style`: uno **stile Qt Quick Controls personalizzato** costruito su `QtQuick.Templates`, con **fallback
-  sullo stile Material** di Qt per i controlli non ancora ridefiniti **[verifica]**. Motivo: lo stile Material di Qt
+  sullo stile Material** di Qt per i controlli non ancora ridefiniti (**verificato**: l'import nel `qmldir` deve essere
+  senza versione). I componenti M3 senza equivalente Qt stanno in un modulo separato `Vedit.Components` (D-18).
+  Motivo dello stile proprio: lo stile Material di Qt
   espone solo pochi colori (accent, primary, background, foreground), mentre la specifica chiede tutti i ruoli M3 e i
   componenti M3 (FAB esteso, segmented button, chip, navigation rail, search bar, snackbar, side sheet…).
 - Nessun colore, dimensione, raggio o durata scritti nei QML: solo `Theme.*` (verificabile con un controllo in CI
@@ -509,6 +520,12 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | D-14 | Identificatori e commenti del codice in inglese, documentazione in italiano | Convenzione Qt/C++; stringhe UI in inglese tradotte in italiano |
 | D-15 | Archivio `.vpack` = tar non compresso | Scrittura e lettura semplici senza nuove librerie; i video non si comprimono comunque |
 | D-16 | Timeline QML virtualizzata + item C++ per miniature e waveform | Prestazioni con 500+ clip senza rinunciare a tema e accessibilità |
+| D-17 | Anteprima RHI con `<rhi/qrhi.h>` (modulo `Qt6::GuiPrivate`) | API QRhi "semi-pubblica" (compatibilità garantita solo tra versioni minori vicine): è la via documentata da Qt per `QQuickRhiItem`; l'avviso di CMake è silenziato consapevolmente |
+| D-18 | Due moduli QML: `Vedit.Style` (controlli con nome Qt Quick Controls) e `Vedit.Components` (componenti solo-M3) | Il `qmldir` dello stile importa Material per il fallback e ne riesporta i tipi: importarlo direttamente rende ambiguo `Button` |
+| D-19 | Il `FrameSink` riceve una copia dei pixel del frame | Un frame MLT vivo dopo la chiusura del consumer impedisce di liberarlo (verificato con ASan); costo ~1 ms per frame in 1080p; ottimizzazione a copia zero rimandata |
+| D-20 | Test e smoke test con `TMPDIR` e XDG dentro `build/`; smoke test dell'app in CTest | Nessun file scritto fuori dalla cartella; verifica automatica di avvio e riproduzione headless (software, safe mode, galleria) |
+| D-21 | Icone risolte tramite il file `.codepoints` invece delle legature | Un nome errato mostra un'icona di riserva invece di disegnare testo sopra l'interfaccia |
+| D-22 | Font UI: Inter Variable (OFL) | Ottima leggibilità a piccole dimensioni e corsivo separato ben supportato da Qt (Roboto Flex usa un asse `slnt`) |
 
 ---
 
@@ -527,7 +544,7 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 
 ---
 
-## 17. Piano della Fase 0 (incrementi, ognuno compila, passa i test e ha un commit)
+## 17. Piano della Fase 0 (incrementi, ognuno compila, passa i test e ha un commit) — completato
 1. Scheletro: `git init`, CMake e preset, warning come errori, sanitizer, clang-format/clang-tidy, sandbox XDG,
    harness dei test, `README.md`, `docs/PROGRESS.md`.
 2. `core/time`: Rational, RationalTime, TimeRange + test.
@@ -543,3 +560,21 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 10. Verifica del criterio: compilazione senza warning, test verdi, video riprodotto con GPU e con
     `QT_QUICK_BACKEND=software` + `LIBGL_ALWAYS_SOFTWARE=1`, galleria in chiaro e scuro con seme di sistema;
     riepilogo onesto.
+
+---
+
+## 18. Esiti delle verifiche della Fase 0
+| Punto | Esito |
+|---|---|
+| `Mlt::Repository::register_service` per servizi propri | ✅ un filtro registrato a runtime viene creato per nome e applicato |
+| `Playlist::mix` | ✅ crea il mix; accorcia la playlist della durata del mix |
+| Consumer `sdl2_audio` + `consumer-frame-show` | ✅ 30 fps in tempo reale (anche con `SDL_AUDIODRIVER=dummy`) |
+| Avvio in pausa e poi play | ⚠️ race condition con `real_time < 0`: risolta con `purge()` al play |
+| Durata dei producer e profilo | ⚠️ il profilo va fissato prima di creare il producer (125 invece di 150 fotogrammi) |
+| Chiusura della factory MLT | ⚠️ gli oggetti MLT vanno distrutti prima di `Factory::close()` (altrimenti crash) |
+| Frame trattenuti dopo la chiusura del consumer | ⚠️ il consumer non viene mai liberato: copia dei pixel (D-19) |
+| Fallback dello stile Qt Quick Controls | ✅ con import senza versione nel `qmldir` |
+| Portale `accent-color` su Hyprland | ❌ non disponibile: seme letto da GNOME `gsettings` (D-13) |
+| Font WOFF2 in Qt | ✅ caricati (Inter corsivo e Material Symbols) |
+| QRhi in piattaforma `offscreen` con OpenGL | ⚠️ nessun QRhi: l'anteprima usa automaticamente la superficie software (`GraphicsInfo.api`) |
+| `timeremap`/`rbpitch`, `plant_filter` per i livelli di regolazione | da verificare quando servono (Fasi 2–3) |
