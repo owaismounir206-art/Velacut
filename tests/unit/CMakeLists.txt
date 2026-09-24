@@ -1,1 +1,4 @@
 vedit_add_test(tst_rational SOURCES tst_rational.cpp LIBRARIES vedit_core)
+vedit_add_test(tst_param SOURCES tst_param.cpp LIBRARIES vedit_core)
+vedit_add_test(tst_timelineeditor SOURCES tst_timelineeditor.cpp ProjectFixture.h LIBRARIES vedit_core)
+vedit_add_test(tst_projectdata SOURCES tst_projectdata.cpp ProjectFixture.h LIBRARIES vedit_core)
