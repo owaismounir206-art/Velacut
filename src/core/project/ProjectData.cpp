@@ -2,6 +2,7 @@
 #include "ProjectData.h"
 
 #include <QSet>
+#include <QTimeZone>
 
 #include <functional>
 
@@ -70,7 +71,8 @@ ProjectData ProjectData::createEmpty(const QString &name)
     ProjectData project;
     project.id = ProjectId::create();
     project.name = name;
-    project.createdAt = QDateTime::currentDateTimeUtc();
+    // Whole seconds: the file stores ISO 8601 dates without milliseconds.
+    project.createdAt = QDateTime::fromSecsSinceEpoch(QDateTime::currentSecsSinceEpoch(), QTimeZone::UTC);
     project.modifiedAt = project.createdAt;
 
     Sequence sequence;

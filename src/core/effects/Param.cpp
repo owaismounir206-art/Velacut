@@ -100,6 +100,12 @@ bool Param::setKeyframes(std::vector<Keyframe> keyframes)
             }
         }
     }
+    // Canonical form: the easing is meaningful only for Bézier segments (and is not stored otherwise).
+    for (Keyframe &keyframe : keyframes) {
+        if (keyframe.interpolation != Interpolation::Bezier) {
+            keyframe.easing = Easing();
+        }
+    }
     if (!keyframes.empty()) {
         m_value = keyframes.front().value;
     }

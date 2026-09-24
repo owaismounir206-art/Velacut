@@ -1,0 +1,87 @@
+{
+    "createdAt": "2026-09-24T17:40:12Z",
+    "format": "vedit.project",
+    "formatVersion": 1,
+    "generator": { "app": "vedit", "version": "0.1.0" },
+    "id": "5f0c1a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5b",
+    "mainSequenceId": "0b6f1d6e-7a8b-4c9d-8e0f-1a2b3c4d5e6f",
+    "media": [
+        {
+            "favorite": false,
+            "fingerprint": { "algo": "sha256-sampled-v1", "size": 52428800, "value": "9c1e5f00aa" },
+            "folderId": null,
+            "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+            "info": {
+                "audio": { "channels": 2, "codec": "aac", "sampleRate": 48000 },
+                "duration": "900@30",
+                "video": { "codec": "h264", "frameRate": "30", "hasAlpha": false, "hdr": false, "height": 1920,
+                           "pixelFormat": "yuv420p", "rotation": 0, "sar": "1", "vfr": false, "width": 1080 }
+            },
+            "kind": "video",
+            "name": "spiaggia.mp4",
+            "path": "/home/owais/Video/spiaggia.mp4",
+            "proxy": "auto",
+            "relativePath": null
+        }
+    ],
+    "mediaFolders": [],
+    "modifiedAt": "2026-09-24T18:02:55Z",
+    "name": "Spiaggia",
+    "sequences": [
+        {
+            "audioTracks": [],
+            "canvas": { "height": 1920, "preset": "9:16", "width": 1080 },
+            "defaultBackground": { "amount": 0.6, "type": "blur" },
+            "groups": [],
+            "id": "0b6f1d6e-7a8b-4c9d-8e0f-1a2b3c4d5e6f",
+            "magneticMain": true,
+            "markers": [],
+            "name": "Principale",
+            "visualTracks": [
+                {
+                    "captions": false,
+                    "clips": [
+                        {
+                            "audio": { "fadeIn": "0@30", "fadeOut": "15@30", "gainDb": 0.0, "muted": false, "pan": 0.0 },
+                            "duration": "150@30",
+                            "effects": [],
+                            "enabled": true,
+                            "id": "c0ffee00-1111-4222-8333-444455556666",
+                            "kind": "media",
+                            "mediaId": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+                            "opacity": 1.0,
+                            "preservePitch": true,
+                            "reversed": false,
+                            "sourceIn": "60@30",
+                            "speed": 1.0,
+                            "start": "0@30",
+                            "streams": "av",
+                            "transform": {
+                                "crop": { "bottom": 0.0, "left": 0.0, "right": 0.0, "top": 0.0 },
+                                "fit": "contain", "flipH": false, "flipV": false,
+                                "position": [0.0, 0.0], "rotation": 0.0, "scale": [1.0, 1.0], "uniformScale": true
+                            }
+                        }
+                    ],
+                    "hidden": false,
+                    "height": 1.0,
+                    "id": "7d8e9f0a-1b2c-4d3e-8f4a-5b6c7d8e9f0a",
+                    "kind": "video",
+                    "locked": false,
+                    "muted": false,
+                    "name": null,
+                    "solo": false,
+                    "transitions": []
+                }
+            ]
+        }
+    ],
+    "settings": {
+        "audioChannels": 2,
+        "colorSpace": "bt709",
+        "defaultCanvas": { "height": 1920, "preset": "9:16", "width": 1080 },
+        "formatFromFirstClip": false,
+        "frameRate": "30",
+        "sampleRate": 48000
+    }
+}

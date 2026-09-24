@@ -1,0 +1,1 @@
+vedit_add_test(tst_projectroundtrip SOURCES tst_projectroundtrip.cpp LIBRARIES vedit_core)

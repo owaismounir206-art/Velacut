@@ -66,6 +66,74 @@ struct Fixture
     }
 };
 
+// Describes the first difference between two projects (for readable test failures).
+inline QString firstDifference(const ProjectData &a, const ProjectData &b)
+{
+    if (a.id != b.id || a.name != b.name) {
+        return QStringLiteral("id/name");
+    }
+    if (a.createdAt != b.createdAt || a.modifiedAt != b.modifiedAt) {
+        return QStringLiteral("dates: ") + a.createdAt.toString(Qt::ISODateWithMs) + QStringLiteral(" vs ") +
+               b.createdAt.toString(Qt::ISODateWithMs);
+    }
+    if (!(a.settings == b.settings)) {
+        return QStringLiteral("settings");
+    }
+    if (a.mediaFolders != b.mediaFolders) {
+        return QStringLiteral("mediaFolders");
+    }
+    for (size_t i = 0; i < std::min(a.media.size(), b.media.size()); ++i) {
+        if (!(a.media[i] == b.media[i])) {
+            const Media &x = a.media[i];
+            const Media &y = b.media[i];
+            return QStringLiteral("media[%1] %2").arg(i).arg(!(x.info == y.info) ? QStringLiteral("info") : !(x.fingerprint == y.fingerprint) ? QStringLiteral("fingerprint") : QStringLiteral("other"));
+        }
+    }
+    if (a.media.size() != b.media.size()) {
+        return QStringLiteral("media count");
+    }
+    for (size_t s = 0; s < std::min(a.sequences.size(), b.sequences.size()); ++s) {
+        const Sequence &x = a.sequences[s];
+        const Sequence &y = b.sequences[s];
+        for (int pass = 0; pass < 2; ++pass) {
+            const auto &tx = pass == 0 ? x.visualTracks : x.audioTracks;
+            const auto &ty = pass == 0 ? y.visualTracks : y.audioTracks;
+            if (tx.size() != ty.size()) {
+                return QStringLiteral("sequence %1 track count").arg(s);
+            }
+            for (size_t t = 0; t < tx.size(); ++t) {
+                if (tx[t] == ty[t]) {
+                    continue;
+                }
+                if (tx[t].clips.size() != ty[t].clips.size()) {
+                    return QStringLiteral("track %1 clip count").arg(t);
+                }
+                for (size_t c = 0; c < tx[t].clips.size(); ++c) {
+                    const Clip &p = tx[t].clips[c];
+                    const Clip &q = ty[t].clips[c];
+                    if (p == q) {
+                        continue;
+                    }
+                    QStringList parts;
+                    if (!(p.transform == q.transform)) parts << QStringLiteral("transform");
+                    if (!(p.opacity == q.opacity)) parts << QStringLiteral("opacity");
+                    if (p.effects != q.effects) parts << QStringLiteral("effects");
+                    if (p.markers != q.markers) parts << QStringLiteral("markers");
+                    if (!(p.payload == q.payload)) parts << QStringLiteral("payload");
+                    if (p.extras != q.extras) parts << QStringLiteral("extras");
+                    if (!(p.start == q.start) || !(p.duration == q.duration)) parts << QStringLiteral("times");
+                    return QStringLiteral("track %1 clip %2: %3").arg(t).arg(c).arg(parts.join(QLatin1Char(',')));
+                }
+                return QStringLiteral("track %1 properties/transitions").arg(t);
+            }
+        }
+        if (!(x == y)) {
+            return QStringLiteral("sequence %1 other").arg(s);
+        }
+    }
+    return a == b ? QString() : QStringLiteral("other");
+}
+
 // A live project with an undo stack. apply() pushes a command and verifies that redo -> undo -> redo
 // restores exactly the same data and that every state satisfies the invariants.
 class Session
