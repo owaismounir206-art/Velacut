@@ -1,0 +1,6 @@
+add_library(vedit_common INTERFACE)
+target_include_directories(vedit_common INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_link_libraries(vedit_common INTERFACE Qt6::Core)
+if(VEDIT_DEV_SANDBOX)
+    target_compile_definitions(vedit_common INTERFACE VEDIT_DEV_HOME="${VEDIT_DEV_HOME}")
+endif()

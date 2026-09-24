@@ -1,0 +1,12 @@
+# build trees
+/build*/
+/out/
+# downloads of upstream sources (see third_party/*/PATCHES.md and src/assets/*LICENSE*)
+/.downloads/
+# editor and tool files
+*.user
+*.swp
+.cache/
+.vscode/
+.idea/
+compile_commands.json
