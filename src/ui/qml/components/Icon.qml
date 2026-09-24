@@ -10,7 +10,7 @@ Text {
     property bool filled: false
     property int weight: 400
 
-    text: name
+    text: Theme.icon(name)
     color: Theme.color.onSurfaceVariant
     font.family: Theme.iconFontFamily
     font.pixelSize: size

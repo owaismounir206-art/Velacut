@@ -21,6 +21,17 @@ T.TextField {
     background: Rectangle {
         radius: Theme.shape.full
         color: Theme.color.surfaceContainerHigh
+        TypeText {
+            // placeholder (templates do not draw it)
+            x: control.leftPadding
+            width: parent.width - control.leftPadding - control.rightPadding
+            anchors.verticalCenter: parent.verticalCenter
+            visible: control.text.length === 0 && control.preeditText.length === 0
+            text: control.placeholderText
+            role: "bodyLarge"
+            color: control.placeholderTextColor
+            elide: Text.ElideRight
+        }
         Icon {
             name: "search"
             x: 16

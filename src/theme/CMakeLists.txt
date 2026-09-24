@@ -19,6 +19,7 @@ qt_add_resources(vedit_theme "vedit_fonts"
         ../assets/fonts/InterVariable.ttf
         ../assets/fonts/InterVariable-Italic.woff2
         ../assets/icons/MaterialSymbolsRounded.woff2
+        ../assets/icons/MaterialSymbolsRounded.codepoints
 )
 target_include_directories(vedit_theme PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_link_libraries(vedit_theme PUBLIC Qt6::Gui Qt6::DBus Qt6::Qml vedit_common

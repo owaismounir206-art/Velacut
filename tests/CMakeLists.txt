@@ -15,3 +15,25 @@ endfunction()
 
 add_subdirectory(unit)
 add_subdirectory(integration)
+
+# Application smoke tests (SPEC 1bis verification): start vedit headless, play a generated video, require
+# frames decoded *and* displayed, exit. The test video is generated with ffmpeg inside the build tree.
+find_program(FFMPEG_EXECUTABLE ffmpeg)
+if(FFMPEG_EXECUTABLE)
+    set(smoke_video "${CMAKE_BINARY_DIR}/testmedia/smoke_720p30.mp4")
+    add_test(NAME smoke_media COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/testmedia")
+    add_test(NAME smoke_media_generate COMMAND "${FFMPEG_EXECUTABLE}" -hide_banner -loglevel error -y
+             -f lavfi -i testsrc2=size=1280x720:rate=30 -f lavfi -i sine=frequency=440:sample_rate=48000
+             -t 5 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "${smoke_video}")
+    set_tests_properties(smoke_media PROPERTIES FIXTURES_SETUP smoke_dir)
+    set_tests_properties(smoke_media_generate PROPERTIES FIXTURES_SETUP smoke_video FIXTURES_REQUIRED smoke_dir)
+    set(smoke_home "${CMAKE_BINARY_DIR}/test-home/smoke")
+    set(smoke_env "QT_QPA_PLATFORM=offscreen;SDL_AUDIODRIVER=dummy;XDG_CONFIG_HOME=${smoke_home}/config;XDG_DATA_HOME=${smoke_home}/data;XDG_CACHE_HOME=${smoke_home}/cache;XDG_STATE_HOME=${smoke_home}/state;VEDIT_NO_SANDBOX=1;ASAN_OPTIONS=fast_unwind_on_malloc=0;LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan.supp:print_suppressions=0")
+    add_test(NAME smoke_software COMMAND vedit --smoke-test "${smoke_video}")
+    set_tests_properties(smoke_software PROPERTIES FIXTURES_REQUIRED smoke_video TIMEOUT 60
+                         ENVIRONMENT "${smoke_env};QT_QUICK_BACKEND=software;LIBGL_ALWAYS_SOFTWARE=1")
+    add_test(NAME smoke_safe_mode COMMAND vedit --safe-mode --smoke-test "${smoke_video}")
+    set_tests_properties(smoke_safe_mode PROPERTIES FIXTURES_REQUIRED smoke_video TIMEOUT 60 ENVIRONMENT "${smoke_env}")
+    add_test(NAME smoke_gallery COMMAND vedit --component-gallery --screenshot "${smoke_home}/gallery.png")
+    set_tests_properties(smoke_gallery PROPERTIES TIMEOUT 60 ENVIRONMENT "${smoke_env};QT_QUICK_BACKEND=software")
+endif()

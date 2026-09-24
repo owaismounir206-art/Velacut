@@ -2,6 +2,9 @@
 #include "ThemeManager.h"
 
 #include <QEasingCurve>
+#include <QFile>
+#include <QHash>
+#include <QSet>
 #include <QFontDatabase>
 #include <QJSEngine>
 #include <QLoggingCategory>
@@ -17,6 +20,29 @@ namespace vedit::theme {
 namespace {
 
 ThemeManager *s_instance = nullptr;
+
+// name -> codepoint, from the codepoints file published next to the Material Symbols font.
+const QHash<QString, char32_t> &iconCodepoints()
+{
+    static const QHash<QString, char32_t> codepoints = [] {
+        QHash<QString, char32_t> map;
+        QFile file(u":/vedit/icons/MaterialSymbolsRounded.codepoints"_s);
+        if (!file.open(QIODevice::ReadOnly)) {
+            qCWarning(lcTheme) << "icon codepoints not found";
+            return map;
+        }
+        while (!file.atEnd()) {
+            const QList<QByteArray> parts = file.readLine().trimmed().split(' ');
+            bool ok = false;
+            const uint codepoint = parts.size() == 2 ? parts[1].toUInt(&ok, 16) : 0;
+            if (ok) {
+                map.insert(QString::fromLatin1(parts[0]), static_cast<char32_t>(codepoint));
+            }
+        }
+        return map;
+    }();
+    return codepoints;
+}
 QString s_fontFamily;
 QString s_iconFontFamily;
 
@@ -326,6 +352,62 @@ QColor ThemeManager::surfaceAt(int level) const
     }
 }
 
+QString ThemeManager::icon(const QString &name) const
+{
+    const auto &codepoints = iconCodepoints();
+    auto it = codepoints.constFind(name);
+    if (it == codepoints.constEnd()) {
+        if (!name.isEmpty()) {
+            static QSet<QString> reported;
+            if (!reported.contains(name)) {
+                reported.insert(name);
+                qCWarning(lcTheme) << "unknown icon name:" << name;
+            }
+        }
+        if (name.isEmpty()) {
+            return {};
+        }
+        it = codepoints.constFind(u"help"_s);
+        if (it == codepoints.constEnd()) {
+            return {};
+        }
+    }
+    const char32_t codepoint = *it;
+    return QString::fromUcs4(&codepoint, 1);
+}
+
+bool ThemeManager::hasIcon(const QString &name) const
+{
+    return iconCodepoints().contains(name);
+}
+
+QStringList ThemeManager::colorRoleNames() const
+{
+    QStringList names;
+    for (int i = 0; i < kColorRoleCount; ++i) {
+        names.append(QString(colorRoleName(static_cast<ColorRole>(i))));
+    }
+    return names;
+}
+
+QColor ThemeManager::readableOn(const QColor &background) const
+{
+    return contrastRatio(background, Qt::black) >= contrastRatio(background, Qt::white) ? QColor(Qt::black) : QColor(Qt::white);
+}
+
+void ThemeManager::setSessionOverrides(std::optional<Mode> mode, std::optional<Contrast> contrast)
+{
+    m_sessionOverride = mode.has_value() || contrast.has_value();
+    if (mode) {
+        m_mode = *mode;
+    }
+    if (contrast) {
+        m_contrast = *contrast;
+    }
+    emit settingsChanged();
+    update(false);
+}
+
 QColor ThemeManager::alpha(const QColor &color, qreal opacity) const
 {
     QColor result = color;
@@ -345,7 +427,7 @@ void ThemeManager::loadSettings()
     if (manual.isValid()) {
         m_manualSeed = manual;
     }
-    m_density = enumFromKey(settings.value(u"density"_s).toString(), Density::Default);
+    m_density = enumFromKey(settings.value(u"density"_s).toString(), Density::Comfortable);
     m_space.setDensity(m_density == Density::Compact ? -1 : 0);
     m_motionPreference = enumFromKey(settings.value(u"motion"_s).toString(), Motion::System);
     settings.endGroup();
@@ -355,6 +437,9 @@ void ThemeManager::loadSettings()
 
 void ThemeManager::saveSettings() const
 {
+    if (m_sessionOverride) {
+        return; // values forced from the command line are not the user's preferences
+    }
     QSettings settings;
     settings.beginGroup(u"theme"_s);
     settings.setValue(u"mode"_s, enumKey(m_mode));

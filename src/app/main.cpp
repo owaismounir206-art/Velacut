@@ -11,7 +11,10 @@
 #include <QCommandLineParser>
 #include <QDir>
 #include <QGuiApplication>
+#include <QLibraryInfo>
+#include <QLocale>
 #include <QLoggingCategory>
+#include <QTranslator>
 #include <QProcess>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
@@ -70,6 +73,16 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     logging::install();
 
+    // Interface language: the system one (Italian and English available from the start, SPEC §4).
+    QTranslator qtTranslator;
+    if (qtTranslator.load(QLocale(), u"qt"_s, u"_"_s, QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
+        QCoreApplication::installTranslator(&qtTranslator);
+    }
+    QTranslator appTranslator;
+    if (appTranslator.load(QLocale(), u"vedit"_s, u"_"_s, u":/i18n"_s)) {
+        QCoreApplication::installTranslator(&appTranslator);
+    }
+
     QCommandLineParser parser;
     parser.setApplicationDescription(QCoreApplication::translate("main", "Offline video editor"));
     parser.addHelpOption();
@@ -85,7 +98,16 @@ int main(int argc, char *argv[])
     const QCommandLineOption screenshotOption(u"screenshot"_s,
                                               QCoreApplication::translate("main", "With --smoke-test: save an image of the window."),
                                               u"file"_s);
-    parser.addOptions({safeModeOption, galleryOption, reprobeOption, smokeTestOption, screenshotOption});
+    const QCommandLineOption themeOption(u"theme"_s, QCoreApplication::translate("main", "Force the theme for this session: light, dark or auto."),
+                                         u"mode"_s);
+    const QCommandLineOption contrastOption(u"contrast"_s,
+                                            QCoreApplication::translate("main", "Force the contrast for this session: standard, medium or high."),
+                                            u"level"_s);
+    const QCommandLineOption windowSizeOption(u"window-size"_s,
+                                              QCoreApplication::translate("main", "Initial window size, e.g. 1280x2400 (screenshots)."),
+                                              u"WxH"_s);
+    parser.addOptions({safeModeOption, galleryOption, reprobeOption, smokeTestOption, screenshotOption, themeOption,
+                       contrastOption, windowSizeOption});
     parser.addPositionalArgument(u"file"_s, QCoreApplication::translate("main", "Video to open."));
     parser.process(app);
     const bool smokeTest = parser.isSet(smokeTestOption);
@@ -135,6 +157,29 @@ int main(int argc, char *argv[])
         theme::ThemeManager themeManager(&appearance);
         theme::ThemeManager::setInstance(&themeManager);
         themeManager.loadSettings();
+        {
+            std::optional<theme::ThemeManager::Mode> mode;
+            std::optional<theme::ThemeManager::Contrast> contrast;
+            const QString themeValue = parser.value(themeOption);
+            if (themeValue == u"light"_s) {
+                mode = theme::ThemeManager::Mode::Light;
+            } else if (themeValue == u"dark"_s) {
+                mode = theme::ThemeManager::Mode::Dark;
+            } else if (themeValue == u"auto"_s) {
+                mode = theme::ThemeManager::Mode::Auto;
+            }
+            const QString contrastValue = parser.value(contrastOption);
+            if (contrastValue == u"standard"_s) {
+                contrast = theme::ThemeManager::Contrast::Standard;
+            } else if (contrastValue == u"medium"_s) {
+                contrast = theme::ThemeManager::Contrast::Medium;
+            } else if (contrastValue == u"high"_s) {
+                contrast = theme::ThemeManager::Contrast::High;
+            }
+            if (mode || contrast) {
+                themeManager.setSessionOverrides(mode, contrast);
+            }
+        }
         themeManager.setSoftwareRendering(decision.ui == gpu::UiBackend::Software);
         QQuickStyle::setStyle(u"Vedit.Style"_s);
 
@@ -181,6 +226,20 @@ int main(int argc, char *argv[])
                                  relaunch();
                                  QCoreApplication::exit(3);
                              });
+        }
+
+        if (window && parser.isSet(windowSizeOption)) {
+            const QStringList size = parser.value(windowSizeOption).split(u'x');
+            if (size.size() == 2 && size[0].toInt() > 0 && size[1].toInt() > 0) {
+                window->resize(size[0].toInt(), size[1].toInt());
+            }
+        }
+        if (!smokeTest && parser.isSet(screenshotOption) && window) {
+            const QString screenshot = parser.value(screenshotOption);
+            QTimer::singleShot(1500, &app, [window, screenshot] {
+                window->grabWindow().save(screenshot);
+                QCoreApplication::exit(0);
+            });
         }
 
         const QStringList files = parser.positionalArguments();

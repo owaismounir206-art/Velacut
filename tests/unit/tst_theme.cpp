@@ -180,6 +180,18 @@ private slots:
         QCOMPARE(theme.type()->labelLarge().weight(), QFont::Medium);
     }
 
+    void iconsResolveThroughCodepoints()
+    {
+        ThemeManager theme(nullptr);
+        QVERIFY(theme.hasIcon(u"play_arrow"_s));
+        QCOMPARE(theme.icon(u"play_arrow"_s), QString(QChar(0xe037)));
+        QVERIFY(!theme.hasIcon(u"magnet"_s));
+        QCOMPARE(theme.icon(u"magnet"_s), theme.icon(u"help"_s)); // never drawn as text
+        QVERIFY(theme.icon(QString()).isEmpty());
+        // Codepoints beyond the BMP become surrogate pairs.
+        QCOMPARE(theme.icon(u"10k"_s).size(), 1);
+    }
+
     void managerDefaultsAndFallbacks()
     {
         ThemeManager theme(nullptr); // no system information at all

@@ -87,6 +87,18 @@ T.TextField {
             Behavior on y { NumberAnimation { duration: Theme.motion.short4; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.motion.standard } }
         }
         Label {
+            // placeholder: only when there is no label, or once the label floated
+            x: control.leftPadding
+            y: control.topPadding
+            width: parent.width - control.leftPadding - control.rightPadding
+            height: 56 - control.topPadding - (control.variant === "filled" && control.label !== "" ? 8 : 16)
+            visible: control.text.length === 0 && control.preeditText.length === 0 && (control.label === "" || control.activeFocus)
+            text: control.placeholderText
+            role: "bodyLarge"
+            color: control.placeholderTextColor
+            elide: Text.ElideRight
+        }
+        Label {
             visible: control.supportingText !== ""
             text: control.supportingText
             role: "bodySmall"

@@ -15,6 +15,7 @@ qt_add_qml_module(vedit_ui
         controllers/AppController.h controllers/AppController.cpp
     QML_FILES
         qml/Main.qml
+        qml/Gallery.qml
         qml/VideoPreview.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"

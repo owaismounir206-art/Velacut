@@ -93,7 +93,7 @@ public:
     Q_ENUM(SeedSource)
     enum class Density
     {
-        Default,
+        Comfortable,
         Compact,
     };
     Q_ENUM(Density)
@@ -160,6 +160,16 @@ public:
 
     // Tonal surface color of an elevation level (0–5), M3 style.
     Q_INVOKABLE QColor surfaceAt(int level) const;
+    // Material Symbols glyph for an icon name (via the bundled codepoints file, no ligature shaping needed).
+    // Unknown names give the "help" glyph and a warning in the log, instead of drawing the name as text.
+    Q_INVOKABLE QString icon(const QString &name) const;
+    Q_INVOKABLE bool hasIcon(const QString &name) const;
+    // Names of every color role, in declaration order (component gallery, documentation).
+    Q_INVOKABLE QStringList colorRoleNames() const;
+    // Black or white, whichever reads better on `background` (labels on arbitrary colors, e.g. swatches).
+    Q_INVOKABLE QColor readableOn(const QColor &background) const;
+    // Session-only overrides (command line, automatic screenshots): not written to the settings.
+    void setSessionOverrides(std::optional<Mode> mode, std::optional<Contrast> contrast);
     // `color` with the given opacity (for state layers).
     Q_INVOKABLE QColor alpha(const QColor &color, qreal opacity) const;
 
@@ -195,7 +205,7 @@ private:
     Variant m_variant = Variant::TonalSpot;
     SeedSource m_seedSource = SeedSource::System;
     QColor m_manualSeed = QColor::fromRgb(kDefaultSeed);
-    Density m_density = Density::Default;
+    Density m_density = Density::Comfortable;
     Motion m_motionPreference = Motion::System;
     std::optional<QColor> m_wallpaperSeed;
     std::optional<QColor> m_coverSeed;
@@ -205,6 +215,7 @@ private:
     SeedSource m_effectiveSource = SeedSource::Default;
     bool m_softwareRendering = false;
     bool m_initialized = false;
+    bool m_sessionOverride = false;
 };
 
 } // namespace vedit::theme
