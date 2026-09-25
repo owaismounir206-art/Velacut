@@ -110,8 +110,8 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
     m_sequenceId = sequenceId;
     m_transitions.clear();
     m_tracks.clear();
-    m_keepAlive.clear();
     m_warnings.clear();
+    m_backgroundLength = 0;
     m_tractor = std::make_unique<Mlt::Tractor>(m_profile);
     m_black = std::make_unique<Mlt::Producer>(m_profile, mltColor(Color{0, 0, 0, 255}).constData());
     m_black->set("length", 0x7fffffff);
@@ -161,11 +161,35 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
 
 void TimelineProjection::fillTrack(TrackSlot &slot, const Track &track, const ProjectData &project, bool anySolo)
 {
-    Mlt::Playlist &playlist = *slot.playlist;
-    retireEntries(playlist);
-    playlist.clear();
+    slot.playlist->set("hide", hideFlags(track, slot.audio, anySolo));
+    patch(slot, entriesFor(slot, track, project));
+}
+
+std::shared_ptr<Mlt::Producer> TimelineProjection::colorProducer(const Color &color)
+{
+    const QByteArray resource = mltColor(color);
+    if (auto existing = m_colors.value(resource)) {
+        return existing;
+    }
+    auto producer = std::make_shared<Mlt::Producer>(m_profile, resource.constData());
+    producer->set("length", 0x7fffffff);
+    m_colors.insert(resource, producer);
+    return producer;
+}
+
+std::vector<TimelineProjection::Entry> TimelineProjection::entriesFor(TrackSlot &slot, const Track &track,
+                                                                     const ProjectData &project)
+{
+    std::vector<Entry> entries;
     slot.media.clear();
-    playlist.set("hide", hideFlags(track, slot.audio, anySolo));
+    const auto addBlank = [&entries](std::int64_t length) {
+        // Adjacent blanks (a gap next to a disabled clip) are one entry.
+        if (!entries.empty() && !entries.back().producer) {
+            entries.back().out += static_cast<int>(length);
+        } else {
+            entries.push_back(Entry{nullptr, 0, static_cast<int>(length - 1), false});
+        }
+    };
     std::int64_t cursor = 0;
     for (const Clip &clip : track.clips) {
         // Both edges are converted (not start and duration) so that adjacent clips stay adjacent.
@@ -184,12 +208,12 @@ void TimelineProjection::fillTrack(TrackSlot &slot, const Track &track, const Pr
             }
         }
         if (start > cursor) {
-            playlist.blank(static_cast<int>(start - cursor - 1));
+            addBlank(start - cursor);
         }
         cursor = start + length;
         const int out = static_cast<int>(length - 1);
         if (!clip.enabled) {
-            playlist.blank(out);
+            addBlank(length);
             continue;
         }
         if (const MediaClipData *data = clip.media()) {
@@ -200,32 +224,76 @@ void TimelineProjection::fillTrack(TrackSlot &slot, const Track &track, const Pr
                 if (media && !m_cache.error(media->id).isEmpty()) {
                     m_warnings << m_cache.error(media->id);
                 }
-                playlist.blank(out);
+                addBlank(length);
                 continue;
             }
             if (data->speed != 1.0 || data->curve || data->reversed) {
                 m_warnings << u"clip %1: speed and reverse are rendered from Phase 2"_s.arg(clip.id.toString());
             }
             const int in = media->kind == MediaKind::Image ? 0 : static_cast<int>(toFrames(data->sourceIn));
-            playlist.append(*producer, in, in + out);
-            if (data->streams == Streams::VideoOnly && media->info.audio) {
-                std::unique_ptr<Mlt::Producer> cut(playlist.get_clip(playlist.count() - 1));
-                Mlt::Filter silence(m_profile, "volume");
-                silence.set("gain", 0.0);
-                cut->attach(silence);
-            }
+            entries.push_back(Entry{producer, in, in + out, data->streams == Streams::VideoOnly && media->info.audio.has_value()});
         } else if (const auto *color = std::get_if<ColorClipData>(&clip.payload)) {
             const ParamValue value = color->color.staticValue();
             const Color c = std::holds_alternative<Color>(value) ? std::get<Color>(value) : Color{};
-            auto producer = std::make_shared<Mlt::Producer>(m_profile, mltColor(c).constData());
-            producer->set("length", 0x7fffffff);
-            playlist.append(*producer, 0, out);
-            m_keepAlive.push_back(producer);
+            entries.push_back(Entry{colorProducer(c), 0, out, false});
         } else {
             m_warnings << u"clip %1: this kind of clip is rendered from a later phase"_s.arg(clip.id.toString());
-            playlist.blank(out);
+            addBlank(length);
         }
     }
+    return entries;
+}
+
+void TimelineProjection::patch(TrackSlot &slot, std::vector<Entry> desired)
+{
+    Mlt::Playlist &playlist = *slot.playlist;
+    const std::vector<Entry> &current = slot.entries;
+    size_t prefix = 0;
+    while (prefix < current.size() && prefix < desired.size() && current[prefix] == desired[prefix]) {
+        ++prefix;
+    }
+    size_t suffix = 0;
+    while (suffix < current.size() - prefix && suffix < desired.size() - prefix &&
+           current[current.size() - 1 - suffix] == desired[desired.size() - 1 - suffix]) {
+        ++suffix;
+    }
+    Retired retired;
+    retired.since = std::chrono::steady_clock::now();
+    for (int i = static_cast<int>(current.size() - suffix) - 1; i >= static_cast<int>(prefix); --i) {
+        if (Mlt::Producer *cut = playlist.get_clip(i)) {
+            retired.cuts.emplace_back(cut); // a new reference: the cut outlives the playlist entry
+        }
+        playlist.remove(i);
+    }
+    if (!retired.cuts.empty()) {
+        m_retired.push_back(std::move(retired));
+    }
+    int where = static_cast<int>(prefix);
+    // At the end (building a track, media becoming ready) appending avoids moving every entry: O(n) instead of O(n²).
+    const bool atEnd = suffix == 0;
+    for (size_t k = prefix; k < desired.size() - suffix; ++k, ++where) {
+        const Entry &entry = desired[k];
+        if (!entry.producer) {
+            if (atEnd) {
+                playlist.blank(entry.out);
+            } else {
+                playlist.insert_blank(where, entry.out);
+            }
+            continue;
+        }
+        if (atEnd) {
+            playlist.append(*entry.producer, entry.in, entry.out);
+        } else {
+            playlist.insert(*entry.producer, where, entry.in, entry.out);
+        }
+        if (entry.silent) {
+            std::unique_ptr<Mlt::Producer> cut(playlist.get_clip(where));
+            Mlt::Filter silence(m_profile, "volume");
+            silence.set("gain", 0.0);
+            cut->attach(silence);
+        }
+    }
+    slot.entries = std::move(desired);
 }
 
 void TimelineProjection::updateBackground()
@@ -235,6 +303,10 @@ void TimelineProjection::updateBackground()
         duration = std::max(duration, slot.playlist->get_playtime());
     }
     m_duration = duration;
+    if (duration == m_backgroundLength) {
+        return;
+    }
+    m_backgroundLength = duration;
     retireEntries(*m_background);
     m_background->clear();
     m_background->append(*m_black, 0, duration - 1);

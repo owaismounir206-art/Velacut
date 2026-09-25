@@ -4,12 +4,14 @@
 #include "../unit/ProjectFixture.h"
 #include "TestMedia.h"
 
+#include "core/serialization/ProjectJson.h"
 #include "document/Document.h"
 #include "document/DraftStore.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/mlt/MltRuntime.h"
 #include "ui/controllers/EditorController.h"
 
+#include <QElapsedTimer>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 
@@ -150,6 +152,58 @@ private slots:
         QCOMPARE(editor.data().mainSequence()->visualTracks.size(), size_t(2));
         QCOMPARE(editor.timeline()->trackRowCount(), 2);
         QCOMPARE(editor.timeline()->mainRow(), 1);
+    }
+
+    // SPEC §6: 500+ clips stay responsive. One edit = command + projection patch + timeline model diff; the continuous
+    // save serializes the project on the UI thread (ARCHITECTURE §10: < 30 ms with 500 clips).
+    void largeProjectStaysResponsive()
+    {
+        ProjectData data = ProjectData::createEmpty(u"Large"_s);
+        data.settings.frameRate = Rational(30);
+        data.sequences.front().canvas = Canvas{320, 180, CanvasPreset::Landscape16x9};
+        Media media = testMedia(MediaKind::Video, m_files.landscape, RationalTime(120, Rational(30)), 320, 180, true);
+        data.media = {media};
+        Track &main = data.sequences.front().visualTracks.front();
+        for (int i = 0; i < 500; ++i) {
+            Clip clip;
+            clip.id = ClipId::create();
+            clip.start = frames(i * 30);
+            clip.duration = frames(30);
+            MediaClipData payload;
+            payload.mediaId = media.id;
+            payload.sourceIn = frames((i * 7) % 90);
+            payload.streams = Streams::AudioVideo;
+            clip.payload = payload;
+            main.clips.push_back(std::move(clip));
+        }
+        QVERIFY(data.checkInvariants().isEmpty());
+        document::DraftStore store(m_dir.filePath(u"drafts-large"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        auto document = document::Document::create(store.directoryOf(data.id), data, &error);
+        QVERIFY2(document, qPrintable(error));
+        EditorController editor(std::move(document), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        QCOMPARE(editor.timeline()->duration(), 15000);
+
+        QTest::qWait(500); // media opened in background enter the preview graph first (measured separately)
+        QElapsedTimer timer;
+        qint64 worstEdit = 0;
+        for (int i = 0; i < 10; ++i) {
+            const Clip &clip = editor.data().mainSequence()->visualTracks.front().clips[250 + i];
+            timer.start();
+            QVERIFY(editor.trimClip(clip.id.toString(), false, static_cast<int>(clip.end().value()) - 5));
+            worstEdit = std::max(worstEdit, timer.elapsed());
+        }
+        timer.start();
+        const QByteArray bytes = projectjson::toBytes(editor.data());
+        const qint64 serialization = timer.elapsed();
+        qInfo("500 clips: worst edit %lld ms, serialization %lld ms (%lld KiB)", worstEdit, serialization,
+              static_cast<long long>(bytes.size() / 1024));
+#if defined(NDEBUG) && !defined(__SANITIZE_ADDRESS__)
+        QVERIFY2(worstEdit < 50, qPrintable(QString::number(worstEdit)));
+        QVERIFY2(serialization < 30, qPrintable(QString::number(serialization)));
+#endif
     }
 
     void cleanupTestCase() {}

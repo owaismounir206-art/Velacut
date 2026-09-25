@@ -81,11 +81,23 @@ public:
     bool hasRetired() const { return !m_retired.empty(); }
 
 private:
+    // One entry of a playlist as the model wants it: a cut of `producer` (null: a blank of out+1 frames).
+    struct Entry
+    {
+        std::shared_ptr<Mlt::Producer> producer;
+        int in = 0;
+        int out = 0;
+        bool silent = false; // video-only use of a media with audio
+
+        friend bool operator==(const Entry &, const Entry &) = default;
+    };
+
     struct TrackSlot
     {
         TrackId id;
         bool audio = false;
         std::unique_ptr<Mlt::Playlist> playlist;
+        std::vector<Entry> entries; // what the playlist contains
         QSet<MediaId> media;
     };
 
@@ -96,6 +108,11 @@ private:
     };
 
     void fillTrack(TrackSlot &slot, const Track &track, const ProjectData &project, bool anySolo);
+    std::vector<Entry> entriesFor(TrackSlot &slot, const Track &track, const ProjectData &project);
+    // Changes the playlist into `desired` replacing only the entries that differ (an edit usually touches one or two
+    // clips: a 500-clip track is not rebuilt for a trim).
+    void patch(TrackSlot &slot, std::vector<Entry> desired);
+    std::shared_ptr<Mlt::Producer> colorProducer(const Color &color);
     void retireEntries(Mlt::Playlist &playlist);
     void updateBackground();
     std::shared_ptr<Mlt::Producer> producerFor(const Media &media);
@@ -112,8 +129,9 @@ private:
     std::unique_ptr<Mlt::Producer> m_black;
     std::vector<TrackSlot> m_tracks; // in tractor order, from track 1
     std::vector<std::unique_ptr<Mlt::Transition>> m_transitions;
-    std::vector<std::shared_ptr<Mlt::Producer>> m_keepAlive; // colour producers used by cuts
+    QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_colors; // colour producers, shared by cuts
     int m_duration = 1;
+    int m_backgroundLength = 0;
     QStringList m_warnings;
     std::vector<Retired> m_retired;
 };
