@@ -61,8 +61,11 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
    **Animazione** del pannello proprietà (durata di ognuna, rimozione), azione "Animazione" nella barra contestuale e
    nella ricerca. La matematica delle animazioni sta in `fx/Animation` (la usano il renderer e le miniature).
 
+7. **Marker nell'interfaccia (`P3.6b`)**: M aggiunge un marker al playhead (della clip selezionata, altrimenti del
+   video); rombi sul righello e tacche sulle clip; clic porta il playhead lì, tasto destro rimuove
+   (`tst_ui::markers`).
+
 ### Prossimi passi (Fase 3 — Keyframe e composizione)
-- P3.6b: marker sulla timeline e sul righello (M aggiunge; clic salta; tasto destro rimuove).
 - P3.6c: keyframe nell'interfaccia: diamanti accanto ai parametri animabili (aggiungi/rimuovi al playhead, salto tra
   keyframe), diamanti sulla clip selezionata, scelta dell'easing; verifica del criterio ("Animo un titolo con keyframe
   ed easing").

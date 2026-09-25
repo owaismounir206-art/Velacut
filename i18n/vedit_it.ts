@@ -1487,12 +1487,12 @@
 <context>
     <name>TimelineClip</name>
     <message>
-        <location filename="../src/ui/qml/TimelineClip.qml" line="+46"/>
+        <location filename="../src/ui/qml/TimelineClip.qml" line="+47"/>
         <source>Clip %1</source>
         <translation>Clip %1</translation>
     </message>
     <message>
-        <location line="+89"/>
+        <location line="+117"/>
         <source>Copy attributes</source>
         <translation>Copia attributi</translation>
     </message>
@@ -1515,7 +1515,7 @@
 <context>
     <name>TimelineView</name>
     <message>
-        <location filename="../src/ui/qml/TimelineView.qml" line="+166"/>
+        <location filename="../src/ui/qml/TimelineView.qml" line="+202"/>
         <location line="+47"/>
         <source>Audio track</source>
         <translation>Traccia audio</translation>

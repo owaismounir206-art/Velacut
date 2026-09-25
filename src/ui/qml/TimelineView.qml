@@ -52,6 +52,12 @@ Rectangle {
         return rows
     }
     function frameAt(x) { return Math.max(0, Math.round(x / zoom)) }
+    // A marker's colour: a role of the theme ("primary", "tertiary"…) or "#RRGGBBAA" (docs/FILE_FORMAT.md §5.8).
+    function markerColor(value) {
+        if (value.length === 9 && value[0] === "#")
+            return "#" + value.substr(7, 2) + value.substr(1, 6)
+        return Theme.color[value] ?? Theme.color.primary
+    }
 
     // ---- zoom -----------------------------------------------------------------------------------------------------
     function setZoom(value, anchorX) {
@@ -136,6 +142,36 @@ Rectangle {
             cursorShape: Qt.SizeHorCursor
             onPressed: (mouse) => { view.player.pause(); view.player.seek(view.frameAt(mouse.x + flick.contentX)) }
             onPositionChanged: (mouse) => { if (pressed) view.player.seek(view.frameAt(mouse.x + flick.contentX)) }
+        }
+        // Markers of the video (M adds one at the playhead): click = go there, right click = remove.
+        Repeater {
+            model: view.model.markers
+            delegate: Rectangle {
+                id: flag
+                required property var modelData
+                objectName: "marker_" + modelData.id
+                x: modelData.frame * view.zoom - flick.contentX - width / 2
+                y: ruler.height - height
+                width: Theme.editor.playheadKnob
+                height: Theme.editor.playheadKnob
+                radius: Theme.shape.extraSmall
+                rotation: 45
+                color: view.markerColor(modelData.color)
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    ToolTip.visible: containsMouse && flag.modelData.name !== ""
+                    ToolTip.text: flag.modelData.name
+                    onClicked: (mouse) => {
+                        if (mouse.button === Qt.RightButton)
+                            view.editor.removeSequenceMarker(flag.modelData.id)
+                        else
+                            view.player.seek(flag.modelData.frame)
+                    }
+                }
+            }
         }
     }
 

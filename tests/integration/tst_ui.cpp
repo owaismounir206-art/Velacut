@@ -546,6 +546,34 @@ private slots:
         click(byText(u"Media"_s));
     }
 
+    // Markers: M adds one at the playhead (of the video, or of the selected clip); click goes there, right click removes.
+    void markers()
+    {
+        editor()->clearSelection();
+        editor()->player()->seek(30);
+        QTRY_COMPARE(editor()->player()->position(), 30);
+        key(Qt::Key_M);
+        QTRY_COMPARE(editor()->data().mainSequence()->markers.size(), size_t(1));
+        const QString id = editor()->data().mainSequence()->markers.front().id.toString();
+        QTRY_VERIFY(byName(u"marker_"_s + id));
+        editor()->player()->seek(90);
+        click(byName(u"marker_"_s + id));
+        QTRY_COMPARE(editor()->player()->position(), 30);
+        QTest::mouseClick(m_window, Qt::RightButton, {}, centre(byName(u"marker_"_s + id)));
+        QTRY_VERIFY(editor()->data().mainSequence()->markers.empty());
+
+        const ClipId first = mainTrack().clips.front().id;
+        click(byName(u"clip-"_s + first.toString()));
+        editor()->player()->seek(20);
+        key(Qt::Key_M);
+        QTRY_COMPARE(editor()->data().findClip(first)->markers.size(), size_t(1));
+        const QString tick = u"clipMarker_"_s + editor()->data().findClip(first)->markers.front().id.toString();
+        QTRY_VERIFY(byName(tick));
+        shot(u"24-markers"_s);
+        editor()->undo();
+        QTRY_VERIFY(!byName(tick));
+    }
+
     // Usability test 8: export with the recommended settings ≤ 2 actions.
     void usability8Export()
     {

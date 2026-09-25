@@ -46,6 +46,7 @@ I tasti singoli (lettere, frecce, Spazio) non agiscono mentre si scrive in un ca
 | Tasto destro su una clip | Le stesse azioni della barra contestuale, più Copia/Incolla attributi |
 | Clic sul "+" tra due clip | Apre le transizioni per quel taglio; clic su una transizione: la seleziona, i bordi ne cambiano la durata |
 | Clic sull'intestazione di una traccia | Volume e muto della traccia |
+| Clic su un marker (righello o clip) | Porta il playhead lì; tasto destro: lo rimuove |
 | Trascinare una clip | Sposta (anche su un'altra traccia, o sopra/sotto le tracce per crearne una nuova); si aggancia a bordi e playhead |
 | Trascinare il bordo di una clip | Accorcia o allunga; l'anteprima mostra il fotogramma del nuovo taglio |
 | Ctrl+rotella | Zoom attorno al puntatore |

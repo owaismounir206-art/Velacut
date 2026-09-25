@@ -22,6 +22,7 @@ Item {
     required property bool selected
     required property bool locked
     required property int mediaLength
+    required property var markers // [{id, frame (from the clip's start), name, color}]
 
     // Gesture in progress: "", "move", "trimStart", "trimEnd".
     property string mode: ""
@@ -90,6 +91,34 @@ Item {
                 elide: Text.ElideRight
                 color: Theme.color.inverseOnSurface
                 text: clip.name
+            }
+        }
+        // Markers of the clip: a tick at the top; a click moves the playhead there.
+        Repeater {
+            model: clip.markers
+            delegate: Rectangle {
+                id: tick
+                required property var modelData
+                objectName: "clipMarker_" + modelData.id
+                x: modelData.frame * clip.view.zoom - width / 2
+                width: Theme.editor.playheadWidth
+                height: parent.height / 3
+                color: clip.view.markerColor(modelData.color)
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -Theme.space.xs
+                    cursorShape: Qt.PointingHandCursor
+                    ToolTip.visible: containsMouse && tick.modelData.name !== ""
+                    ToolTip.text: tick.modelData.name
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: (mouse) => {
+                        if (mouse.button === Qt.RightButton)
+                            clip.view.editor.removeClipMarker(clip.clipId, tick.modelData.id)
+                        else
+                            clip.view.player.seek(clip.start + tick.modelData.frame)
+                    }
+                }
             }
         }
         Rectangle {
