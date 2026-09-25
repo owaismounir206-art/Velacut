@@ -67,7 +67,7 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    // [{trackId, kind: "overlay"|"main"|"audio", audio, index, muted, hidden, locked}], top to bottom.
+    // [{trackId, kind: "overlay"|"main"|"audio", audio, index, muted, gainDb, hidden, locked}], top to bottom.
     QVariantList tracks() const { return m_trackList; }
     int mainRow() const { return m_mainRow; }
     int trackRowCount() const { return static_cast<int>(m_trackRows.size()); }

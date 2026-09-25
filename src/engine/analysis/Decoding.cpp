@@ -305,4 +305,64 @@ std::optional<Waveform> extractWaveform(const QString &path, int bucketsPerSecon
     return waveform;
 }
 
+QImage extractFrame(const QString &path, double seconds, int maxHeight)
+{
+    Input input = openInput(path);
+    if (!input) {
+        return {};
+    }
+    int streamIndex = -1;
+    for (unsigned i = 0; i < input->nb_streams; ++i) {
+        const AVStream *stream = input->streams[i];
+        if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && !(stream->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
+            streamIndex = static_cast<int>(i);
+            break;
+        }
+    }
+    if (streamIndex < 0) {
+        return {};
+    }
+    AVStream *stream = input->streams[streamIndex];
+    Codec codec = openDecoder(stream);
+    if (!codec || codec->width <= 0 || codec->height <= 0) {
+        return {};
+    }
+    const int rotation = rotationOf(stream);
+    const AVRational sar = stream->codecpar->sample_aspect_ratio.num > 0 ? stream->codecpar->sample_aspect_ratio
+                                                                         : AVRational{1, 1};
+    // Square pixels at the decoded height (or less), before the rotation.
+    int height = codec->height;
+    if (maxHeight > 0) {
+        const bool sideways = rotation == 90 || rotation == 270;
+        const double displayHeight = sideways ? codec->width * av_q2d(sar) : codec->height;
+        if (displayHeight > maxHeight) {
+            height = even(codec->height * maxHeight / displayHeight);
+        }
+    }
+    const int width = even(height * codec->width * av_q2d(sar) / codec->height);
+
+    const int64_t start = stream->start_time != AV_NOPTS_VALUE ? stream->start_time : 0;
+    const int64_t target = start + av_rescale_q(static_cast<int64_t>(std::llround(std::max(0.0, seconds) * AV_TIME_BASE)),
+                                                AV_TIME_BASE_Q, stream->time_base);
+    if (target > start) {
+        av_seek_frame(input.get(), streamIndex, target, AVSEEK_FLAG_BACKWARD);
+        avcodec_flush_buffers(codec.get());
+    }
+    Frame frame(av_frame_alloc());
+    if (!decodeUntil(input.get(), codec.get(), streamIndex, target, frame.get(), nullptr)) {
+        return {};
+    }
+    std::unique_ptr<SwsContext, SwsDeleter> scaler(
+        sws_getContext(frame->width, frame->height, static_cast<AVPixelFormat>(frame->format), width, height,
+                       AV_PIX_FMT_RGB32, SWS_BICUBIC, nullptr, nullptr, nullptr));
+    if (!scaler) {
+        return {};
+    }
+    QImage image(width, height, QImage::Format_RGB32);
+    uint8_t *destination[4] = {image.bits(), nullptr, nullptr, nullptr};
+    const int destinationStride[4] = {static_cast<int>(image.bytesPerLine()), 0, 0, 0};
+    sws_scale(scaler.get(), frame->data, frame->linesize, 0, frame->height, destination, destinationStride);
+    return rotation != 0 ? image.transformed(QTransform().rotate(rotation)) : image;
+}
+
 } // namespace vedit::engine

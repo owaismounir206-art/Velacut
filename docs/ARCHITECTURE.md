@@ -430,9 +430,9 @@ soddisfatto qui tramite l'accento GNOME. Se il portale lo rende disponibile, ver
   editor aperto) ed `EditorController` (un progetto aperto: ogni azione diventa un comando); modelli `DraftsModel`,
   `MediaPoolModel`, `AudioLibraryModel`, `TimelineModel` (virtualizzato per intervallo visibile, aggiornato con un
   diff); item `MediaThumbnail` e `WaveformView`. Lo snapping è una funzione di `EditorController` (`snap`,
-  `snapRange`: bordi delle clip, playhead, inizio), non ancora un `SnapEngine` separato. L'`ActionRegistry` (menu
-  contestuali, Ctrl+K, scorciatoie personalizzabili) non esiste ancora: le azioni della Fase 1 sono dichiarate in
-  barra, menu della clip e `Shortcut` QML; arriva quando le azioni diventano molte (Fase 2).
+  `snapRange`: bordi delle clip, playhead, inizio), non ancora un `SnapEngine` separato. Dalla Fase 2:
+  `ClipInspector` (pannello proprietà, D-40) e `ActionRegistry` (barra contestuale, menu del tasto destro, Ctrl+K;
+  D-47). Le scorciatoie sono ancora `Shortcut` QML: diventano personalizzabili con le preferenze (Fase 8).
 
 ---
 
@@ -559,6 +559,8 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | D-44 | Un'unica funzione del core per il tempo dei keyframe e dei marker di clip (`core/project/ClipTime.h`), usata dall'engine, dai marker e dalla timeline | D-05 vale anche con velocità e inversione (a 2× un keyframe al fotogramma 60 della sorgente cade al fotogramma 30 della clip); prima l'engine usava `sourceIn + fotogrammi trascorsi` e i marker di clip erano scostamenti dall'inizio: il contenuto e i keyframe si separavano |
 | D-45 | Le chiavi di rendering dei filtri (`TransformSettings`, `MaskSettings`) contengono tutti i keyframe (tempi, valori, interpolazione, easing), non solo il loro numero | Altrimenti spostare o cambiare un keyframe lasciava in anteprima il filtro vecchio (l'export, ricostruito da zero, era corretto): verificato da `tst_projection::keyframeChangesUpdateTheProjection` |
 | D-46 | Animazioni predefinite (ingresso, uscita, ciclo; 30 per tipo) calcolate in `vedit.transform` a partire dall'id del manifest `animations.json` | Agganciate ai bordi della clip (non al contenuto), si sommano alla trasformazione e ai keyframe; nessun keyframe generato nel modello: la durata si cambia con un valore |
+| D-47 | `ActionRegistry` in C++ (id, testo, icona, scorciatoia, selezioni in cui compare, abilitazione) | Barra contestuale, menu del tasto destro e Ctrl+K leggono la stessa lista: un'azione aggiunta compare ovunque, con lo stesso nome; la ricerca unisce comandi e librerie ignorando maiuscole e accenti, in italiano e inglese |
+| D-48 | Il fermo immagine è un PNG del fotogramma della sorgente (non del risultato con effetti) salvato in `media/` della bozza | La clip del fermo immagine riceve l'aspetto della clip d'origine (trasformazione, filtri): il PNG deve essere il materiale grezzo, o gli effetti si applicherebbero due volte. È un media normale del progetto (si esporta e si archivia con il resto) |
 
 ---
 

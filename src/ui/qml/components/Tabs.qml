@@ -1,4 +1,4 @@
-// Material 3 secondary tabs: model = list of { text }, currentIndex; the active tab is underlined in primary.
+// Material 3 secondary tabs: model = list of { text }, currentIndex (set by the owner); the active tab is underlined.
 // The tabs share the width equally (a side panel has room for a few short labels).
 import QtQuick
 import Vedit.Theme
@@ -14,11 +14,11 @@ FocusScope {
     activeFocusOnTab: true
     Accessible.role: Accessible.PageTabList
 
+    // The owner decides the page shown: it binds currentIndex and changes it on activated() (a click never breaks that
+    // binding, so the page can also change from elsewhere, e.g. a toolbar button).
     function select(index) {
-        if (index < 0 || index >= model.length)
-            return
-        currentIndex = index
-        activated(index)
+        if (index >= 0 && index < model.length)
+            activated(index)
     }
     Keys.onLeftPressed: select(currentIndex - 1)
     Keys.onRightPressed: select(currentIndex + 1)

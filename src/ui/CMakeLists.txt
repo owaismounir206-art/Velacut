@@ -23,6 +23,7 @@ qt_add_qml_module(vedit_ui
         controllers/AppController.h controllers/AppController.cpp
         controllers/EditorController.h controllers/EditorController.cpp
         controllers/ClipInspector.h controllers/ClipInspector.cpp
+        controllers/ActionRegistry.h controllers/ActionRegistry.cpp
     QML_FILES
         qml/Main.qml
         qml/Gallery.qml
@@ -46,6 +47,8 @@ qt_add_qml_module(vedit_ui
         qml/AssetPanel.qml
         qml/CanvasHandles.qml
         qml/FormatButton.qml
+        qml/SearchDialog.qml
+        qml/LevelMeter.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"
     PREFIX "/vedit/shaders"

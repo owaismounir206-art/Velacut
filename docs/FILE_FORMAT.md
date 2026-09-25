@@ -423,6 +423,7 @@ e l'interfaccia propone di reinstallarlo.
 ├── draft.json             # cache per la schermata iniziale (sotto)
 ├── thumbnail.jpg          # miniatura della bozza (fotogramma in anteprima alla chiusura, larga al massimo 320 px)
 ├── state.json             # stato dell'interfaccia (sotto)
+├── media/                 # immagini create dall'editor e usate dal progetto (fermi immagine), in PNG
 ├── history/               # cronologia delle versioni (§9.2, dalla Fase 8)
 │   └── 2026-09-24T17-50-00Z.vproj.gz
 └── lock                   # presente mentre la bozza è aperta (§9.3)

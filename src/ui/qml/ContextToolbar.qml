@@ -1,5 +1,5 @@
 // Contextual toolbar above the timeline (SPEC 0bis rule 3): the actions for what is selected, always one click away.
-// Only actions that work today are shown; zoom on the right.
+// The actions come from the ActionRegistry (the same ones as the right-click menu and Ctrl+K); zoom on the right.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
@@ -13,7 +13,6 @@ Rectangle {
 
     required property Editor editor
     required property Item timeline
-    readonly property bool hasSelection: editor.selection.length > 0
 
     implicitHeight: Theme.editor.toolbarHeight
     color: Theme.color.surfaceContainerLow
@@ -24,48 +23,36 @@ Rectangle {
         anchors.rightMargin: Theme.space.sm
         spacing: Theme.space.xs
 
-        Button {
-            objectName: "splitButton"
-            variant: "text"
-            iconName: "content_cut"
-            text: bar.hasSelection ? qsTr("Split") : qsTr("Split at playhead")
-            enabled: bar.editor.splitAvailable
-            ToolTip.visible: hovered
-            ToolTip.text: qsTr("Cut at the playhead (S)")
-            onClicked: bar.editor.split()
+        // The actions of the selection (ActionRegistry): a narrow window scrolls them instead of hiding any.
+        Flickable {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            contentWidth: actions.implicitWidth
+            clip: true
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            Row {
+                id: actions
+                height: parent.height
+                spacing: Theme.space.xs
+                Repeater {
+                    model: bar.editor.actions.toolbar
+                    delegate: Button {
+                        required property var modelData
+                        objectName: modelData.id + "Button"
+                        y: (actions.height - height) / 2
+                        variant: "text"
+                        iconName: modelData.icon
+                        text: modelData.text
+                        enabled: modelData.enabled
+                        ToolTip.visible: hovered
+                        ToolTip.text: modelData.shortcut !== "" ? qsTr("%1 (%2)").arg(modelData.text).arg(modelData.shortcut)
+                                                              : modelData.text
+                        onClicked: bar.editor.actions.trigger(modelData.id)
+                    }
+                }
+            }
         }
-        Button {
-            objectName: "deleteButton"
-            variant: "text"
-            iconName: "delete"
-            text: qsTr("Delete")
-            visible: bar.hasSelection
-            ToolTip.visible: hovered
-            ToolTip.text: qsTr("Delete the selected clips (Del)")
-            onClicked: bar.editor.deleteSelection()
-        }
-        Button {
-            variant: "text"
-            iconName: "content_copy"
-            text: qsTr("Duplicate")
-            visible: bar.hasSelection
-            ToolTip.visible: hovered
-            ToolTip.text: qsTr("Place a copy right after (Ctrl+D)")
-            onClicked: bar.editor.duplicateSelection()
-        }
-
-        Button {
-            objectName: "addTextButton"
-            variant: "text"
-            iconName: "title"
-            text: qsTr("Add text")
-            visible: !bar.hasSelection
-            ToolTip.visible: hovered
-            ToolTip.text: qsTr("A text at the playhead: write it in the panel on the right")
-            onClicked: bar.editor.addText()
-        }
-
-        Item { Layout.fillWidth: true }
 
         IconButton {
             iconName: "zoom_out"

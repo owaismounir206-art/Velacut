@@ -16,6 +16,9 @@ Item {
     Connections {
         target: root.editor
         function onMessage(text, undoable) { root.message(text, undoable) }
+        function onPropertiesRequested(page) { properties.showPage(page) }
+        function onExportRequested() { exportDialog.openDialog() }
+        function onImportRequested() { library.importFiles() }
         function onLibraryRequested(name) {
             const index = ["media", "audio", "text", "transitions", "filters"].indexOf(name)
             if (index >= 0)
@@ -46,6 +49,10 @@ Item {
     Shortcut { sequence: "Ctrl+E"; onActivated: exportDialog.openDialog() }
     Shortcut { sequence: "Ctrl+I"; onActivated: library.importFiles() }
     Shortcut { sequence: "Escape"; enabled: !root.typing; onActivated: root.editor.clearSelection() }
+    Shortcut { sequence: "Ctrl+K"; onActivated: search.open() }
+    Shortcut { sequence: "Ctrl+Alt+C"; enabled: !root.typing; onActivated: root.editor.actions.trigger("copyAttributes") }
+    Shortcut { sequence: "Ctrl+Alt+V"; enabled: !root.typing; onActivated: root.editor.actions.trigger("pasteAttributes") }
+    Shortcut { sequence: "M"; enabled: !root.typing; onActivated: root.editor.addMarker() }
 
     ColumnLayout {
         anchors.fill: parent
@@ -56,6 +63,7 @@ Item {
             editor: root.editor
             onBackRequested: App.closeEditor()
             onExportRequested: exportDialog.openDialog()
+            onSearchRequested: search.open()
         }
 
         // Upper half: libraries and preview. Lower half: toolbar and timeline, resizable.
@@ -122,6 +130,7 @@ Item {
                 }
                 Divider { vertical: true; Layout.fillHeight: true }
                 PropertiesPanel {
+                    id: properties
                     objectName: "propertiesPanel"
                     Layout.preferredWidth: Math.min(Theme.editor.propertiesWidth, root.width / 4)
                     Layout.fillWidth: false
@@ -149,6 +158,11 @@ Item {
                 }
             }
         }
+    }
+
+    SearchDialog {
+        id: search
+        editor: root.editor
     }
 
     ExportDialog {

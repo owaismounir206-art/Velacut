@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "EditorController.h"
 
+#include "ActionRegistry.h"
 #include "ClipInspector.h"
 #include "common/Paths.h"
 #include "core/edit/ProjectFormat.h"
@@ -9,6 +10,8 @@
 #include "core/effects/Easing.h"
 #include "core/serialization/ProjectJson.h"
 #include "document/Document.h"
+#include "engine/analysis/Decoding.h"
+#include "engine/analysis/Fingerprint.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/analysis/MediaImporter.h"
 #include "engine/mlt/MltRuntime.h"
@@ -24,6 +27,7 @@
 #include <QFileInfo>
 #include <QLoggingCategory>
 #include <QRegularExpression>
+#include <QUuid>
 
 #include <cmath>
 #include <limits>
@@ -103,6 +107,7 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     connect(&stack, &QUndoStack::redoTextChanged, this, &EditorController::undoChanged);
     connect(m_player.get(), &engine::TimelinePlayer::positionChanged, this, &EditorController::splitAvailableChanged);
     m_inspector = new ClipInspector(*this);
+    m_actions = new ActionRegistry(*this);
 }
 
 EditorController::~EditorController()
@@ -671,6 +676,101 @@ bool EditorController::addText(const QString &styleId)
     const Rational rate = data().settings.frameRate;
     return apply(TimelineEditor(data(), data().mainSequenceId)
                      .insertText(RationalTime(playhead(), rate), std::move(text), RationalTime(0, rate))); // default length
+}
+
+bool EditorController::setTrackVolume(const QString &trackId, double gainDb)
+{
+    const std::optional<TrackId> id = TrackId::fromString(trackId);
+    if (!id) {
+        return false;
+    }
+    const double value = std::clamp(gainDb, -60.0, 12.0);
+    EditResult result = TimelineEditor(data(), data().mainSequenceId)
+                            .updateTrack(*id, [value](Track &track) { track.gainDb = Param(value); }, tr("Change track volume"));
+    return push(std::move(result), MergeKey{u"track-volume:"_s + trackId, m_trackGesture});
+}
+
+void EditorController::endTrackGesture()
+{
+    ++m_trackGesture;
+}
+
+bool EditorController::setTrackMuted(const QString &trackId, bool muted)
+{
+    const std::optional<TrackId> id = TrackId::fromString(trackId);
+    if (!id) {
+        return false;
+    }
+    return push(TimelineEditor(data(), data().mainSequenceId)
+                    .updateTrack(*id, [muted](Track &track) { track.muted = muted; },
+                                 muted ? tr("Mute track") : tr("Unmute track")));
+}
+
+bool EditorController::freezeFrame()
+{
+    const std::optional<ClipId> id = clipForLibrary();
+    const Clip *clip = id ? data().findClip(*id) : nullptr;
+    const MediaClipData *media = clip ? clip->media() : nullptr;
+    const Media *source = media ? data().findMedia(media->mediaId) : nullptr;
+    const Rational rate = data().settings.frameRate;
+    const RationalTime at(playhead(), rate);
+    if (!source || source->kind != MediaKind::Video || media->streams == Streams::AudioOnly || at < clip->start ||
+        !(at < clip->end())) {
+        emit message(tr("Move the playhead over a video clip to freeze a frame."), false);
+        return false;
+    }
+    // The frame of the source shown there (speed and direction included, D-44), at up to 4K.
+    const double seconds = keyframeTime(*clip, at - clip->start).toSecondsDouble();
+    const QImage frame = engine::extractFrame(source->path, seconds, 2160);
+    if (frame.isNull()) {
+        emit message(tr("This frame cannot be read from the file."), false);
+        return false;
+    }
+    // Pictures made by the editor live in the draft (docs/FILE_FORMAT.md §6.1).
+    const QDir folder(m_document->directory() + u"/media"_s);
+    const QString path = folder.filePath(u"freeze-%1.png"_s.arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
+    if (!QDir().mkpath(folder.path()) || !frame.save(path)) {
+        emit message(tr("The frame cannot be saved in the draft folder."), false);
+        return false;
+    }
+    Media still;
+    still.id = MediaId::create();
+    still.kind = MediaKind::Image;
+    still.name = tr("Freeze frame");
+    still.path = path;
+    if (const std::optional<MediaFingerprint> fingerprint = engine::sampledFingerprint(path)) {
+        still.fingerprint = *fingerprint;
+    }
+    VideoStreamInfo video;
+    video.width = frame.width();
+    video.height = frame.height();
+    video.codec = u"png"_s;
+    still.info.video = video;
+    // The picture and its place on the timeline: one undo step.
+    const MergeKey key{u"freeze"_s, ++m_importBatch};
+    EditResult add;
+    add.script.push_back(edits::insertMedia(static_cast<int>(data().media.size()), still));
+    add.text = tr("Freeze frame");
+    if (!push(std::move(add), key)) {
+        return false;
+    }
+    EditResult freeze = TimelineEditor(data(), data().mainSequenceId)
+                            .insertFreezeFrame(clip->id, at, still.id,
+                                               RationalTime(std::llround(TimelineEditor::kDefaultTextSeconds * rate.toDouble()), rate));
+    if (!freeze.ok()) {
+        m_document->undoStack().undo(); // the picture alone is of no use
+        emit message(freeze.error, false);
+        return false;
+    }
+    const ClipId primary = freeze.primaryClip;
+    freeze.text = tr("Freeze frame");
+    if (!push(std::move(freeze), key)) {
+        return false;
+    }
+    if (!primary.isNull()) {
+        setSelection({primary});
+    }
+    return true;
 }
 
 // ---- Timeline -----------------------------------------------------------------------------------------------------

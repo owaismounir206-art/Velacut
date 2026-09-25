@@ -136,6 +136,8 @@ class ThemeEditor : public QObject
     Q_PROPERTY(qreal rotateHandleDistance MEMBER m_rotateHandleDistance CONSTANT FINAL)
     Q_PROPERTY(qreal transitionMark MEMBER m_transitionMark CONSTANT FINAL)
     Q_PROPERTY(qreal meterWidth MEMBER m_meterWidth CONSTANT FINAL)
+    // Refresh of the audio meters (ms): not an animation, so not affected by "reduce motion".
+    Q_PROPERTY(qreal meterInterval MEMBER m_meterInterval CONSTANT FINAL)
     // Home screen
     Q_PROPERTY(qreal draftCardWidth MEMBER m_draftCardWidth CONSTANT FINAL)
     Q_PROPERTY(qreal draftThumbnailHeight MEMBER m_draftThumbnailHeight CONSTANT FINAL)
@@ -189,6 +191,7 @@ private:
     qreal m_rotateHandleDistance = 28;
     qreal m_transitionMark = 22;
     qreal m_meterWidth = 6;
+    qreal m_meterInterval = 33;
     qreal m_draftCardWidth = 232;
     qreal m_draftThumbnailHeight = 130;
     qreal m_heroHeight = 176;

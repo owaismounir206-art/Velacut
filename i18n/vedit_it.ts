@@ -101,52 +101,12 @@
 <context>
     <name>ContextToolbar</name>
     <message>
-        <location filename="../src/ui/qml/ContextToolbar.qml" line="+31"/>
-        <source>Split</source>
-        <translation>Dividi</translation>
+        <location filename="../src/ui/qml/ContextToolbar.qml" line="+49"/>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
-        <location line="+0"/>
-        <source>Split at playhead</source>
-        <translation>Dividi al playhead</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Cut at the playhead (S)</source>
-        <translation>Taglia al playhead (S)</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>Delete</source>
-        <translation>Elimina</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Delete the selected clips (Del)</source>
-        <translation>Elimina le clip selezionate (Canc)</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>Duplicate</source>
-        <translation>Duplica</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Place a copy right after (Ctrl+D)</source>
-        <translation>Metti una copia subito dopo (Ctrl+D)</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>Add text</source>
-        <translation>Aggiungi testo</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>A text at the playhead: write it in the panel on the right</source>
-        <translation>Un testo al playhead: scrivilo nel pannello a destra</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="+10"/>
         <source>Zoom out</source>
         <translation>Riduci lo zoom</translation>
     </message>
@@ -213,12 +173,12 @@
 <context>
     <name>EditorScreen</name>
     <message>
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+27"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+30"/>
         <source>Video exported</source>
         <translation>Video esportato</translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+58"/>
         <source>Media</source>
         <translation>Media</translation>
     </message>
@@ -249,7 +209,7 @@
 <context>
     <name>EditorTopBar</name>
     <message>
-        <location filename="../src/ui/qml/EditorTopBar.qml" line="+29"/>
+        <location filename="../src/ui/qml/EditorTopBar.qml" line="+30"/>
         <source>Back to projects</source>
         <translation>Torna ai progetti</translation>
     </message>
@@ -275,6 +235,16 @@
     </message>
     <message>
         <location line="+12"/>
+        <source>Search commands, filters, transitions…</source>
+        <translation>Cerca comandi, filtri, transizioni…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+K</source>
+        <translation>Ctrl+K</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Undo: %1</source>
         <translation>Annulla: %1</translation>
     </message>
@@ -935,6 +905,14 @@
     </message>
 </context>
 <context>
+    <name>LevelMeter</name>
+    <message>
+        <location filename="../src/ui/qml/LevelMeter.qml" line="+19"/>
+        <source>Audio level</source>
+        <translation>Livello audio</translation>
+    </message>
+</context>
+<context>
     <name>Main</name>
     <message>
         <location filename="../src/ui/qml/Main.qml" line="+19"/>
@@ -1021,7 +999,7 @@
 <context>
     <name>PreviewPanel</name>
     <message>
-        <location filename="../src/ui/qml/PreviewPanel.qml" line="+45"/>
+        <location filename="../src/ui/qml/PreviewPanel.qml" line="+56"/>
         <source>Add a video or a photo to the timeline: the preview appears here.</source>
         <translation>Aggiungi un video o una foto alla timeline: l&apos;anteprima compare qui.</translation>
     </message>
@@ -1427,6 +1405,24 @@
     </message>
 </context>
 <context>
+    <name>SearchDialog</name>
+    <message>
+        <location filename="../src/ui/qml/SearchDialog.qml" line="+56"/>
+        <source>Search commands, filters, transitions, texts, music…</source>
+        <translation>Cerca comandi, filtri, transizioni, testi, musica…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Search</source>
+        <translation>Cerca</translation>
+    </message>
+    <message>
+        <location line="+75"/>
+        <source>Nothing found</source>
+        <translation>Nessun risultato</translation>
+    </message>
+</context>
+<context>
     <name>TimelineClip</name>
     <message>
         <location filename="../src/ui/qml/TimelineClip.qml" line="+46"/>
@@ -1434,50 +1430,65 @@
         <translation>Clip %1</translation>
     </message>
     <message>
-        <location line="+73"/>
-        <source>Split</source>
-        <translation>Dividi</translation>
+        <location line="+89"/>
+        <source>Copy attributes</source>
+        <translation>Copia attributi</translation>
     </message>
     <message>
-        <location line="+7"/>
-        <source>Duplicate</source>
-        <translation>Duplica</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Ctrl+D</source>
-        <translation>Ctrl+D</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>Delete</source>
-        <translation>Elimina</translation>
+        <location line="+0"/>
+        <source>Paste attributes</source>
+        <translation>Incolla attributi</translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Del</source>
-        <translation>Canc</translation>
+        <source>Ctrl+Alt+C</source>
+        <translation>Ctrl+Alt+C</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+Alt+V</source>
+        <translation>Ctrl+Alt+V</translation>
     </message>
 </context>
 <context>
     <name>TimelineView</name>
     <message>
-        <location filename="../src/ui/qml/TimelineView.qml" line="+162"/>
+        <location filename="../src/ui/qml/TimelineView.qml" line="+166"/>
+        <location line="+47"/>
         <source>Audio track</source>
         <translation>Traccia audio</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-46"/>
+        <location line="+47"/>
         <source>Main track</source>
         <translation>Traccia principale</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-47"/>
+        <location line="+47"/>
         <source>Overlay track</source>
         <translation>Traccia sovrapposta</translation>
     </message>
     <message>
-        <location line="+108"/>
+        <location line="-33"/>
+        <location line="+51"/>
+        <source>Track volume</source>
+        <translation>Volume della traccia</translation>
+    </message>
+    <message>
+        <location line="-12"/>
+        <source>%1 dB</source>
+        <translation>%1 dB</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <location line="+4"/>
+        <source>Mute</source>
+        <translation>Muto</translation>
+    </message>
+    <message>
+        <location line="+119"/>
         <source>Drop videos and photos here</source>
         <translation>Trascina qui video e foto</translation>
     </message>
@@ -2110,9 +2121,256 @@
     </message>
 </context>
 <context>
+    <name>vedit::ui::ActionRegistry</name>
+    <message>
+        <location filename="../src/ui/controllers/ActionRegistry.cpp" line="+78"/>
+        <source>Split</source>
+        <translation>Dividi</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Edit text</source>
+        <translation>Modifica testo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+203"/>
+        <source>Text style</source>
+        <translation>Stile del testo</translation>
+    </message>
+    <message>
+        <location line="-202"/>
+        <source>Delete</source>
+        <translation>Elimina</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Del</source>
+        <translation>Canc</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Duplicate</source>
+        <translation>Duplica</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+D</source>
+        <translation>Ctrl+D</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Speed</source>
+        <translation>Velocità</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Volume</source>
+        <translation>Volume</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Fades</source>
+        <translation>Dissolvenze</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Freeze</source>
+        <translation>Congela</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reverse</source>
+        <translation>Inverti</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Mirror</source>
+        <translation>Specchia</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Rotate</source>
+        <translation>Ruota</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Enhance</source>
+        <translation>Migliora</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Apply to all cuts</source>
+        <translation>Applica a tutti i tagli</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Add text</source>
+        <translation>Aggiungi testo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add audio</source>
+        <translation>Aggiungi audio</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Copy attributes</source>
+        <translation>Copia attributi</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+Alt+C</source>
+        <translation>Ctrl+Alt+C</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Paste attributes</source>
+        <translation>Incolla attributi</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+Alt+V</source>
+        <translation>Ctrl+Alt+V</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Undo</source>
+        <translation>Annulla</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+Z</source>
+        <translation>Ctrl+Z</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Redo</source>
+        <translation>Ripeti</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+Shift+Z</source>
+        <translation>Ctrl+Maiusc+Z</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Export the video</source>
+        <translation>Esporta il video</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+E</source>
+        <translation>Ctrl+E</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Import media</source>
+        <translation>Importa media</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ctrl+I</source>
+        <translation>Ctrl+I</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Add a marker</source>
+        <translation>Aggiungi un marker</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Next marker</source>
+        <translation>Marker successivo</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Previous marker</source>
+        <translation>Marker precedente</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Random transitions</source>
+        <translation>Transizioni casuali</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Remove all transitions</source>
+        <translation>Rimuovi tutte le transizioni</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Format 16:9 (YouTube)</source>
+        <translation>Formato 16:9 (YouTube)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Format 9:16 (TikTok, Reels, Shorts)</source>
+        <translation>Formato 9:16 (TikTok, Reels, Shorts)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Format 1:1 (square)</source>
+        <translation>Formato 1:1 (quadrato)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Format 4:5 (Instagram post)</source>
+        <translation>Formato 4:5 (post Instagram)</translation>
+    </message>
+    <message>
+        <location line="+122"/>
+        <location line="+1"/>
+        <source>Filter</source>
+        <translation>Filtro</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+1"/>
+        <source>Transition</source>
+        <translation>Transizione</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Text</source>
+        <translation>Testo</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Entry animation</source>
+        <translation>Animazione di entrata</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Exit animation</source>
+        <translation>Animazione di uscita</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Loop animation</source>
+        <translation>Animazione in ciclo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Animation</source>
+        <translation>Animazione</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+0"/>
+        <source>Music</source>
+        <translation>Musica</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Your media</source>
+        <translation>I tuoi media</translation>
+    </message>
+</context>
+<context>
     <name>vedit::ui::AppController</name>
     <message>
-        <location filename="../src/ui/controllers/AppController.cpp" line="+125"/>
+        <location filename="../src/ui/controllers/AppController.cpp" line="+128"/>
         <source>Project recovered: vedit did not close properly last time. Your latest changes are here.</source>
         <translation>Progetto recuperato: l&apos;ultima volta vedit non si è chiuso correttamente. Le tue ultime modifiche sono qui.</translation>
     </message>
@@ -2386,7 +2644,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+186"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+191"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
@@ -2407,7 +2665,44 @@
         <translation>Il tuo testo</translation>
     </message>
     <message>
-        <location line="+117"/>
+        <location line="+19"/>
+        <source>Change track volume</source>
+        <translation>Cambia volume della traccia</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Mute track</source>
+        <translation>Silenzia traccia</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Unmute track</source>
+        <translation>Riattiva audio della traccia</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Move the playhead over a video clip to freeze a frame.</source>
+        <translation>Porta il playhead su una clip video per congelare un fotogramma.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>This frame cannot be read from the file.</source>
+        <translation>Questo fotogramma non si può leggere dal file.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The frame cannot be saved in the draft folder.</source>
+        <translation>Il fotogramma non si può salvare nella cartella della bozza.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+14"/>
+        <location line="+13"/>
+        <source>Freeze frame</source>
+        <translation>Fermo immagine</translation>
+    </message>
+    <message>
+        <location line="+116"/>
         <source>Move the playhead over a clip to split it.</source>
         <translation>Porta il playhead sopra una clip per dividerla.</translation>
     </message>

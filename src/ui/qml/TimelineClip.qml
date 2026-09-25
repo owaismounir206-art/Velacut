@@ -114,25 +114,29 @@ Item {
     Menu {
         id: contextMenu
         objectName: "clipMenu"
-        MenuItem {
-            iconName: "content_cut"
-            text: qsTr("Split")
-            shortcutText: "S"
-            enabled: clip.view.editor.splitAvailable
-            onTriggered: clip.view.editor.split()
-        }
-        MenuItem {
-            iconName: "content_copy"
-            text: qsTr("Duplicate")
-            shortcutText: qsTr("Ctrl+D")
-            onTriggered: clip.view.editor.duplicateSelection()
+        Repeater {
+            model: clip.view.editor.actions.toolbar
+            delegate: MenuItem {
+                required property var modelData
+                iconName: modelData.icon
+                text: modelData.text
+                shortcutText: modelData.shortcut
+                enabled: modelData.enabled
+                onTriggered: clip.view.editor.actions.trigger(modelData.id)
+            }
         }
         MenuSeparator {}
-        MenuItem {
-            iconName: "delete"
-            text: qsTr("Delete")
-            shortcutText: qsTr("Del")
-            onTriggered: clip.view.editor.deleteSelection()
+        Repeater {
+            model: ["copyAttributes", "pasteAttributes"]
+            delegate: MenuItem {
+                required property string modelData
+                objectName: modelData + "Item"
+                iconName: modelData === "copyAttributes" ? "format_paint" : "content_paste"
+                text: modelData === "copyAttributes" ? qsTr("Copy attributes") : qsTr("Paste attributes")
+                shortcutText: modelData === "copyAttributes" ? qsTr("Ctrl+Alt+C") : qsTr("Ctrl+Alt+V")
+                enabled: modelData === "copyAttributes" || clip.view.editor.inspector.canPaste
+                onTriggered: clip.view.editor.actions.trigger(modelData)
+            }
         }
     }
 

@@ -139,7 +139,7 @@ Rectangle {
         }
     }
 
-    // ---- track headers ----------------------------------------------------------------------------------------------
+    // ---- track headers: kind, level meter, a click opens the track's volume (mixer, SPEC §5.9) ------------------------
     Item {
         id: headers
         y: Theme.editor.rulerHeight
@@ -149,18 +149,108 @@ Rectangle {
         Repeater {
             model: view.tracks
             delegate: Item {
+                id: header
                 required property var modelData
                 required property int index
+                objectName: "trackHeader_" + index
                 y: view.rowTop(index) - flick.contentY
                 width: headers.width
                 height: view.rowHeight(index)
                 Icon {
                     anchors.centerIn: parent
-                    name: parent.modelData.kind === "audio" ? "music_note"
-                        : parent.modelData.kind === "main" ? "movie" : "picture_in_picture"
-                    color: parent.modelData.kind === "main" ? Theme.color.primary : Theme.color.onSurfaceVariant
-                    Accessible.name: parent.modelData.kind === "audio" ? qsTr("Audio track")
-                                   : parent.modelData.kind === "main" ? qsTr("Main track") : qsTr("Overlay track")
+                    name: header.modelData.muted ? "volume_off"
+                        : header.modelData.kind === "audio" ? "music_note"
+                        : header.modelData.kind === "main" ? "movie" : "picture_in_picture"
+                    color: header.modelData.muted ? Theme.color.error
+                         : header.modelData.kind === "main" ? Theme.color.primary : Theme.color.onSurfaceVariant
+                    Accessible.name: header.modelData.kind === "audio" ? qsTr("Audio track")
+                                   : header.modelData.kind === "main" ? qsTr("Main track") : qsTr("Overlay track")
+                }
+                LevelMeter {
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.space.xxs
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: parent.height - Theme.space.sm
+                    player: view.player
+                    key: header.modelData.trackId
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    ToolTip.visible: containsMouse
+                    ToolTip.text: qsTr("Track volume")
+                    hoverEnabled: true
+                    onClicked: {
+                        trackMixer.track = header.modelData
+                        trackMixer.y = Math.min(header.y + headers.y, view.height - trackMixer.height)
+                        trackMixer.open()
+                    }
+                }
+            }
+        }
+    }
+
+    // The volume of one track (its clips keep their own).
+    Popup {
+        id: trackMixer
+        objectName: "trackMixer"
+        property var track: ({})
+        x: Theme.editor.trackHeaderWidth
+        padding: Theme.space.md
+        width: Theme.editor.propertiesWidth
+        background: Rectangle {
+            radius: Theme.shape.medium
+            color: Theme.color.surfaceContainerHigh
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Theme.space.sm
+            RowLayout {
+                Layout.fillWidth: true
+                Label {
+                    Layout.fillWidth: true
+                    role: "titleSmall"
+                    text: trackMixer.track.kind === "audio" ? qsTr("Audio track")
+                        : trackMixer.track.kind === "main" ? qsTr("Main track") : qsTr("Overlay track")
+                }
+                Label {
+                    role: "labelLarge"
+                    font.features: { "tnum": 1 }
+                    color: Theme.color.onSurfaceVariant
+                    text: qsTr("%1 dB").arg((volume.value > 0 ? "+" : "") + volume.value.toLocaleString(Qt.locale(), "f", 1))
+                }
+            }
+            Slider {
+                id: volume
+                objectName: "trackVolume"
+                Layout.fillWidth: true
+                from: -60
+                to: 12
+                stepSize: 0.5
+                value: trackMixer.track.gainDb ?? 0
+                valueText: (value > 0 ? "+" : "") + value.toLocaleString(Qt.locale(), "f", 1)
+                Accessible.name: qsTr("Track volume")
+                onMoved: view.editor.setTrackVolume(trackMixer.track.trackId, value)
+                onPressedChanged: if (!pressed) view.editor.endTrackGesture()
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Label { Layout.fillWidth: true; role: "bodyMedium"; text: qsTr("Mute") }
+                Switch {
+                    objectName: "trackMute"
+                    checked: trackMixer.track.muted ?? false
+                    Accessible.name: qsTr("Mute")
+                    onToggled: view.editor.setTrackMuted(trackMixer.track.trackId, checked)
+                }
+            }
+        }
+        // The track's values follow undo and the other edits while open.
+        Connections {
+            target: view
+            function onTracksChanged() {
+                for (const track of view.tracks) {
+                    if (track.trackId === trackMixer.track.trackId)
+                        trackMixer.track = track
                 }
             }
         }

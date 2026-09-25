@@ -135,6 +135,7 @@ void TimelineModel::rebuild()
                                          {u"audio"_s, audio},
                                          {u"index"_s, index},
                                          {u"muted"_s, track.muted},
+                                         {u"gainDb"_s, track.gainDb.numberAt(RationalTime(), 0.0)},
                                          {u"hidden"_s, track.hidden},
                                          {u"locked"_s, track.locked}});
             for (const Clip &clip : track.clips) {

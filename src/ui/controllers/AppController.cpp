@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "AppController.h"
 
+#include "ActionRegistry.h"
 #include "document/Document.h"
 #include "document/DraftStore.h"
 #include "engine/analysis/MediaAnalysis.h"
@@ -101,6 +102,7 @@ bool AppController::newProject()
         return false;
     }
     m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper);
+    m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
     emit editorChanged();
     return true;
 }
@@ -120,6 +122,7 @@ bool AppController::openDraft(const QString &draftId)
     }
     const bool recovered = document->recovered();
     m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper);
+    m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
     emit editorChanged();
     if (recovered) {
         emit message(tr("Project recovered: vedit did not close properly last time. Your latest changes are here."));

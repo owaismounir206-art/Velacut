@@ -287,6 +287,9 @@ private slots:
 
         // A text: added from the toolbar, written in the panel.
         editor()->clearSelection();
+        // The toolbar rebuilds its buttons for the new selection: once they are laid out.
+        QTRY_VERIFY(byName(u"addTextButton"_s));
+        QTest::qWait(50);
         click(byName(u"addTextButton"_s));
         QTRY_COMPARE(editor()->inspector()->kind(), int(ui::ClipInspector::Text));
         QQuickItem *content = byName(u"textContent"_s);
@@ -432,6 +435,9 @@ private slots:
 
         // A text: double click on it, type, Escape.
         editor()->clearSelection();
+        // The toolbar rebuilds its buttons for the new selection: once they are laid out.
+        QTRY_VERIFY(byName(u"addTextButton"_s));
+        QTest::qWait(50);
         click(byName(u"addTextButton"_s));
         QTRY_COMPARE(editor()->inspector()->kind(), int(ui::ClipInspector::Text));
         QTest::mouseMove(m_window, centre(byName(u"propertiesPanel"_s)) - QPoint(500, 0));
@@ -456,6 +462,69 @@ private slots:
         shot(u"19-format-9x16"_s);
         editor()->undo();
         QTRY_COMPARE(editor()->canvasPreset(), 0);
+        QTRY_VERIFY(!byName(u"format_1"_s)); // the menu has finished closing (it takes the keys until then)
+    }
+
+    // Ctrl+K: type, Enter applies the first result (SPEC 0bis rule 14); toolbar buttons open their page.
+    void universalSearchAndToolbar()
+    {
+        editor()->clearSelection();
+        editor()->player()->seek(10);
+        const int steps = editor()->document().undoStack().index();
+        key(Qt::Key_K, Qt::ControlModifier);
+        QTRY_VERIFY(byName(u"universalSearchField"_s));
+        for (const char c : {'v', 'i', 'v', 'i', 'd'}) {
+            QTest::keyClick(m_window, c);
+        }
+        QTRY_VERIFY(byName(u"searchResult_0"_s));
+        shot(u"20-universal-search"_s);
+        key(Qt::Key_Return);
+        QTRY_VERIFY(!byName(u"universalSearchField"_s));
+        QTRY_COMPARE(editor()->inspector()->values().value(u"filter"_s).toString(), u"filters/vivid"_s);
+        while (editor()->document().undoStack().index() > steps) {
+            editor()->undo();
+        }
+
+        // "Speed" in the toolbar of a video clip shows the Speed page of the properties.
+        click(byName(u"clip-"_s + mainTrack().clips.front().id.toString()));
+        QTRY_VERIFY(byName(u"speedButton"_s));
+        QTest::qWait(50);
+        click(byName(u"speedButton"_s));
+        QTRY_VERIFY(byName(u"reverseSwitch"_s));
+        // The tab shown is the Speed one (Video, Audio, Speed, Adjust), even after another tab was clicked before.
+        QCOMPARE(byName(u"propertiesTabs"_s)->property("currentIndex").toInt(), 2);
+        shot(u"21-toolbar-speed"_s);
+    }
+
+    // The mixer: a click on a track header opens its volume and mute; the meters move while the video plays.
+    void mixer()
+    {
+        const int mainRow = editor()->timeline()->mainRow();
+        click(byName(u"trackHeader_%1"_s.arg(mainRow)));
+        QTRY_VERIFY(byName(u"trackVolume"_s));
+        const int steps = editor()->document().undoStack().index();
+        QQuickItem *slider = byName(u"trackVolume"_s);
+        drag(slider->mapToScene(QPointF(slider->width() * 60 / 72, slider->height() / 2)).toPoint(),
+             slider->mapToScene(QPointF(slider->width() * 30 / 72, slider->height() / 2)).toPoint());
+        QTRY_VERIFY(mainTrack().gainDb.numberAt(RationalTime(), 0.0) < -10);
+        QCOMPARE(editor()->document().undoStack().index(), steps + 1);
+        click(byName(u"trackMute"_s));
+        QTRY_VERIFY(mainTrack().muted);
+        shot(u"22-track-mixer"_s);
+        key(Qt::Key_Escape);
+        QTRY_VERIFY(!byName(u"trackMixer"_s) || !byName(u"trackVolume"_s));
+        while (editor()->document().undoStack().index() > steps) {
+            editor()->undo();
+        }
+        QVERIFY(!mainTrack().muted);
+
+        // Playing: the master meter shows the sound of the video.
+        editor()->player()->seek(0);
+        editor()->player()->play();
+        QQuickItem *master = byName(u"masterMeter"_s);
+        QVERIFY(master);
+        QTRY_VERIFY_WITH_TIMEOUT(master->property("level").toDouble() > 0.01, 5000);
+        editor()->player()->pause();
     }
 
     // Usability test 8: export with the recommended settings ≤ 2 actions.

@@ -46,7 +46,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+810"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+910"/>
         <source>%n clips deleted</source>
         <translation>
             <numerusform>%n clip deleted</numerusform>

@@ -35,6 +35,7 @@ class MediaImporter;
 
 namespace vedit::ui {
 
+class ActionRegistry;
 class ClipInspector;
 
 // The open project in the editor: every user action becomes one command on the undo stack (docs/ARCHITECTURE.md §9).
@@ -59,6 +60,7 @@ class EditorController : public QObject
     Q_PROPERTY(vedit::ui::TimelineModel *timeline READ timeline CONSTANT FINAL)
     Q_PROPERTY(vedit::engine::RenderJob *exportJob READ exportJob CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::ClipInspector *inspector READ inspector CONSTANT FINAL)
+    Q_PROPERTY(vedit::ui::ActionRegistry *actions READ actions CONSTANT FINAL)
     Q_PROPERTY(QStringList selection READ selection NOTIFY selectionChanged FINAL)
     // A transition selected on the timeline, or the cut (its first clip) chosen for a new one; "" = none.
     Q_PROPERTY(QString selectedTransition READ selectedTransition NOTIFY selectionChanged FINAL)
@@ -102,6 +104,7 @@ public:
     TimelineModel *timeline() const { return m_timeline.get(); }
     engine::RenderJob *exportJob() const { return m_exportJob.get(); }
     ClipInspector *inspector() const { return m_inspector; }
+    ActionRegistry *actions() const { return m_actions; }
     QStringList selection() const;
     std::vector<ClipId> selectedClips() const;
     // The clip whose properties are shown: the last one clicked among the selected ones.
@@ -161,6 +164,15 @@ public:
     // A text at the playhead with the default style, or a style of the library, selected for editing.
     Q_INVOKABLE bool addText(const QString &styleId = {});
 
+    // Mixer (SPEC §5.9): the volume of a whole track in dB (a slider drag is one undo step until endTrackGesture()),
+    // mute.
+    Q_INVOKABLE bool setTrackVolume(const QString &trackId, double gainDb);
+    Q_INVOKABLE void endTrackGesture();
+    Q_INVOKABLE bool setTrackMuted(const QString &trackId, bool muted);
+
+    // Freeze frame (SPEC §5.5): the frame at the playhead of the clip on screen, held for 3 s; the rest moves along.
+    Q_INVOKABLE bool freezeFrame();
+
     // Markers & Animations (Phase 3)
     Q_INVOKABLE bool addMarker(const QString &name = {}, const QString &color = {}, const QString &note = {});
     Q_INVOKABLE bool addSequenceMarker(int frame, const QString &name = {}, const QString &color = {}, const QString &note = {});
@@ -207,6 +219,10 @@ signals:
     void exportFinished(const QString &path);
     // Asks the interface to show a library ("transitions", "filters", "text").
     void libraryRequested(const QString &name);
+    // Asks the interface to show a page of the properties panel ("speed", "audio", "text"…).
+    void propertiesRequested(const QString &page);
+    void exportRequested();
+    void importRequested();
 
 private:
     bool apply(EditResult result, bool selectResult = true);
@@ -230,6 +246,8 @@ private:
     TransitionId m_transition;
     ClipId m_cut;
     ClipInspector *m_inspector = nullptr; // child
+    quint64 m_trackGesture = 1;
+    ActionRegistry *m_actions = nullptr;  // child
     quint64 m_importBatch = 0;
     // Files dropped on the timeline, inserted as they are imported.
     struct PendingInsert

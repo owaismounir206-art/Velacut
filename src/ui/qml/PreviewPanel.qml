@@ -26,12 +26,23 @@ Rectangle {
 
             VideoPreview {
                 anchors.fill: parent
+                anchors.rightMargin: Theme.editor.meterWidth + Theme.space.sm // room for the master meter
                 sink: panel.player.sink
                 backgroundColor: panel.color
             }
             CanvasHandles {
                 anchors.fill: parent
+                anchors.rightMargin: Theme.editor.meterWidth + Theme.space.sm
                 editor: panel.editor
+            }
+            // Level of the whole mix (master).
+            LevelMeter {
+                objectName: "masterMeter"
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                player: panel.player
+                key: "master"
             }
             // Before the first clip: say what to do, in the place where the result will appear.
             Label {

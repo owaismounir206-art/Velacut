@@ -15,6 +15,10 @@ namespace vedit::engine {
 // Decoded directly with FFmpeg (seek, then decode up to the wanted time), in the calling thread.
 QImage extractThumbnailStrip(const QString &path, int count, int height, const std::atomic<bool> *cancel = nullptr);
 
+// One frame of a video (or the picture of an image) as displayed (rotation and pixel aspect applied), the one shown at
+// `seconds` from the start; at most `maxHeight` high (0 = the decoded size). Null if it cannot be decoded.
+QImage extractFrame(const QString &path, double seconds, int maxHeight = 0);
+
 // Peaks of the audio mixed down to mono: for every 1/`bucketsPerSecond` s a (min, max) pair of int8 (-127…127).
 struct Waveform
 {

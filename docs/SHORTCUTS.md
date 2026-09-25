@@ -3,7 +3,7 @@
 Tutte le scorciatoie saranno personalizzabili, con i preset "stile CapCut" e "stile Premiere" (Fase 8).
 I tasti singoli (lettere, frecce, Spazio) non agiscono mentre si scrive in un campo di testo.
 
-## Disponibili (Fase 1)
+## Disponibili (Fasi 1–3)
 ### Schermata iniziale
 | Tasto | Azione |
 |---|---|
@@ -26,6 +26,16 @@ I tasti singoli (lettere, frecce, Spazio) non agiscono mentre si scrive in un ca
 | Esc | Deseleziona |
 | Ctrl+I | Importa media |
 | Ctrl+E | Esporta |
+| Ctrl+K | Ricerca universale: comandi, filtri, transizioni, testi, animazioni, musica, media (frecce e Invio) |
+| Ctrl+Alt+C / Ctrl+Alt+V | Copia / incolla gli attributi della clip (aspetto, posizione, sfondo, volume, stile del testo) |
+| M | Aggiunge un marker al playhead (sulla clip selezionata, altrimenti sul video) |
+
+### Mouse nell'anteprima
+| Gesto | Azione |
+|---|---|
+| Trascinare la clip selezionata | Sposta (si aggancia alle linee centrali) |
+| Trascinare un angolo / la maniglia tonda | Ridimensiona / ruota (si aggancia agli angoli retti) |
+| Doppio clic su un testo | Lo modifica sul posto (Esc per finire) |
 
 ### Mouse nella timeline
 | Gesto | Azione |
@@ -33,7 +43,9 @@ I tasti singoli (lettere, frecce, Spazio) non agiscono mentre si scrive in un ca
 | Passare sopra la timeline | Mostra nell'anteprima il fotogramma sotto il puntatore (senza spostare il playhead) |
 | Clic su uno spazio vuoto o sul righello | Sposta il playhead (trascinando sul righello si scorre) |
 | Clic su una clip | Seleziona (Ctrl o Maiusc: aggiunge o toglie dalla selezione) |
-| Tasto destro su una clip | Dividi, Duplica, Elimina |
+| Tasto destro su una clip | Le stesse azioni della barra contestuale, più Copia/Incolla attributi |
+| Clic sul "+" tra due clip | Apre le transizioni per quel taglio; clic su una transizione: la seleziona, i bordi ne cambiano la durata |
+| Clic sull'intestazione di una traccia | Volume e muto della traccia |
 | Trascinare una clip | Sposta (anche su un'altra traccia, o sopra/sotto le tracce per crearne una nuova); si aggancia a bordi e playhead |
 | Trascinare il bordo di una clip | Accorcia o allunga; l'anteprima mostra il fotogramma del nuovo taglio |
 | Ctrl+rotella | Zoom attorno al puntatore |
@@ -43,5 +55,4 @@ I tasti singoli (lettere, frecce, Spazio) non agiscono mentre si scrive in un ca
 | Tasto | Azione | Fase |
 |---|---|---|
 | Q / W | Taglia a sinistra / a destra del playhead | 2 |
-| Ctrl+K | Ricerca universale | 8 |
 | 1–9 | Cambio inquadratura in multicamera | 4 |

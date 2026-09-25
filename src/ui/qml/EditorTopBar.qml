@@ -13,6 +13,7 @@ Rectangle {
     required property Editor editor
     signal backRequested()
     signal exportRequested()
+    signal searchRequested()
 
     implicitHeight: Theme.space.control(64)
     color: Theme.color.surface
@@ -77,6 +78,13 @@ Rectangle {
 
         Item { Layout.fillWidth: true }
 
+        IconButton {
+            objectName: "searchButton"
+            iconName: "search"
+            label: qsTr("Search commands, filters, transitions…")
+            shortcutText: qsTr("Ctrl+K")
+            onClicked: bar.searchRequested()
+        }
         IconButton {
             iconName: "undo"
             enabled: bar.editor.canUndo

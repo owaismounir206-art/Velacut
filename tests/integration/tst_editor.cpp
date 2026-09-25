@@ -9,6 +9,7 @@
 #include "document/DraftStore.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/mlt/MltRuntime.h"
+#include "ui/controllers/ActionRegistry.h"
 #include "ui/controllers/ClipInspector.h"
 #include "ui/items/AssetThumbnail.h"
 #include "ui/models/AssetLibraryModel.h"
@@ -478,6 +479,78 @@ private slots:
         QVERIFY(editor.data().findClip(second)->animations.out);
         QVERIFY(editor.removeAnimation());
         QVERIFY(editor.data().findClip(second)->animations.isEmpty());
+        QVERIFY(editor.close());
+    }
+
+    // The actions of the selection (toolbar, right-click menu), the universal search, the freeze frame.
+    void actionsSearchAndFreeze()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-actions"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        ActionRegistry &actions = *editor.actions();
+        editor.importAndInsertPaths({m_files.landscape, m_files.photo}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(2), 20000);
+        const auto ids = [&actions] {
+            QStringList list;
+            for (const QVariant &action : actions.toolbar()) {
+                list << action.toMap().value(u"id"_s).toString();
+            }
+            return list;
+        };
+        // SPEC 0bis rule 3: what shows for each selection.
+        editor.clearSelection();
+        QCOMPARE(ids(), (QStringList{u"split"_s, u"freeze"_s, u"addText"_s, u"addAudio"_s}));
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        QCOMPARE(ids(), (QStringList{u"split"_s, u"delete"_s, u"duplicate"_s, u"speed"_s, u"volume"_s, u"freeze"_s,
+                                     u"reverse"_s, u"mirror"_s, u"rotate"_s, u"enhance"_s}));
+        editor.select(mainTrack(editor).clips[1].id.toString(), false);
+        QVERIFY(!ids().contains(u"speed"_s) && ids().contains(u"mirror"_s));
+
+        // Toolbar buttons that open a page of the properties panel.
+        QSignalSpy pages(&editor, &EditorController::propertiesRequested);
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        QVERIFY(actions.trigger(u"speed"_s));
+        QCOMPARE(pages.last().first().toString(), u"speed"_s);
+        QVERIFY(actions.trigger(u"mirror"_s));
+        QVERIFY(mainTrack(editor).clips[0].transform.flipH);
+        QVERIFY(actions.trigger(u"rotate"_s));
+        QCOMPARE(std::get<double>(mainTrack(editor).clips[0].transform.rotation.staticValue()), 90.0);
+
+        // Copy and paste attributes through the actions.
+        QVERIFY(actions.trigger(u"copyAttributes"_s));
+        editor.select(mainTrack(editor).clips[1].id.toString(), false);
+        QVERIFY(actions.isEnabled(u"pasteAttributes"_s));
+        QVERIFY(actions.trigger(u"pasteAttributes"_s));
+        QVERIFY(mainTrack(editor).clips[1].transform.flipH);
+
+        // Universal search: commands, library items (either language, accents ignored), the project's media.
+        QCOMPARE(actions.search(u"speed"_s).first().toMap().value(u"id"_s).toString(), u"speed"_s);
+        const QVariantMap sepia = actions.search(u"seppia"_s).value(0).toMap();
+        QCOMPARE(sepia.value(u"kind"_s).toString(), u"filter"_s);
+        QVERIFY(!actions.search(u"dissolvenza"_s).isEmpty());
+        QCOMPARE(actions.search(u"landscape"_s).first().toMap().value(u"kind"_s).toString(), u"media"_s);
+        QVERIFY(actions.search(u"zzzz"_s).isEmpty());
+        QVERIFY(actions.activate(sepia.value(u"kind"_s).toString(), sepia.value(u"id"_s).toString()));
+        QCOMPARE(editor.inspector()->values().value(u"filter"_s).toString(), sepia.value(u"id"_s).toString());
+
+        // Freeze: 3 s of the frame at the playhead inserted there; the picture and its clip are one undo step.
+        editor.clearSelection();
+        editor.player()->seek(60);
+        const size_t clips = mainTrack(editor).clips.size();
+        const size_t media = editor.data().media.size();
+        QVERIFY(actions.trigger(u"freeze"_s));
+        QCOMPARE(mainTrack(editor).clips.size(), clips + 2); // split around the still
+        QCOMPARE(editor.data().media.size(), media + 1);
+        const Media &still = editor.data().media.back();
+        QCOMPARE(still.kind, MediaKind::Image);
+        QVERIFY(QFileInfo::exists(still.path));
+        QCOMPARE(QImage(still.path).size(), QSize(320, 180));
+        editor.undo();
+        QCOMPARE(mainTrack(editor).clips.size(), clips);
+        QCOMPARE(editor.data().media.size(), media);
         QVERIFY(editor.close());
     }
 

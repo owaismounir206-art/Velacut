@@ -62,15 +62,23 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
   selettore colore del chroma key, maschere sul canvas, clip composta e livello di regolazione dal menu della clip;
   verifica del criterio ("Animo un titolo con keyframe ed easing").
 
-### Lacune della Fase 2 (trovate il 2026-09-25, da recuperare)
-La Fase 2 è stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata
-senza il via registrato dell'utente. Mancano ancora nell'interfaccia:
-- **ricerca universale Ctrl+K** e `ActionRegistry` (regola 14 della SPEC 0bis);
-- **mixer** con misuratori per traccia e master (l'engine li calcola già: `TimelinePlayer::audioLevel`) e volume di
-  traccia nell'intestazione;
-- nella barra contestuale: **Velocità, Congela, Inverti, Specchia, Migliora, Copia/Incolla attributi** (velocità,
-  inversione e "Migliora" sono raggiungibili solo dal pannello proprietà; congela e copia/incolla non hanno pulsante:
-  `TimelineEditor::insertFreezeFrame` e `ClipInspector::copyAttributes/pasteAttributes` esistono e sono testati).
+### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
+La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata
+senza il via registrato dell'utente. Recuperate nello stesso giorno (commit `feat(ui): Ctrl+K, contextual actions,
+freeze frame and mixer`):
+- **ricerca universale Ctrl+K** (anche dal pulsante nella barra in alto) su comandi, filtri, transizioni, stili di
+  testo, animazioni, musica e media, in italiano e inglese e senza accenti; **`ActionRegistry`** (D-47);
+- **barra contestuale e menu del tasto destro** dalla selezione (regola 3): Dividi, Elimina, Duplica, Velocità,
+  Volume, Dissolvenze, **Congela**, **Inverti**, **Specchia**, **Ruota**, **Migliora**, Modifica/Stile del testo,
+  Aggiungi testo/audio, Applica a tutti i tagli; **Copia/Incolla attributi** (menu, Ctrl+Alt+C/V, ricerca);
+- **fermo immagine**: PNG del fotogramma della sorgente in `media/` della bozza (D-48, FILE_FORMAT §6.1);
+- **mixer**: misuratore su ogni intestazione di traccia e master accanto al player; clic sull'intestazione: volume e
+  muto della traccia;
+- corretti: l'indicatore delle schede del pannello proprietà restava sulla scheda cliccata quando un pulsante apriva
+  un'altra pagina; la ricerca mostrava tutti i comandi per qualsiasi testo.
+Test: `tst_editor::actionsSearchAndFreeze`, `tst_ui::universalSearchAndToolbar`, `tst_ui::mixer`.
+Ancora nella barra contestuale secondo la SPEC ma di fasi successive: Animazione (P3.6), Ritaglia, Rimuovi sfondo
+(Fase 6), Sostituisci, Beat, Riduci rumore, Cambia voce, Separa voce/musica (Fasi 4–6), Sottotitoli automatici (Fase 6).
 
 ## Criterio di completamento della Fase 1 (SPEC §8)
 | Requisito | Esito | Verifica |
@@ -202,6 +210,6 @@ sorgenti di MLT consultati per le verifiche (D-24, §20). Si possono cancellare:
 `third_party/` e `src/assets/`.
 
 ## Decisioni
-Registro in `docs/ARCHITECTURE.md` §15 (D-01 … D-46), esiti delle verifiche in §18 (Fase 0), §20 (Fase 1) e §21 (Fase 2).
+Registro in `docs/ARCHITECTURE.md` §15 (D-01 … D-48), esiti delle verifiche in §18 (Fase 0), §20 (Fase 1) e §21 (Fase 2).
 `tools/run-test.sh <build-dir> <test> [funzione]` esegue un singolo test con lo stesso ambiente di CTest (utile per
 ripetere un test instabile: `for i in $(seq 20); do tools/run-test.sh build tst_timelineplayer || break; done`).
