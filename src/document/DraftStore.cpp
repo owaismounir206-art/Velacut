@@ -24,11 +24,6 @@ namespace vedit::document {
 
 namespace {
 
-QString tr(const char *text)
-{
-    return QCoreApplication::translate("vedit::document::DraftStore", text);
-}
-
 std::optional<DraftInfo> readInfo(const QString &directory)
 {
     const std::optional<ProjectId> id = ProjectId::fromString(QFileInfo(directory).fileName());
@@ -76,7 +71,7 @@ bool rewriteProject(const QString &directory, const std::function<void(ProjectDa
 {
     if (DraftLock::isHeld(directory)) {
         if (error) {
-            *error = tr("This project is open: close it first.");
+            *error = QCoreApplication::translate("vedit::document::DraftStore", "This project is open: close it first.");
         }
         return false;
     }
@@ -166,7 +161,7 @@ bool DraftStore::renameDraft(const ProjectId &id, const QString &name, QString *
     const QString trimmed = name.trimmed();
     if (trimmed.isEmpty()) {
         if (error) {
-            *error = tr("The name cannot be empty.");
+            *error = QCoreApplication::translate("vedit::document::DraftStore", "The name cannot be empty.");
         }
         return false;
     }
@@ -184,7 +179,7 @@ std::optional<ProjectId> DraftStore::duplicateDraft(const ProjectId &id, QString
     }
     ProjectData copy = std::move(*loaded.project);
     copy.id = ProjectId::create();
-    copy.name = uniqueName(tr("%1 copy").arg(copy.name));
+    copy.name = uniqueName(QCoreApplication::translate("vedit::document::DraftStore", "%1 copy").arg(copy.name));
     copy.createdAt = QDateTime::currentDateTimeUtc();
     copy.modifiedAt = copy.createdAt;
     const QString directory = directoryOf(copy.id);
@@ -206,7 +201,7 @@ bool DraftStore::removeDraft(const ProjectId &id, QString *error) const
     const QString directory = directoryOf(id);
     if (DraftLock::isHeld(directory)) {
         if (error) {
-            *error = tr("This project is open: close it first.");
+            *error = QCoreApplication::translate("vedit::document::DraftStore", "This project is open: close it first.");
         }
         return false;
     }
@@ -215,7 +210,7 @@ bool DraftStore::removeDraft(const ProjectId &id, QString *error) const
     QDir().mkpath(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
     if (!QFile::moveToTrash(directory)) {
         if (error) {
-            *error = tr("The project could not be moved to the trash.");
+            *error = QCoreApplication::translate("vedit::document::DraftStore", "The project could not be moved to the trash.");
         }
         return false;
     }

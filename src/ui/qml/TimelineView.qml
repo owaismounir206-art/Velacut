@@ -213,6 +213,7 @@ Rectangle {
 
         Item {
             id: canvas
+            objectName: "timelineCanvas"
             width: flick.contentWidth
             height: flick.contentHeight
 

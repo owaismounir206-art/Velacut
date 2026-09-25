@@ -25,6 +25,7 @@ Rectangle {
         spacing: Theme.space.xs
 
         Button {
+            objectName: "splitButton"
             variant: "text"
             iconName: "content_cut"
             text: bar.hasSelection ? qsTr("Split") : qsTr("Split at playhead")
@@ -34,6 +35,7 @@ Rectangle {
             onClicked: bar.editor.split()
         }
         Button {
+            objectName: "deleteButton"
             variant: "text"
             iconName: "delete"
             text: qsTr("Delete")

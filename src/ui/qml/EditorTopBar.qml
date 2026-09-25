@@ -24,6 +24,7 @@ Rectangle {
         spacing: Theme.space.sm
 
         IconButton {
+            objectName: "backButton"
             iconName: "arrow_back"
             label: qsTr("Back to projects")
             onClicked: bar.backRequested()
@@ -124,6 +125,7 @@ Rectangle {
 
         // Export: visible while it runs, a click opens the details.
         Button {
+            objectName: "exportButton"
             variant: "filled"
             iconName: bar.editor.exportJob.running ? "hourglass_top" : "file_upload"
             text: bar.editor.exportJob.running ? qsTr("Exporting %1%").arg(Math.floor(bar.editor.exportJob.progress * 100))

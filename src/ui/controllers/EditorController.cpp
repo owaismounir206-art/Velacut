@@ -108,8 +108,33 @@ bool EditorController::close(QString *error)
         return true;
     }
     m_closed = true;
-    // The frame on screen becomes the draft's thumbnail on the home screen.
-    const QImage frame = m_player->sink()->latest();
+    // The frame on screen becomes the draft's thumbnail on the home screen; if nothing was shown yet (closed at
+    // once), the first frame of the first clip.
+    QImage frame = m_player->sink()->latest();
+    const auto blank = [](const QImage &image) {
+        if (image.isNull()) {
+            return true;
+        }
+        for (int i = 0; i < 64; ++i) {
+            const QRgb pixel = image.pixel((i % 8) * image.width() / 8, (i / 8) * image.height() / 8);
+            if (qRed(pixel) > 16 || qGreen(pixel) > 16 || qBlue(pixel) > 16) {
+                return false;
+            }
+        }
+        return true;
+    };
+    if (blank(frame)) {
+        frame = {};
+        const Sequence *sequence = data().mainSequence();
+        const Track *main = sequence && !sequence->visualTracks.empty() ? &sequence->visualTracks.front() : nullptr;
+        const MediaClipData *first = main && !main->clips.empty() ? main->clips.front().media() : nullptr;
+        if (const Media *media = first ? data().findMedia(first->mediaId) : nullptr) {
+            const QImage strip = m_analysis.thumbnails(*media);
+            if (!strip.isNull()) {
+                frame = strip.copy(0, 0, strip.width() / engine::MediaAnalysis::thumbnailCount(*media), strip.height());
+            }
+        }
+    }
     if (!frame.isNull()) {
         m_document->setThumbnail(frame.scaled(320, 320, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
@@ -707,11 +732,18 @@ QVariantMap EditorController::exportDefaults() const
                                        std::pair{1440, u"2K"_s}, std::pair{2160, u"4K"_s}}) {
         resolutions.append(QVariantMap{{u"label"_s, label}, {u"value"_s, value}});
     }
-    int resolution = 1080;
-    for (const int value : {480, 720, 1080, 1440, 2160}) {
-        if (value <= shortSide) {
-            resolution = value; // the largest standard size not above the project's
+    // Recommended = the project's own size (SPEC 0bis rule 6); listed among the standard ones if it is not one.
+    const int resolution = shortSide;
+    bool listed = false;
+    for (const QVariant &entry : std::as_const(resolutions)) {
+        listed = listed || entry.toMap().value(u"value"_s).toInt() == shortSide;
+    }
+    if (!listed) {
+        qsizetype index = 0;
+        while (index < resolutions.size() && resolutions[index].toMap().value(u"value"_s).toInt() < shortSide) {
+            ++index;
         }
+        resolutions.insert(index, QVariantMap{{u"label"_s, u"%1p"_s.arg(shortSide)}, {u"value"_s, shortSide}});
     }
     QVariantList rates;
     const Rational project = data().settings.frameRate;

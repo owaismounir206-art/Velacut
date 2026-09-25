@@ -17,7 +17,8 @@ Item {
         target: root.editor
         function onMessage(text, undoable) { root.message(text, undoable) }
         function onExportFinished(path) {
-            if (!Window.window.active)
+            // A desktop notification when vedit is in background (SPEC §5.15).
+            if (!root.Window.window.active)
                 App.notify(qsTr("Video exported"), path)
         }
     }

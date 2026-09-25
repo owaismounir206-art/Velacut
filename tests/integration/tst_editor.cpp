@@ -84,6 +84,8 @@ private slots:
         const QVariantMap defaults = editor->exportDefaults();
         QCOMPARE(defaults.value(u"frameRate"_s).toString(), u"30"_s);
         QCOMPARE(defaults.value(u"quality"_s).toInt(), 1);
+        QCOMPARE(defaults.value(u"resolution"_s).toInt(), 180); // the project's own size, not upscaled
+        QCOMPARE(defaults.value(u"resolutions"_s).toList().first().toMap().value(u"label"_s).toString(), u"180p"_s);
         QVERIFY(!editor->exportEstimate(180, u"30"_s, 1).isEmpty());
         const QString folder = m_dir.filePath(u"videos"_s);
         QDir().mkpath(folder);

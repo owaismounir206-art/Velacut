@@ -80,6 +80,7 @@ Rectangle {
                         text: row.durationText
                     }
                     IconButton {
+                        objectName: "addMusic-" + row.index
                         variant: "tonal"
                         iconName: "add"
                         enabled: row.ready

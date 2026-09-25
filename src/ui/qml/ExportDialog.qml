@@ -12,6 +12,7 @@ import Vedit.UI
 
 Dialog {
     id: dialog
+    objectName: "exportDialog"
 
     required property Editor editor
     readonly property RenderJob job: editor.exportJob
@@ -97,19 +98,16 @@ Dialog {
             Label { role: "labelLarge"; text: qsTr("Resolution") }
             SegmentedButton {
                 id: resolution
-                Layout.fillWidth: true
                 model: (dialog.defaults.resolutions ?? []).map(r => ({ text: r.label }))
             }
             Label { role: "labelLarge"; text: qsTr("Frame rate") }
             SegmentedButton {
                 id: frameRate
-                Layout.fillWidth: true
                 model: (dialog.defaults.frameRates ?? []).map(r => ({ text: r.label }))
             }
             Label { role: "labelLarge"; text: qsTr("Quality") }
             SegmentedButton {
                 id: quality
-                Layout.fillWidth: true
                 model: [{ text: qsTr("Low") }, { text: qsTr("Recommended") }, { text: qsTr("High") }]
             }
             Label {
@@ -135,6 +133,7 @@ Dialog {
                 }
                 Button {
                     id: exportButton
+                    objectName: "exportConfirmButton"
                     variant: "filled"
                     iconName: "file_upload"
                     text: qsTr("Export")

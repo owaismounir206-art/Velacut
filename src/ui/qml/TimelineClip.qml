@@ -33,6 +33,7 @@ Item {
     readonly property int shownDuration: mode === "trimStart" || mode === "trimEnd" ? editEnd - editStart : duration
     readonly property int shownRow: mode === "move" ? moveRow : trackRow
 
+    objectName: "clip-" + clipId
     x: shownStart * view.zoom
     y: view.rowTop(shownRow) + (shownRow < 0 || shownRow >= view.rows
                                 ? (view.rowHeight(shownRow) - view.rowHeight(trackRow)) / 2 : 0)
@@ -206,6 +207,6 @@ Item {
             color: handle.pressed ? Theme.color.primary : Theme.color.primaryContainer
         }
     }
-    TrimHandle { startEdge: true; anchors.left: parent.left }
-    TrimHandle { startEdge: false; anchors.right: parent.right }
+    TrimHandle { objectName: "trimStart"; startEdge: true; anchors.left: parent.left }
+    TrimHandle { objectName: "trimEnd"; startEdge: false; anchors.right: parent.right }
 }

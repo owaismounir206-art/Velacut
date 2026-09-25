@@ -48,6 +48,7 @@ Item {
             // "New project": the most important action, the largest target.
             Card {
                 id: hero
+                objectName: "newProjectButton"
                 Layout.fillWidth: true
                 Layout.preferredHeight: Theme.editor.heroHeight
                 variant: "filled"

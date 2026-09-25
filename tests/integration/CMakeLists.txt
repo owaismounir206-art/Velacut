@@ -12,3 +12,9 @@ add_dependencies(tst_import vedit-render)
 vedit_add_test(tst_editor SOURCES tst_editor.cpp TestMedia.h LIBRARIES vedit_ui)
 target_compile_definitions(tst_editor PRIVATE VEDIT_RENDER_EXECUTABLE="$<TARGET_FILE:vedit-render>")
 add_dependencies(tst_editor vedit-render)
+vedit_add_test(tst_ui SOURCES tst_ui.cpp TestMedia.h
+               LIBRARIES vedit_ui vedit_uiplugin vedit_style vedit_styleplugin vedit_components vedit_componentsplugin
+                         vedit_theme vedit_themeplugin)
+target_compile_definitions(tst_ui PRIVATE VEDIT_RENDER_EXECUTABLE="$<TARGET_FILE:vedit-render>")
+add_dependencies(tst_ui vedit-render)
+set_tests_properties(tst_ui PROPERTIES TIMEOUT 240)
