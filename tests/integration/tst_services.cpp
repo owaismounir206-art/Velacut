@@ -313,6 +313,31 @@ private slots:
         QVERIFY(qRed(redImg.pixel(160, 90)) > 200);
     }
 
+    void maskCutsOutRegion()
+    {
+        auto profile = profile320();
+        Mlt::Producer white(*profile, "color:#ffffffff");
+        std::unique_ptr<Mlt::Producer> cut(white.cut(0, 9));
+
+        MaskSettings settings;
+        Mask mask;
+        mask.id = MaskId::create();
+        mask.shape = MaskShape::Rectangle;
+        mask.center = Param(Vec2{0.0, 0.0});
+        mask.size = Param(Vec2{0.5, 0.5});
+        mask.feather = Param(0.0);
+        settings.masks.push_back(mask);
+
+        auto filter = makeMaskFilter(*profile, settings);
+        cut->attach(*filter);
+
+        const QImage img = frameImage(*cut, 0);
+        QCOMPARE(img.size(), QSize(320, 180));
+        QCOMPARE(alphaAt(img, 160, 90), 255);
+        QCOMPARE(alphaAt(img, 10, 10), 0);
+        QCOMPARE(alphaAt(img, 310, 170), 0);
+    }
+
     void cleanupTestCase() { MltRuntime::shutdown(); }
 };
 

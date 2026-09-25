@@ -9,7 +9,7 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
 | Requisito | Esito | Verifica |
 |---|---|---|
 | Animo un titolo con keyframe ed easing | In corso | Keyframe, curve ed easing nel modello e player |
-| Compongo un green screen con maschera | In corso | Kernel chroma key e maschere in `src/fx` |
+| Compongo un green screen con maschera | ✅ | `vedit.chroma_key` + `vedit.mask` verificati in `tst_projection::greenScreenCompositionWithMaskInProjection` |
 | Compila senza warning, test verdi | ✅ | 25/25 in `build` (RelWithDebInfo e Debug con sanitizers) |
 
 ### Fase 3: fatto (un commit per incremento)
@@ -26,8 +26,12 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
    - Integrazione del servizio `vedit.chroma_key` prima di trasformazione e filtri, consentendo la rimozione dello sfondo verde/blu in spazio coordinate nativo prima della trasformazione geometrica e compositing multi-traccia.
    - Test di integrazione al 100% in `tst_services` (`transformAnimatesWithKeyframes`, `chromaKeyRemovesGreen`) e `tst_projection` (`chromaKeyRemovesGreenInProjection`, `animatedTransformInProjection`).
 
+3. **Maschere in Fx ed Engine (`P3.3`)**:
+   - Kernel CPU di riferimento in `src/fx/Mask.h` e `Mask.cpp`: rasterizzazione di tutte le forme di maschera (Rectangle con roundness SDF, Circle/Ellipse, Linear, Mirror, Heart, Star a 5 punte, Path vettoriale con raycasting) con feathering (smoothstep), invert e combinazione unione multi-maschera in straight alpha.
+   - Servizio MLT `vedit.mask` in `Services.cpp` collegato nella pipeline di cut render in spazio sorgente prima di correzione colore e trasformazione (garbage matte).
+   - Test unitari approfonditi in `tst_kernels` (forme, sfumatura, invert, multi-maschera) e integrazione in `tst_services` (`maskCutsOutRegion`) e `tst_projection` (`greenScreenCompositionWithMaskInProjection`).
+
 ### Prossimi passi (Fase 3 — Keyframe e composizione)
-- P3.3: Valutazione e rasterizzazione maschere (rettangolare con roundness, circolare, lineare, specchio, cuore, stella, path) con feather e invert in `src/fx` e `vedit.mask`.
 - P3.4: Compound clip e tracce di regolazione (`adjustment`) in `TimelineEditor` e `TimelineProjection`.
 - P3.5: Animazioni predefinite e marker (sequence e clip) in timeline.
 - P3.6: Controlli UI inspector (keyframe diamonds, curve easing selector, chroma key picker, maschere) e verifica criterio di completamento SPEC §8.

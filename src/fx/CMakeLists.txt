@@ -8,6 +8,7 @@ add_library(vedit_fx STATIC
     Composite.h Composite.cpp
     Enhance.h Enhance.cpp
     Library.h Library.cpp
+    Mask.h Mask.cpp
     Transform.h Transform.cpp
     Transition.h Transition.cpp
 )

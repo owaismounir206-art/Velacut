@@ -6,6 +6,7 @@
 #include "fx/Composite.h"
 #include "fx/Enhance.h"
 #include "fx/Library.h"
+#include "fx/Mask.h"
 #include "fx/Transform.h"
 #include "fx/Transition.h"
 
@@ -482,6 +483,120 @@ private slots:
         // Non-green subject pixels preserved (alpha = 255)
         QCOMPARE(img.at(0, 2)[3], 255);
         QCOMPARE(img.at(0, 2)[0], 200);
+    }
+
+    // ---- masks --------------------------------------------------------------------------------------------------
+    void maskRectangleAndCircle()
+    {
+        Buffer img(100, 100, {255, 255, 255, 255});
+        MaskParams rect;
+        rect.shape = MaskShape::Rectangle;
+        rect.centerX = 0.0;
+        rect.centerY = 0.0;
+        rect.sizeX = 0.5; // 50 pixels wide: x from 25 to 75
+        rect.sizeY = 0.5; // 50 pixels high: y from 25 to 75
+        rect.feather = 0.0;
+
+        applyMasks(img.view(), {rect});
+        // Inside
+        QCOMPARE(img.at(50, 50)[3], 255);
+        QCOMPARE(img.at(30, 30)[3], 255);
+        // Outside
+        QCOMPARE(img.at(5, 5)[3], 0);
+        QCOMPARE(img.at(90, 90)[3], 0);
+
+        // Test invert
+        Buffer inv(100, 100, {255, 255, 255, 255});
+        rect.invert = true;
+        applyMasks(inv.view(), {rect});
+        QCOMPARE(inv.at(50, 50)[3], 0);
+        QCOMPARE(inv.at(5, 5)[3], 255);
+
+        // Test Circle
+        Buffer circle(100, 100, {255, 255, 255, 255});
+        MaskParams circ;
+        circ.shape = MaskShape::Circle;
+        circ.centerX = 0.0;
+        circ.centerY = 0.0;
+        circ.sizeX = 0.5; // radius 25
+        circ.sizeY = 0.5;
+        circ.feather = 0.0;
+        applyMasks(circle.view(), {circ});
+        QCOMPARE(circle.at(50, 50)[3], 255);
+        QCOMPARE(circle.at(70, 50)[3], 255); // distance 20 < 25
+        QCOMPARE(circle.at(80, 50)[3], 0);   // distance 30 > 25
+        QCOMPARE(circle.at(5, 5)[3], 0);
+    }
+
+    void maskFeatherLinearAndMirror()
+    {
+        // Linear mask: top half inside, bottom half outside
+        Buffer img(100, 100, {255, 255, 255, 255});
+        MaskParams linear;
+        linear.shape = MaskShape::Linear;
+        linear.feather = 0.1; // 10% feather
+        applyMasks(img.view(), {linear});
+        QCOMPARE(img.at(50, 20)[3], 255);
+        QCOMPARE(img.at(50, 80)[3], 0);
+        // Middle has feather gradient
+        const uint8_t midAlpha = img.at(50, 50)[3];
+        QVERIFY(midAlpha > 100 && midAlpha < 155);
+
+        // Mirror mask: center horizontal band inside
+        Buffer mirrorImg(100, 100, {255, 255, 255, 255});
+        MaskParams mirror;
+        mirror.shape = MaskShape::Mirror;
+        mirror.sizeY = 0.3; // 30 pixels tall centered at y=50 (from y=35 to y=65)
+        mirror.feather = 0.0;
+        applyMasks(mirrorImg.view(), {mirror});
+        QCOMPARE(mirrorImg.at(50, 50)[3], 255);
+        QCOMPARE(mirrorImg.at(50, 10)[3], 0);
+        QCOMPARE(mirrorImg.at(50, 90)[3], 0);
+    }
+
+    void maskHeartStarAndPath()
+    {
+        Buffer img(100, 100, {255, 255, 255, 255});
+        MaskParams heart;
+        heart.shape = MaskShape::Heart;
+        heart.sizeX = 0.6;
+        heart.sizeY = 0.6;
+        applyMasks(img.view(), {heart});
+        QCOMPARE(img.at(50, 50)[3], 255); // center inside
+        QCOMPARE(img.at(5, 95)[3], 0);    // bottom corners outside
+
+        Buffer starImg(100, 100, {255, 255, 255, 255});
+        MaskParams star;
+        star.shape = MaskShape::Star;
+        star.sizeX = 0.7;
+        star.sizeY = 0.7;
+        applyMasks(starImg.view(), {star});
+        QCOMPARE(starImg.at(50, 50)[3], 255);
+        QCOMPARE(starImg.at(5, 5)[3], 0);
+
+        // Path mask: triangle with points at (-0.2, -0.2), (0.2, -0.2), (0.0, 0.2)
+        Buffer pathImg(100, 100, {255, 255, 255, 255});
+        MaskParams path;
+        path.shape = MaskShape::Path;
+        path.points = {{-0.2, -0.2, 0, 0, 0, 0}, {0.2, -0.2, 0, 0, 0, 0}, {0.0, 0.2, 0, 0, 0, 0}};
+        applyMasks(pathImg.view(), {path});
+        QCOMPARE(pathImg.at(50, 40)[3], 255); // inside triangle
+        QCOMPARE(pathImg.at(10, 10)[3], 0);   // outside triangle
+
+        // Union of two masks: left rectangle + right rectangle
+        Buffer unionImg(100, 100, {255, 255, 255, 255});
+        MaskParams left;
+        left.centerX = -0.3;
+        left.sizeX = 0.3;
+        left.sizeY = 0.3;
+        MaskParams right;
+        right.centerX = 0.3;
+        right.sizeX = 0.3;
+        right.sizeY = 0.3;
+        applyMasks(unionImg.view(), {left, right});
+        QCOMPARE(unionImg.at(20, 50)[3], 255); // left mask
+        QCOMPARE(unionImg.at(80, 50)[3], 255); // right mask
+        QCOMPARE(unionImg.at(50, 50)[3], 0);   // gap in the middle
     }
 
     // ---- audio --------------------------------------------------------------------------------------------------

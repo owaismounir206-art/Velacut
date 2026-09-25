@@ -590,6 +590,54 @@ private slots:
         QCOMPARE(pixel(frame29, 20, 90), 0x00000000u);
     }
 
+    void greenScreenCompositionWithMaskInProjection()
+    {
+        ProjectData data = baseProject();
+
+        // Track 0 (bottom): Blue background
+        Clip blueClip;
+        blueClip.id = ClipId::create();
+        blueClip.start = frames(0);
+        blueClip.duration = frames(30);
+        blueClip.payload = ColorClipData{Param(Color{0, 0, 255, 255})};
+        data.sequences.front().visualTracks.front().clips.push_back(blueClip);
+
+        // Track 1 (top overlay): Green clip with chroma key AND a mask
+        Track overlayTrack;
+        overlayTrack.id = TrackId::create();
+        overlayTrack.kind = TrackKind::Video;
+
+        Clip overlayClip;
+        overlayClip.id = ClipId::create();
+        overlayClip.start = frames(0);
+        overlayClip.duration = frames(30);
+        overlayClip.payload = ColorClipData{Param(Color{0, 255, 0, 255})};
+
+        Effect ck;
+        ck.type = u"vedit.chroma_key"_s;
+        ck.params[u"keyColor"_s] = Param(Color{0, 255, 0, 255});
+        ck.params[u"similarity"_s] = Param(0.4);
+        overlayClip.effects.push_back(ck);
+
+        Mask mask;
+        mask.id = MaskId::create();
+        mask.shape = MaskShape::Rectangle;
+        mask.center = Param(Vec2{0.0, 0.0});
+        mask.size = Param(Vec2{0.5, 0.5});
+        mask.feather = Param(0.0);
+        overlayClip.masks.push_back(mask);
+
+        overlayTrack.clips.push_back(overlayClip);
+        data.sequences.front().visualTracks.push_back(overlayTrack);
+
+        const QImage comp = renderFresh1(data, 10);
+        const QRgb centerP = pixel(comp, 160, 90);
+        QVERIFY(qBlue(centerP) > 200 && qGreen(centerP) < 50);
+
+        const QRgb cornerP = pixel(comp, 10, 10);
+        QVERIFY(qBlue(cornerP) > 200 && qGreen(cornerP) < 50);
+    }
+
     void cleanupTestCase() { MltRuntime::shutdown(); }
 };
 

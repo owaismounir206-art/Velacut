@@ -106,6 +106,7 @@ private:
     struct ClipRender
     {
         std::optional<ChromaKeySettings> chromaKey;
+        std::optional<MaskSettings> maskSettings;
         std::vector<AdjustSettings> adjusts;
         std::optional<TransformSettings> transform;
         std::optional<GainSettings> gain;

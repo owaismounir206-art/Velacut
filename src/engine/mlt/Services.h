@@ -81,6 +81,17 @@ struct ChromaKeySettings
     QByteArray key() const;
 };
 
+struct MaskSettings
+{
+    std::vector<Mask> masks;
+    RationalTime sourceIn{0, 30};
+    Rational frameRate{30, 1};
+    int firstFrame = 0;
+
+    bool isIdentity() const { return masks.empty(); }
+    QByteArray key() const;
+};
+
 struct AdjustSettings
 {
     fx::ColorAdjust look;
@@ -117,6 +128,7 @@ struct TransitionSettings
 std::unique_ptr<Mlt::Filter> makeTransformFilter(Mlt::Profile &profile, const TransformSettings &settings);
 std::unique_ptr<Mlt::Filter> makeAdjustFilter(Mlt::Profile &profile, const AdjustSettings &settings);
 std::unique_ptr<Mlt::Filter> makeChromaKeyFilter(Mlt::Profile &profile, const ChromaKeySettings &settings);
+std::unique_ptr<Mlt::Filter> makeMaskFilter(Mlt::Profile &profile, const MaskSettings &settings);
 std::unique_ptr<Mlt::Filter> makeGainFilter(Mlt::Profile &profile, const GainSettings &settings);
 std::unique_ptr<Mlt::Transition> makeTransition(Mlt::Profile &profile, const TransitionSettings &settings);
 std::unique_ptr<Mlt::Producer> makeTextProducer(Mlt::Profile &profile, const TextClipData &text);

@@ -7,6 +7,7 @@
 #include "fx/Audio.h"
 #include "fx/ChromaKey.h"
 #include "fx/Composite.h"
+#include "fx/Mask.h"
 #include "fx/Transform.h"
 
 #include <QCryptographicHash>
@@ -351,6 +352,72 @@ mlt_frame chromaKeyProcess(mlt_filter filter, mlt_frame frame)
     return frame;
 }
 
+// ---- vedit.mask -----------------------------------------------------------------------------------------------
+
+int maskGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
+{
+    auto filter = static_cast<mlt_filter>(mlt_frame_pop_service(frame));
+    const int framePosition = mlt_frame_pop_service_int(frame);
+    *format = mlt_image_rgba;
+    const int error = mlt_frame_get_image(frame, image, format, width, height, 1);
+    const auto *s = settingsOf<MaskSettings>(MLT_FILTER_PROPERTIES(filter));
+    if (error || !s || s->masks.empty() || *format != mlt_image_rgba || !*image) {
+        return error;
+    }
+
+    const Rational rate = (s->frameRate.num() > 0 && s->frameRate.den() > 0) ? s->frameRate : Rational(30, 1);
+    const int localFrame = framePosition - s->firstFrame;
+    const RationalTime inAtRate = s->sourceIn.rescaled(rate, Rounding::NearestEven);
+    const RationalTime contentTime = inAtRate + RationalTime(localFrame, rate);
+
+    std::vector<fx::MaskParams> params;
+    params.reserve(s->masks.size());
+
+    for (const Mask &m : s->masks) {
+        fx::MaskParams p;
+        p.shape = static_cast<fx::MaskShape>(m.shape);
+        p.invert = m.invert;
+
+        const ParamValue centerVal = m.center.valueAt(contentTime);
+        if (const auto *v = std::get_if<Vec2>(&centerVal)) {
+            p.centerX = v->x;
+            p.centerY = v->y;
+        }
+
+        const ParamValue sizeVal = m.size.valueAt(contentTime);
+        if (const auto *v = std::get_if<Vec2>(&sizeVal)) {
+            p.sizeX = v->x;
+            p.sizeY = v->y;
+        }
+
+        p.rotation = m.rotation.numberAt(contentTime, 0.0);
+        p.roundness = m.roundness.numberAt(contentTime, 0.0);
+        p.feather = m.feather.numberAt(contentTime, 0.0);
+
+        p.points.reserve(m.points.size());
+        for (const auto &pt : m.points) {
+            p.points.push_back(fx::MaskPoint{pt.p.x, pt.p.y, pt.in.x, pt.in.y, pt.out.x, pt.out.y});
+        }
+
+        params.push_back(std::move(p));
+    }
+
+    const fx::ImageView view{*image, *width, *height, *width * 4};
+    runSliced(*height, [&](int begin, int end) {
+        fx::applyMasks(view, params, begin, end);
+    });
+
+    return 0;
+}
+
+mlt_frame maskProcess(mlt_filter filter, mlt_frame frame)
+{
+    mlt_frame_push_service_int(frame, static_cast<int>(mlt_frame_get_position(frame)));
+    mlt_frame_push_service(frame, filter);
+    mlt_frame_push_get_image(frame, maskGetImage);
+    return frame;
+}
+
 // ---- vedit.gain -----------------------------------------------------------------------------------------------
 
 double envelope(const GainSettings &s, double position)
@@ -561,6 +628,7 @@ void registerServices(Mlt::Repository *repository)
     repository->register_service(mlt_service_filter_type, "vedit.transform", createFilter<transformProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.adjust", createFilter<adjustProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.chroma_key", createFilter<chromaKeyProcess>);
+    repository->register_service(mlt_service_filter_type, "vedit.mask", createFilter<maskProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.gain", createFilter<gainProcess>);
     repository->register_service(mlt_service_transition_type, "vedit.transition", createTransitionService);
     repository->register_service(mlt_service_producer_type, "vedit.text", createText);
@@ -609,6 +677,41 @@ QByteArray ChromaKeySettings::key() const
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream << keyColor.r << keyColor.g << keyColor.b << similarity << smoothness << spill;
+    return bytes;
+}
+
+QByteArray MaskSettings::key() const
+{
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream << quint32(masks.size()) << firstFrame;
+    for (const Mask &m : masks) {
+        stream << int(m.shape) << m.invert << m.center.isAnimated() << m.size.isAnimated()
+               << m.rotation.isAnimated() << m.roundness.isAnimated() << m.feather.isAnimated()
+               << quint32(m.points.size());
+        if (!m.center.isAnimated()) {
+            if (const auto *v = std::get_if<Vec2>(&m.center.staticValue())) {
+                stream << v->x << v->y;
+            }
+        }
+        if (!m.size.isAnimated()) {
+            if (const auto *v = std::get_if<Vec2>(&m.size.staticValue())) {
+                stream << v->x << v->y;
+            }
+        }
+        if (!m.rotation.isAnimated()) {
+            stream << m.rotation.numberAt(RationalTime(0, 1));
+        }
+        if (!m.roundness.isAnimated()) {
+            stream << m.roundness.numberAt(RationalTime(0, 1));
+        }
+        if (!m.feather.isAnimated()) {
+            stream << m.feather.numberAt(RationalTime(0, 1));
+        }
+        for (const auto &p : m.points) {
+            stream << p.p.x << p.p.y << p.in.x << p.in.y << p.out.x << p.out.y;
+        }
+    }
     return bytes;
 }
 
@@ -664,6 +767,17 @@ std::unique_ptr<Mlt::Filter> makeChromaKeyFilter(Mlt::Profile &profile, const Ch
 {
     auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.chroma_key");
     attachSettings(*filter, settings);
+    return filter;
+}
+
+std::unique_ptr<Mlt::Filter> makeMaskFilter(Mlt::Profile &profile, const MaskSettings &settings)
+{
+    auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.mask");
+    MaskSettings copy = settings;
+    if (copy.frameRate.num() <= 0 || copy.frameRate.den() <= 0) {
+        copy.frameRate = Rational(profile.fps(), 1);
+    }
+    attachSettings(*filter, copy);
     return filter;
 }
 

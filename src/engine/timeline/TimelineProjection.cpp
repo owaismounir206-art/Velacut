@@ -377,6 +377,14 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
             }
             render->adjusts.push_back(adjust);
         }
+        if (!clip.masks.empty()) {
+            MaskSettings maskSettings;
+            maskSettings.masks = clip.masks;
+            maskSettings.firstFrame = in;
+            maskSettings.sourceIn = clip.media() ? clip.media()->sourceIn : RationalTime(0, m_profile.fps());
+            maskSettings.frameRate = Rational(m_profile.fps(), 1);
+            render->maskSettings = maskSettings;
+        }
         TransformSettings transform;
         if (media) {
             const QSizeF source = displaySize(*media);
@@ -453,6 +461,7 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
     QByteArray key;
     QDataStream stream(&key, QIODevice::WriteOnly);
     stream << render->chromaKey.has_value() << (render->chromaKey ? render->chromaKey->key() : QByteArray());
+    stream << render->maskSettings.has_value() << (render->maskSettings ? render->maskSettings->key() : QByteArray());
     for (const AdjustSettings &adjust : render->adjusts) {
         stream << adjust.key();
     }
@@ -748,6 +757,10 @@ void TimelineProjection::attachFilters(Mlt::Producer &cut, const ClipRender &ren
 {
     if (render.chromaKey) {
         auto filter = makeChromaKeyFilter(m_profile, *render.chromaKey);
+        cut.attach(*filter);
+    }
+    if (render.maskSettings) {
+        auto filter = makeMaskFilter(m_profile, *render.maskSettings);
         cut.attach(*filter);
     }
     for (const AdjustSettings &adjust : render.adjusts) {
