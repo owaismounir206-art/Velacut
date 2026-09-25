@@ -189,6 +189,7 @@ private:
     void patch(TrackSlot &slot, std::vector<Entry> desired);
     std::shared_ptr<Mlt::Producer> colorProducer(const Color &color);
     std::shared_ptr<Mlt::Producer> textProducer(const TextClipData &text);
+    std::shared_ptr<Mlt::Producer> compoundProducer(const ProjectData &project, const SequenceId &sequenceId);
     void retireEntries(Mlt::Playlist &playlist);
     void updateBackground();
     std::shared_ptr<Mlt::Producer> producerFor(const Media &media, double speed, bool preservePitch);
@@ -207,8 +208,10 @@ private:
     std::unique_ptr<Mlt::Filter> m_masterMeter;
     std::vector<TrackSlot> m_tracks; // in tractor order, from track 1
     std::vector<std::unique_ptr<Mlt::Transition>> m_transitions;
+    std::vector<std::unique_ptr<Mlt::Filter>> m_adjustmentFilters;
     QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_colors; // colour producers, shared by cuts
     QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_texts;  // text producers, by content
+    QHash<SequenceId, std::shared_ptr<TimelineProjection>> m_compounds;
     Preview m_preview;
     int m_duration = 1;
     int m_backgroundLength = 0;

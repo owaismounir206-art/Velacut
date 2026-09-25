@@ -1054,4 +1054,221 @@ EditResult TimelineEditor::setDefaultBackground(const std::optional<CanvasBackgr
     return finish(std::move(modified), tr("Change background"), {});
 }
 
+EditResult TimelineEditor::createCompoundClip(const std::vector<ClipId> &clipIds, const QString &name)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    if (clipIds.empty()) {
+        return fail(tr("Select at least one clip."));
+    }
+    Sequence modified = *m_sequence;
+
+    std::vector<Clip> selected;
+    RationalTime minStart;
+    RationalTime maxEnd;
+    bool first = true;
+    TrackId primaryTrackId;
+
+    for (const ClipId &id : clipIds) {
+        const auto ref = findClip(modified, id);
+        if (!ref) {
+            return fail(tr("A clip does not exist."));
+        }
+        if (ref->track->locked) {
+            return fail(tr("A track is locked."));
+        }
+        const Clip &c = ref->clip();
+        if (first) {
+            minStart = c.start;
+            maxEnd = c.end();
+            primaryTrackId = ref->track->id;
+            first = false;
+        } else {
+            minStart = std::min(minStart, c.start);
+            maxEnd = std::max(maxEnd, c.end());
+        }
+        selected.push_back(c);
+    }
+
+    const RationalTime duration = maxEnd - minStart;
+    if (duration.value() <= 0) {
+        return fail(tr("Invalid duration for compound clip."));
+    }
+
+    Sequence nestedSeq;
+    nestedSeq.id = SequenceId::create();
+    nestedSeq.name = name.isEmpty() ? tr("Compound Clip") : name;
+    nestedSeq.canvas = m_sequence->canvas;
+    nestedSeq.defaultBackground = m_sequence->defaultBackground;
+
+    std::map<TrackId, Track> nestedVisualTracks;
+    std::map<TrackId, Track> nestedAudioTracks;
+
+    for (const Clip &c : selected) {
+        const auto ref = findClip(modified, c.id);
+        const Track &srcTrack = *ref->track;
+        const bool isAudio = !isVisualTrackKind(srcTrack.kind);
+        auto &targetMap = isAudio ? nestedAudioTracks : nestedVisualTracks;
+
+        if (targetMap.find(srcTrack.id) == targetMap.end()) {
+            Track t = makeTrack(srcTrack.kind);
+            t.name = srcTrack.name;
+            targetMap[srcTrack.id] = t;
+        }
+        Clip shifted = c;
+        shifted.start = c.start - minStart;
+        insertSorted(targetMap[srcTrack.id], std::move(shifted));
+    }
+
+    for (auto &[trackId, track] : nestedVisualTracks) {
+        nestedSeq.visualTracks.push_back(std::move(track));
+    }
+    for (auto &[trackId, track] : nestedAudioTracks) {
+        nestedSeq.audioTracks.push_back(std::move(track));
+    }
+    if (nestedSeq.visualTracks.empty()) {
+        nestedSeq.visualTracks.push_back(makeTrack(TrackKind::Video));
+    }
+
+    for (const ClipId &id : clipIds) {
+        const auto ref = findClip(modified, id);
+        if (ref) {
+            auto &clips = ref->track->clips;
+            clips.erase(std::remove_if(clips.begin(), clips.end(), [&](const Clip &c) { return c.id == id; }), clips.end());
+        }
+    }
+
+    Clip compoundClip;
+    compoundClip.id = ClipId::create();
+    compoundClip.name = nestedSeq.name;
+    compoundClip.start = minStart;
+    compoundClip.duration = duration;
+    compoundClip.payload = CompoundClipData{nestedSeq.id, RationalTime(0, m_rate)};
+
+    auto targetTrackRef = findTrack(modified, primaryTrackId);
+    if (!targetTrackRef || !clipAllowedOnTrack(compoundClip, targetTrackRef->track->kind)) {
+        targetTrackRef = findTrack(modified, modified.visualTracks.front().id);
+    }
+    insertSorted(*targetTrackRef->track, compoundClip);
+    if (modified.magneticMain && !modified.visualTracks.empty()) {
+        pack(modified.visualTracks.front(), m_rate);
+    }
+
+    EditResult result;
+    result.script.push_back(edits::insertSequence(static_cast<int>(m_project.sequences.size()), std::move(nestedSeq)));
+    EditScript seqEdits = diffSequence(*m_sequence, modified);
+    for (auto &e : seqEdits) {
+        result.script.push_back(std::move(e));
+    }
+    result.text = tr("Create compound clip");
+    result.primaryClip = compoundClip.id;
+    return result;
+}
+
+EditResult TimelineEditor::expandCompoundClip(const ClipId &clipId)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (ref->track->locked) {
+        return fail(tr("The track is locked."));
+    }
+    const Clip &c = ref->clip();
+    const auto *compound = c.compound();
+    if (!compound) {
+        return fail(tr("The clip is not a compound clip."));
+    }
+
+    const Sequence *nested = m_project.findSequence(compound->sequenceId);
+    if (!nested) {
+        return fail(tr("The nested sequence was not found."));
+    }
+
+    const SequenceId nestedSeqId = compound->sequenceId;
+    const Sequence nestedSeqCopy = *nested;
+    const RationalTime compStart = c.start;
+    const RationalTime sourceIn = compound->sourceIn.rescaled(m_rate, Rounding::NearestEven);
+    const TrackId parentTrackId = ref->track->id;
+
+    auto &clips = ref->track->clips;
+    clips.erase(std::remove_if(clips.begin(), clips.end(), [&](const Clip &item) { return item.id == clipId; }), clips.end());
+
+    ClipId primary;
+    for (int pass = 0; pass < 2; ++pass) {
+        const auto &tracks = (pass == 0) ? nestedSeqCopy.visualTracks : nestedSeqCopy.audioTracks;
+        for (const Track &t : tracks) {
+            for (const Clip &nestedClip : t.clips) {
+                Clip expanded = nestedClip;
+                expanded.id = ClipId::create();
+                expanded.start = compStart + (nestedClip.start - sourceIn);
+                if (expanded.start.isNegative()) {
+                    continue;
+                }
+                if (primary.isNull()) {
+                    primary = expanded.id;
+                }
+                if (pass == 0) {
+                    const auto trk = findTrack(modified, parentTrackId);
+                    if (trk && t.kind == trk->track->kind && hasRoom(*trk->track, expanded.range())) {
+                        insertSorted(*trk->track, std::move(expanded));
+                    } else {
+                        Track &target = overlayTrackFor(modified, t.kind, expanded.range());
+                        insertSorted(target, std::move(expanded));
+                    }
+                } else {
+                    Track &target = audioTrackFor(modified, expanded.range());
+                    insertSorted(target, std::move(expanded));
+                }
+            }
+        }
+    }
+
+    if (modified.magneticMain && !modified.visualTracks.empty()) {
+        pack(modified.visualTracks.front(), m_rate);
+    }
+
+    EditResult result;
+    EditScript seqEdits = diffSequence(*m_sequence, modified);
+    for (auto &e : seqEdits) {
+        result.script.push_back(std::move(e));
+    }
+    const int seqIdx = m_project.sequenceIndex(nestedSeqId);
+    if (seqIdx >= 0) {
+        result.script.push_back(edits::removeSequence(seqIdx, nestedSeqCopy));
+    }
+    result.text = tr("Expand compound clip");
+    result.primaryClip = primary;
+    return result;
+}
+
+EditResult TimelineEditor::insertAdjustment(const RationalTime &position, const RationalTime &duration)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Clip clip;
+    clip.id = ClipId::create();
+    clip.name = tr("Adjustment Layer");
+    clip.start = position.rescaled(m_rate, Rounding::NearestEven);
+    if (clip.start.isNegative()) {
+        clip.start = RationalTime(0, m_rate);
+    }
+    clip.duration = duration.rescaled(m_rate, Rounding::NearestEven);
+    if (clip.duration.value() <= 0) {
+        clip.duration = RationalTime::fromSeconds(Rational(kDefaultTextSeconds), m_rate, Rounding::NearestEven);
+    }
+    clip.payload = AdjustmentClipData{};
+    const ClipId clipId = clip.id;
+    Sequence modified = *m_sequence;
+    Track &track = overlayTrackFor(modified, TrackKind::Adjustment, clip.range());
+    insertSorted(track, std::move(clip));
+    return finish(std::move(modified), tr("Add adjustment layer"), clipId);
+}
+
 } // namespace vedit

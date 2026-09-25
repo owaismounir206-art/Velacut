@@ -94,6 +94,11 @@ public:
     EditResult updateTrack(const TrackId &trackId, const std::function<void(Track &)> &change, const QString &text);
     EditResult setDefaultBackground(const std::optional<CanvasBackground> &background);
 
+    // ---- Phase 3 ----
+    EditResult createCompoundClip(const std::vector<ClipId> &clipIds, const QString &name = QString());
+    EditResult expandCompoundClip(const ClipId &clipId);
+    EditResult insertAdjustment(const RationalTime &position, const RationalTime &duration);
+
     // Duration of a new text and of a freeze frame (SPEC 0bis rule 6).
     static constexpr int kDefaultTextSeconds = 3;
 

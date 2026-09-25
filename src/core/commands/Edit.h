@@ -43,6 +43,10 @@ std::unique_ptr<Edit> insertMedia(int index, Media media);
 std::unique_ptr<Edit> removeMedia(int index, Media media);
 std::unique_ptr<Edit> replaceMedia(Media before, Media after);
 
+std::unique_ptr<Edit> insertSequence(int index, Sequence sequence);
+std::unique_ptr<Edit> removeSequence(int index, Sequence sequence);
+std::unique_ptr<Edit> replaceSequence(Sequence before, Sequence after);
+
 std::unique_ptr<Edit> setCanvas(SequenceId sequenceId, Canvas before, Canvas after);
 std::unique_ptr<Edit> setDefaultBackground(SequenceId sequenceId, std::optional<CanvasBackground> before,
                                            std::optional<CanvasBackground> after);

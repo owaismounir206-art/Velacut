@@ -290,8 +290,8 @@ int adjustGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, i
         return error;
     }
     const AdjustSettings &s = state->settings;
-    const fx::ImageView view{*image, *width, *height, *width * 4};
     const double k = std::clamp(s.intensity, 0.0, 1.0);
+    const fx::ImageView view{*image, *width, *height, *width * 4};
     if (!s.look.isIdentity()) {
         runSliced(*height, [&](int begin, int end) { state->lut.apply(view, k, begin, end); });
     }

@@ -209,6 +209,8 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
     m_masterMeter.reset();
     m_warnings.clear();
     m_backgroundLength = 0;
+    m_compounds.clear();
+    m_adjustmentFilters.clear();
     m_tractor = std::make_unique<Mlt::Tractor>(m_profile);
     m_black = std::make_unique<Mlt::Producer>(m_profile, mltColor(Color{0, 0, 0, 255}).constData());
     m_black->set("length", 0x7fffffff);
@@ -245,8 +247,43 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
             composite->set("always_active", 1);
             m_tractor->plant_transition(*composite, 0, index);
             m_transitions.push_back(std::move(composite));
+            if (slot.kind == SlotKind::Clips) {
+                for (const Clip &clip : track->clips) {
+                    if (!clip.enabled) {
+                        continue;
+                    }
+                    if (track->kind != TrackKind::Adjustment && !clip.adjustment()) {
+                        continue;
+                    }
+                    const int in = static_cast<int>(toFrames(clip.start));
+                    const int length = static_cast<int>(toFrames(clip.end()) - in);
+                    if (length <= 0) {
+                        continue;
+                    }
+                    const int out = in + length - 1;
+                    auto render = renderOf(clip, *track, project, nullptr, false, in, length);
+                    for (const AdjustSettings &adjust : render->adjusts) {
+                        auto filter = makeAdjustFilter(m_profile, adjust);
+                        filter->set_in_and_out(in, out);
+                        m_tractor->attach(*filter);
+                        m_adjustmentFilters.push_back(std::move(filter));
+                    }
+                    if (render->chromaKey) {
+                        auto filter = makeChromaKeyFilter(m_profile, *render->chromaKey);
+                        filter->set_in_and_out(in, out);
+                        m_tractor->attach(*filter);
+                        m_adjustmentFilters.push_back(std::move(filter));
+                    }
+                    if (render->maskSettings) {
+                        auto filter = makeMaskFilter(m_profile, *render->maskSettings);
+                        filter->set_in_and_out(in, out);
+                        m_tractor->attach(*filter);
+                        m_adjustmentFilters.push_back(std::move(filter));
+                    }
+                }
+            }
         }
-        if (slot.kind == SlotKind::Clips) {
+        if (slot.kind == SlotKind::Clips && track->kind != TrackKind::Adjustment) {
             auto mix = std::make_unique<Mlt::Transition>(m_profile, "mix");
             mix->set("always_active", 1);
             mix->set("sum", 1);
@@ -314,6 +351,34 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::textProducer(const TextClipDa
     std::shared_ptr<Mlt::Producer> producer = makeTextProducer(m_profile, staticText(text));
     m_texts.insert(key, producer);
     return producer;
+}
+
+std::shared_ptr<Mlt::Producer> TimelineProjection::compoundProducer(const ProjectData &project, const SequenceId &sequenceId)
+{
+    if (sequenceId == m_sequenceId) {
+        m_warnings << u"recursive compound clip detected: %1"_s.arg(sequenceId.toString());
+        return nullptr;
+    }
+    const Sequence *sequence = sequenceOf(project, sequenceId);
+    if (!sequence) {
+        m_warnings << u"compound clip sequence not found: %1"_s.arg(sequenceId.toString());
+        return nullptr;
+    }
+    auto it = m_compounds.find(sequenceId);
+    if (it != m_compounds.end() && it.value()) {
+        Mlt::Tractor *tractor = it.value()->tractor();
+        if (tractor) {
+            return std::shared_ptr<Mlt::Producer>(it.value(), tractor);
+        }
+    }
+    auto nested = std::make_shared<TimelineProjection>(m_profile, m_cache, m_loading);
+    nested->build(project, sequenceId);
+    m_compounds.insert(sequenceId, nested);
+    Mlt::Tractor *tractor = nested->tractor();
+    if (!tractor) {
+        return nullptr;
+    }
+    return std::shared_ptr<Mlt::Producer>(nested, tractor);
 }
 
 std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::renderOf(const Clip &clip, const Track &track,
@@ -529,6 +594,20 @@ std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &
     if (const TextClipData *text = clip.text()) {
         placed.producer = textProducer(*text);
         placed.render = renderOf(clip, track, project, nullptr, false, 0, placed.length);
+        return placed;
+    }
+    if (const CompoundClipData *compound = clip.compound()) {
+        placed.producer = compoundProducer(project, compound->sequenceId);
+        if (!placed.producer) {
+            return placed;
+        }
+        placed.in = static_cast<int>(toFrames(compound->sourceIn));
+        placed.render = renderOf(clip, track, project, nullptr, mainTrack, placed.in, placed.length);
+        return placed;
+    }
+    if (clip.adjustment() || track.kind == TrackKind::Adjustment) {
+        placed.producer = colorProducer(Color{0, 0, 0, 0});
+        placed.render = nullptr;
         return placed;
     }
     m_warnings << u"clip %1: this kind of clip is rendered from a later phase"_s.arg(clip.id.toString());
@@ -784,6 +863,10 @@ void TimelineProjection::updateBackground()
         duration = std::max(duration, slot.playlist->get_playtime());
     }
     m_duration = duration;
+    if (m_tractor) {
+        m_tractor->set_in_and_out(0, duration - 1);
+        m_tractor->set("length", duration);
+    }
     if (duration == m_backgroundLength) {
         return;
     }
@@ -869,6 +952,18 @@ bool TimelineProjection::needsRebuild(const ProjectData &project, const ChangeSe
     const Sequence *sequence = sequenceOf(project, m_sequenceId);
     if (!m_tractor || !sequence || changes.settingsChanged || changes.sequences.contains(m_sequenceId)) {
         return true;
+    }
+    for (auto it = m_compounds.keyBegin(); it != m_compounds.keyEnd(); ++it) {
+        if (changes.sequences.contains(*it)) {
+            return true;
+        }
+    }
+    if (!m_adjustmentFilters.empty()) {
+        for (const TrackId &tid : changes.tracks) {
+            if (const Track *t = project.findTrack(tid); t && t->kind == TrackKind::Adjustment) {
+                return true;
+            }
+        }
     }
     const std::vector<StructureSlot> structure = structureOf(*sequence);
     if (structure.size() != m_tracks.size()) {

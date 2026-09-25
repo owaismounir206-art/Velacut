@@ -31,10 +31,21 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
    - Servizio MLT `vedit.mask` in `Services.cpp` collegato nella pipeline di cut render in spazio sorgente prima di correzione colore e trasformazione (garbage matte).
    - Test unitari approfonditi in `tst_kernels` (forme, sfumatura, invert, multi-maschera) e integrazione in `tst_services` (`maskCutsOutRegion`) e `tst_projection` (`greenScreenCompositionWithMaskInProjection`).
 
+4. **Compound Clip & Adjustment Layer (`P3.4`)**:
+   - `ProjectMutator` e `edits::`: operazioni atomiche e reversibili `insertSequence`, `removeSequence`, `replaceSequence` con ripristino ordinato in undo/redo.
+   - `TimelineEditor`:
+     - `createCompoundClip`: raggruppa le clip selezionate in una nuova sequenza annidata (`Sequence`), sostituisce la selezione con una clip composta (`CompoundClipData`) preservando sincronizzazione e posizioni relative.
+     - `expandCompoundClip`: esplode una clip composta ripristinando le clip componenti nelle rispettive tracce della sequenza padre e rimuovendo la sequenza annidata con pieno supporto di annullamento/ripetizione.
+     - `insertAdjustment`: inserisce un livello di regolazione (`AdjustmentClipData`) su una traccia dedicata `TrackKind::Adjustment` con calcolo dell'estensione temporale.
+   - `TimelineProjection`:
+     - Supporto per proiezioni ricorsive di sequenze annidate tramite `compoundProducer`, memorizzando in cache le proiezioni MLT senza cicli.
+     - Integrazione delle clip composte nel grafo MLT con trasformazioni, opacità, effetti, maschere e mixing audio.
+     - Gestione dei livelli di regolazione (`TrackKind::Adjustment` o `AdjustmentClipData`): applicazione degli effetti tramite filtri agganciati al trattore sul composito durante il range temporale della clip.
+   - Test unitari in `tst_timelineeditor` (`compoundClipCreationAndExpansion`, `adjustmentLayerInsertion`) e integrazione in `tst_projection` (`compoundClipRendersInProjection`, `adjustmentLayerRendersInProjection`) 100% verdi.
+
 ### Prossimi passi (Fase 3 — Keyframe e composizione)
-- P3.4: Compound clip e tracce di regolazione (`adjustment`) in `TimelineEditor` e `TimelineProjection`.
 - P3.5: Animazioni predefinite e marker (sequence e clip) in timeline.
-- P3.6: Controlli UI inspector (keyframe diamonds, curve easing selector, chroma key picker, maschere) e verifica criterio di completamento SPEC §8.
+- P3.6: Controlli UI inspector (keyframe diamonds, curve easing selector, chroma key picker, maschere) e verifica criterio di completamento SPEC §8 ("Animo un titolo con keyframe ed easing").
 
 ## Criterio di completamento della Fase 1 (SPEC §8)
 | Requisito | Esito | Verifica |

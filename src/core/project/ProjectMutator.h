@@ -31,6 +31,9 @@ public:
     void replaceMedia(const Media &media);
 
     // Sequences
+    void insertSequence(int index, Sequence sequence);
+    Sequence removeSequence(const SequenceId &sequenceId);
+    void replaceSequence(const Sequence &sequence);
     void setCanvas(const SequenceId &sequenceId, const Canvas &canvas);
     void setDefaultBackground(const SequenceId &sequenceId, const std::optional<CanvasBackground> &background);
     void setSequenceMarkers(const SequenceId &sequenceId, std::vector<Marker> markers);

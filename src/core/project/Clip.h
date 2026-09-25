@@ -350,6 +350,8 @@ struct Clip
     TextClipData *text() { return std::get_if<TextClipData>(&payload); }
     const AdjustmentClipData *adjustment() const { return std::get_if<AdjustmentClipData>(&payload); }
     AdjustmentClipData *adjustment() { return std::get_if<AdjustmentClipData>(&payload); }
+    const CompoundClipData *compound() const { return std::get_if<CompoundClipData>(&payload); }
+    CompoundClipData *compound() { return std::get_if<CompoundClipData>(&payload); }
 
     friend bool operator==(const Clip &, const Clip &) = default;
 };

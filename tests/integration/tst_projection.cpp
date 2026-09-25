@@ -638,6 +638,81 @@ private slots:
         QVERIFY(qBlue(cornerP) > 200 && qGreen(cornerP) < 50);
     }
 
+    void compoundClipRendersInProjection()
+    {
+        ProjectData data = baseProject();
+
+        // 1. Create a nested sequence with a red color clip
+        Sequence nested;
+        nested.id = SequenceId::create();
+        nested.name = u"Nested"_s;
+        nested.canvas = data.settings.defaultCanvas;
+        Track nestedTrack;
+        nestedTrack.id = TrackId::create();
+        nestedTrack.kind = TrackKind::Video;
+        Clip redClip;
+        redClip.id = ClipId::create();
+        redClip.start = frames(0);
+        redClip.duration = frames(30);
+        redClip.payload = ColorClipData{Param(Color{255, 0, 0, 255})};
+        nestedTrack.clips.push_back(redClip);
+        nested.visualTracks.push_back(nestedTrack);
+        data.sequences.push_back(nested);
+
+        // 2. Main sequence contains a compound clip referencing the nested sequence
+        Clip compClip;
+        compClip.id = ClipId::create();
+        compClip.start = frames(0);
+        compClip.duration = frames(30);
+        compClip.payload = CompoundClipData{nested.id, frames(0)};
+        data.sequences.front().visualTracks.front().clips.push_back(compClip);
+
+        // Render frame 5: should be red!
+        const QImage img = renderFresh1(data, 5);
+        const QRgb p = pixel(img, 160, 90);
+        QVERIFY(qRed(p) > 200 && qGreen(p) < 50 && qBlue(p) < 50);
+    }
+
+    void adjustmentLayerRendersInProjection()
+    {
+        ProjectData data = baseProject();
+
+        // Track 0 (bottom): White clip (255, 255, 255)
+        Clip whiteClip;
+        whiteClip.id = ClipId::create();
+        whiteClip.start = frames(0);
+        whiteClip.duration = frames(30);
+        whiteClip.payload = ColorClipData{Param(Color{255, 255, 255, 255})};
+        data.sequences.front().visualTracks.front().clips.push_back(whiteClip);
+
+        // Track 1 (adjustment track): Adjustment clip with exposure = -1.0
+        Track adjTrack;
+        adjTrack.id = TrackId::create();
+        adjTrack.kind = TrackKind::Adjustment;
+
+        Clip adjClip;
+        adjClip.id = ClipId::create();
+        adjClip.start = frames(0);
+        adjClip.duration = frames(30);
+        adjClip.payload = AdjustmentClipData{};
+
+        Effect adjEffect;
+        adjEffect.id = EffectId::create();
+        adjEffect.type = u"vedit.adjust.basic"_s;
+        adjEffect.params[u"exposure"_s] = Param(-1.0);
+        adjClip.effects.push_back(adjEffect);
+
+        adjTrack.clips.push_back(adjClip);
+        data.sequences.front().visualTracks.push_back(adjTrack);
+
+        // Render frame 10: exposure -1.0 halves RGB values from 255 to ~128
+        const QImage img = renderFresh1(data, 10);
+        const QRgb p = pixel(img, 160, 90);
+        QVERIFY(qRed(p) < 200 && qRed(p) > 50);
+        QVERIFY(qGreen(p) < 200 && qGreen(p) > 50);
+        QVERIFY(qBlue(p) < 200 && qBlue(p) > 50);
+    }
+
     void cleanupTestCase() { MltRuntime::shutdown(); }
 };
 

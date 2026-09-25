@@ -121,6 +121,27 @@ std::unique_ptr<Edit> replaceMedia(Media before, Media after)
                               [](ProjectMutator &m, const QString &, const Media &v) { m.replaceMedia(v); });
 }
 
+std::unique_ptr<Edit> insertSequence(int index, Sequence sequence)
+{
+    const SequenceId id = sequence.id;
+    return makeFunction([index, sequence = std::move(sequence)](ProjectMutator &m) { m.insertSequence(index, sequence); },
+                        [id](ProjectMutator &m) { m.removeSequence(id); });
+}
+
+std::unique_ptr<Edit> removeSequence(int index, Sequence sequence)
+{
+    const SequenceId id = sequence.id;
+    return makeFunction([id](ProjectMutator &m) { m.removeSequence(id); },
+                        [index, sequence = std::move(sequence)](ProjectMutator &m) { m.insertSequence(index, sequence); });
+}
+
+std::unique_ptr<Edit> replaceSequence(Sequence before, Sequence after)
+{
+    const QString key = before.id.toString();
+    return makeReplace<Sequence>(key, std::move(before), std::move(after),
+                                 [](ProjectMutator &m, const QString &, const Sequence &v) { m.replaceSequence(v); });
+}
+
 std::unique_ptr<Edit> setCanvas(SequenceId sequenceId, Canvas before, Canvas after)
 {
     return makeReplace<SequenceCanvas>(

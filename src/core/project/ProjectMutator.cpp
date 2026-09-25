@@ -72,6 +72,38 @@ void ProjectMutator::replaceMedia(const Media &media)
     changes().media.insert(media.id);
 }
 
+void ProjectMutator::insertSequence(int index, Sequence seq)
+{
+    auto &seqs = m_project.m_data.sequences;
+    const size_t pos = static_cast<size_t>(std::clamp(index, 0, static_cast<int>(seqs.size())));
+    const SequenceId id = seq.id;
+    seqs.insert(seqs.begin() + pos, std::move(seq));
+    changes().sequences.insert(id);
+}
+
+Sequence ProjectMutator::removeSequence(const SequenceId &sequenceId)
+{
+    auto &seqs = m_project.m_data.sequences;
+    const int index = m_project.m_data.sequenceIndex(sequenceId);
+    if (index < 0) {
+        throw std::logic_error("ProjectMutator::removeSequence: unknown sequence");
+    }
+    Sequence removed = std::move(seqs[static_cast<size_t>(index)]);
+    seqs.erase(seqs.begin() + index);
+    changes().sequences.insert(sequenceId);
+    return removed;
+}
+
+void ProjectMutator::replaceSequence(const Sequence &seq)
+{
+    const int index = m_project.m_data.sequenceIndex(seq.id);
+    if (index < 0) {
+        throw std::logic_error("ProjectMutator::replaceSequence: unknown sequence");
+    }
+    m_project.m_data.sequences[static_cast<size_t>(index)] = seq;
+    changes().sequences.insert(seq.id);
+}
+
 Sequence &ProjectMutator::sequence(const SequenceId &sequenceId)
 {
     const int index = m_project.m_data.sequenceIndex(sequenceId);

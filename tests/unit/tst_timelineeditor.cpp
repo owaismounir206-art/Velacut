@@ -530,6 +530,80 @@ private slots:
                                            MergeKey{QStringLiteral("opacity"), 43}));
         QCOMPARE(session.stack.index(), before + 1);
     }
+
+    void compoundClipCreationAndExpansion()
+    {
+        ClipId a, b;
+        auto owner = threeClips(&a, &b);
+        Session &session = *owner;
+
+        EditResult createResult = session.editor().createCompoundClip({a, b}, QStringLiteral("Compound"));
+        QVERIFY(createResult.ok());
+        const ClipId compId = createResult.primaryClip;
+        QVERIFY(session.apply(std::move(createResult)));
+
+        // The nested sequence should have been added to the project.
+        QCOMPARE(session.data().sequences.size(), size_t(2));
+        const Clip *compClip = session.data().findClip(compId);
+        QVERIFY(compClip != nullptr);
+        QVERIFY(compClip->compound() != nullptr);
+        const SequenceId nestedId = compClip->compound()->sequenceId;
+        const Sequence *nestedSeq = session.data().findSequence(nestedId);
+        QVERIFY(nestedSeq != nullptr);
+        QCOMPARE(nestedSeq->name, QStringLiteral("Compound"));
+
+        // Undo restores original 3 clips and removes the nested sequence.
+        session.stack.undo();
+        QCOMPARE(session.data().sequences.size(), size_t(1));
+        QVERIFY(session.data().findClip(a) != nullptr);
+        QVERIFY(session.data().findClip(b) != nullptr);
+
+        // Redo re-creates the compound clip.
+        session.stack.redo();
+        QCOMPARE(session.data().sequences.size(), size_t(2));
+        QVERIFY(session.data().findClip(compId) != nullptr);
+
+        // Expand the compound clip back.
+        EditResult expandResult = session.editor().expandCompoundClip(compId);
+        QVERIFY(expandResult.ok());
+        QVERIFY(session.apply(std::move(expandResult)));
+
+        // The compound clip is gone, clips are back, nested sequence removed.
+        QVERIFY(session.data().findClip(compId) == nullptr);
+        QCOMPARE(session.data().sequences.size(), size_t(1));
+        QCOMPARE(session.mainTrack().clips.size(), size_t(3));
+    }
+
+    void adjustmentLayerInsertion()
+    {
+        Fixture fixture;
+        Session session(fixture.data);
+
+        EditResult result = session.editor().insertAdjustment(frames(10), frames(60));
+        QVERIFY(result.ok());
+        const ClipId adjId = result.primaryClip;
+        QVERIFY(session.apply(std::move(result)));
+
+        const Clip *adjClip = session.data().findClip(adjId);
+        QVERIFY(adjClip != nullptr);
+        QVERIFY(adjClip->adjustment() != nullptr);
+        QCOMPARE(adjClip->start, frames(10));
+        QCOMPARE(adjClip->duration, frames(60));
+
+        // Track should be of kind Adjustment
+        bool foundAdjTrack = false;
+        for (const Track &t : session.sequence().visualTracks) {
+            if (t.kind == TrackKind::Adjustment) {
+                foundAdjTrack = true;
+                break;
+            }
+        }
+        QVERIFY(foundAdjTrack);
+
+        // Undo removes it.
+        session.stack.undo();
+        QVERIFY(session.data().findClip(adjId) == nullptr);
+    }
 };
 
 QTEST_GUILESS_MAIN(TestTimelineEditor)
