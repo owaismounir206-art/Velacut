@@ -108,6 +108,89 @@ private:
     int m_density = 0;
 };
 
+// Sizes of the editor's own surfaces (timeline, panels, preview), so that QML never hard-codes a dimension.
+class ThemeEditor : public QObject
+{
+    Q_OBJECT
+    QML_ANONYMOUS
+    // Panels
+    Q_PROPERTY(qreal libraryWidth MEMBER m_libraryWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal mediaTileWidth MEMBER m_mediaTileWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal mediaTileHeight MEMBER m_mediaTileHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal previewMinimumHeight MEMBER m_previewMinimumHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal timelineMinimumHeight MEMBER m_timelineMinimumHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal timelineDefaultHeight MEMBER m_timelineDefaultHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal splitterSize MEMBER m_splitterSize CONSTANT FINAL)
+    Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal dialogWidth MEMBER m_dialogWidth CONSTANT FINAL)
+    // Home screen
+    Q_PROPERTY(qreal draftCardWidth MEMBER m_draftCardWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal draftThumbnailHeight MEMBER m_draftThumbnailHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal heroHeight MEMBER m_heroHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal contentMaxWidth MEMBER m_contentMaxWidth CONSTANT FINAL)
+    // Timeline
+    Q_PROPERTY(qreal rulerHeight MEMBER m_rulerHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal trackHeaderWidth MEMBER m_trackHeaderWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal mainTrackHeight MEMBER m_mainTrackHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal overlayTrackHeight MEMBER m_overlayTrackHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal audioTrackHeight MEMBER m_audioTrackHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal trackGap MEMBER m_trackGap CONSTANT FINAL)
+    Q_PROPERTY(qreal newTrackZone MEMBER m_newTrackZone CONSTANT FINAL)
+    Q_PROPERTY(qreal trimHandleWidth MEMBER m_trimHandleWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal playheadWidth MEMBER m_playheadWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal playheadKnob MEMBER m_playheadKnob CONSTANT FINAL)
+    Q_PROPERTY(qreal selectionBorder MEMBER m_selectionBorder CONSTANT FINAL)
+    Q_PROPERTY(qreal hairline MEMBER m_hairline CONSTANT FINAL)
+    Q_PROPERTY(qreal snapThreshold MEMBER m_snapThreshold CONSTANT FINAL)
+    Q_PROPERTY(qreal rulerLabelSpacing MEMBER m_rulerLabelSpacing CONSTANT FINAL)
+    Q_PROPERTY(qreal dragStartDistance MEMBER m_dragStartDistance CONSTANT FINAL)
+    // Zoom of the timeline in pixels per frame
+    Q_PROPERTY(qreal zoomDefault MEMBER m_zoomDefault CONSTANT FINAL)
+    Q_PROPERTY(qreal zoomMinimum MEMBER m_zoomMinimum CONSTANT FINAL)
+    Q_PROPERTY(qreal zoomMaximum MEMBER m_zoomMaximum CONSTANT FINAL)
+    Q_PROPERTY(qreal zoomStep MEMBER m_zoomStep CONSTANT FINAL)
+    // Timeline padding after the last clip, as a share of the view
+    Q_PROPERTY(qreal tailRatio MEMBER m_tailRatio CONSTANT FINAL)
+
+public:
+    using QObject::QObject;
+
+private:
+    qreal m_libraryWidth = 344;
+    qreal m_mediaTileWidth = 152;
+    qreal m_mediaTileHeight = 100;
+    qreal m_previewMinimumHeight = 180;
+    qreal m_timelineMinimumHeight = 160;
+    qreal m_timelineDefaultHeight = 300;
+    qreal m_splitterSize = 8;
+    qreal m_toolbarHeight = 48;
+    qreal m_dialogWidth = 560;
+    qreal m_draftCardWidth = 232;
+    qreal m_draftThumbnailHeight = 130;
+    qreal m_heroHeight = 176;
+    qreal m_contentMaxWidth = 1240;
+    qreal m_rulerHeight = 28;
+    qreal m_trackHeaderWidth = 48;
+    qreal m_mainTrackHeight = 64;
+    qreal m_overlayTrackHeight = 48;
+    qreal m_audioTrackHeight = 40;
+    qreal m_trackGap = 4;
+    qreal m_newTrackZone = 24;
+    qreal m_trimHandleWidth = 10;
+    qreal m_playheadWidth = 2;
+    qreal m_playheadKnob = 12;
+    qreal m_selectionBorder = 2;
+    qreal m_hairline = 1;
+    qreal m_snapThreshold = 8;
+    qreal m_rulerLabelSpacing = 96;
+    qreal m_dragStartDistance = 4;
+    qreal m_zoomDefault = 3;
+    qreal m_zoomMinimum = 0.02;
+    qreal m_zoomMaximum = 24;
+    qreal m_zoomStep = 1.25;
+    qreal m_tailRatio = 0.5;
+};
+
 // Elevation levels 0–5 (dp), rendered mainly with tonal surface colors (see Theme.surfaceAt()).
 class ThemeElevation : public QObject
 {

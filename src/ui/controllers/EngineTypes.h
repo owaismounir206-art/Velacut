@@ -3,19 +3,28 @@
 #pragma once
 
 #include "engine/playback/FrameSink.h"
-#include "engine/playback/Player.h"
+#include "engine/playback/TimelinePlayer.h"
+#include "engine/render/RenderJob.h"
 
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
 
 namespace vedit::ui {
 
-struct PlayerForeign
+struct TimelinePlayerForeign
 {
     Q_GADGET
-    QML_FOREIGN(vedit::engine::Player)
-    QML_NAMED_ELEMENT(Player)
-    QML_UNCREATABLE("Provided by App.player")
+    QML_FOREIGN(vedit::engine::TimelinePlayer)
+    QML_NAMED_ELEMENT(TimelinePlayer)
+    QML_UNCREATABLE("Provided by App.editor.player")
+};
+
+struct RenderJobForeign
+{
+    Q_GADGET
+    QML_FOREIGN(vedit::engine::RenderJob)
+    QML_NAMED_ELEMENT(RenderJob)
+    QML_UNCREATABLE("Provided by App.editor.exportJob")
 };
 
 struct FrameSinkForeign

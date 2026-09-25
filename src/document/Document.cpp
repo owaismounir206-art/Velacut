@@ -81,13 +81,13 @@ std::unique_ptr<Document> Document::create(const QString &directory, ProjectData
     return open(directory, error);
 }
 
-bool Document::apply(EditResult edit)
+bool Document::apply(EditResult edit, MergeKey mergeKey)
 {
     if (!edit.ok()) {
         qCWarning(lcDocument) << "edit refused:" << edit.error;
         return false;
     }
-    m_undoStack.push(new EditCommand(*m_project, edit.text, std::move(edit.script)));
+    m_undoStack.push(new EditCommand(*m_project, edit.text, std::move(edit.script), std::move(mergeKey)));
     return true;
 }
 

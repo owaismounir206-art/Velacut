@@ -36,6 +36,7 @@ class ThemeManager : public QObject
     Q_PROPERTY(vedit::theme::ThemeSpace *space READ space CONSTANT FINAL)
     Q_PROPERTY(vedit::theme::ThemeElevation *elevation READ elevation CONSTANT FINAL)
     Q_PROPERTY(vedit::theme::ThemeMotion *motion READ motion CONSTANT FINAL)
+    Q_PROPERTY(vedit::theme::ThemeEditor *editor READ editor CONSTANT FINAL)
 
     Q_PROPERTY(Mode mode READ mode WRITE setMode NOTIFY settingsChanged FINAL)
     Q_PROPERTY(Contrast contrast READ contrast WRITE setContrast NOTIFY settingsChanged FINAL)
@@ -125,6 +126,7 @@ public:
     ThemeShape *shape() { return &m_shape; }
     ThemeState *state() { return &m_state; }
     ThemeSpace *space() { return &m_space; }
+    ThemeEditor *editor() { return &m_editor; }
     ThemeElevation *elevation() { return &m_elevation; }
     ThemeMotion *motion() { return &m_motion; }
 
@@ -194,6 +196,7 @@ private:
     ThemeShape m_shape;
     ThemeState m_state;
     ThemeSpace m_space;
+    ThemeEditor m_editor;
     ThemeElevation m_elevation;
     ThemeMotion m_motion;
     QVariantAnimation m_animation;

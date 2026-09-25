@@ -1,9 +1,8 @@
-// Phase 0 window: open a video and play it (SPEC §8, Phase 0). The full editor layout arrives in Phase 1.
+// The application window: the home screen with the drafts, or the editor of the open project (SPEC 0bis rules 1–2).
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material as M
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import Vedit.Components
 import Vedit.Theme
@@ -12,14 +11,12 @@ import Vedit.UI
 ApplicationWindow {
     id: window
 
-    readonly property var player: App.player
-
-    width: 1280
-    height: 800
-    minimumWidth: 480
-    minimumHeight: 360
+    width: 1440
+    height: 900
+    minimumWidth: 960
+    minimumHeight: 600
     visible: true
-    title: player.source !== "" ? qsTr("%1 — vedit").arg(player.source.split("/").pop()) : "vedit"
+    title: App.editor ? qsTr("%1 — vedit").arg(App.editor.name) : "vedit"
     color: Theme.color.surface
 
     // Colors of the Qt Material controls this style does not redefine.
@@ -29,195 +26,55 @@ ApplicationWindow {
     M.Material.background: Theme.color.surface
     M.Material.foreground: Theme.color.onSurface
 
-    function openFile(url) {
-        player.open(App.localPath(url))
-    }
-
-    Shortcut { sequences: [StandardKey.Open]; onActivated: fileDialog.open() }
-    Shortcut { sequence: "Space"; enabled: window.player.ready; onActivated: window.player.togglePlay() }
-    Shortcut { sequence: "Left"; enabled: window.player.ready; onActivated: window.player.step(-1) }
-    Shortcut { sequence: "Right"; enabled: window.player.ready; onActivated: window.player.step(1) }
-    Shortcut { sequence: "Home"; enabled: window.player.ready; onActivated: window.player.seek(0) }
-    Shortcut { sequence: "End"; enabled: window.player.ready; onActivated: window.player.seek(window.player.duration - 1) }
-
-    FileDialog {
-        id: fileDialog
-        title: qsTr("Open a video")
-        nameFilters: [qsTr("Videos and audio (%1)").arg("*.mp4 *.mov *.mkv *.webm *.avi *.mts *.m2ts *.mxf *.mp3 *.wav *.flac *.ogg *.opus *.m4a"),
-                      qsTr("All files (*)")]
-        onAccepted: window.openFile(selectedFile)
+    function showMessage(text, undoable) {
+        if (undoable && App.editor) {
+            const editor = App.editor
+            snackbar.show(text, qsTr("Undo"), () => editor.undo())
+        } else {
+            snackbar.show(text, "")
+        }
     }
 
     Connections {
-        target: window.player
-        function onStateChanged() {
-            if (window.player.error !== "")
-                snackbar.show(window.player.error, "")
-        }
+        target: App
+        function onMessage(text) { window.showMessage(text, false) }
     }
 
-    header: TopAppBar {
-        title: window.player.source !== "" ? window.player.source.split("/").pop() : "vedit"
-        trailing: [
-            Chip {
-                variant: "assist"
-                iconName: App.softwareRendering ? "memory" : "speed"
-                text: App.safeMode ? qsTr("Safe mode") : App.uiBackend
-                checkable: false
-                onClicked: infoDialog.open()
-            },
-            IconButton {
-                iconName: "info"
-                label: qsTr("System information")
-                onClicked: infoDialog.open()
-            },
-            Button {
-                variant: "tonal"
-                iconName: "folder_open"
-                text: qsTr("Open video")
-                onClicked: fileDialog.open()
-            }
-        ]
-    }
-
-    ColumnLayout {
+    Loader {
         anchors.fill: parent
-        anchors.margins: Theme.space.lg
-        spacing: Theme.space.md
-
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            radius: Theme.shape.large
-            color: Theme.color.surfaceContainerLowest
-            clip: true
-
-            VideoPreview {
-                anchors.fill: parent
-                anchors.margins: 1
-                sink: window.player.sink
-                visible: window.player.ready
-            }
-
-            ColumnLayout {
-                anchors.centerIn: parent
-                visible: !window.player.ready
-                spacing: Theme.space.lg
-                Icon {
-                    Layout.alignment: Qt.AlignHCenter
-                    name: "movie"
-                    size: 64
-                    color: Theme.color.onSurfaceVariant
-                }
-                Label {
-                    Layout.alignment: Qt.AlignHCenter
-                    role: "titleLarge"
-                    text: window.player.loading ? qsTr("Opening…") : qsTr("Open a video to start")
-                }
-                BusyIndicator {
-                    Layout.alignment: Qt.AlignHCenter
-                    running: window.player.loading
-                    visible: running
-                }
-                Button {
-                    Layout.alignment: Qt.AlignHCenter
-                    visible: !window.player.loading
-                    iconName: "folder_open"
-                    text: qsTr("Open video")
-                    onClicked: fileDialog.open()
-                }
-                Label {
-                    Layout.alignment: Qt.AlignHCenter
-                    visible: !window.player.loading
-                    role: "bodyMedium"
-                    color: Theme.color.onSurfaceVariant
-                    text: qsTr("or drop a file here")
-                }
-            }
-
-            DropArea {
-                anchors.fill: parent
-                onDropped: (drop) => {
-                    if (drop.hasUrls)
-                        window.openFile(drop.urls[0])
-                }
-            }
-        }
-
-        // Transport bar
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Theme.space.sm
-            enabled: window.player.ready
-
-            IconButton {
-                iconName: "skip_previous"
-                label: qsTr("Go to start")
-                shortcutText: "Home"
-                onClicked: window.player.seek(0)
-            }
-            IconButton {
-                iconName: "chevron_left"
-                label: qsTr("Previous frame")
-                shortcutText: "←"
-                onClicked: window.player.step(-1)
-            }
-            IconButton {
-                variant: "filled"
-                iconName: window.player.playing ? "pause" : "play_arrow"
-                label: window.player.playing ? qsTr("Pause") : qsTr("Play")
-                shortcutText: qsTr("Space")
-                onClicked: window.player.togglePlay()
-            }
-            IconButton {
-                iconName: "chevron_right"
-                label: qsTr("Next frame")
-                shortcutText: "→"
-                onClicked: window.player.step(1)
-            }
-            Label {
-                role: "labelLarge"
-                font.features: { "tnum": 1 }
-                text: window.player.timecode(window.player.position) + " / " + window.player.timecode(Math.max(0, window.player.duration - 1))
-            }
-            Slider {
-                id: seekSlider
-                Layout.fillWidth: true
-                from: 0
-                to: Math.max(1, window.player.duration - 1)
-                stepSize: 1
-                value: window.player.position
-                valueText: window.player.timecode(value)
-                Accessible.name: qsTr("Position")
-                onMoved: window.player.seek(value)
-            }
-            Icon {
-                name: window.player.volume > 0 ? "volume_up" : "volume_off"
-            }
-            Slider {
-                Layout.preferredWidth: 120
-                from: 0
-                to: 1
-                value: window.player.volume
-                valueText: Math.round(value * 100) + "%"
-                Accessible.name: qsTr("Volume")
-                onMoved: window.player.volume = value
-            }
+        sourceComponent: App.editor ? editorScreen : homeScreen
+    }
+    Component {
+        id: homeScreen
+        HomeScreen {
+            onInfoRequested: infoDialog.open()
         }
     }
+    Component {
+        id: editorScreen
+        EditorScreen {
+            editor: App.editor
+            onMessage: (text, undoable) => window.showMessage(text, undoable)
+        }
+    }
+
+    // Leaving the window or the app: everything is saved already, this writes the last second of changes.
+    onActiveChanged: if (!active && App.editor) App.editor.saveNow()
 
     Snackbar {
         id: snackbar
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: Theme.space.xl + 56
+        anchors.bottomMargin: Theme.space.xxxl
+        z: 100
     }
 
     Dialog {
         id: infoDialog
         title: qsTr("System information")
         iconName: "info"
-        width: Math.min(window.width - 48, 640)
+        anchors.centerIn: parent
+        width: Math.min(window.width - 2 * Theme.space.xl, Theme.editor.dialogWidth)
         standardButtons: Dialog.Close
 
         ColumnLayout {
@@ -225,7 +82,7 @@ ApplicationWindow {
             spacing: Theme.space.md
             ScrollView {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.min(360, info.implicitHeight)
+                Layout.preferredHeight: Math.min(window.height / 2, info.implicitHeight)
                 clip: true
                 Label {
                     id: info

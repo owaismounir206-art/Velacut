@@ -4,9 +4,14 @@
 #include "common/DevSandbox.h"
 #include "engine/gpu/GraphicsSetup.h"
 #include "engine/mlt/MltRuntime.h"
-#include "engine/playback/Player.h"
+#include "engine/playback/FrameSink.h"
+#include "engine/playback/TimelinePlayer.h"
+#include "ui/controllers/EditorController.h"
+#include "ui/models/TimelineModel.h"
+#include "document/DraftStore.h"
 #include "theme/ThemeManager.h"
 #include "ui/controllers/AppController.h"
+#include "ui/models/DraftsModel.h"
 
 #include <QCommandLineParser>
 #include <QDir>
@@ -94,7 +99,7 @@ int main(int argc, char *argv[])
     const QCommandLineOption reprobeOption(u"reprobe"_s,
                                            QCoreApplication::translate("main", "Probe the graphics capabilities again."));
     const QCommandLineOption smokeTestOption(u"smoke-test"_s,
-                                             QCoreApplication::translate("main", "Play the given file and exit (automatic tests)."));
+                                             QCoreApplication::translate("main", "Put the given file in a new project, play it and exit (automatic tests)."));
     const QCommandLineOption screenshotOption(u"screenshot"_s,
                                               QCoreApplication::translate("main", "With --smoke-test: save an image of the window."),
                                               u"file"_s);
@@ -108,7 +113,7 @@ int main(int argc, char *argv[])
                                               u"WxH"_s);
     parser.addOptions({safeModeOption, galleryOption, reprobeOption, smokeTestOption, screenshotOption, themeOption,
                        contrastOption, windowSizeOption});
-    parser.addPositionalArgument(u"file"_s, QCoreApplication::translate("main", "Video to open."));
+    parser.addPositionalArgument(u"files"_s, QCoreApplication::translate("main", "Videos, photos or music to start a new project with."));
     parser.process(app);
     const bool smokeTest = parser.isSet(smokeTestOption);
 
@@ -183,8 +188,7 @@ int main(int argc, char *argv[])
         themeManager.setSoftwareRendering(decision.ui == gpu::UiBackend::Software);
         QQuickStyle::setStyle(u"Vedit.Style"_s);
 
-        engine::Player player;
-        ui::AppController controller(&player, decision, capabilities);
+        ui::AppController controller(decision, capabilities);
         ui::AppController::setInstance(&controller);
 
         // Video capabilities are slower to probe: done in background, then cached.
@@ -242,18 +246,35 @@ int main(int argc, char *argv[])
             });
         }
 
-        const QStringList files = parser.positionalArguments();
-        if (!files.isEmpty()) {
-            player.open(QDir::current().absoluteFilePath(files.constFirst()));
+        // "Open with vedit": a new project with those files on the timeline.
+        QStringList files;
+        for (const QString &file : parser.positionalArguments()) {
+            files << QDir::current().absoluteFilePath(file);
+        }
+        if (!files.isEmpty() && controller.newProject()) {
+            controller.editor()->importAndInsertPaths(files, 0, controller.editor()->timeline()->mainRow());
         }
         if (smokeTest) {
-            // Automatic check (SPEC 1bis verification): play the file (muted), require real frames, exit.
-            player.setVolume(0.0);
-            QObject::connect(&player, &engine::Player::sourceChanged, &player, [&player] { player.play(); });
-            // Passes only when frames were decoded *and* drawn by the preview surface.
+            // Automatic check (SPEC 1bis verification): the file goes through import, timeline, projection and
+            // preview; frames must be decoded *and* drawn by the preview surface, then the draft is removed.
+            ui::EditorController *editor = controller.editor();
+            if (!editor) {
+                qCCritical(lcApp) << "smoke test failed: no project";
+                return 2;
+            }
+            editor->player()->setVolume(0.0);
+            QObject::connect(editor->timeline(), &ui::TimelineModel::durationChanged, editor, [editor] {
+                if (editor->timeline()->duration() > 0 && !editor->player()->playing()) {
+                    editor->player()->play();
+                }
+            });
+            QObject::connect(editor, &ui::EditorController::message, &app, [](const QString &text) {
+                qCCritical(lcApp) << "smoke test failed:" << text;
+                QCoreApplication::exit(2);
+            });
             const QString screenshot = parser.value(screenshotOption);
-            QObject::connect(player.sink(), &engine::FrameSink::frameReady, &app, [&player, window, screenshot] {
-                engine::FrameSink *sink = player.sink();
+            engine::FrameSink *sink = editor->player()->sink();
+            QObject::connect(sink, &engine::FrameSink::frameReady, &app, [sink, window, screenshot] {
                 if (sink->framesReceived() >= 45 && sink->framesDisplayed() >= 20) {
                     qCInfo(lcApp) << "smoke test passed:" << sink->framesReceived() << "frames decoded,"
                                   << sink->framesDisplayed() << "displayed," << sink->framesDropped() << "replaced before display";
@@ -263,22 +284,23 @@ int main(int argc, char *argv[])
                     QCoreApplication::exit(0);
                 }
             });
-            QObject::connect(&player, &engine::Player::stateChanged, &app, [&player] {
-                if (!player.error().isEmpty()) {
-                    qCCritical(lcApp) << "smoke test failed:" << player.error();
-                    QCoreApplication::exit(2);
-                }
-            });
-            QTimer::singleShot(30000, &app, [&player] {
-                qCCritical(lcApp) << "smoke test failed: timeout;" << player.sink()->framesReceived() << "decoded,"
-                                  << player.sink()->framesDisplayed() << "displayed";
+            QTimer::singleShot(30000, &app, [sink] {
+                qCCritical(lcApp) << "smoke test failed: timeout;" << sink->framesReceived() << "decoded,"
+                                  << sink->framesDisplayed() << "displayed";
                 QCoreApplication::exit(2);
             });
         }
 
         result = app.exec();
         themeManager.saveSettings();
-        // Destruction order: QML first, then the player (every MLT object), then MLT itself.
+        if (smokeTest && controller.editor()) {
+            const QString draft = controller.editor()->data().id.toString();
+            controller.closeEditor();
+            controller.drafts()->remove(draft); // the smoke test leaves nothing behind
+        } else {
+            controller.closeEditor(); // writes the last changes
+        }
+        // Destruction order: QML first, then the editor (every MLT object), then MLT itself.
     }
     engine::MltRuntime::shutdown();
     if (!restarting && result == 0) {

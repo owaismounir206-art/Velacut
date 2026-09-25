@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "core/commands/EditCommand.h"
 #include "core/edit/TimelineEditor.h"
 #include "core/project/Project.h"
 
@@ -47,8 +48,9 @@ public:
     // Values corrected while loading (for the log).
     QStringList loadWarnings() const { return m_loadWarnings; }
 
-    // Pushes one undoable command; false (nothing changed) if the edit failed.
-    bool apply(EditResult edit);
+    // Pushes one undoable command; false (nothing changed) if the edit failed. Commands with the same non-empty
+    // merge key become one undo step (a gesture, an import of several files).
+    bool apply(EditResult edit, MergeKey mergeKey = {});
 
     SaveState saveState() const;
     QString saveError() const;
