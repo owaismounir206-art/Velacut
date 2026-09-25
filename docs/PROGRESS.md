@@ -15,15 +15,22 @@ Ultimo aggiornamento: 2026-09-25
    fotogramma mostrato (skimming), J/K/L fino a 8x, stop agli estremi. Test anche sotto ASan con modifiche continue in
    riproduzione. Scoperte: race di MLT nei worker paralleli (D-24), colori MLT `#AARRGGBB` (D-25).
 
+3. Export MP4 in `vedit-render` (processo separato, progetto congelato, avanzamento JSON, annullamento senza file
+   parziali), stessa proiezione dell'anteprima anche a dimensioni/fps diversi; test con ffprobe e fotogrammi decodificati.
+4. `src/document`: bozze con salvataggio continuo atomico (300 ms / max 2 s, thread di I/O, nuovi tentativi), lock con
+   recupero dopo crash, `DraftStore` (elenco, crea, rinomina, duplica, cestino).
+5. Import: probe in `vedit-render --probe` (un file che fa crashare il probe viene scartato), fingerprint campionato,
+   miniature e waveform con FFmpeg in background con cache su disco, canvas e fps dalla prima clip (un solo comando).
+
 ### Fase 1: prossimi passi (in ordine)
-1. Export: `vedit-render` (processo separato, `.vproj` congelato + job JSON, avanzamento JSON su stdout) + test ffprobe.
-2. Bozze: libreria `src/document` (Document = Project + undo + salvataggio continuo atomico, lock/recupero, cronologia),
-   `DraftStore` per la schermata iniziale.
-3. Import dei media: probe libavformat, fingerprint campionato, miniature e waveform in background con cache;
-   canvas e fps dalla prima clip nello stesso comando.
-4. UI dell'editor: schermata iniziale, layout, media pool con skimming e "+", anteprima con J/K/L, timeline
+1. UI dell'editor: schermata iniziale, layout, media pool con skimming e "+", anteprima con J/K/L, timeline
    virtualizzata (drag/trim/split/snapping/zoom/skimming), barra contestuale, snackbar "Annulla", export a una schermata.
-5. Test di semplicità 1, 2, 8, 10; verifica del criterio; README/SHORTCUTS/PROGRESS; attesa del via.
+2. Test di semplicità 1, 2, 8, 10; verifica del criterio; README/SHORTCUTS/PROGRESS; attesa del via.
+
+### Fase 1: limiti noti finora
+- Cronologia delle versioni: rimandata alla Fase 8 come da tabella SPEC §8 (D-31).
+- Stima della dimensione dell'export: ipotesi del 70% del tetto di bitrate, da tarare su filmati reali.
+- Encoder hardware all'export: Fase 8 (ora sempre libx264, disponibile ovunque).
 
 ## Fase 0 — Fondamenta: completata
 
