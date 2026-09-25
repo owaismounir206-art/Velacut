@@ -1,0 +1,791 @@
+{
+    "categories": [
+        {
+            "id": "basic",
+            "name": {
+                "en": "Basic",
+                "it": "Base"
+            }
+        },
+        {
+            "id": "label",
+            "name": {
+                "en": "Labels",
+                "it": "Etichette"
+            }
+        },
+        {
+            "id": "title",
+            "name": {
+                "en": "Titles",
+                "it": "Titoli"
+            }
+        },
+        {
+            "id": "social",
+            "name": {
+                "en": "Social",
+                "it": "Social"
+            }
+        },
+        {
+            "id": "neon",
+            "name": {
+                "en": "Neon",
+                "it": "Neon"
+            }
+        }
+    ],
+    "items": [
+        {
+            "kind": "textStyle",
+            "id": "text/default",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Default",
+                "it": "Predefinito"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.006
+                    ],
+                    "blur": 0.08
+                },
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/outline",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Outline",
+                "it": "Contorno"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#FFFFFFFF",
+                "stroke": {
+                    "color": "#000000FF",
+                    "width": 0.12
+                },
+                "shadow": null,
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/outline-yellow",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Yellow outline",
+                "it": "Giallo con contorno"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#FFD54FFF",
+                "stroke": {
+                    "color": "#000000FF",
+                    "width": 0.12
+                },
+                "shadow": null,
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/shadow",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Soft shadow",
+                "it": "Ombra morbida"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#000000B3",
+                    "offset": [
+                        0.0,
+                        0.01
+                    ],
+                    "blur": 0.25
+                },
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/thin",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Thin",
+                "it": "Sottile"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 300,
+                    "italic": false
+                },
+                "size": 0.06,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.006
+                    ],
+                    "blur": 0.08
+                },
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/heavy",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Heavy",
+                "it": "Pesante"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.09,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.006
+                    ],
+                    "blur": 0.08
+                },
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/label-black",
+            "version": 1,
+            "category": "label",
+            "name": {
+                "en": "Black label",
+                "it": "Etichetta nera"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": null,
+                "background": {
+                    "color": "#000000CC",
+                    "padding": 0.3,
+                    "radius": 0.15
+                },
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/label-white",
+            "version": 1,
+            "category": "label",
+            "name": {
+                "en": "White label",
+                "it": "Etichetta bianca"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#111111FF",
+                "stroke": null,
+                "shadow": null,
+                "background": {
+                    "color": "#FFFFFFFF",
+                    "padding": 0.3,
+                    "radius": 0.15
+                },
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/label-yellow",
+            "version": 1,
+            "category": "label",
+            "name": {
+                "en": "Yellow label",
+                "it": "Etichetta gialla"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#111111FF",
+                "stroke": null,
+                "shadow": null,
+                "background": {
+                    "color": "#FFD54FFF",
+                    "padding": 0.3,
+                    "radius": 0.3
+                },
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/label-red",
+            "version": 1,
+            "category": "label",
+            "name": {
+                "en": "Red label",
+                "it": "Etichetta rossa"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": null,
+                "background": {
+                    "color": "#E53935FF",
+                    "padding": 0.3,
+                    "radius": 0.3
+                },
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/label-pill",
+            "version": 1,
+            "category": "label",
+            "name": {
+                "en": "Pill",
+                "it": "Pillola"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.05,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": null,
+                "background": {
+                    "color": "#3949ABFF",
+                    "padding": 0.45,
+                    "radius": 1.0
+                },
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/label-glass",
+            "version": 1,
+            "category": "label",
+            "name": {
+                "en": "Glass",
+                "it": "Vetro"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.06,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": null,
+                "background": {
+                    "color": "#FFFFFF40",
+                    "padding": 0.35,
+                    "radius": 0.4
+                },
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/title-serif",
+            "version": 1,
+            "category": "title",
+            "name": {
+                "en": "Serif title",
+                "it": "Titolo con grazie"
+            },
+            "style": {
+                "font": {
+                    "family": "serif",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.09,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.006
+                    ],
+                    "blur": 0.08
+                },
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/title-italic",
+            "version": 1,
+            "category": "title",
+            "name": {
+                "en": "Italic title",
+                "it": "Titolo corsivo"
+            },
+            "style": {
+                "font": {
+                    "family": "serif",
+                    "weight": 400,
+                    "italic": true
+                },
+                "size": 0.08,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.006
+                    ],
+                    "blur": 0.08
+                },
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/title-wide",
+            "version": 1,
+            "category": "title",
+            "name": {
+                "en": "Wide title",
+                "it": "Titolo spaziato"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.065,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.006
+                    ],
+                    "blur": 0.08
+                },
+                "background": null,
+                "letterSpacing": 0.3,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/title-mono",
+            "version": 1,
+            "category": "title",
+            "name": {
+                "en": "Typewriter",
+                "it": "Macchina da scrivere"
+            },
+            "style": {
+                "font": {
+                    "family": "monospace",
+                    "weight": 500,
+                    "italic": false
+                },
+                "size": 0.055,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": null,
+                "background": {
+                    "color": "#000000A0",
+                    "padding": 0.25,
+                    "radius": 0.05
+                },
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/title-giant",
+            "version": 1,
+            "category": "title",
+            "name": {
+                "en": "Giant",
+                "it": "Gigante"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.14,
+                "color": "#FFFFFFFF",
+                "stroke": {
+                    "color": "#000000FF",
+                    "width": 0.06
+                },
+                "shadow": null,
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/social-bold",
+            "version": 1,
+            "category": "social",
+            "name": {
+                "en": "Bold caption",
+                "it": "Didascalia decisa"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.065,
+                "color": "#FFFFFFFF",
+                "stroke": {
+                    "color": "#000000FF",
+                    "width": 0.16
+                },
+                "shadow": {
+                    "color": "#00000080",
+                    "offset": [
+                        0.0,
+                        0.008
+                    ],
+                    "blur": 0.05
+                },
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/social-green",
+            "version": 1,
+            "category": "social",
+            "name": {
+                "en": "Green pop",
+                "it": "Verde acceso"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#76FF03FF",
+                "stroke": {
+                    "color": "#000000FF",
+                    "width": 0.14
+                },
+                "shadow": null,
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/social-pink",
+            "version": 1,
+            "category": "social",
+            "name": {
+                "en": "Pink pop",
+                "it": "Rosa acceso"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#FF4081FF",
+                "stroke": {
+                    "color": "#FFFFFFFF",
+                    "width": 0.12
+                },
+                "shadow": null,
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/social-cyan",
+            "version": 1,
+            "category": "social",
+            "name": {
+                "en": "Cyan pop",
+                "it": "Ciano acceso"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#18FFFFFF",
+                "stroke": {
+                    "color": "#000000FF",
+                    "width": 0.14
+                },
+                "shadow": null,
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/neon-blue",
+            "version": 1,
+            "category": "neon",
+            "name": {
+                "en": "Neon blue",
+                "it": "Neon blu"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#E1F5FEFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#2979FFFF",
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "blur": 0.35
+                },
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/neon-pink",
+            "version": 1,
+            "category": "neon",
+            "name": {
+                "en": "Neon pink",
+                "it": "Neon rosa"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#FCE4ECFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#F50057FF",
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "blur": 0.35
+                },
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/neon-green",
+            "version": 1,
+            "category": "neon",
+            "name": {
+                "en": "Neon green",
+                "it": "Neon verde"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#F1F8E9FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00E676FF",
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "blur": 0.35
+                },
+                "background": null,
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            }
+        }
+    ]
+}

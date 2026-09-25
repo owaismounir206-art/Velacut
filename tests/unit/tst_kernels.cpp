@@ -2,9 +2,11 @@
 // CPU reference kernels of Phase 2 (SPEC 1bis rule 1): transform, colour, spatial filters, transitions, audio gain.
 #include "fx/Audio.h"
 #include "fx/Color.h"
+#include "fx/Library.h"
 #include "fx/Transform.h"
 #include "fx/Transition.h"
 
+#include <QSet>
 #include <QTest>
 
 #include <array>
@@ -305,6 +307,43 @@ private slots:
         QVERIFY(near(out.at(0, 0), {0, 0, 0, 255}));
         QCOMPARE(ease(Easing::EaseInOut, 0.5), 0.5);
         QVERIFY(ease(Easing::EaseIn, 0.3) < 0.3 && ease(Easing::EaseOut, 0.3) > 0.3);
+    }
+
+    // ---- library ------------------------------------------------------------------------------------------------
+    void coreLibraryLoads()
+    {
+        const Library &library = Library::core();
+        QVERIFY2(library.errors().isEmpty(), qPrintable(library.errors().join(u'\n')));
+        QCOMPARE(library.packId(), QStringLiteral("vedit.core"));
+        QVERIFY(library.filters().size() >= 30);
+        QVERIFY(library.transitions().size() >= 18);
+        QVERIFY(library.textStyles().size() >= 24);
+        // Every item has a category that exists, a name in both languages, a unique id.
+        QSet<QString> ids;
+        const auto check = [&](const auto &items, const std::vector<Category> &categories) {
+            for (const auto &item : items) {
+                QVERIFY2(!ids.contains(item.id), qPrintable(item.id));
+                ids.insert(item.id);
+                QVERIFY2(!item.name.en.isEmpty() && !item.name.it.isEmpty(), qPrintable(item.id));
+                QVERIFY2(std::any_of(categories.begin(), categories.end(), [&](const Category &c) { return c.id == item.category; }),
+                         qPrintable(item.id));
+            }
+        };
+        check(library.filters(), library.filterCategories());
+        check(library.transitions(), library.transitionCategories());
+        check(library.textStyles(), library.textStyleCategories());
+        // Every kernel is used by a transition; every filter changes something.
+        for (int k = int(TransitionKind::Dissolve); k <= int(TransitionKind::ZoomIn); ++k) {
+            QVERIFY(std::any_of(library.transitions().begin(), library.transitions().end(),
+                                [k](const TransitionPreset &t) { return int(t.kernel) == k; }));
+        }
+        for (const FilterPreset &filter : library.filters()) {
+            QVERIFY2(!filter.look.isIdentity() || filter.vignette != 0 || filter.grain != 0, qPrintable(filter.id));
+        }
+        QVERIFY(library.filter(QStringLiteral("filters/bw")));
+        QCOMPARE(library.filter(QStringLiteral("filters/bw"))->look.saturation, -1.0);
+        QVERIFY(library.effect(QStringLiteral("vedit.adjust.basic")));
+        QVERIFY(library.effect(QStringLiteral("vedit.adjust.basic"))->params.size() >= 12);
     }
 
     // ---- audio --------------------------------------------------------------------------------------------------

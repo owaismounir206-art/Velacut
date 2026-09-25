@@ -1,0 +1,603 @@
+{
+    "categories": [
+        {
+            "id": "life",
+            "name": {
+                "en": "Vivid",
+                "it": "Vivido"
+            }
+        },
+        {
+            "id": "portrait",
+            "name": {
+                "en": "Portrait",
+                "it": "Ritratto"
+            }
+        },
+        {
+            "id": "cinema",
+            "name": {
+                "en": "Cinema",
+                "it": "Cinema"
+            }
+        },
+        {
+            "id": "vintage",
+            "name": {
+                "en": "Vintage",
+                "it": "Vintage"
+            }
+        },
+        {
+            "id": "bw",
+            "name": {
+                "en": "Black & white",
+                "it": "Bianco e nero"
+            }
+        },
+        {
+            "id": "nature",
+            "name": {
+                "en": "Nature",
+                "it": "Natura"
+            }
+        },
+        {
+            "id": "food",
+            "name": {
+                "en": "Food",
+                "it": "Cibo"
+            }
+        }
+    ],
+    "items": [
+        {
+            "kind": "filter",
+            "id": "filters/clear",
+            "version": 1,
+            "category": "life",
+            "name": {
+                "en": "Clear",
+                "it": "Nitido"
+            },
+            "look": {
+                "contrast": 0.12,
+                "vibrance": 0.25,
+                "highlights": -0.1,
+                "shadows": 0.1,
+                "sharpness": 0.3
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/vivid",
+            "version": 1,
+            "category": "life",
+            "name": {
+                "en": "Vivid",
+                "it": "Vivace"
+            },
+            "look": {
+                "contrast": 0.18,
+                "saturation": 0.25,
+                "vibrance": 0.2
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/bright",
+            "version": 1,
+            "category": "life",
+            "name": {
+                "en": "Bright",
+                "it": "Luminoso"
+            },
+            "look": {
+                "exposure": 0.35,
+                "brightness": 0.15,
+                "shadows": 0.2,
+                "vibrance": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/pop",
+            "version": 1,
+            "category": "life",
+            "name": {
+                "en": "Pop",
+                "it": "Pop"
+            },
+            "look": {
+                "contrast": 0.3,
+                "saturation": 0.35,
+                "blacks": 0.2
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/soft",
+            "version": 1,
+            "category": "life",
+            "name": {
+                "en": "Soft",
+                "it": "Morbido"
+            },
+            "look": {
+                "contrast": -0.15,
+                "highlights": -0.2,
+                "fade": 0.25,
+                "vibrance": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/glow",
+            "version": 1,
+            "category": "portrait",
+            "name": {
+                "en": "Glow",
+                "it": "Bagliore"
+            },
+            "look": {
+                "brightness": 0.2,
+                "highlights": 0.15,
+                "contrast": -0.1,
+                "temperature": 0.12,
+                "fade": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/rosy",
+            "version": 1,
+            "category": "portrait",
+            "name": {
+                "en": "Rosy",
+                "it": "Roseo"
+            },
+            "look": {
+                "tint": 0.2,
+                "temperature": 0.1,
+                "brightness": 0.1,
+                "saturation": -0.05
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/porcelain",
+            "version": 1,
+            "category": "portrait",
+            "name": {
+                "en": "Porcelain",
+                "it": "Porcellana"
+            },
+            "look": {
+                "brightness": 0.25,
+                "saturation": -0.25,
+                "contrast": -0.1,
+                "temperature": -0.08
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/honey",
+            "version": 1,
+            "category": "portrait",
+            "name": {
+                "en": "Honey",
+                "it": "Miele"
+            },
+            "look": {
+                "temperature": 0.35,
+                "tint": 0.05,
+                "shadows": 0.15,
+                "saturation": 0.05
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/natural",
+            "version": 1,
+            "category": "portrait",
+            "name": {
+                "en": "Natural",
+                "it": "Naturale"
+            },
+            "look": {
+                "shadows": 0.15,
+                "highlights": -0.1,
+                "vibrance": 0.12
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/teal-orange",
+            "version": 1,
+            "category": "cinema",
+            "name": {
+                "en": "Teal & orange",
+                "it": "Verde acqua e arancio"
+            },
+            "look": {
+                "contrast": 0.2,
+                "saturation": 0.1,
+                "shadowTone": [
+                    -0.6,
+                    0.2,
+                    0.6
+                ],
+                "highlightTone": [
+                    0.7,
+                    0.25,
+                    -0.5
+                ],
+                "splitAmount": 0.8
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/blockbuster",
+            "version": 1,
+            "category": "cinema",
+            "name": {
+                "en": "Blockbuster",
+                "it": "Kolossal"
+            },
+            "look": {
+                "contrast": 0.3,
+                "blacks": 0.25,
+                "shadowTone": [
+                    -0.3,
+                    0.1,
+                    0.5
+                ],
+                "highlightTone": [
+                    0.5,
+                    0.2,
+                    -0.2
+                ],
+                "splitAmount": 0.6,
+                "vignette": -0.25
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/noir-teal",
+            "version": 1,
+            "category": "cinema",
+            "name": {
+                "en": "Night teal",
+                "it": "Notte verde acqua"
+            },
+            "look": {
+                "exposure": -0.25,
+                "temperature": -0.35,
+                "saturation": -0.2,
+                "contrast": 0.2,
+                "vignette": -0.35
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/desert",
+            "version": 1,
+            "category": "cinema",
+            "name": {
+                "en": "Desert",
+                "it": "Deserto"
+            },
+            "look": {
+                "temperature": 0.45,
+                "saturation": -0.15,
+                "contrast": 0.15,
+                "fade": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/bleach",
+            "version": 1,
+            "category": "cinema",
+            "name": {
+                "en": "Bleach bypass",
+                "it": "Sbiancato"
+            },
+            "look": {
+                "contrast": 0.4,
+                "saturation": -0.5,
+                "highlights": 0.1,
+                "grain": 0.15
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/moody",
+            "version": 1,
+            "category": "cinema",
+            "name": {
+                "en": "Moody",
+                "it": "Cupo"
+            },
+            "look": {
+                "exposure": -0.2,
+                "contrast": 0.25,
+                "saturation": -0.25,
+                "shadows": -0.15,
+                "vignette": -0.4
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/film",
+            "version": 1,
+            "category": "vintage",
+            "name": {
+                "en": "Film",
+                "it": "Pellicola"
+            },
+            "look": {
+                "fade": 0.35,
+                "contrast": 0.1,
+                "temperature": 0.12,
+                "grain": 0.3,
+                "curve": [
+                    [
+                        0.25,
+                        0.28
+                    ],
+                    [
+                        0.75,
+                        0.72
+                    ]
+                ]
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/polaroid",
+            "version": 1,
+            "category": "vintage",
+            "name": {
+                "en": "Instant",
+                "it": "Istantanea"
+            },
+            "look": {
+                "fade": 0.45,
+                "temperature": 0.2,
+                "tint": 0.08,
+                "saturation": -0.1,
+                "vignette": -0.25
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/seventies",
+            "version": 1,
+            "category": "vintage",
+            "name": {
+                "en": "Seventies",
+                "it": "Anni '70"
+            },
+            "look": {
+                "temperature": 0.4,
+                "tint": 0.1,
+                "saturation": -0.15,
+                "fade": 0.3,
+                "grain": 0.25
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/faded",
+            "version": 1,
+            "category": "vintage",
+            "name": {
+                "en": "Faded",
+                "it": "Sbiadito"
+            },
+            "look": {
+                "fade": 0.6,
+                "contrast": -0.2,
+                "saturation": -0.3
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/sepia",
+            "version": 1,
+            "category": "vintage",
+            "name": {
+                "en": "Sepia",
+                "it": "Seppia"
+            },
+            "look": {
+                "saturation": -1,
+                "shadowTone": [
+                    0.35,
+                    0.15,
+                    -0.25
+                ],
+                "highlightTone": [
+                    0.4,
+                    0.2,
+                    -0.2
+                ],
+                "splitAmount": 1,
+                "fade": 0.2
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/bw",
+            "version": 1,
+            "category": "bw",
+            "name": {
+                "en": "Black & white",
+                "it": "Bianco e nero"
+            },
+            "look": {
+                "saturation": -1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/bw-contrast",
+            "version": 1,
+            "category": "bw",
+            "name": {
+                "en": "High contrast",
+                "it": "Alto contrasto"
+            },
+            "look": {
+                "saturation": -1,
+                "contrast": 0.45,
+                "blacks": 0.25,
+                "whites": 0.2
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/bw-soft",
+            "version": 1,
+            "category": "bw",
+            "name": {
+                "en": "Soft grey",
+                "it": "Grigio morbido"
+            },
+            "look": {
+                "saturation": -1,
+                "contrast": -0.2,
+                "fade": 0.3
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/bw-noir",
+            "version": 1,
+            "category": "bw",
+            "name": {
+                "en": "Noir",
+                "it": "Noir"
+            },
+            "look": {
+                "saturation": -1,
+                "contrast": 0.35,
+                "exposure": -0.25,
+                "vignette": -0.5,
+                "grain": 0.25
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/green",
+            "version": 1,
+            "category": "nature",
+            "name": {
+                "en": "Green",
+                "it": "Verde"
+            },
+            "look": {
+                "tint": -0.1,
+                "vibrance": 0.35,
+                "saturation": 0.1,
+                "shadows": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/sky",
+            "version": 1,
+            "category": "nature",
+            "name": {
+                "en": "Sky",
+                "it": "Cielo"
+            },
+            "look": {
+                "temperature": -0.2,
+                "vibrance": 0.3,
+                "highlights": -0.25,
+                "contrast": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/autumn",
+            "version": 1,
+            "category": "nature",
+            "name": {
+                "en": "Autumn",
+                "it": "Autunno"
+            },
+            "look": {
+                "temperature": 0.3,
+                "tint": 0.05,
+                "saturation": 0.15,
+                "contrast": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/fresh",
+            "version": 1,
+            "category": "nature",
+            "name": {
+                "en": "Fresh",
+                "it": "Fresco"
+            },
+            "look": {
+                "temperature": -0.15,
+                "brightness": 0.1,
+                "vibrance": 0.25
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/tasty",
+            "version": 1,
+            "category": "food",
+            "name": {
+                "en": "Tasty",
+                "it": "Gustoso"
+            },
+            "look": {
+                "temperature": 0.2,
+                "saturation": 0.25,
+                "contrast": 0.15,
+                "sharpness": 0.3
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/cafe",
+            "version": 1,
+            "category": "food",
+            "name": {
+                "en": "Café",
+                "it": "Caffè"
+            },
+            "look": {
+                "temperature": 0.3,
+                "fade": 0.2,
+                "contrast": 0.05,
+                "vignette": -0.2
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/crisp",
+            "version": 1,
+            "category": "food",
+            "name": {
+                "en": "Crisp",
+                "it": "Croccante"
+            },
+            "look": {
+                "contrast": 0.25,
+                "vibrance": 0.3,
+                "sharpness": 0.5,
+                "highlights": -0.1
+            }
+        }
+    ]
+}

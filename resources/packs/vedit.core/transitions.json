@@ -1,0 +1,297 @@
+{
+    "categories": [
+        {
+            "id": "base",
+            "name": {
+                "en": "Basic",
+                "it": "Base"
+            }
+        },
+        {
+            "id": "motion",
+            "name": {
+                "en": "Motion",
+                "it": "Movimento"
+            }
+        },
+        {
+            "id": "wipe",
+            "name": {
+                "en": "Wipes & shapes",
+                "it": "Tendine e forme"
+            }
+        }
+    ],
+    "items": [
+        {
+            "kind": "transition",
+            "id": "transitions/dissolve",
+            "version": 1,
+            "category": "base",
+            "name": {
+                "en": "Dissolve",
+                "it": "Dissolvenza"
+            },
+            "kernel": "dissolve",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/dip-to-black",
+            "version": 1,
+            "category": "base",
+            "name": {
+                "en": "Dip to black",
+                "it": "Dissolvenza al nero"
+            },
+            "kernel": "dipToBlack",
+            "defaultDuration": 0.8,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/dip-to-white",
+            "version": 1,
+            "category": "base",
+            "name": {
+                "en": "Flash",
+                "it": "Flash"
+            },
+            "kernel": "dipToWhite",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/slide-left",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Slide left",
+                "it": "Scorri a sinistra"
+            },
+            "kernel": "slideLeft",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/slide-right",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Slide right",
+                "it": "Scorri a destra"
+            },
+            "kernel": "slideRight",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/slide-up",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Slide up",
+                "it": "Scorri in alto"
+            },
+            "kernel": "slideUp",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/slide-down",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Slide down",
+                "it": "Scorri in basso"
+            },
+            "kernel": "slideDown",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/push-left",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Push left",
+                "it": "Spingi a sinistra"
+            },
+            "kernel": "pushLeft",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/push-right",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Push right",
+                "it": "Spingi a destra"
+            },
+            "kernel": "pushRight",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/push-up",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Push up",
+                "it": "Spingi in alto"
+            },
+            "kernel": "pushUp",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/push-down",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Push down",
+                "it": "Spingi in basso"
+            },
+            "kernel": "pushDown",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/zoom-in",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Zoom in",
+                "it": "Zoom avanti"
+            },
+            "kernel": "zoomIn",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/wipe-left",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Wipe left",
+                "it": "Tendina a sinistra"
+            },
+            "kernel": "wipeLeft",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/wipe-right",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Wipe right",
+                "it": "Tendina a destra"
+            },
+            "kernel": "wipeRight",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/wipe-up",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Wipe up",
+                "it": "Tendina in alto"
+            },
+            "kernel": "wipeUp",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/wipe-down",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Wipe down",
+                "it": "Tendina in basso"
+            },
+            "kernel": "wipeDown",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/iris",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Circle",
+                "it": "Cerchio"
+            },
+            "kernel": "iris",
+            "defaultDuration": 0.7,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/clock",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Clock",
+                "it": "Orologio"
+            },
+            "kernel": "clock",
+            "defaultDuration": 0.8,
+            "params": {
+                "easing": "easeInOut"
+            }
+        }
+    ]
+}

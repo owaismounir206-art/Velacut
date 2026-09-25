@@ -1,0 +1,8 @@
+{
+    "format": "vedit.pack",
+    "formatVersion": 1,
+    "id": "vedit.core",
+    "version": 1,
+    "name": { "en": "vedit library", "it": "Libreria di vedit" },
+    "license": "GPL-3.0-or-later"
+}
