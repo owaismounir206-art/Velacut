@@ -95,7 +95,20 @@ ProjectData richProject()
     main.clips[1].background = CanvasBackground{BackgroundType::Color, Color{20, 40, 60, 255}, 0.6, {}, std::nullopt};
     main.gainDb = Param(-6.0);
     main.extras.insert(u"futureTrackField"_s, 42);
-    first.extras.insert(u"masks"_s, QJsonArray{QJsonObject{{u"shape"_s, u"circle"_s}}});
+    Mask testMask;
+    testMask.id = MaskId::create();
+    testMask.shape = MaskShape::Circle;
+    testMask.center = Param(Vec2{0.1, -0.2});
+    testMask.size = Param(Vec2{0.4, 0.4});
+    testMask.feather = Param(0.05);
+    first.masks.push_back(testMask);
+
+    ClipAnimation animIn;
+    animIn.type = AssetRef{u"vedit.core"_s, u"animations/in/fade"_s, 1};
+    animIn.duration = frames(10);
+    animIn.easing = Easing::preset(Easing::Preset::EaseOut);
+    first.animations.in = animIn;
+    first.extras.insert(u"futureClipField"_s, 42);
 
     // A text clip on a text track, with the fields of later phases preserved verbatim.
     Track textTrack;

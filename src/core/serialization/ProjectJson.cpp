@@ -58,6 +58,11 @@ constexpr EnumName<FitMode> kFitModes[] = {{FitMode::Contain, "contain"_L1},
                                            {FitMode::Cover, "cover"_L1},
                                            {FitMode::Stretch, "stretch"_L1},
                                            {FitMode::None, "none"_L1}};
+constexpr EnumName<MaskShape> kMaskShapes[] = {
+    {MaskShape::Linear, "linear"_L1},       {MaskShape::Mirror, "mirror"_L1},
+    {MaskShape::Circle, "circle"_L1},       {MaskShape::Rectangle, "rectangle"_L1},
+    {MaskShape::Heart, "heart"_L1},         {MaskShape::Star, "star"_L1},
+    {MaskShape::Path, "path"_L1}};
 constexpr EnumName<Streams> kStreams[] = {
     {Streams::AudioVideo, "av"_L1}, {Streams::VideoOnly, "video"_L1}, {Streams::AudioOnly, "audio"_L1}};
 constexpr EnumName<Interpolation> kInterpolations[] = {{Interpolation::Linear, "linear"_L1},
@@ -107,10 +112,10 @@ const QSet<QString> kSequenceKeys{u"id"_s,           u"name"_s,        u"canvas"
                                   u"defaultBackground"_s};
 const QSet<QString> kTrackKeys{u"id"_s,     u"kind"_s,   u"name"_s,     u"locked"_s, u"muted"_s,      u"solo"_s,
                                u"hidden"_s, u"height"_s, u"captions"_s, u"clips"_s,  u"transitions"_s, u"gainDb"_s};
-const QSet<QString> kClipCommonKeys{u"id"_s,        u"kind"_s,    u"start"_s,     u"duration"_s,
-                                    u"name"_s,      u"enabled"_s, u"linkId"_s,    u"transform"_s,
-                                    u"opacity"_s,   u"blendMode"_s, u"effects"_s, u"markers"_s,
-                                    u"background"_s};
+const QSet<QString> kClipCommonKeys{u"id"_s,        u"kind"_s,        u"start"_s,      u"duration"_s,
+                                    u"name"_s,      u"enabled"_s,     u"linkId"_s,     u"transform"_s,
+                                    u"opacity"_s,   u"blendMode"_s,   u"effects"_s,    u"masks"_s,
+                                    u"animations"_s, u"markers"_s,    u"background"_s};
 const QSet<QString> kTextClipKeys{u"text"_s, u"style"_s, u"stylePreset"_s, u"box"_s};
 const QSet<QString> kTextStyleKeys{u"font"_s,          u"size"_s,       u"color"_s, u"stroke"_s,   u"shadow"_s,
                                    u"background"_s,    u"letterSpacing"_s, u"lineHeight"_s, u"align"_s,
@@ -319,6 +324,59 @@ QJsonObject textStyleJson(const TextStyle &style)
     return object;
 }
 
+inline QJsonArray vec2Json(const Vec2 &v)
+{
+    return QJsonArray{v.x, v.y};
+}
+
+QJsonObject maskJson(const Mask &mask)
+{
+    QJsonObject object{{u"id"_s, idValue(mask.id)},
+                       {u"shape"_s, nameOf(kMaskShapes, mask.shape)},
+                       {u"center"_s, paramJson(mask.center)},
+                       {u"size"_s, paramJson(mask.size)},
+                       {u"rotation"_s, paramJson(mask.rotation)},
+                       {u"roundness"_s, paramJson(mask.roundness)},
+                       {u"feather"_s, paramJson(mask.feather)},
+                       {u"invert"_s, mask.invert}};
+    if (mask.shape == MaskShape::Path && !mask.points.empty()) {
+        QJsonArray points;
+        for (const MaskPoint &pt : mask.points) {
+            points.append(QJsonObject{{u"p"_s, vec2Json(pt.p)},
+                                      {u"in"_s, vec2Json(pt.in)},
+                                      {u"out"_s, vec2Json(pt.out)}});
+        }
+        object.insert(u"points"_s, points);
+    }
+    return object;
+}
+
+QJsonObject clipAnimationJson(const ClipAnimation &anim)
+{
+    QJsonObject object{{u"type"_s, assetRefJson(anim.type)},
+                       {u"duration"_s, timeValue(anim.duration)},
+                       {u"easing"_s, anim.easing.name()}};
+    if (!anim.params.isEmpty()) {
+        object.insert(u"params"_s, anim.params);
+    }
+    return object;
+}
+
+QJsonObject animationsJson(const ClipAnimations &anims)
+{
+    QJsonObject object;
+    if (anims.in) {
+        object.insert(u"in"_s, clipAnimationJson(*anims.in));
+    }
+    if (anims.out) {
+        object.insert(u"out"_s, clipAnimationJson(*anims.out));
+    }
+    if (anims.loop) {
+        object.insert(u"loop"_s, clipAnimationJson(*anims.loop));
+    }
+    return object;
+}
+
 QJsonObject clipJson(const Clip &clip)
 {
     QJsonObject object{{u"id"_s, idValue(clip.id)},
@@ -333,6 +391,12 @@ QJsonObject clipJson(const Clip &clip)
                        {u"blendMode"_s, nameOf(kBlendModes, clip.blendMode)},
                        {u"effects"_s, arrayOf(clip.effects, effectJson)},
                        {u"markers"_s, arrayOf(clip.markers, markerJson)}};
+    if (!clip.masks.empty()) {
+        object.insert(u"masks"_s, arrayOf(clip.masks, maskJson));
+    }
+    if (!clip.animations.isEmpty()) {
+        object.insert(u"animations"_s, animationsJson(clip.animations));
+    }
     if (clip.background) {
         object.insert(u"background"_s, backgroundJson(clip.background));
     }
@@ -371,6 +435,8 @@ QJsonObject clipJson(const Clip &clip)
                 object.insert(u"stylePreset"_s, data.stylePreset ? QJsonValue(assetRefJson(*data.stylePreset)) : QJsonValue::Null);
                 object.insert(u"box"_s, QJsonObject{{u"width"_s, data.boxWidth ? QJsonValue(*data.boxWidth) : QJsonValue::Null}});
                 mergeInto(object, data.fields);
+            } else if constexpr (std::is_same_v<T, AdjustmentClipData>) {
+                // Effects are serialized at the clip level
             } else {
                 mergeInto(object, data.fields);
             }
@@ -928,6 +994,68 @@ public:
         return result;
     }
 
+    Mask mask(const QJsonObject &object, const QString &path)
+    {
+        Mask m;
+        m.id = id<MaskTag>(object, u"id"_s, path, true);
+        m.shape = enumeration(object, u"shape"_s, path, kMaskShapes, MaskShape::Rectangle);
+        m.center = param(object.value(u"center"_s), join(path, u"center"_s), Param(Vec2{0.0, 0.0}));
+        m.size = param(object.value(u"size"_s), join(path, u"size"_s), Param(Vec2{0.5, 0.5}));
+        m.rotation = param(object.value(u"rotation"_s), join(path, u"rotation"_s), Param(0.0));
+        m.roundness = param(object.value(u"roundness"_s), join(path, u"roundness"_s), Param(0.0));
+        m.feather = param(object.value(u"feather"_s), join(path, u"feather"_s), Param(0.0));
+        m.invert = boolean(object, u"invert"_s, path, false);
+        const QJsonArray points = object.value(u"points"_s).toArray();
+        for (const QJsonValue &pv : points) {
+            const QJsonObject po = pv.toObject();
+            MaskPoint pt;
+            const QJsonArray pa = po.value(u"p"_s).toArray();
+            if (pa.size() == 2) {
+                pt.p = Vec2{pa[0].toDouble(), pa[1].toDouble()};
+            }
+            const QJsonArray ina = po.value(u"in"_s).toArray();
+            if (ina.size() == 2) {
+                pt.in = Vec2{ina[0].toDouble(), ina[1].toDouble()};
+            }
+            const QJsonArray outa = po.value(u"out"_s).toArray();
+            if (outa.size() == 2) {
+                pt.out = Vec2{outa[0].toDouble(), outa[1].toDouble()};
+            }
+            m.points.push_back(pt);
+        }
+        return m;
+    }
+
+    ClipAnimation clipAnimation(const QJsonObject &object, const QString &path)
+    {
+        ClipAnimation anim;
+        anim.type = assetRef(object.value(u"type"_s), join(path, u"type"_s), true).value_or(AssetRef{});
+        anim.duration = requiredTime(object, u"duration"_s, path);
+        const QString easingName = string(object, u"easing"_s, path);
+        if (!easingName.isEmpty()) {
+            if (auto e = Easing::fromName(easingName)) {
+                anim.easing = *e;
+            }
+        }
+        anim.params = this->object(object, u"params"_s, path, false);
+        return anim;
+    }
+
+    ClipAnimations animations(const QJsonObject &object, const QString &path)
+    {
+        ClipAnimations anims;
+        if (object.value(u"in"_s).isObject()) {
+            anims.in = clipAnimation(object.value(u"in"_s).toObject(), join(path, u"in"_s));
+        }
+        if (object.value(u"out"_s).isObject()) {
+            anims.out = clipAnimation(object.value(u"out"_s).toObject(), join(path, u"out"_s));
+        }
+        if (object.value(u"loop"_s).isObject()) {
+            anims.loop = clipAnimation(object.value(u"loop"_s).toObject(), join(path, u"loop"_s));
+        }
+        return anims;
+    }
+
     Clip clip(const QJsonObject &object, const QString &path)
     {
         Clip clip;
@@ -950,6 +1078,13 @@ public:
         const QJsonArray effects = array(object, u"effects"_s, path);
         for (qsizetype i = 0; i < effects.size(); ++i) {
             clip.effects.push_back(effect(effects[i].toObject(), index(join(path, u"effects"_s), i)));
+        }
+        const QJsonArray masks = array(object, u"masks"_s, path);
+        for (qsizetype i = 0; i < masks.size(); ++i) {
+            clip.masks.push_back(mask(masks[i].toObject(), index(join(path, u"masks"_s), i)));
+        }
+        if (object.value(u"animations"_s).isObject()) {
+            clip.animations = animations(object.value(u"animations"_s).toObject(), join(path, u"animations"_s));
         }
         clip.markers = markers(object, path);
 
@@ -1002,6 +1137,10 @@ public:
             clip.payload = CompoundClipData{id<SequenceTag>(object, u"sequenceId"_s, path, true),
                                             requiredTime(object, u"sourceIn"_s, path)};
             clip.extras = unknownKeys(object, kClipCommonKeys, kCompoundClipKeys);
+            break;
+        case ClipKind::Adjustment:
+            clip.payload = AdjustmentClipData{clip.effects};
+            clip.extras = unknownKeys(object, kClipCommonKeys);
             break;
         default:
             // Kinds implemented in later phases: every non-common field is kept verbatim.

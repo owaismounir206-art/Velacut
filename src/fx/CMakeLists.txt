@@ -3,6 +3,7 @@
 add_library(vedit_fx STATIC
     Image.h
     Audio.h Audio.cpp
+    ChromaKey.h ChromaKey.cpp
     Color.h Color.cpp
     Composite.h Composite.cpp
     Enhance.h Enhance.cpp

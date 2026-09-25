@@ -61,6 +61,7 @@ using EffectId = Id<struct EffectTag>;
 using MarkerId = Id<struct MarkerTag>;
 using GroupId = Id<struct GroupTag>;
 using LinkId = Id<struct LinkTag>;
+using MaskId = Id<struct MaskTag>;
 
 } // namespace vedit
 

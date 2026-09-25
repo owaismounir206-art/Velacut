@@ -23,6 +23,8 @@ ClipKind Clip::kind() const
                 return ClipKind::Compound;
             } else if constexpr (std::is_same_v<T, TextClipData>) {
                 return ClipKind::Text;
+            } else if constexpr (std::is_same_v<T, AdjustmentClipData>) {
+                return ClipKind::Adjustment;
             } else {
                 return data.kind;
             }

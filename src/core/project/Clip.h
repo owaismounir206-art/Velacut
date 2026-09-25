@@ -83,6 +83,61 @@ struct Transform
     friend bool operator==(const Transform &, const Transform &) = default;
 };
 
+enum class MaskShape
+{
+    Linear,
+    Mirror,
+    Circle,
+    Rectangle,
+    Heart,
+    Star,
+    Path,
+};
+
+struct MaskPoint
+{
+    Vec2 p;
+    Vec2 in;
+    Vec2 out;
+
+    friend bool operator==(const MaskPoint &, const MaskPoint &) = default;
+};
+
+struct Mask
+{
+    MaskId id;
+    MaskShape shape = MaskShape::Rectangle;
+    Param center{Vec2{0.0, 0.0}};
+    Param size{Vec2{0.5, 0.5}};
+    Param rotation{0.0};
+    Param roundness{0.0};
+    Param feather{0.0};
+    bool invert = false;
+    std::vector<MaskPoint> points;
+
+    friend bool operator==(const Mask &, const Mask &) = default;
+};
+
+struct ClipAnimation
+{
+    AssetRef type;
+    RationalTime duration;
+    Easing easing = Easing::preset(Easing::Preset::EaseInOut);
+    QJsonObject params;
+
+    friend bool operator==(const ClipAnimation &, const ClipAnimation &) = default;
+};
+
+struct ClipAnimations
+{
+    std::optional<ClipAnimation> in;
+    std::optional<ClipAnimation> out;
+    std::optional<ClipAnimation> loop;
+
+    bool isEmpty() const noexcept { return !in && !out && !loop; }
+    friend bool operator==(const ClipAnimations &, const ClipAnimations &) = default;
+};
+
 enum class MarkerKind
 {
     User,
@@ -244,18 +299,25 @@ struct CompoundClipData
     friend bool operator==(const CompoundClipData &, const CompoundClipData &) = default;
 };
 
-// Payload of clip kinds whose editing features arrive in later phases (text, subtitle, sticker,
-// effect, adjustment): the kind-specific JSON fields are kept verbatim and written back unchanged,
+struct AdjustmentClipData
+{
+    std::vector<Effect> effects;
+
+    friend bool operator==(const AdjustmentClipData &, const AdjustmentClipData &) = default;
+};
+
+// Payload of clip kinds whose editing features arrive in later phases (subtitle, sticker,
+// effect): the kind-specific JSON fields are kept verbatim and written back unchanged,
 // so no data is ever lost (docs/FILE_FORMAT.md §1). Each kind gets a typed struct when implemented.
 struct PreservedClipData
 {
-    ClipKind kind = ClipKind::Text;
+    ClipKind kind = ClipKind::Subtitle;
     QJsonObject fields;
 
     friend bool operator==(const PreservedClipData &, const PreservedClipData &) = default;
 };
 
-using ClipPayload = std::variant<MediaClipData, ColorClipData, CompoundClipData, TextClipData, PreservedClipData>;
+using ClipPayload = std::variant<MediaClipData, ColorClipData, CompoundClipData, TextClipData, AdjustmentClipData, PreservedClipData>;
 
 struct Clip
 {
@@ -271,10 +333,11 @@ struct Clip
     // Main track only: the canvas behind this clip; none = the sequence default.
     std::optional<CanvasBackground> background;
     std::vector<Effect> effects;
+    std::vector<Mask> masks;
+    ClipAnimations animations;
     std::vector<Marker> markers;
     ClipPayload payload = MediaClipData{};
-    // Common fields not yet interpreted by this version (masks, animations, background, transitionIn/Out…),
-    // preserved verbatim.
+    // Common fields not yet interpreted by this version (transitionIn/Out…), preserved verbatim.
     QJsonObject extras;
 
     ClipKind kind() const;
@@ -285,6 +348,8 @@ struct Clip
     MediaClipData *media() { return std::get_if<MediaClipData>(&payload); }
     const TextClipData *text() const { return std::get_if<TextClipData>(&payload); }
     TextClipData *text() { return std::get_if<TextClipData>(&payload); }
+    const AdjustmentClipData *adjustment() const { return std::get_if<AdjustmentClipData>(&payload); }
+    AdjustmentClipData *adjustment() { return std::get_if<AdjustmentClipData>(&payload); }
 
     friend bool operator==(const Clip &, const Clip &) = default;
 };

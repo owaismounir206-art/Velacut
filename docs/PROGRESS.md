@@ -3,52 +3,29 @@
 Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
 
 ## Fase corrente
-**Fase 2 — Editing essenziale: completata** (criterio verificato, in attesa del via per la Fase 3). Fase 1 completata (sotto, storico).
+**Fase 3 — Keyframe e composizione: in corso** (Fase 2 completata, storico sotto).
 
-### Criterio di completamento della Fase 2 (SPEC §8)
+### Criterio di completamento della Fase 3 (SPEC §8)
 | Requisito | Esito | Verifica |
 |---|---|---|
-| Realizzo un video verticale 9:16 | ✅ | `tst_editor::phaseTwoCriterion`: formato 9:16 (180×320) impostato con `CanvasPreset::Portrait9x16` sotto il player |
-| Con testi | ✅ | inserito clip di testo al playhead, modificato testo sul canvas e inspector, applicato stile `text/outline-yellow` |
-| Con musica | ✅ | inserita traccia audio con file musicale locale sotto il video |
-| Con transizioni | ✅ | transizione `dissolve` tra le clip sul taglio, durata trascinabile |
-| Con filtri | ✅ | filtro `vivid` applicato alla clip video con intensità regolabile |
-| Esportato e verificato | ✅ | ffprobe: H.264, AAC stereo, 180×320 esatti (9:16); bozza riaperta identica con salvataggio continuo |
-| Test di semplicità applicabili | ✅ | test 1: **4** azioni; test 2: **2**; test 3: **3** (limite 3); test 6: **3** (limite 3); test 8: **2**; test 10: **2 livelli** (`docs/USABILITY.md`) |
+| Animo un titolo con keyframe ed easing | In corso | Keyframe, curve ed easing nel modello e player |
+| Compongo un green screen con maschera | In corso | Kernel chroma key e maschere in `src/fx` |
 | Compila senza warning, test verdi | ✅ | 25/25 in `build` (RelWithDebInfo e Debug con sanitizers) |
 
-### Fase 2: fatto (un commit per incremento)
-1. `phase2_probe`: `timewarp` (velocità, intonazione, −1), `repeat`, loader alla proporzione della sorgente, tractor
-   annidato (esiti in ARCHITECTURE §21).
-2. `src/fx`: kernel CPU di riferimento (trasformazione affine, ridimensionamento, regolazioni colore + LUT 33³,
-   vignettatura, grana, nitidezza, sfocatura, 18 transizioni, guadagno/pan audio); `tst_kernels`.
-3. Core: clip di testo, sfondi del canvas, volume di traccia, operazioni di `TimelineEditor` (testo, velocità, fermo
-   immagine, transizioni e "applica a tutte", sfondo predefinito); formato del file aggiornato.
-4. Libreria `vedit.core` (32 filtri, 18 transizioni, 24 stili di testo, regolazioni) e `docs/EFFECT_FORMAT.md`.
-5. Engine: servizi `vedit.transform`, `vedit.adjust`, `vedit.gain`, `vedit.transition`, `vedit.text`; proiezione con
-   filtri per clip, velocità/inversione (proxy invertiti), testi, transizioni, anteprima dal vivo, misuratori per
-   traccia e master (D-35 … D-39).
-6. Pannello proprietà (`PropertiesPanel`) con inspector a schede (Video, Audio, Velocità, Regola, Testo, Sfondo),
-   slider con merge dei gesti, "Migliora automaticamente", copia/incolla attributi.
-7. Librerie Testo, Transizioni e Filtri (`AssetPanel`, `AssetThumbnail`, `AssetLibraryModel`) con anteprima dal vivo
-   al passaggio del mouse su player (`setPreview`), icone di transizione su ogni taglio con durata trascinabile, "Applica a tutte".
-8. Maniglie di trasformazione sul canvas (`CanvasHandles`: sposta con snapping alle guide centrali, scala dai 4 angoli,
-   ruota con snapping a 90°, doppio clic per modifica testo sul canvas); selettore formato 9:16/16:9 sotto il player (`FormatButton`);
-   proxy invertiti con precaricamento sincrono in cache; traduzioni italiane complete al 100%; test criterio `phaseTwoCriterion` in `tst_editor`.
-
-### Fase 2: limiti dichiarati (onestà, regola 4)
-- Librerie sotto gli obiettivi numerici finali (filtri 32/60, transizioni 18/100, stili di testo 24/40): espansione con la Fase 5.
-- Keyframe sui parametri della trasformazione e degli effetti a partire dalla Fase 3.
-- Audio delle transizioni a taglio netto (crossfade con dissolvenza incrociata in Fase 4 col mixer avanzato).
-- Ricerca universale Ctrl+K e ActionRegistry esteso: scorciatoie dirette attive, palette globale completata con le funzioni di sistema (Fase 8).
+### Fase 3: fatto (un commit per incremento)
+1. **Core & Fx (`P3.1`)**:
+   - Modello dati per maschere (`Mask`, `MaskShape`, `MaskPoint`), animazioni (`ClipAnimation`, `ClipAnimations`), e livelli di regolazione (`AdjustmentClipData`).
+   - Serializzazione JSON canonica e tollerante in `ProjectJson.cpp` verificata senza perdita di dati in `tst_serialization` e `tst_projectroundtrip`.
+   - Implementate tutte le 16 modalità di fusione (`BlendMode`: Normal, Multiply, Screen, Overlay, Darken, Lighten, ColorDodge, ColorBurn, HardLight, SoftLight, Difference, Exclusion, Add, Hue, Saturation, Color, Luminosity) con straight alpha compositing W3C in `Composite.cpp`.
+   - Kernel CPU di riferimento e servizio per Chroma Key (`ChromaKey.cpp` / `vedit.chroma_key`): spazio colore UV, soglia/somiglianza, morbidezza bordo e soppressione spill verde/blu.
+   - Test unitari in `tst_kernels` (blend modes e chroma key) e `tst_serialization` al 100% verdi.
 
 ### Prossimi passi (Fase 3 — Keyframe e composizione)
-In attesa del via dell'utente:
-- Keyframe su tutti i parametri, editor curve con easing.
-- Animazioni predefinite e grafiche per clip e testi.
-- Maschere (rettangolare, circolare, linea, pennello).
-- Blend mode e chroma key / green screen.
-- Compound clip e livelli di regolazione.
+- P3.2: Valutazione runtime dei keyframe per trasformazioni, opacità e parametri di effetto in `Services.cpp` e `TimelineProjection.cpp`; integrazione `BlendMode` e `ChromaKey` nella pipeline di proiezione MLT.
+- P3.3: Valutazione e rasterizzazione maschere (rettangolare con roundness, circolare, lineare, specchio, cuore, stella, path) con feather e invert in `src/fx` e `vedit.mask`.
+- P3.4: Compound clip e tracce di regolazione (`adjustment`) in `TimelineEditor` e `TimelineProjection`.
+- P3.5: Animazioni predefinite e marker (sequence e clip) in timeline.
+- P3.6: Controlli UI inspector (keyframe diamonds, curve easing selector, chroma key picker, maschere) e verifica criterio di completamento SPEC §8.
 
 ## Criterio di completamento della Fase 1 (SPEC §8)
 | Requisito | Esito | Verifica |

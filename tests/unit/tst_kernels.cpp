@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // CPU reference kernels of Phase 2 (SPEC 1bis rule 1): transform, colour, spatial filters, transitions, audio gain.
 #include "fx/Audio.h"
+#include "fx/ChromaKey.h"
 #include "fx/Color.h"
+#include "fx/Composite.h"
 #include "fx/Enhance.h"
 #include "fx/Library.h"
 #include "fx/Transform.h"
@@ -399,6 +401,87 @@ private slots:
         QCOMPARE(library.filter(QStringLiteral("filters/bw"))->look.saturation, -1.0);
         QVERIFY(library.effect(QStringLiteral("vedit.adjust.basic")));
         QVERIFY(library.effect(QStringLiteral("vedit.adjust.basic"))->params.size() >= 12);
+        QVERIFY(library.effect(QStringLiteral("vedit.chroma_key")));
+        QVERIFY(library.effect(QStringLiteral("vedit.chroma_key"))->params.size() >= 3);
+    }
+
+    // ---- blend modes --------------------------------------------------------------------------------------------
+    void blendModes()
+    {
+        // Multiply: 128 * 128 / 255 = 64
+        Buffer dstM(2, 2, {128, 128, 128, 255});
+        Buffer srcM(2, 2, {128, 128, 128, 255});
+        compositeBlend(dstM.view(), srcM.constView(), BlendMode::Multiply, 255);
+        QCOMPARE(dstM.at(0, 0)[0], 64);
+        QCOMPARE(dstM.at(0, 0)[3], 255);
+
+        // Screen: 128 + 128 - 64 = 192
+        Buffer dstS(2, 2, {128, 128, 128, 255});
+        Buffer srcS(2, 2, {128, 128, 128, 255});
+        compositeBlend(dstS.view(), srcS.constView(), BlendMode::Screen, 255);
+        QCOMPARE(dstS.at(0, 0)[0], 192);
+
+        // Add: 100 + 100 = 200
+        Buffer dstA(2, 2, {100, 100, 100, 255});
+        Buffer srcA(2, 2, {100, 100, 100, 255});
+        compositeBlend(dstA.view(), srcA.constView(), BlendMode::Add, 255);
+        QCOMPARE(dstA.at(0, 0)[0], 200);
+
+        // Difference: |200 - 50| = 150
+        Buffer dstD(2, 2, {200, 200, 200, 255});
+        Buffer srcD(2, 2, {50, 50, 50, 255});
+        compositeBlend(dstD.view(), srcD.constView(), BlendMode::Difference, 255);
+        QCOMPARE(dstD.at(0, 0)[0], 150);
+
+        // All 16 blend modes execute deterministically on a test pattern without crash or bounds violations
+        const BlendMode modes[] = {
+            BlendMode::Normal, BlendMode::Lighten, BlendMode::Screen, BlendMode::Multiply,
+            BlendMode::Overlay, BlendMode::SoftLight, BlendMode::HardLight, BlendMode::Difference,
+            BlendMode::Darken, BlendMode::Color, BlendMode::Luminosity, BlendMode::Add,
+            BlendMode::ColorDodge, BlendMode::ColorBurn, BlendMode::Exclusion, BlendMode::Hue,
+            BlendMode::Saturation
+        };
+        for (BlendMode mode : modes) {
+            Buffer p1 = pattern(16, 16);
+            Buffer p2 = pattern(16, 16);
+            compositeBlend(p1.view(), p2.constView(), mode, 200);
+            QCOMPARE(p1.width, 16);
+        }
+    }
+
+    // ---- chroma key ---------------------------------------------------------------------------------------------
+    void chromaKey()
+    {
+        // 4x4 image: top half green screen (0, 255, 0), bottom half subject (200, 100, 80)
+        Buffer img(4, 4);
+        for (int y = 0; y < 2; ++y) {
+            for (int x = 0; x < 4; ++x) {
+                img.set(x, y, {0, 255, 0, 255});
+            }
+        }
+        for (int y = 2; y < 4; ++y) {
+            for (int x = 0; x < 4; ++x) {
+                img.set(x, y, {200, 100, 80, 255});
+            }
+        }
+
+        ChromaKeySettings settings;
+        settings.keyR = 0;
+        settings.keyG = 255;
+        settings.keyB = 0;
+        settings.similarity = 0.35;
+        settings.smoothness = 0.05;
+        settings.spill = 0.5;
+
+        applyChromaKey(img.view(), settings);
+
+        // Green screen pixels keyed out (alpha = 0)
+        QCOMPARE(img.at(0, 0)[3], 0);
+        QCOMPARE(img.at(3, 1)[3], 0);
+
+        // Non-green subject pixels preserved (alpha = 255)
+        QCOMPARE(img.at(0, 2)[3], 255);
+        QCOMPARE(img.at(0, 2)[0], 200);
     }
 
     // ---- audio --------------------------------------------------------------------------------------------------

@@ -22,6 +22,17 @@
                 { "name": "vignette", "min": -1, "max": 1, "default": 0, "label": { "en": "Vignette", "it": "Vignettatura" } },
                 { "name": "grain", "min": 0, "max": 1, "default": 0, "label": { "en": "Grain", "it": "Grana" }, "advanced": true }
             ]
+        },
+        {
+            "kind": "effect",
+            "id": "vedit.chroma_key",
+            "version": 1,
+            "name": { "en": "Chroma Key", "it": "Chroma key" },
+            "params": [
+                { "name": "similarity", "min": 0, "max": 1, "default": 0.4, "label": { "en": "Intensity", "it": "Intensità" } },
+                { "name": "smoothness", "min": 0, "max": 1, "default": 0.1, "label": { "en": "Edges", "it": "Bordo" } },
+                { "name": "spill", "min": 0, "max": 1, "default": 0.5, "label": { "en": "Spill Removal", "it": "Rimuovi spill" } }
+            ]
         }
     ]
 }
