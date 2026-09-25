@@ -21,6 +21,7 @@ qt_add_resources(vedit_fx "vedit_core_pack"
     BASE "${core_pack}"
     FILES
         "${core_pack}/pack.json"
+        "${core_pack}/animations.json"
         "${core_pack}/effects.json"
         "${core_pack}/filters.json"
         "${core_pack}/text-styles.json"

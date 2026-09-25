@@ -59,6 +59,17 @@ struct TextStylePreset
     QJsonObject style; // FILE_FORMAT §5.5 text "style"
 };
 
+struct AnimationPreset
+{
+    QString id; // "animations/in/fade"
+    int version = 1;
+    QString category; // "in", "out", "loop"
+    LocalizedText name;
+    double defaultSeconds = 0.5;
+    QString easing = QStringLiteral("easeInOut");
+    QJsonObject params;
+};
+
 struct ParamSpec
 {
     QString name;
@@ -100,6 +111,9 @@ public:
     const std::vector<Category> &textStyleCategories() const { return m_textCategories; }
     const std::vector<TextStylePreset> &textStyles() const { return m_textStyles; }
     const TextStylePreset *textStyle(const QString &id) const;
+    const std::vector<Category> &animationCategories() const { return m_animationCategories; }
+    const std::vector<AnimationPreset> &animations() const { return m_animations; }
+    const AnimationPreset *animation(const QString &id) const;
     const EffectSpec *effect(const QString &id) const;
 
     // The "look" JSON of a filter manifest / the params of a "vedit.adjust.basic" effect, as colour adjustments.
@@ -114,6 +128,8 @@ private:
     std::vector<TransitionPreset> m_transitions;
     std::vector<Category> m_textCategories;
     std::vector<TextStylePreset> m_textStyles;
+    std::vector<Category> m_animationCategories;
+    std::vector<AnimationPreset> m_animations;
     std::vector<EffectSpec> m_effects;
 };
 

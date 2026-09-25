@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ProjectFixture.h"
 
+#include "core/project/ClipTime.h"
+
 #include <QSignalSpy>
 
 using namespace vedit;
 using namespace vedit::test;
+using namespace Qt::StringLiterals;
 
 class TestTimelineEditor : public QObject
 {
@@ -603,6 +606,87 @@ private slots:
         // Undo removes it.
         session.stack.undo();
         QVERIFY(session.data().findClip(adjId) == nullptr);
+    }
+
+    // Keyframe time (D-05): source time for media clips (speed and direction included), clip time for the others.
+    void keyframeTimeFollowsTheContent()
+    {
+        Clip clip;
+        MediaClipData media;
+        media.sourceIn = frames(100);
+        clip.payload = media;
+        clip.duration = frames(50);
+        QCOMPARE(keyframeTime(clip, frames(0)), frames(100));
+        QCOMPARE(keyframeTime(clip, frames(20)), frames(120));
+        QCOMPARE(offsetOfKeyframeTime(clip, frames(120)), frames(20));
+        // Twice as fast: 20 frames of the timeline show 40 of the source.
+        clip.media()->speed = 2.0;
+        QCOMPARE(keyframeTime(clip, frames(20)), frames(140));
+        QCOMPARE(offsetOfKeyframeTime(clip, frames(140)), frames(20));
+        // Backwards: the first frame shows the end of the material used.
+        clip.media()->speed = 1.0;
+        clip.media()->reversed = true;
+        QCOMPARE(keyframeTime(clip, frames(0)), frames(149));
+        QCOMPARE(keyframeTime(clip, frames(49)), frames(100));
+        QCOMPARE(offsetOfKeyframeTime(clip, frames(100)), frames(49));
+        // Outside the clip: clamped.
+        QCOMPARE(offsetOfKeyframeTime(clip, frames(10)), frames(50));
+        // A text: from its start.
+        Clip text;
+        text.payload = TextClipData{};
+        text.duration = frames(90);
+        QCOMPARE(keyframeTime(text, frames(30)), frames(30));
+        QCOMPARE(offsetOfKeyframeTime(text, frames(30)), frames(30));
+    }
+
+    void markers()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+        // Sequence markers, kept in time order.
+        QVERIFY(session.apply(session.editor().addSequenceMarker(frames(200), u"Drop"_s, u"tertiary"_s)));
+        QVERIFY(session.apply(session.editor().addSequenceMarker(frames(50), u"Intro"_s)));
+        const std::vector<Marker> &markers = session.sequence().markers;
+        QCOMPARE(markers.size(), size_t(2));
+        QCOMPARE(markers.front().name, u"Intro"_s);
+        QCOMPARE(markers.back().color, u"tertiary"_s);
+        Marker renamed = markers.back();
+        renamed.name = u"Chorus"_s;
+        QVERIFY(session.apply(session.editor().updateSequenceMarker(renamed)));
+        QCOMPARE(session.sequence().markers.back().name, u"Chorus"_s);
+        QVERIFY(session.apply(session.editor().removeSequenceMarker(renamed.id)));
+        QCOMPARE(session.sequence().markers.size(), size_t(1));
+        session.stack.undo();
+        QCOMPARE(session.sequence().markers.size(), size_t(2));
+
+        // Clip markers stay on the content: trimming the start keeps them in keyframe time.
+        QVERIFY(session.apply(session.editor().addClipMarker(a, frames(150), u"Beat"_s)));
+        QCOMPARE(session.data().findClip(a)->markers.size(), size_t(1));
+        QVERIFY(session.apply(session.editor().trimClip(a, ClipEdge::Start, frames(60))));
+        const Clip &trimmed = *session.data().findClip(a);
+        QCOMPARE(trimmed.markers.front().time, frames(150));
+        QCOMPARE(offsetOfKeyframeTime(trimmed, trimmed.markers.front().time), frames(90));
+        QVERIFY(session.apply(session.editor().removeClipMarker(a, trimmed.markers.front().id)));
+        QVERIFY(session.data().findClip(a)->markers.empty());
+        QVERIFY(!session.editor().removeClipMarker(a, MarkerId::create()).ok());
+    }
+
+    void presetAnimations()
+    {
+        ClipId a;
+        auto owner = threeClips(&a);
+        Session &session = *owner;
+        ClipAnimations animations;
+        ClipAnimation in;
+        in.type = AssetRef{u"vedit.core"_s, u"animations/in/fade"_s, 1};
+        in.duration = frames(15);
+        animations.in = in;
+        QVERIFY(session.apply(session.editor().setClipAnimations(a, animations)));
+        QCOMPARE(session.data().findClip(a)->animations.in->type.id, u"animations/in/fade"_s);
+        QVERIFY(!session.data().findClip(a)->animations.out);
+        session.stack.undo();
+        QVERIFY(session.data().findClip(a)->animations.isEmpty());
     }
 };
 

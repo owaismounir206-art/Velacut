@@ -446,8 +446,11 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
             MaskSettings maskSettings;
             maskSettings.masks = clip.masks;
             maskSettings.firstFrame = in;
-            maskSettings.sourceIn = clip.media() ? clip.media()->sourceIn : RationalTime(0, m_profile.fps());
-            maskSettings.frameRate = Rational(m_profile.fps(), 1);
+            maskSettings.sourceIn = clip.media() ? clip.media()->sourceIn : RationalTime(0, m_rate);
+            maskSettings.frameRate = m_rate;
+            maskSettings.clipLength = static_cast<int>(length);
+            maskSettings.speed = clip.media() && !clip.media()->curve ? clip.media()->speed : 1.0;
+            maskSettings.reversed = clip.media() && clip.media()->reversed;
             render->maskSettings = maskSettings;
         }
         TransformSettings transform;
@@ -487,8 +490,12 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
         transform.cropRightParam = clip.transform.crop.right;
         transform.cropBottomParam = clip.transform.crop.bottom;
         transform.firstFrame = in;
-        transform.sourceIn = clip.media() ? clip.media()->sourceIn : RationalTime(0, m_profile.fps());
-        transform.frameRate = Rational(m_profile.fps(), 1);
+        transform.sourceIn = clip.media() ? clip.media()->sourceIn : RationalTime(0, m_rate);
+        transform.frameRate = m_rate;
+        transform.clipLength = static_cast<int>(length);
+        transform.speed = clip.media() && !clip.media()->curve ? clip.media()->speed : 1.0;
+        transform.reversed = clip.media() && clip.media()->reversed;
+        transform.animations = clip.animations;
 
         if (mainTrack) {
             const Sequence *sequence = sequenceOf(project, m_sequenceId);

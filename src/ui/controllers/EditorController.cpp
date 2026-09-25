@@ -5,6 +5,8 @@
 #include "common/Paths.h"
 #include "core/edit/ProjectFormat.h"
 #include "core/edit/TimelineEditor.h"
+#include "core/project/ClipTime.h"
+#include "core/effects/Easing.h"
 #include "core/serialization/ProjectJson.h"
 #include "document/Document.h"
 #include "engine/analysis/MediaAnalysis.h"
@@ -24,6 +26,7 @@
 #include <QRegularExpression>
 
 #include <cmath>
+#include <limits>
 
 Q_LOGGING_CATEGORY(lcEditor, "vedit.ui.editor")
 
@@ -877,6 +880,31 @@ int EditorController::snapRange(int start, int duration, const QStringList &excl
         targets.push_back(begin);
         targets.push_back(end);
     }
+    const Sequence *sequence = data().mainSequence();
+    if (sequence) {
+        const Rational rate = data().settings.frameRate;
+        for (const Marker &marker : sequence->markers) {
+            targets.push_back(static_cast<int>(marker.time.rescaled(rate, Rounding::NearestEven).value()));
+        }
+        for (const Track &track : sequence->visualTracks) {
+            for (const Clip &clip : track.clips) {
+                if (!excluded.contains(clip.id)) {
+                    for (const Marker &marker : clip.markers) {
+                        targets.push_back(static_cast<int>((clip.start + marker.time).rescaled(rate, Rounding::NearestEven).value()));
+                    }
+                }
+            }
+        }
+        for (const Track &track : sequence->audioTracks) {
+            for (const Clip &clip : track.clips) {
+                if (!excluded.contains(clip.id)) {
+                    for (const Marker &marker : clip.markers) {
+                        targets.push_back(static_cast<int>((clip.start + marker.time).rescaled(rate, Rounding::NearestEven).value()));
+                    }
+                }
+            }
+        }
+    }
     int best = threshold + 1;
     int delta = 0;
     for (const int target : targets) {
@@ -1041,6 +1069,251 @@ bool EditorController::startExport(const QString &fileName, const QString &folde
 QString EditorController::folderPath(const QUrl &url) const
 {
     return url.isLocalFile() ? url.toLocalFile() : url.toString();
+}
+
+bool EditorController::addMarker(const QString &name, const QString &color, const QString &note)
+{
+    const int currentFrame = playhead();
+    const Rational rate = data().settings.frameRate;
+    const RationalTime at(currentFrame, rate);
+
+    const auto focus = focusClip();
+    if (focus) {
+        if (const Clip *c = data().findClip(*focus)) {
+            if (at >= c->start && at <= c->end()) {
+                // Clip markers are in keyframe time: they stay on the content (D-05).
+                const RationalTime time = keyframeTime(*c, at - c->start);
+                return push(TimelineEditor(data(), data().mainSequenceId).addClipMarker(*focus, time, name, color, note));
+            }
+        }
+    }
+    return push(TimelineEditor(data(), data().mainSequenceId).addSequenceMarker(at, name, color, note));
+}
+
+bool EditorController::addSequenceMarker(int frame, const QString &name, const QString &color, const QString &note)
+{
+    const Rational rate = data().settings.frameRate;
+    return push(TimelineEditor(data(), data().mainSequenceId).addSequenceMarker(RationalTime(frame, rate), name, color, note));
+}
+
+bool EditorController::removeSequenceMarker(const QString &markerId)
+{
+    const auto id = MarkerId::fromString(markerId);
+    if (!id) {
+        return false;
+    }
+    return push(TimelineEditor(data(), data().mainSequenceId).removeSequenceMarker(*id));
+}
+
+bool EditorController::addClipMarker(const QString &clipId, int frameOffset, const QString &name, const QString &color, const QString &note)
+{
+    const auto id = ClipId::fromString(clipId);
+    if (!id) {
+        return false;
+    }
+    const Clip *clip = data().findClip(*id);
+    if (!clip) {
+        return false;
+    }
+    const Rational rate = data().settings.frameRate;
+    const RationalTime time = keyframeTime(*clip, RationalTime(frameOffset, rate));
+    return push(TimelineEditor(data(), data().mainSequenceId).addClipMarker(*id, time, name, color, note));
+}
+
+bool EditorController::removeClipMarker(const QString &clipId, const QString &markerId)
+{
+    const auto cId = ClipId::fromString(clipId);
+    const auto mId = MarkerId::fromString(markerId);
+    if (!cId || !mId) {
+        return false;
+    }
+    return push(TimelineEditor(data(), data().mainSequenceId).removeClipMarker(*cId, *mId));
+}
+
+void EditorController::nextMarker()
+{
+    const Sequence *sequence = data().mainSequence();
+    if (!sequence) {
+        return;
+    }
+    const Rational rate = data().settings.frameRate;
+    const int currentFrame = playhead();
+    int nextFrame = std::numeric_limits<int>::max();
+
+    for (const Marker &m : sequence->markers) {
+        const int f = static_cast<int>(m.time.rescaled(rate, Rounding::NearestEven).value());
+        if (f > currentFrame && f < nextFrame) {
+            nextFrame = f;
+        }
+    }
+    for (const Track &t : sequence->visualTracks) {
+        for (const Clip &c : t.clips) {
+            for (const Marker &m : c.markers) {
+                const int f = static_cast<int>((c.start + offsetOfKeyframeTime(c, m.time)).rescaled(rate, Rounding::NearestEven).value());
+                if (f > currentFrame && f < nextFrame) {
+                    nextFrame = f;
+                }
+            }
+        }
+    }
+    for (const Track &t : sequence->audioTracks) {
+        for (const Clip &c : t.clips) {
+            for (const Marker &m : c.markers) {
+                const int f = static_cast<int>((c.start + offsetOfKeyframeTime(c, m.time)).rescaled(rate, Rounding::NearestEven).value());
+                if (f > currentFrame && f < nextFrame) {
+                    nextFrame = f;
+                }
+            }
+        }
+    }
+    if (nextFrame != std::numeric_limits<int>::max() && m_player) {
+        m_player->seek(nextFrame);
+    }
+}
+
+void EditorController::previousMarker()
+{
+    const Sequence *sequence = data().mainSequence();
+    if (!sequence) {
+        return;
+    }
+    const Rational rate = data().settings.frameRate;
+    const int currentFrame = playhead();
+    int prevFrame = -1;
+
+    for (const Marker &m : sequence->markers) {
+        const int f = static_cast<int>(m.time.rescaled(rate, Rounding::NearestEven).value());
+        if (f < currentFrame && f > prevFrame) {
+            prevFrame = f;
+        }
+    }
+    for (const Track &t : sequence->visualTracks) {
+        for (const Clip &c : t.clips) {
+            for (const Marker &m : c.markers) {
+                const int f = static_cast<int>((c.start + offsetOfKeyframeTime(c, m.time)).rescaled(rate, Rounding::NearestEven).value());
+                if (f < currentFrame && f > prevFrame) {
+                    prevFrame = f;
+                }
+            }
+        }
+    }
+    for (const Track &t : sequence->audioTracks) {
+        for (const Clip &c : t.clips) {
+            for (const Marker &m : c.markers) {
+                const int f = static_cast<int>((c.start + offsetOfKeyframeTime(c, m.time)).rescaled(rate, Rounding::NearestEven).value());
+                if (f < currentFrame && f > prevFrame) {
+                    prevFrame = f;
+                }
+            }
+        }
+    }
+    if (prevFrame >= 0 && m_player) {
+        m_player->seek(prevFrame);
+    }
+}
+
+bool EditorController::applyAnimation(const QString &animationId, double durationSeconds)
+{
+    const auto target = clipForLibrary();
+    if (!target) {
+        return false;
+    }
+    const Clip *clip = data().findClip(*target);
+    if (!clip) {
+        return false;
+    }
+    const Rational rate = data().settings.frameRate;
+    ClipAnimations anims = clip->animations;
+
+    const fx::AnimationPreset *preset = fx::Library::core().animation(animationId);
+    ClipAnimation anim;
+    anim.type = AssetRef{QString::fromLatin1(fx::Library::kCorePack), animationId, preset ? preset->version : 1};
+    const double durSec = durationSeconds > 0.05 ? durationSeconds : (preset ? preset->defaultSeconds : 0.5);
+    anim.duration = RationalTime::fromSeconds(Rational(static_cast<int64_t>(std::round(durSec * 1000.0)), 1000), rate, Rounding::NearestEven);
+    if (preset) {
+        const auto easingOpt = Easing::fromName(preset->easing);
+        if (easingOpt) {
+            anim.easing = *easingOpt;
+        }
+        anim.params = preset->params;
+    }
+
+    QString cat = preset ? preset->category : QString();
+    if (cat.isEmpty()) {
+        if (animationId.contains(u"/in/") || animationId.startsWith(u"in")) {
+            cat = QStringLiteral("in");
+        } else if (animationId.contains(u"/out/") || animationId.startsWith(u"out")) {
+            cat = QStringLiteral("out");
+        } else {
+            cat = QStringLiteral("loop");
+        }
+    }
+
+    if (cat == u"in"_s) {
+        anims.in = anim;
+    } else if (cat == u"out"_s) {
+        anims.out = anim;
+    } else {
+        anims.loop = anim;
+    }
+
+    return push(TimelineEditor(data(), data().mainSequenceId).setClipAnimations(*target, anims));
+}
+
+bool EditorController::removeAnimation(const QString &category)
+{
+    const auto target = clipForLibrary();
+    if (!target) {
+        return false;
+    }
+    const Clip *clip = data().findClip(*target);
+    if (!clip) {
+        return false;
+    }
+    ClipAnimations anims = clip->animations;
+    if (category == u"in"_s) {
+        anims.in.reset();
+    } else if (category == u"out"_s) {
+        anims.out.reset();
+    } else if (category == u"loop"_s) {
+        anims.loop.reset();
+    } else {
+        anims.in.reset();
+        anims.out.reset();
+        anims.loop.reset();
+    }
+    return push(TimelineEditor(data(), data().mainSequenceId).setClipAnimations(*target, anims));
+}
+
+bool EditorController::createCompoundClip(const QString &name)
+{
+    const auto selected = selectedClips();
+    if (selected.empty()) {
+        return false;
+    }
+    return push(TimelineEditor(data(), data().mainSequenceId).createCompoundClip(selected, name));
+}
+
+bool EditorController::expandCompoundClip(const QString &clipId)
+{
+    std::optional<ClipId> target;
+    if (!clipId.isEmpty()) {
+        target = ClipId::fromString(clipId);
+    } else {
+        target = focusClip();
+    }
+    if (!target) {
+        return false;
+    }
+    return push(TimelineEditor(data(), data().mainSequenceId).expandCompoundClip(*target));
+}
+
+bool EditorController::insertAdjustment(int durationFrames)
+{
+    const Rational rate = data().settings.frameRate;
+    const RationalTime position(playhead(), rate);
+    const RationalTime duration(durationFrames > 0 ? durationFrames : 90, rate);
+    return push(TimelineEditor(data(), data().mainSequenceId).insertAdjustment(position, duration));
 }
 
 } // namespace vedit::ui

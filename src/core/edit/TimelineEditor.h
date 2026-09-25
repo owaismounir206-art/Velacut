@@ -98,6 +98,18 @@ public:
     EditResult createCompoundClip(const std::vector<ClipId> &clipIds, const QString &name = QString());
     EditResult expandCompoundClip(const ClipId &clipId);
     EditResult insertAdjustment(const RationalTime &position, const RationalTime &duration);
+    EditResult addSequenceMarker(const RationalTime &time, const QString &name = QString(),
+                                 const QString &color = QStringLiteral("primary"),
+                                 const QString &note = QString(), MarkerKind kind = MarkerKind::User);
+    EditResult removeSequenceMarker(const MarkerId &markerId);
+    EditResult updateSequenceMarker(const Marker &marker);
+    // Clip markers: `time` in the clip's keyframe time (D-05, core/project/ClipTime.h).
+    EditResult addClipMarker(const ClipId &clipId, const RationalTime &time, const QString &name = QString(),
+                             const QString &color = QStringLiteral("primary"),
+                             const QString &note = QString(), MarkerKind kind = MarkerKind::User);
+    EditResult removeClipMarker(const ClipId &clipId, const MarkerId &markerId);
+    EditResult updateClipMarker(const ClipId &clipId, const Marker &marker);
+    EditResult setClipAnimations(const ClipId &clipId, const ClipAnimations &animations);
 
     // Duration of a new text and of a freeze frame (SPEC 0bis rule 6).
     static constexpr int kDefaultTextSeconds = 3;

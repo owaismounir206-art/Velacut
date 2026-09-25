@@ -1,0 +1,1287 @@
+{
+    "categories": [
+        {
+            "id": "in",
+            "name": {
+                "en": "In",
+                "it": "Entrata"
+            }
+        },
+        {
+            "id": "out",
+            "name": {
+                "en": "Out",
+                "it": "Uscita"
+            }
+        },
+        {
+            "id": "loop",
+            "name": {
+                "en": "Loop",
+                "it": "Ciclo"
+            }
+        }
+    ],
+    "items": [
+        {
+            "kind": "animation",
+            "id": "animations/in/fade",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Fade in",
+                "it": "Dissolvenza in entrata"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/zoom_in",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Zoom in",
+                "it": "Ingrandimento"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutBack"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/zoom_out",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Zoom from large",
+                "it": "Zoom da grande"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/slide_left",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Slide left",
+                "it": "Scorrimento a sinistra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/slide_right",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Slide right",
+                "it": "Scorrimento a destra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/slide_up",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Slide up",
+                "it": "Scorrimento verso l'alto"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/slide_down",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Slide down",
+                "it": "Scorrimento verso il basso"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/spin",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Spin in",
+                "it": "Rotazione in entrata"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutBack"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/bounce",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Bounce in",
+                "it": "Rimbalzo in entrata"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutBounce"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/wipe_right",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Wipe right",
+                "it": "Tendina a destra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/wipe_left",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Wipe left",
+                "it": "Tendina a sinistra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/wipe_up",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Wipe up",
+                "it": "Tendina verso l'alto"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/wipe_down",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Wipe down",
+                "it": "Tendina verso il basso"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/rotate_cw",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Rotate clockwise",
+                "it": "Rotazione oraria"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/rotate_ccw",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Rotate counter-clockwise",
+                "it": "Rotazione antioraria"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/pop",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Pop in",
+                "it": "Pop in entrata"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutBack"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/drop",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Drop in",
+                "it": "Caduta dall'alto"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutBounce"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/rise",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Rise in",
+                "it": "Salita dal basso"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/swing",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Swing in",
+                "it": "Oscillazione in entrata"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutElastic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/flip_x",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Flip vertical",
+                "it": "Ribaltamento verticale"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/flip_y",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Flip horizontal",
+                "it": "Ribaltamento orizzontale"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/roll_left",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Roll left",
+                "it": "Rotolamento a sinistra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/roll_right",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Roll right",
+                "it": "Rotolamento a destra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/expand_h",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Expand horizontal",
+                "it": "Espansione orizzontale"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/expand_v",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Expand vertical",
+                "it": "Espansione verticale"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/elastic_in",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Elastic in",
+                "it": "Elastico in entrata"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutElastic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/back_in",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Back in",
+                "it": "Rinculo in entrata"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutBack"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/fade_slide_up",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Fade and slide up",
+                "it": "Dissolvenza e salita"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/fade_slide_down",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Fade and slide down",
+                "it": "Dissolvenza e discesa"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOutCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/in/fade_zoom",
+            "version": 1,
+            "category": "in",
+            "name": {
+                "en": "Fade and zoom",
+                "it": "Dissolvenza e zoom"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/fade",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Fade out",
+                "it": "Dissolvenza in uscita"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/zoom_in",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Zoom larger",
+                "it": "Ingrandimento in uscita"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeIn"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/zoom_out",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Zoom smaller",
+                "it": "Rimpicciolimento in uscita"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInBack"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/slide_left",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Slide left",
+                "it": "Scorrimento a sinistra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/slide_right",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Slide right",
+                "it": "Scorrimento a destra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/slide_up",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Slide up",
+                "it": "Scorrimento verso l'alto"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/slide_down",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Slide down",
+                "it": "Scorrimento verso il basso"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/spin",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Spin out",
+                "it": "Rotazione in uscita"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInBack"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/bounce",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Bounce out",
+                "it": "Rimbalzo in uscita"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInBounce"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/wipe_right",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Wipe right",
+                "it": "Tendina a destra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/wipe_left",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Wipe left",
+                "it": "Tendina a sinistra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/wipe_up",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Wipe up",
+                "it": "Tendina verso l'alto"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/wipe_down",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Wipe down",
+                "it": "Tendina verso il basso"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/rotate_cw",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Rotate clockwise",
+                "it": "Rotazione oraria"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeIn"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/rotate_ccw",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Rotate counter-clockwise",
+                "it": "Rotazione antioraria"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeIn"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/shrink",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Shrink",
+                "it": "Restringimento"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInBack"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/fall",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Fall out",
+                "it": "Caduta verso il basso"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/sink",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Sink out",
+                "it": "Sprofondamento"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/swing",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Swing out",
+                "it": "Oscillazione in uscita"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInElastic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/flip_x",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Flip vertical",
+                "it": "Ribaltamento verticale"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeIn"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/flip_y",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Flip horizontal",
+                "it": "Ribaltamento orizzontale"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeIn"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/roll_left",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Roll left",
+                "it": "Rotolamento a sinistra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/roll_right",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Roll right",
+                "it": "Rotolamento a destra"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/contract_h",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Contract horizontal",
+                "it": "Contrazione orizzontale"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeIn"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/contract_v",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Contract vertical",
+                "it": "Contrazione verticale"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeIn"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/elastic_out",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Elastic out",
+                "it": "Elastico in uscita"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInElastic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/back_out",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Back out",
+                "it": "Rinculo in uscita"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInBack"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/fade_slide_up",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Fade and slide up",
+                "it": "Dissolvenza e salita"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/fade_slide_down",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Fade and slide down",
+                "it": "Dissolvenza e discesa"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInCubic"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/out/fade_zoom",
+            "version": 1,
+            "category": "out",
+            "name": {
+                "en": "Fade and zoom",
+                "it": "Dissolvenza e zoom"
+            },
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/pulse",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Pulse",
+                "it": "Pulsazione"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/wobble",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Wobble",
+                "it": "Oscillazione rapida"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/float",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Float",
+                "it": "Fluttuazione"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/blink",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Blink",
+                "it": "Lampeggio"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/rotate",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Continuous rotate",
+                "it": "Rotazione continua"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/shake",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Shake",
+                "it": "Scuotimento"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/bounce",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Bounce",
+                "it": "Rimbalzo continuo"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeOutBounce"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/swing",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Swing",
+                "it": "Dondolio"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/heartbeat",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Heartbeat",
+                "it": "Battito cardiaco"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/jiggle",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Jiggle",
+                "it": "Vibrazione"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/breathe",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Breathe",
+                "it": "Respiro"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/zoom_pulse",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Zoom pulse",
+                "it": "Pulsazione zoom"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/flash",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Flash",
+                "it": "Bagliore a intermittenza"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/sway",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Sway",
+                "it": "Oscillazione morbida"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/pendulum",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Pendulum",
+                "it": "Pendolo"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/spin_slow",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Slow spin",
+                "it": "Rotazione lenta"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/vibrate",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Vibrate",
+                "it": "Micro-vibrazione"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/wave",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Wave",
+                "it": "Onda sinusoidale"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/tilt",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Tilt",
+                "it": "Inclinazione ciclica"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/flicker",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Flicker",
+                "it": "Tremolio luminoso"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/rock",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Rock",
+                "it": "Dondolio angolare"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/shiver",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Shiver",
+                "it": "Brivido"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/bob",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Bob",
+                "it": "Saliscendi"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/drift",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Drift",
+                "it": "Deriva orbitale"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/twist",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Twist",
+                "it": "Torsione ciclica"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/orbit",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Orbit",
+                "it": "Orbita ellittica"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/zigzag",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Zigzag",
+                "it": "Zigzag"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/heart_pulse",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Heart pulse",
+                "it": "Pulsazione cardiaca dolce"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/tremble",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Tremble",
+                "it": "Tremore"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/hover",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Hover",
+                "it": "Sospensione in aria"
+            },
+            "defaultDuration": 1.0,
+            "params": {
+                "easing": "easeInOut"
+            }
+        }
+    ]
+}

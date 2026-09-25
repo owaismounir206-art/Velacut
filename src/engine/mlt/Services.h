@@ -62,6 +62,11 @@ struct TransformSettings
     RationalTime sourceIn{0, 30};
     Rational frameRate{30, 1};
     int firstFrame = 0;
+    int clipLength = 0;
+    // How the clip plays its source, for the keyframe time (D-05, core/project/ClipTime.h).
+    double speed = 1;
+    bool reversed = false;
+    ClipAnimations animations;
 
     // Canvas background behind the clip (main track only).
     std::optional<CanvasBackground> background;
@@ -87,6 +92,9 @@ struct MaskSettings
     RationalTime sourceIn{0, 30};
     Rational frameRate{30, 1};
     int firstFrame = 0;
+    int clipLength = 0;
+    double speed = 1;
+    bool reversed = false;
 
     bool isIdentity() const { return masks.empty(); }
     QByteArray key() const;

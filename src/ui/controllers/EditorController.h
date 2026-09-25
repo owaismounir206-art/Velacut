@@ -161,6 +161,22 @@ public:
     // A text at the playhead with the default style, or a style of the library, selected for editing.
     Q_INVOKABLE bool addText(const QString &styleId = {});
 
+    // Markers & Animations (Phase 3)
+    Q_INVOKABLE bool addMarker(const QString &name = {}, const QString &color = {}, const QString &note = {});
+    Q_INVOKABLE bool addSequenceMarker(int frame, const QString &name = {}, const QString &color = {}, const QString &note = {});
+    Q_INVOKABLE bool removeSequenceMarker(const QString &markerId);
+    Q_INVOKABLE bool addClipMarker(const QString &clipId, int frameOffset, const QString &name = {}, const QString &color = {}, const QString &note = {});
+    Q_INVOKABLE bool removeClipMarker(const QString &clipId, const QString &markerId);
+    Q_INVOKABLE void nextMarker();
+    Q_INVOKABLE void previousMarker();
+    Q_INVOKABLE bool applyAnimation(const QString &animationId, double durationSeconds = 0.5);
+    Q_INVOKABLE bool removeAnimation(const QString &category = {});
+
+    // Compound clip and adjustment layer (Phase 3)
+    Q_INVOKABLE bool createCompoundClip(const QString &name = {});
+    Q_INVOKABLE bool expandCompoundClip(const QString &clipId = {});
+    Q_INVOKABLE bool insertAdjustment(int durationFrames = 90);
+
     // Format (SPEC 0bis rule 1: changeable with one click)
     Q_INVOKABLE void setCanvasPreset(int preset);
 

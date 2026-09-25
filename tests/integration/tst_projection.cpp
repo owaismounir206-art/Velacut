@@ -416,6 +416,97 @@ private slots:
         QCOMPARE(canvasBox(clip, &m_vertical, QSize(320, 180)).size.width(), 320.0);
     }
 
+    // Keyframes stay on the content (D-05): at 2× a keyframe at source frame 60 is reached at timeline frame 30.
+    void keyframesFollowTheSpeed()
+    {
+        const auto opacityAt = [this](double speed, bool animated, int position) {
+            Session session(baseProject());
+            if (!session.apply(session.editor().insertMedia(m_landscape.id, frames(0)))) {
+                return QImage();
+            }
+            const ClipId id = session.mainTrack().clips.front().id;
+            if (speed != 1.0 && !session.apply(session.editor().setSpeed(id, speed))) {
+                return QImage();
+            }
+            if (animated) {
+                // Opacity 0 at source frame 0, 1 at source frame 60.
+                const bool ok = session.apply(session.editor().updateClips({id}, [](Clip &clip) {
+                    clip.opacity.setKeyframes({Keyframe{frames(0), 0.0, Interpolation::Linear}, Keyframe{frames(60), 1.0, Interpolation::Linear}});
+                }, u"animate"_s));
+                if (!ok) {
+                    return QImage();
+                }
+            }
+            return renderFresh1(session.data(), position);
+        };
+        // Timeline frame 15 at 2× shows source frame 30: half way.
+        const QImage full = opacityAt(2.0, false, 15);
+        const QImage half = opacityAt(2.0, true, 15);
+        QVERIFY(!full.isNull() && !half.isNull());
+        const QRgb f = full.pixel(160, 90);
+        const QRgb h = half.pixel(160, 90);
+        QVERIFY2(std::abs(qRed(h) - qRed(f) / 2) <= 6 && std::abs(qGreen(h) - qGreen(f) / 2) <= 6,
+                 qPrintable(u"%1,%2 vs half of %3,%4"_s.arg(qRed(h)).arg(qGreen(h)).arg(qRed(f)).arg(qGreen(f))));
+        // Timeline frame 30 at 2× = source frame 60: fully visible.
+        QCOMPARE(rgbHash(opacityAt(2.0, true, 30)), rgbHash(opacityAt(2.0, false, 30)));
+    }
+
+    // Changing a keyframe (not only adding one) reaches a running projection.
+    void keyframeChangesUpdateTheProjection()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const ClipId id = session.mainTrack().clips.front().id;
+        const auto animate = [&](double end) {
+            return session.apply(session.editor().updateClips({id}, [end](Clip &clip) {
+                clip.opacity.setKeyframes({Keyframe{frames(0), 0.0, Interpolation::Linear}, Keyframe{frames(60), end, Interpolation::Linear}});
+            }, u"animate"_s));
+        };
+        QVERIFY(animate(1.0));
+        auto profile = makeProfile(session.data(), session.data().mainSequenceId);
+        MediaProducerCache cache(*profile);
+        TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+        projection.build(session.data(), session.data().mainSequenceId);
+        connect(&session.project, &Project::changed, this, [&](const ChangeSet &changes) { projection.update(session.data(), changes); });
+        const QByteArray before = rgbHash(projection.renderFrame(30));
+        QVERIFY(animate(0.2)); // same number of keyframes, another value
+        const QByteArray after = rgbHash(projection.renderFrame(30));
+        QVERIFY(after != before);
+        QCOMPARE(after, rgbHash(renderFresh1(session.data(), 30)));
+    }
+
+    // A preset entry animation (SPEC §5.6): a text fading in over its first half second.
+    void presetFadeInAnimation()
+    {
+        Session session(baseProject());
+        TextClipData text;
+        text.text = u"TITLE"_s;
+        text.style.size = Param(0.2);
+        QVERIFY(session.apply(session.editor().insertText(frames(0), text, frames(60))));
+        const ClipId id = session.data().mainSequence()->visualTracks.back().clips.front().id;
+        ClipAnimations animations;
+        ClipAnimation in;
+        in.type = AssetRef{u"vedit.core"_s, u"animations/in/fade"_s, 1};
+        in.duration = frames(15);
+        in.easing = Easing::preset(Easing::Preset::Linear);
+        animations.in = in;
+        const QImage still = renderFresh1(session.data(), 20);
+        QVERIFY(session.apply(session.editor().setClipAnimations(id, animations)));
+        const auto brightest = [](const QImage &image) {
+            int best = 0;
+            for (int y = 0; y < image.height(); ++y) {
+                for (int x = 0; x < image.width(); ++x) {
+                    best = std::max(best, qGray(image.pixel(x, y)));
+                }
+            }
+            return best;
+        };
+        QCOMPARE(brightest(renderFresh1(session.data(), 0)), 0);   // not visible yet
+        const int middle = brightest(renderFresh1(session.data(), 7));
+        QVERIFY2(middle > 60 && middle < 200, qPrintable(QString::number(middle)));
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 20)), rgbHash(still)); // after it: as without animation
+    }
+
     void dissolveBetweenClipsFreezesMissingFrames()
     {
         // Two whole clips: no material beyond the cut, so the edge frames are frozen during the transition.

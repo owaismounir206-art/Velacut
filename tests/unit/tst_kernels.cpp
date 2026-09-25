@@ -376,6 +376,13 @@ private slots:
         QVERIFY(library.filters().size() >= 30);
         QVERIFY(library.transitions().size() >= 18);
         QVERIFY(library.textStyles().size() >= 24);
+        // Preset animations: at least 30 entry, 30 exit and 30 loop animations (SPEC §5.6).
+        for (const char *category : {"in", "out", "loop"}) {
+            const auto count = std::count_if(library.animations().begin(), library.animations().end(),
+                                             [category](const AnimationPreset &a) { return a.category == QLatin1StringView(category); });
+            QVERIFY2(count >= 30, category);
+        }
+        QVERIFY(library.animation(QStringLiteral("animations/in/fade")));
         // Every item has a category that exists, a name in both languages, a unique id.
         QSet<QString> ids;
         const auto check = [&](const auto &items, const std::vector<Category> &categories) {

@@ -1580,11 +1580,20 @@
         <location line="+47"/>
         <location line="+14"/>
         <location line="+21"/>
+        <location line="+10"/>
+        <location line="+112"/>
+        <location line="+81"/>
+        <location line="+25"/>
+        <location line="+22"/>
+        <location line="+15"/>
+        <location line="+19"/>
+        <location line="+30"/>
+        <location line="+23"/>
         <source>The sequence does not exist.</source>
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-742"/>
+        <location line="-1079"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -1631,11 +1640,15 @@
         <location line="+27"/>
         <location line="+44"/>
         <location line="+80"/>
+        <location line="+286"/>
+        <location line="+162"/>
+        <location line="+30"/>
+        <location line="+23"/>
         <source>The clip does not exist.</source>
         <translation>La clip non esiste.</translation>
     </message>
     <message>
-        <location line="-508"/>
+        <location line="-1009"/>
         <location line="+10"/>
         <location line="+49"/>
         <location line="+80"/>
@@ -1647,11 +1660,15 @@
         <location line="+44"/>
         <location line="+81"/>
         <location line="+82"/>
+        <location line="+203"/>
+        <location line="+162"/>
+        <location line="+30"/>
+        <location line="+23"/>
         <source>The track is locked.</source>
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-587"/>
+        <location line="-1005"/>
         <location line="+583"/>
         <location line="+47"/>
         <location line="+14"/>
@@ -1780,6 +1797,104 @@
         <location line="+45"/>
         <source>Change background</source>
         <translation>Cambia sfondo</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Select at least one clip.</source>
+        <translation>Seleziona almeno una clip.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>A clip does not exist.</source>
+        <translation>Una clip non esiste.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>A track is locked.</source>
+        <translation>Una traccia è bloccata.</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Invalid duration for compound clip.</source>
+        <translation>Durata non valida per la clip composta.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Compound Clip</source>
+        <translation>Clip composta</translation>
+    </message>
+    <message>
+        <location line="+63"/>
+        <source>Create compound clip</source>
+        <translation>Crea clip composta</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>The clip is not a compound clip.</source>
+        <translation>La clip non è una clip composta.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The nested sequence was not found.</source>
+        <translation>La sequenza annidata non è stata trovata.</translation>
+    </message>
+    <message>
+        <location line="+55"/>
+        <source>Expand compound clip</source>
+        <translation>Espandi clip composta</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Adjustment Layer</source>
+        <translation>Livello di regolazione</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Add adjustment layer</source>
+        <translation>Aggiungi livello di regolazione</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Add marker</source>
+        <translation>Aggiungi marker</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <location line="+15"/>
+        <location line="+57"/>
+        <location line="+23"/>
+        <source>The marker does not exist.</source>
+        <translation>Il marker non esiste.</translation>
+    </message>
+    <message>
+        <location line="-92"/>
+        <source>Remove marker</source>
+        <translation>Rimuovi marker</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Edit marker</source>
+        <translation>Modifica marker</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>Add clip marker</source>
+        <translation>Aggiungi marker alla clip</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Remove clip marker</source>
+        <translation>Rimuovi marker della clip</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Edit clip marker</source>
+        <translation>Modifica marker della clip</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Animation</source>
+        <translation>Animazione</translation>
     </message>
 </context>
 <context>
@@ -1984,7 +2099,7 @@
 <context>
     <name>vedit::projectjson</name>
     <message>
-        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1232"/>
+        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1371"/>
         <source>The project file is damaged (%1).</source>
         <translation>Il file del progetto è danneggiato (%1).</translation>
     </message>
@@ -2271,7 +2386,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+183"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+186"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
@@ -2315,7 +2430,7 @@
         </translation>
     </message>
     <message>
-        <location line="+128"/>
+        <location line="+153"/>
         <source>Change format</source>
         <translation>Cambia formato</translation>
     </message>

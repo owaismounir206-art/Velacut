@@ -142,6 +142,21 @@ Library Library::load(const QString &folder)
                                         item.value(u"style"_s).toObject()});
     }
 
+    const QJsonObject animations = read(u"animations.json"_s);
+    library.m_animationCategories = categories(animations);
+    for (const QJsonValue &value : animations.value(u"items"_s).toArray()) {
+        const QJsonObject item = value.toObject();
+        AnimationPreset preset;
+        preset.id = item.value(u"id"_s).toString();
+        preset.version = item.value(u"version"_s).toInt(1);
+        preset.category = item.value(u"category"_s).toString();
+        preset.name = localized(item.value(u"name"_s));
+        preset.defaultSeconds = item.value(u"defaultDuration"_s).toDouble(0.5);
+        preset.params = item.value(u"params"_s).toObject();
+        preset.easing = preset.params.value(u"easing"_s).toString(u"easeInOut"_s);
+        library.m_animations.push_back(std::move(preset));
+    }
+
     const QJsonObject effects = read(u"effects.json"_s);
     for (const QJsonValue &value : effects.value(u"items"_s).toArray()) {
         const QJsonObject item = value.toObject();
@@ -189,6 +204,16 @@ const TransitionPreset *Library::transition(const QString &id) const
 const TextStylePreset *Library::textStyle(const QString &id) const
 {
     for (const TextStylePreset &preset : m_textStyles) {
+        if (preset.id == id) {
+            return &preset;
+        }
+    }
+    return nullptr;
+}
+
+const AnimationPreset *Library::animation(const QString &id) const
+{
+    for (const AnimationPreset &preset : m_animations) {
         if (preset.id == id) {
             return &preset;
         }

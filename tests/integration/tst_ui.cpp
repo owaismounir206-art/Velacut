@@ -401,6 +401,9 @@ private slots:
         editor()->player()->seek(10);
         QTRY_COMPARE(editor()->player()->position(), 10);
         click(byName(u"clip-"_s + first.toString()));
+        // Pointing at the timeline skims (the handles hide): the pointer goes to the player.
+        QTest::mouseMove(m_window, centre(byName(u"propertiesPanel"_s)) - QPoint(500, 0));
+        QTRY_VERIFY(!editor()->player()->skimming());
         QTRY_VERIFY(byName(u"canvasBox"_s));
         const auto value = [&](const char *key) { return editor()->inspector()->values().value(QString::fromLatin1(key)).toDouble(); };
         const int steps = editor()->document().undoStack().index();
@@ -431,6 +434,7 @@ private slots:
         editor()->clearSelection();
         click(byName(u"addTextButton"_s));
         QTRY_COMPARE(editor()->inspector()->kind(), int(ui::ClipInspector::Text));
+        QTest::mouseMove(m_window, centre(byName(u"propertiesPanel"_s)) - QPoint(500, 0));
         QTRY_VERIFY(byName(u"canvasMove"_s));
         QTest::mouseDClick(m_window, Qt::LeftButton, {}, centre(byName(u"canvasMove"_s)));
         QTRY_VERIFY(byName(u"canvasTextEditor"_s));

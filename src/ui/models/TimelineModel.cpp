@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "TimelineModel.h"
 
+#include "core/project/ClipTime.h"
 #include "core/project/Project.h"
 #include "fx/Library.h"
 
@@ -83,6 +84,8 @@ QVariant TimelineModel::data(const QModelIndex &index, int role) const
         return entry.locked;
     case MediaLengthRole:
         return entry.mediaLength;
+    case MarkersRole:
+        return entry.markers;
     default:
         return {};
     }
@@ -93,7 +96,7 @@ QHash<int, QByteArray> TimelineModel::roleNames() const
     return {{ClipIdRole, "clipId"},     {TrackRowRole, "trackRow"}, {StartRole, "start"},
             {DurationRole, "duration"}, {NameRole, "name"},         {KindRole, "kind"},
             {MediaIdRole, "mediaId"},   {SourceInRole, "sourceIn"}, {SelectedRole, "selected"},
-            {LockedRole, "locked"},     {MediaLengthRole, "mediaLength"}};
+            {LockedRole, "locked"},     {MediaLengthRole, "mediaLength"}, {MarkersRole, "markers"}};
 }
 
 std::optional<TimelineModel::TrackRow> TimelineModel::trackRow(int row) const
@@ -156,6 +159,17 @@ void TimelineModel::rebuild()
                 }
                 entry.selected = m_selection.contains(clip.id);
                 entry.locked = track.locked;
+                for (const Marker &marker : clip.markers) {
+                    entry.markers.append(QVariantMap{
+                        {u"id"_s, marker.id.toString()},
+                        // Frames from the clip's start (the marker itself is in keyframe time, D-05).
+                        {u"frame"_s, frames(offsetOfKeyframeTime(clip, marker.time), rate)},
+                        {u"name"_s, marker.name},
+                        {u"color"_s, marker.color},
+                        {u"note"_s, marker.note},
+                        {u"kind"_s, static_cast<int>(marker.kind)}
+                    });
+                }
                 duration = std::max(duration, entry.start + entry.duration);
                 all.push_back(std::move(entry));
             }
@@ -196,6 +210,24 @@ void TimelineModel::rebuild()
         for (int i = 0; i < static_cast<int>(sequence->audioTracks.size()); ++i) {
             addTrack(sequence->audioTracks[static_cast<size_t>(i)], true, i, u"audio"_s);
         }
+        QVariantList markerList;
+        for (const Marker &marker : sequence->markers) {
+            markerList.append(QVariantMap{
+                {u"id"_s, marker.id.toString()},
+                {u"frame"_s, frames(marker.time, rate)},
+                {u"name"_s, marker.name},
+                {u"color"_s, marker.color},
+                {u"note"_s, marker.note},
+                {u"kind"_s, static_cast<int>(marker.kind)}
+            });
+        }
+        if (m_markers != markerList) {
+            m_markers = std::move(markerList);
+            emit markersChanged();
+        }
+    } else if (!m_markers.isEmpty()) {
+        m_markers.clear();
+        emit markersChanged();
     }
     m_all = std::move(all);
     m_allCuts = std::move(allCuts);

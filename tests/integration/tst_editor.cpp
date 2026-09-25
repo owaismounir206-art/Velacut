@@ -428,6 +428,59 @@ private slots:
         QVERIFY2(before == after, qPrintable(firstDifference(before, after)));
     }
 
+    // Markers at the playhead (on the selected clip, or on the video) and jumping between them; preset animations.
+    void markersAndAnimations()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-markers"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.importAndInsertPaths({m_files.landscape, m_files.vertical}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(2), 20000);
+        const ClipId second = mainTrack(editor).clips[1].id;
+
+        // Nothing selected: a marker of the video.
+        editor.clearSelection();
+        editor.player()->seek(30);
+        QVERIFY(editor.addMarker(u"Start"_s));
+        QCOMPARE(editor.data().mainSequence()->markers.size(), size_t(1));
+        QCOMPARE(editor.timeline()->markers().size(), 1);
+        // A selected clip at 2×: the marker goes on the clip, in its keyframe time (source time).
+        editor.select(second.toString(), false);
+        QVERIFY(editor.inspector()->set(u"speed"_s, 2.0));
+        editor.player()->seek(120 + 20); // 20 frames into the clip = 40 frames of its source
+        QVERIFY(editor.addMarker(u"Beat"_s));
+        const Clip &clip = *editor.data().findClip(second);
+        QCOMPARE(clip.markers.size(), size_t(1));
+        QCOMPARE(clip.markers.front().time.value(), 40);
+
+        // Jumping from marker to marker.
+        editor.player()->seek(0);
+        editor.nextMarker();
+        QTRY_COMPARE(editor.player()->position(), 30);
+        editor.nextMarker();
+        QTRY_COMPARE(editor.player()->position(), 140);
+        editor.nextMarker(); // none after: stays
+        QTRY_COMPARE(editor.player()->position(), 140);
+        editor.previousMarker();
+        QTRY_COMPARE(editor.player()->position(), 30);
+
+        // Preset animations on the selected clip: one per kind, replaced, removed.
+        QVERIFY(editor.applyAnimation(u"animations/in/zoom_in"_s));
+        QVERIFY(editor.applyAnimation(u"animations/out/fade"_s, 1.0));
+        QCOMPARE(editor.data().findClip(second)->animations.in->type.id, u"animations/in/zoom_in"_s);
+        QCOMPARE(editor.data().findClip(second)->animations.out->duration.value(), 30);
+        QVERIFY(editor.applyAnimation(u"animations/in/fade"_s));
+        QCOMPARE(editor.data().findClip(second)->animations.in->type.id, u"animations/in/fade"_s);
+        QVERIFY(editor.removeAnimation(u"in"_s));
+        QVERIFY(!editor.data().findClip(second)->animations.in);
+        QVERIFY(editor.data().findClip(second)->animations.out);
+        QVERIFY(editor.removeAnimation());
+        QVERIFY(editor.data().findClip(second)->animations.isEmpty());
+        QVERIFY(editor.close());
+    }
+
     void snappingAndFormat()
     {
         document::DraftStore store(m_dir.filePath(u"drafts2"_s));

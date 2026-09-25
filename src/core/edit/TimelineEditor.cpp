@@ -1271,4 +1271,145 @@ EditResult TimelineEditor::insertAdjustment(const RationalTime &position, const 
     return finish(std::move(modified), tr("Add adjustment layer"), clipId);
 }
 
+EditResult TimelineEditor::addSequenceMarker(const RationalTime &time, const QString &name,
+                                             const QString &color, const QString &note, MarkerKind kind)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    Marker marker;
+    marker.id = MarkerId::create();
+    marker.time = time.rescaled(m_rate, Rounding::NearestEven);
+    if (marker.time.isNegative()) {
+        marker.time = RationalTime(0, m_rate);
+    }
+    marker.name = name;
+    marker.color = color.isEmpty() ? QStringLiteral("primary") : color;
+    marker.note = note;
+    marker.kind = kind;
+    modified.markers.push_back(std::move(marker));
+    std::sort(modified.markers.begin(), modified.markers.end(),
+              [](const Marker &a, const Marker &b) { return a.time < b.time; });
+    return finish(std::move(modified), tr("Add marker"), ClipId{});
+}
+
+EditResult TimelineEditor::removeSequenceMarker(const MarkerId &markerId)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto it = std::find_if(modified.markers.begin(), modified.markers.end(),
+                                 [&](const Marker &m) { return m.id == markerId; });
+    if (it == modified.markers.end()) {
+        return fail(tr("The marker does not exist."));
+    }
+    modified.markers.erase(it);
+    return finish(std::move(modified), tr("Remove marker"), ClipId{});
+}
+
+EditResult TimelineEditor::updateSequenceMarker(const Marker &marker)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto it = std::find_if(modified.markers.begin(), modified.markers.end(),
+                                 [&](const Marker &m) { return m.id == marker.id; });
+    if (it == modified.markers.end()) {
+        return fail(tr("The marker does not exist."));
+    }
+    *it = marker;
+    it->time = it->time.rescaled(m_rate, Rounding::NearestEven);
+    std::sort(modified.markers.begin(), modified.markers.end(),
+              [](const Marker &a, const Marker &b) { return a.time < b.time; });
+    return finish(std::move(modified), tr("Edit marker"), ClipId{});
+}
+
+EditResult TimelineEditor::addClipMarker(const ClipId &clipId, const RationalTime &time, const QString &name,
+                                         const QString &color, const QString &note, MarkerKind kind)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (ref->track->locked) {
+        return fail(tr("The track is locked."));
+    }
+    Clip &clip = ref->clip();
+    Marker marker;
+    marker.id = MarkerId::create();
+    marker.time = time.rescaled(m_rate, Rounding::NearestEven);
+    if (marker.time.isNegative()) {
+        marker.time = RationalTime(0, m_rate);
+    }
+    marker.name = name;
+    marker.color = color.isEmpty() ? QStringLiteral("primary") : color;
+    marker.note = note;
+    marker.kind = kind;
+    clip.markers.push_back(std::move(marker));
+    std::sort(clip.markers.begin(), clip.markers.end(),
+              [](const Marker &a, const Marker &b) { return a.time < b.time; });
+    return finish(std::move(modified), tr("Add clip marker"), clipId);
+}
+
+EditResult TimelineEditor::removeClipMarker(const ClipId &clipId, const MarkerId &markerId)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (ref->track->locked) {
+        return fail(tr("The track is locked."));
+    }
+    Clip &clip = ref->clip();
+    const auto it = std::find_if(clip.markers.begin(), clip.markers.end(),
+                                 [&](const Marker &m) { return m.id == markerId; });
+    if (it == clip.markers.end()) {
+        return fail(tr("The marker does not exist."));
+    }
+    clip.markers.erase(it);
+    return finish(std::move(modified), tr("Remove clip marker"), clipId);
+}
+
+EditResult TimelineEditor::updateClipMarker(const ClipId &clipId, const Marker &marker)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (ref->track->locked) {
+        return fail(tr("The track is locked."));
+    }
+    Clip &clip = ref->clip();
+    const auto it = std::find_if(clip.markers.begin(), clip.markers.end(),
+                                 [&](const Marker &m) { return m.id == marker.id; });
+    if (it == clip.markers.end()) {
+        return fail(tr("The marker does not exist."));
+    }
+    *it = marker;
+    it->time = it->time.rescaled(m_rate, Rounding::NearestEven);
+    std::sort(clip.markers.begin(), clip.markers.end(),
+              [](const Marker &a, const Marker &b) { return a.time < b.time; });
+    return finish(std::move(modified), tr("Edit clip marker"), clipId);
+}
+
+EditResult TimelineEditor::setClipAnimations(const ClipId &clipId, const ClipAnimations &animations)
+{
+    return updateClips({clipId}, [&](Clip &c) { c.animations = animations; }, tr("Animation"));
+}
+
 } // namespace vedit

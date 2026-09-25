@@ -43,9 +43,34 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
      - Gestione dei livelli di regolazione (`TrackKind::Adjustment` o `AdjustmentClipData`): applicazione degli effetti tramite filtri agganciati al trattore sul composito durante il range temporale della clip.
    - Test unitari in `tst_timelineeditor` (`compoundClipCreationAndExpansion`, `adjustmentLayerInsertion`) e integrazione in `tst_projection` (`compoundClipRendersInProjection`, `adjustmentLayerRendersInProjection`) 100% verdi.
 
+5. **Animazioni predefinite e marker (`P3.5`)**:
+   - `animations.json` nel pacchetto core: 30 animazioni di ingresso, 30 di uscita, 30 in ciclo; calcolate in
+     `vedit.transform` (D-46). `TimelineEditor::setClipAnimations`; `EditorController::applyAnimation/removeAnimation`.
+   - Marker della sequenza e delle clip (`TimelineEditor` add/update/remove; `EditorController::addMarker` al playhead,
+     `nextMarker`/`previousMarker`; `TimelineModel.markers` e ruolo `markers` delle clip).
+   - Tempo dei keyframe e dei marker di clip con velocità e inversione (`core/project/ClipTime.h`, D-44); chiavi di
+     rendering con tutti i keyframe (D-45: prima un keyframe modificato non aggiornava l'anteprima); frequenza dei
+     fotogrammi del profilo non più troncata (29,97 diventava 29 nei calcoli dei keyframe).
+   - Test: `tst_timelineeditor` (`keyframeTimeFollowsTheContent`, `markers`, `presetAnimations`), `tst_projection`
+     (`keyframesFollowTheSpeed`, `keyframeChangesUpdateTheProjection`, `presetFadeInAnimation`), `tst_editor`
+     (`markersAndAnimations`), `tst_kernels` (30 animazioni per tipo). Traduzioni complete.
+   - Nell'interfaccia non c'è ancora niente di tutto questo (P3.6).
+
 ### Prossimi passi (Fase 3 — Keyframe e composizione)
-- P3.5: Animazioni predefinite e marker (sequence e clip) in timeline.
-- P3.6: Controlli UI inspector (keyframe diamonds, curve easing selector, chroma key picker, maschere) e verifica criterio di completamento SPEC §8 ("Animo un titolo con keyframe ed easing").
+- P3.6: interfaccia: marker sulla timeline e sul righello (tasto M, salto con Maiusc+frecce), scheda Animazioni con
+  anteprima al passaggio del mouse, diamanti dei keyframe accanto ai parametri e sulla clip, scelta dell'easing,
+  selettore colore del chroma key, maschere sul canvas, clip composta e livello di regolazione dal menu della clip;
+  verifica del criterio ("Animo un titolo con keyframe ed easing").
+
+### Lacune della Fase 2 (trovate il 2026-09-25, da recuperare)
+La Fase 2 è stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata
+senza il via registrato dell'utente. Mancano ancora nell'interfaccia:
+- **ricerca universale Ctrl+K** e `ActionRegistry` (regola 14 della SPEC 0bis);
+- **mixer** con misuratori per traccia e master (l'engine li calcola già: `TimelinePlayer::audioLevel`) e volume di
+  traccia nell'intestazione;
+- nella barra contestuale: **Velocità, Congela, Inverti, Specchia, Migliora, Copia/Incolla attributi** (velocità,
+  inversione e "Migliora" sono raggiungibili solo dal pannello proprietà; congela e copia/incolla non hanno pulsante:
+  `TimelineEditor::insertFreezeFrame` e `ClipInspector::copyAttributes/pasteAttributes` esistono e sono testati).
 
 ## Criterio di completamento della Fase 1 (SPEC §8)
 | Requisito | Esito | Verifica |
@@ -177,6 +202,6 @@ sorgenti di MLT consultati per le verifiche (D-24, §20). Si possono cancellare:
 `third_party/` e `src/assets/`.
 
 ## Decisioni
-Registro in `docs/ARCHITECTURE.md` §15 (D-01 … D-39), esiti delle verifiche in §18 (Fase 0), §20 (Fase 1) e §21 (Fase 2).
+Registro in `docs/ARCHITECTURE.md` §15 (D-01 … D-46), esiti delle verifiche in §18 (Fase 0), §20 (Fase 1) e §21 (Fase 2).
 `tools/run-test.sh <build-dir> <test> [funzione]` esegue un singolo test con lo stesso ambiente di CTest (utile per
 ripetere un test instabile: `for i in $(seq 20); do tools/run-test.sh build tst_timelineplayer || break; done`).

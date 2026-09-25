@@ -35,6 +35,7 @@ class TimelineModel : public QAbstractListModel
     Q_PROPERTY(int rowCountTotal READ trackRowCount NOTIFY tracksChanged FINAL)
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged FINAL)
     Q_PROPERTY(QVariantList cuts READ cuts NOTIFY cutsChanged FINAL)
+    Q_PROPERTY(QVariantList markers READ markers NOTIFY markersChanged FINAL)
 
 public:
     enum Role
@@ -50,6 +51,7 @@ public:
         SelectedRole,
         LockedRole,
         MediaLengthRole, // frames of material in the media (-1: unlimited, e.g. photos)
+        MarkersRole,
     };
 
     struct TrackRow
@@ -73,6 +75,8 @@ public:
     // The cuts between touching clips of the visual tracks in the visible range (plus a margin), where a transition
     // goes: [{fromClip, trackRow, frame, transitionId ("" = none), duration (frames), name}].
     QVariantList cuts() const { return m_cuts; }
+    // [{id, frame, name, color, note, kind}]
+    QVariantList markers() const { return m_markers; }
     std::optional<TrackRow> trackRow(int row) const;
 
     // Frames shown by the view; clips outside (with a margin of the same width) get no row.
@@ -85,6 +89,7 @@ signals:
     void tracksChanged();
     void durationChanged();
     void cutsChanged();
+    void markersChanged();
 
 private:
     struct Entry
@@ -100,6 +105,7 @@ private:
         bool selected = false;
         bool locked = false;
         int mediaLength = -1;
+        QVariantList markers;
 
         friend bool operator==(const Entry &, const Entry &) = default;
     };
@@ -120,6 +126,7 @@ private:
     };
     std::vector<Cut> m_allCuts;
     QVariantList m_cuts;
+    QVariantList m_markers;
     std::vector<TrackRow> m_trackRows;
     QVariantList m_trackList;
     QSet<ClipId> m_selection;
