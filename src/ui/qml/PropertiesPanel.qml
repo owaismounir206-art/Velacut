@@ -19,6 +19,8 @@ Rectangle {
     // The tabs the selected clip has, each with the page it shows.
     readonly property var tabs: {
         const list = []
+        if (sections.includes("transition"))
+            list.push({ text: qsTr("Transition"), page: "transition" })
         if (sections.includes("text"))
             list.push({ text: qsTr("Text"), page: "text" })
         if (sections.includes("video"))
@@ -101,6 +103,43 @@ Rectangle {
                 spacing: Theme.space.md
 
                 Item { implicitHeight: Theme.space.xs }
+
+                // ---- Transition --------------------------------------------------------------------------------
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: panel.page === "transition"
+                    spacing: Theme.space.md
+
+                    Label {
+                        Layout.fillWidth: true
+                        role: "titleSmall"
+                        text: panel.values["transition.name"] ?? ""
+                    }
+                    PropertySlider {
+                        inspector: panel.inspector
+                        key: "transition.duration"
+                        label: qsTr("Duration")
+                        from: 0.1
+                        to: Math.max(0.2, panel.values["transition.maxDuration"] ?? 1)
+                        neutral: 0.5
+                        stepSize: 0.1
+                        format: v => qsTr("%1 s").arg(v.toLocaleString(Qt.locale(), "f", 1))
+                    }
+                    Button {
+                        objectName: "transitionPanelApplyAll"
+                        Layout.fillWidth: true
+                        variant: "tonal"
+                        text: qsTr("Apply to all cuts")
+                        onClicked: panel.inspector.applyToAll("transition")
+                    }
+                    Button {
+                        Layout.fillWidth: true
+                        variant: "text"
+                        iconName: "delete"
+                        text: qsTr("Remove transition")
+                        onClicked: panel.inspector.removeTransition()
+                    }
+                }
 
                 // ---- Text ------------------------------------------------------------------------------------
                 ColumnLayout {

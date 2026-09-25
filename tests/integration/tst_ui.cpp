@@ -302,6 +302,97 @@ private slots:
         editor()->undo();
     }
 
+    // Usability test 3: a filter on every clip ≤ 3 actions.
+    void usability3FilterOnAllClips()
+    {
+        // Three clips on the main track (setup, not counted).
+        editor()->clearSelection();
+        editor()->player()->seek(0);
+        while (mainTrack().clips.size() < 3) {
+            QVERIFY(editor()->addMedia(mainTrack().clips.front().media()->mediaId.toString()));
+        }
+        editor()->clearSelection();
+        editor()->player()->seek(1);
+        m_actions = 0;
+        click(byText(u"Filters"_s));                                                   // 1
+        QTRY_VERIFY(byName(u"asset_filters/vivid"_s));
+        // Pointing at a filter previews it; nothing changes in the project.
+        const int steps = editor()->document().undoStack().index();
+        QTest::mouseMove(m_window, centre(byName(u"asset_filters/pop"_s)));
+        QTest::qWait(100);
+        QCOMPARE(editor()->document().undoStack().index(), steps);
+        shot(u"13-library-filters"_s);
+        click(byName(u"asset_filters/vivid"_s));                                       // 2: the clip on screen
+        QTRY_VERIFY(byName(u"filterApplyAll"_s));
+        click(byName(u"filterApplyAll"_s));                                            // 3
+        qInfo("usability test 3: %d actions", m_actions);
+        QVERIFY(m_actions <= 3);
+        for (const Clip &clip : mainTrack().clips) {
+            QVERIFY(std::any_of(clip.effects.begin(), clip.effects.end(), [](const Effect &effect) {
+                return effect.type == u"vedit.filter"_s && effect.preset && effect.preset->id == u"filters/vivid"_s;
+            }));
+        }
+    }
+
+    // Usability test 6: a transition between all the clips ≤ 3 actions.
+    void usability6TransitionOnAllCuts()
+    {
+        editor()->clearSelection();
+        m_actions = 0;
+        click(byText(u"Transitions"_s));                                               // 1
+        QTRY_VERIFY(byName(u"asset_transitions/dissolve"_s));
+        QTest::mouseMove(m_window, centre(byName(u"asset_transitions/slide-left"_s)));
+        QTest::qWait(300);
+        shot(u"14-library-transitions"_s);
+        click(byName(u"asset_transitions/dissolve"_s));                                // 2: the cut nearest the playhead
+        QTRY_VERIFY(byName(u"transitionApplyAll"_s));
+        click(byName(u"transitionApplyAll"_s));                                        // 3
+        qInfo("usability test 6: %d actions", m_actions);
+        QVERIFY(m_actions <= 3);
+        size_t cuts = 0;
+        for (size_t i = 0; i + 1 < mainTrack().clips.size(); ++i) {
+            cuts += mainTrack().clips[i].end() == mainTrack().clips[i + 1].start ? 1 : 0;
+        }
+        QVERIFY(cuts >= 2);
+        QCOMPARE(mainTrack().transitions.size(), cuts);
+        shot(u"15-transitions-on-timeline"_s);
+
+        // The duration from the edge of the mark on the timeline.
+        const TransitionId first = mainTrack().transitions.front().id;
+        const RationalTime before = mainTrack().transitions.front().duration;
+        QQuickItem *mark = byName(u"cut-"_s + mainTrack().transitions.front().from.toString());
+        QVERIFY(mark);
+        click(mark);
+        QTRY_VERIFY(findItem(mark, [](QQuickItem *item) { return item->objectName() == u"transitionEnd"_s; }));
+        QQuickItem *edge = findItem(mark, [](QQuickItem *item) { return item->objectName() == u"transitionEnd"_s; });
+        drag(centre(edge), centre(edge) + QPoint(frameX(10) - frameX(0), 0));
+        QTRY_VERIFY(mainTrack().transitions.front().duration > before);
+        QCOMPARE(mainTrack().transitions.front().id, first);
+        editor()->undo(); // the duration
+        editor()->undo(); // apply to all
+        editor()->undo(); // the first transition
+        editor()->undo(); // the filter on all
+        editor()->undo(); // the filter
+        click(byText(u"Media"_s));
+    }
+
+    // The Text library: a click adds a text in that style; with a text selected, a click restyles it.
+    void textLibrary()
+    {
+        editor()->clearSelection();
+        click(byText(u"Text"_s));
+        QTRY_VERIFY(byName(u"asset_text/outline-yellow"_s));
+        click(byName(u"asset_text/outline-yellow"_s));
+        QTRY_COMPARE(editor()->inspector()->kind(), int(ui::ClipInspector::Text));
+        QCOMPARE(editor()->inspector()->values().value(u"text.preset"_s).toString(), u"text/outline-yellow"_s);
+        click(byName(u"asset_text/label-black"_s));
+        QTRY_COMPARE(editor()->inspector()->values().value(u"text.preset"_s).toString(), u"text/label-black"_s);
+        shot(u"16-library-text"_s);
+        editor()->undo();
+        editor()->undo();
+        click(byText(u"Media"_s));
+    }
+
     // Usability test 8: export with the recommended settings ≤ 2 actions.
     void usability8Export()
     {

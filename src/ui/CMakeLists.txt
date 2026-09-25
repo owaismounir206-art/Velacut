@@ -12,8 +12,10 @@ qt_add_qml_module(vedit_ui
         items/VideoSurfaceRhi.h items/VideoSurfaceRhi.cpp
         items/VideoSurfaceSoftware.h items/VideoSurfaceSoftware.cpp
         items/MediaThumbnail.h items/MediaThumbnail.cpp
+        items/AssetThumbnail.h items/AssetThumbnail.cpp
         items/WaveformView.h items/WaveformView.cpp
         models/AudioLibraryModel.h models/AudioLibraryModel.cpp
+        models/AssetLibraryModel.h models/AssetLibraryModel.cpp
         models/DraftsModel.h models/DraftsModel.cpp
         models/MediaPoolModel.h models/MediaPoolModel.cpp
         models/TimelineModel.h models/TimelineModel.cpp
@@ -41,6 +43,7 @@ qt_add_qml_module(vedit_ui
         qml/PropertySection.qml
         qml/PropertySlider.qml
         qml/ColorSwatches.qml
+        qml/AssetPanel.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"
     PREFIX "/vedit/shaders"

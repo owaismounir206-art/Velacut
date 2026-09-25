@@ -2,6 +2,59 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="it" sourcelanguage="en">
 <context>
+    <name>AssetPanel</name>
+    <message>
+        <location filename="../src/ui/qml/AssetPanel.qml" line="+108"/>
+        <source>Default text</source>
+        <translation>Testo predefinito</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Search</source>
+        <translation>Cerca</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>All</source>
+        <translation>Tutti</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Apply %1 to all clips</source>
+        <translation>Applica %1 a tutte le clip</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Apply to all cuts</source>
+        <translation>Applica a tutti i tagli</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Random</source>
+        <translation>Casuale</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Remove all</source>
+        <translation>Rimuovi tutte</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Add a video or a photo first: filters apply to the selected clip, or to the one on screen.</source>
+        <translation>Aggiungi prima un video o una foto: i filtri si applicano alla clip selezionata, o a quella sullo schermo.</translation>
+    </message>
+    <message>
+        <location line="+68"/>
+        <source>New text in this style</source>
+        <translation>Nuovo testo con questo stile</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Apply</source>
+        <translation>Applica</translation>
+    </message>
+</context>
+<context>
     <name>AudioPanel</name>
     <message>
         <location filename="../src/ui/qml/AudioPanel.qml" line="+28"/>
@@ -152,7 +205,7 @@
 <context>
     <name>EditorScreen</name>
     <message>
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+22"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+27"/>
         <source>Video exported</source>
         <translation>Video esportato</translation>
     </message>
@@ -165,6 +218,24 @@
         <location line="+1"/>
         <source>Audio</source>
         <translation>Audio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+21"/>
+        <source>Text</source>
+        <translation>Testo</translation>
+    </message>
+    <message>
+        <location line="-20"/>
+        <location line="+25"/>
+        <source>Transitions</source>
+        <translation>Transizioni</translation>
+    </message>
+    <message>
+        <location line="-24"/>
+        <location line="+29"/>
+        <source>Filters</source>
+        <translation>Filtri</translation>
     </message>
 </context>
 <context>
@@ -992,13 +1063,13 @@
 <context>
     <name>PropertiesPanel</name>
     <message>
-        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+23"/>
-        <location line="+92"/>
+        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+25"/>
+        <location line="+129"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-90"/>
+        <location line="-127"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
@@ -1014,19 +1085,19 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+418"/>
+        <location line="+455"/>
         <location line="+6"/>
         <source>Speed</source>
         <translation>Velocità</translation>
     </message>
     <message>
-        <location line="-422"/>
-        <location line="+528"/>
+        <location line="-459"/>
+        <location line="+565"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
     <message>
-        <location line="-496"/>
+        <location line="-533"/>
         <source>Select a clip on the timeline to change it here.</source>
         <translation>Seleziona una clip sulla timeline per modificarla qui.</translation>
     </message>
@@ -1039,7 +1110,22 @@
         </translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+31"/>
+        <source>Duration</source>
+        <translation>Durata</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Apply to all cuts</source>
+        <translation>Applica a tutti i tagli</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Remove transition</source>
+        <translation>Rimuovi transizione</translation>
+    </message>
+    <message>
+        <location line="+16"/>
         <source>Write here</source>
         <translation>Scrivi qui</translation>
     </message>
@@ -1232,13 +1318,19 @@
         <translation>Dissolvenza in entrata</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-327"/>
+        <location line="+330"/>
         <location line="+8"/>
         <source>%1 s</source>
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-3"/>
+        <location line="-441"/>
+        <source>Transition</source>
+        <translation>Transizione</translation>
+    </message>
+    <message>
+        <location line="+438"/>
         <source>Fade out</source>
         <translation>Dissolvenza in uscita</translation>
     </message>
@@ -1382,6 +1474,17 @@
         <location line="+4"/>
         <source>Import</source>
         <translation>Importa</translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <source>Transition %1</source>
+        <translation>Transizione %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+24"/>
+        <source>Add a transition</source>
+        <translation>Aggiungi una transizione</translation>
     </message>
 </context>
 <context>
@@ -1894,9 +1997,22 @@
     </message>
 </context>
 <context>
+    <name>vedit::ui::AssetThumbnail</name>
+    <message>
+        <location filename="../src/ui/items/AssetThumbnail.cpp" line="+228"/>
+        <source>Text</source>
+        <translation>Testo</translation>
+    </message>
+</context>
+<context>
     <name>vedit::ui::ClipInspector</name>
     <message>
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+432"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+465"/>
+        <source>Change transition duration</source>
+        <translation>Cambia durata della transizione</translation>
+    </message>
+    <message>
+        <location line="+21"/>
         <source>Move clip</source>
         <translation>Sposta clip</translation>
     </message>
@@ -1982,12 +2098,12 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+203"/>
+        <location line="+224"/>
         <source>Change text style</source>
         <translation>Cambia stile del testo</translation>
     </message>
     <message>
-        <location line="-183"/>
+        <location line="-204"/>
         <source>Reset position and size</source>
         <translation>Ripristina posizione e dimensione</translation>
     </message>
@@ -2009,12 +2125,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+125"/>
+        <location line="+146"/>
         <source>Remove filter</source>
         <translation>Rimuovi filtro</translation>
     </message>
     <message>
-        <location line="-123"/>
+        <location line="-144"/>
         <source>Reset adjustments</source>
         <translation>Ripristina regolazioni</translation>
     </message>
@@ -2023,8 +2139,17 @@
         <source>Reset text style</source>
         <translation>Ripristina stile del testo</translation>
     </message>
+    <message numerus="yes">
+        <location line="+25"/>
+        <location line="+316"/>
+        <source>Transition on %n cut(s)</source>
+        <translation>
+            <numerusform>Transizione su %n taglio</numerusform>
+            <numerusform>Transizione su %n tagli</numerusform>
+        </translation>
+    </message>
     <message>
-        <location line="+45"/>
+        <location line="-276"/>
         <location line="+4"/>
         <source>Apply background to all</source>
         <translation>Applica lo sfondo a tutte</translation>
@@ -2063,7 +2188,7 @@
         </translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+25"/>
         <source>Select a video or a photo first.</source>
         <translation>Seleziona prima un video o una foto.</translation>
     </message>
@@ -2073,7 +2198,22 @@
         <translation>Applica filtro</translation>
     </message>
     <message>
-        <location line="+56"/>
+        <location line="+102"/>
+        <source>Put two clips next to each other first: the transition goes between them.</source>
+        <translation>Metti prima due clip una accanto all&apos;altra: la transizione va tra le due.</translation>
+    </message>
+    <message>
+        <location line="+82"/>
+        <source>There are no cuts between clips on this track.</source>
+        <translation>Su questa traccia non ci sono tagli tra clip.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Random transitions</source>
+        <translation>Transizioni casuali</translation>
+    </message>
+    <message>
+        <location line="+21"/>
         <source>Attributes copied</source>
         <translation>Attributi copiati</translation>
     </message>
@@ -2125,7 +2265,7 @@
         <translation>Rinomina progetto</translation>
     </message>
     <message>
-        <location line="+230"/>
+        <location line="+383"/>
         <source>Import media</source>
         <translation>Importa media</translation>
     </message>
@@ -2164,7 +2304,7 @@
         </translation>
     </message>
     <message>
-        <location line="+122"/>
+        <location line="+128"/>
         <source>Change format</source>
         <translation>Cambia formato</translation>
     </message>

@@ -287,6 +287,139 @@ std::optional<ClipId> EditorController::focusClip() const
     return m_selection.contains(m_focus) ? std::optional<ClipId>(m_focus) : std::nullopt;
 }
 
+QString EditorController::selectedTransition() const
+{
+    return m_transition.isNull() ? QString() : m_transition.toString();
+}
+
+QString EditorController::selectedCut() const
+{
+    return m_cut.isNull() ? QString() : m_cut.toString();
+}
+
+std::optional<TransitionId> EditorController::focusTransition() const
+{
+    return m_transition.isNull() ? std::nullopt : std::optional<TransitionId>(m_transition);
+}
+
+std::optional<ClipId> EditorController::transitionTarget() const
+{
+    const Sequence *sequence = data().mainSequence();
+    if (!sequence) {
+        return std::nullopt;
+    }
+    // The first clip of the cut that `clip` makes with its next neighbour, if they touch.
+    const auto cutAfter = [](const Track &track, size_t index) -> std::optional<ClipId> {
+        if (index + 1 < track.clips.size() && track.clips[index].end() == track.clips[index + 1].start) {
+            return track.clips[index].id;
+        }
+        return std::nullopt;
+    };
+    for (const Track &track : sequence->visualTracks) {
+        for (const Transition &transition : track.transitions) {
+            if (transition.id == m_transition) {
+                return transition.from;
+            }
+        }
+    }
+    if (!m_cut.isNull() && data().findClip(m_cut)) {
+        return m_cut;
+    }
+    if (const std::optional<ClipId> focus = focusClip()) {
+        for (const Track &track : sequence->visualTracks) {
+            const int index = track.clipIndex(*focus);
+            if (index < 0) {
+                continue;
+            }
+            if (const auto after = cutAfter(track, static_cast<size_t>(index))) {
+                return after;
+            }
+            if (index > 0) {
+                return cutAfter(track, static_cast<size_t>(index - 1));
+            }
+            return std::nullopt;
+        }
+        return std::nullopt;
+    }
+    // Nothing selected: the cut of the main track nearest to the playhead.
+    if (sequence->visualTracks.empty()) {
+        return std::nullopt;
+    }
+    const Track &main = sequence->visualTracks.front();
+    std::optional<ClipId> nearest;
+    std::int64_t best = std::numeric_limits<std::int64_t>::max();
+    for (size_t i = 0; i < main.clips.size(); ++i) {
+        if (const auto cut = cutAfter(main, i)) {
+            const std::int64_t distance = std::abs(main.clips[i].end().value() - playhead());
+            if (distance < best) {
+                best = distance;
+                nearest = cut;
+            }
+        }
+    }
+    return nearest;
+}
+
+std::optional<ClipId> EditorController::clipForLibrary() const
+{
+    if (const std::optional<ClipId> focus = focusClip()) {
+        return focus;
+    }
+    // Here a clip starting at the playhead counts (unlike for splitting).
+    const Sequence *sequence = data().mainSequence();
+    if (sequence && !sequence->visualTracks.empty()) {
+        const RationalTime at(playhead(), data().settings.frameRate);
+        for (const Clip &candidate : sequence->visualTracks.front().clips) {
+            if (candidate.start <= at && at < candidate.end()) {
+                return candidate.id;
+            }
+        }
+    }
+    return clipAtPlayhead();
+}
+
+bool EditorController::selectClipAtPlayhead()
+{
+    if (!m_selection.isEmpty()) {
+        return true;
+    }
+    const std::optional<ClipId> clip = clipForLibrary();
+    if (!clip) {
+        return false;
+    }
+    setSelection({*clip});
+    return true;
+}
+
+void EditorController::selectTransition(const QString &transitionId)
+{
+    const std::optional<TransitionId> id = TransitionId::fromString(transitionId);
+    if (!id) {
+        return;
+    }
+    m_selection.clear();
+    m_timeline->setSelection(m_selection);
+    m_transition = *id;
+    m_cut = {};
+    emit selectionChanged();
+    emit splitAvailableChanged();
+}
+
+void EditorController::selectCut(const QString &fromClipId)
+{
+    const std::optional<ClipId> id = ClipId::fromString(fromClipId);
+    if (!id) {
+        return;
+    }
+    m_selection.clear();
+    m_timeline->setSelection(m_selection);
+    m_transition = {};
+    m_cut = *id;
+    emit selectionChanged();
+    emit splitAvailableChanged();
+    emit libraryRequested(u"transitions"_s);
+}
+
 bool EditorController::push(EditResult result, MergeKey mergeKey)
 {
     if (!result.ok()) {
@@ -320,6 +453,21 @@ void EditorController::onProjectChanged(const ChangeSet &changes)
     if (changes.settingsChanged || changes.sequences.contains(data().mainSequenceId)) {
         emit formatChanged();
     }
+    if (!m_transition.isNull() || !m_cut.isNull()) {
+        bool exists = false;
+        if (const Sequence *sequence = data().mainSequence()) {
+            for (const Track &track : sequence->visualTracks) {
+                for (const Transition &transition : track.transitions) {
+                    exists = exists || transition.id == m_transition;
+                }
+            }
+        }
+        if ((!m_transition.isNull() && !exists) || (!m_cut.isNull() && !data().findClip(m_cut))) {
+            m_transition = {};
+            m_cut = {};
+            emit selectionChanged();
+        }
+    }
     QSet<ClipId> remaining;
     for (const ClipId &id : std::as_const(m_selection)) {
         if (data().findClip(id)) {
@@ -335,8 +483,13 @@ void EditorController::onProjectChanged(const ChangeSet &changes)
 
 void EditorController::setSelection(QSet<ClipId> selection)
 {
-    if (selection == m_selection) {
+    const bool otherSelection = !m_transition.isNull() || !m_cut.isNull();
+    if (selection == m_selection && !(otherSelection && !selection.isEmpty())) {
         return;
+    }
+    if (!selection.isEmpty()) {
+        m_transition = {};
+        m_cut = {};
     }
     m_selection = std::move(selection);
     if (!m_selection.contains(m_focus)) {
@@ -687,7 +840,13 @@ void EditorController::select(const QString &clipId, bool additive)
 
 void EditorController::clearSelection()
 {
+    const bool other = !m_transition.isNull() || !m_cut.isNull();
+    m_transition = {};
+    m_cut = {};
     setSelection({});
+    if (other) {
+        emit selectionChanged();
+    }
 }
 
 void EditorController::undo()

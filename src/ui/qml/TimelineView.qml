@@ -285,6 +285,92 @@ Rectangle {
                 }
             }
 
+            // Cuts between touching clips (SPEC §5.11bis): a "+" to add a transition, or the transition, as wide as the
+            // time it covers; selected, its edges change the duration.
+            Repeater {
+                model: view.model.cuts
+                delegate: Item {
+                    id: cut
+                    required property var modelData
+                    readonly property bool hasTransition: modelData.transitionId !== ""
+                    readonly property bool selected: hasTransition ? view.editor.selectedTransition === modelData.transitionId
+                                                                   : view.editor.selectedCut === modelData.fromClip
+                    property int dragDuration: -1 // frames, while an edge is dragged
+                    readonly property int duration: dragDuration >= 0 ? dragDuration : modelData.duration
+
+                    objectName: "cut-" + modelData.fromClip
+                    z: 5 // above the clips (even a selected one), below a clip being dragged
+                    width: hasTransition ? Math.max(Theme.editor.transitionMark, duration * view.zoom) : Theme.editor.transitionMark
+                    height: Theme.editor.transitionMark
+                    x: modelData.frame * view.zoom - width / 2
+                    y: view.rowTop(modelData.trackRow) + (view.rowHeight(modelData.trackRow) - height) / 2
+                    Accessible.role: Accessible.Button
+                    Accessible.name: hasTransition ? qsTr("Transition %1").arg(modelData.name) : qsTr("Add a transition")
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Theme.shape.full
+                        color: cut.selected ? Theme.color.primary
+                             : cut.hasTransition ? Theme.color.secondaryContainer : Theme.color.surfaceContainerHighest
+                        border.width: Theme.editor.hairline
+                        border.color: Theme.color.outline
+                        opacity: cut.hasTransition || cut.selected || markMouse.containsMouse ? 1 : Theme.state.disabledContent
+                    }
+                    Icon {
+                        anchors.centerIn: parent
+                        name: cut.hasTransition ? "transition_fade" : "add"
+                        size: Theme.editor.transitionMark - Theme.space.sm
+                        color: cut.selected ? Theme.color.onPrimary
+                             : cut.hasTransition ? Theme.color.onSecondaryContainer : Theme.color.onSurfaceVariant
+                    }
+                    MouseArea {
+                        id: markMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        ToolTip.visible: containsMouse
+                        ToolTip.text: cut.hasTransition ? cut.modelData.name : qsTr("Add a transition")
+                        onClicked: {
+                            if (cut.hasTransition) {
+                                view.editor.selectTransition(cut.modelData.transitionId)
+                                view.editor.libraryRequested("transitions")
+                            } else {
+                                view.editor.selectCut(cut.modelData.fromClip)
+                            }
+                        }
+                    }
+                    // Edges of the selected transition: the window stays centred on the cut, so both sides move.
+                    Repeater {
+                        model: cut.hasTransition && cut.selected ? [-1, 1] : []
+                        delegate: MouseArea {
+                            required property int modelData
+                            property real startX: 0
+                            property int startDuration: 0
+                            objectName: modelData < 0 ? "transitionStart" : "transitionEnd"
+                            width: Theme.editor.trimHandleWidth
+                            height: cut.height
+                            x: modelData < 0 ? -width / 2 : cut.width - width / 2
+                            cursorShape: Qt.SizeHorCursor
+                            onPressed: (mouse) => {
+                                startX = mapToItem(canvas, mouse.x, 0).x
+                                startDuration = cut.modelData.duration
+                            }
+                            onPositionChanged: (mouse) => {
+                                if (!pressed)
+                                    return
+                                const delta = (mapToItem(canvas, mouse.x, 0).x - startX) * modelData * 2 / view.zoom
+                                cut.dragDuration = Math.max(1, Math.round(startDuration + delta))
+                                view.editor.inspector.set("transition.duration", cut.dragDuration / view.editor.frameRate)
+                            }
+                            onReleased: {
+                                view.editor.inspector.endGesture()
+                                cut.dragDuration = -1
+                            }
+                        }
+                    }
+                }
+            }
+
             // Where a dropped media item or file will go.
             Rectangle {
                 id: dropMarker

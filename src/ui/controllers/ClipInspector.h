@@ -29,6 +29,8 @@ class EditorController;
 //   speed       speed (0.1…100), reversed, preservePitch
 //   filter      filter (asset id, "" = none), filter.intensity (0…1)
 //   adjust      adjust.<name> (the parameters of "vedit.adjust.basic", see adjustParams)
+//   transition  transition.type (asset id), transition.name, transition.duration, transition.maxDuration (seconds)
+//               — when a transition is selected on the timeline instead of clips
 //   text        text.content, text.font, text.size (fraction of the canvas height), text.color, text.bold,
 //               text.italic, text.underline, text.align (0 left, 1 centre, 2 right), text.stroke, text.strokeColor,
 //               text.strokeWidth, text.shadow, text.background, text.backgroundColor, text.letterSpacing,
@@ -61,6 +63,7 @@ public:
         Audio,
         Text,
         Other,
+        Transition,
     };
     Q_ENUM(Kind)
 
@@ -94,6 +97,16 @@ public:
     Q_INVOKABLE bool toggleFilter(const QString &filterId);
     Q_INVOKABLE void previewTextStyle(const QString &styleId);
     Q_INVOKABLE bool applyTextStyle(const QString &styleId);
+    // Transitions of the library, for the cut EditorController::transitionTarget() chooses: the preview returns the
+    // frames it covers {start, end} (the interface loops over them); a click adds it (or replaces the one there, keeping
+    // its duration), a click on the same one removes it; the new transition becomes the selection.
+    Q_INVOKABLE QVariantMap previewTransition(const QString &typeId);
+    Q_INVOKABLE bool toggleTransition(const QString &typeId);
+    Q_INVOKABLE bool removeTransition();
+    // Every cut of the track of the selected transition (else of the main track): none / a random one each
+    // (SPEC §5.11bis "rimuovi tutte", "transizione casuale"). One undo step.
+    Q_INVOKABLE bool removeAllTransitions();
+    Q_INVOKABLE bool randomTransitions();
     Q_INVOKABLE void clearPreview();
 
     // Copy/paste attributes: look, placement, background, volume and text style (not the speed: it changes the length).
@@ -112,6 +125,12 @@ signals:
 
 private:
     const Clip *focus() const;
+    // The clip a library item applies to: the focused one, else the one under the playhead (not selected).
+    const Clip *libraryClip() const;
+    const vedit::Transition *focusTransition(const Track **track = nullptr) const;
+    // The track "all the transitions" act on.
+    const Track *transitionTrack() const;
+    std::optional<vedit::Transition> plannedTransition(const QString &typeId, const Track **track) const;
     // The selected clips that have `section`.
     std::vector<ClipId> targets(const QString &section) const;
     bool supports(const Clip &clip, const QString &section) const;

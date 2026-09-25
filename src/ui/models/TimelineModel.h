@@ -34,6 +34,7 @@ class TimelineModel : public QAbstractListModel
     Q_PROPERTY(int mainRow READ mainRow NOTIFY tracksChanged FINAL)
     Q_PROPERTY(int rowCountTotal READ trackRowCount NOTIFY tracksChanged FINAL)
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged FINAL)
+    Q_PROPERTY(QVariantList cuts READ cuts NOTIFY cutsChanged FINAL)
 
 public:
     enum Role
@@ -69,6 +70,9 @@ public:
     int mainRow() const { return m_mainRow; }
     int trackRowCount() const { return static_cast<int>(m_trackRows.size()); }
     int duration() const { return m_duration; }
+    // The cuts between touching clips of the visual tracks in the visible range (plus a margin), where a transition
+    // goes: [{fromClip, trackRow, frame, transitionId ("" = none), duration (frames), name}].
+    QVariantList cuts() const { return m_cuts; }
     std::optional<TrackRow> trackRow(int row) const;
 
     // Frames shown by the view; clips outside (with a margin of the same width) get no row.
@@ -80,6 +84,7 @@ public:
 signals:
     void tracksChanged();
     void durationChanged();
+    void cutsChanged();
 
 private:
     struct Entry
@@ -108,6 +113,13 @@ private:
     SequenceId m_sequenceId;
     std::vector<Entry> m_all;  // every clip
     std::vector<Entry> m_rows; // the visible ones: the model rows (in no particular order)
+    struct Cut
+    {
+        int frame = 0;
+        QVariantMap value;
+    };
+    std::vector<Cut> m_allCuts;
+    QVariantList m_cuts;
     std::vector<TrackRow> m_trackRows;
     QVariantList m_trackList;
     QSet<ClipId> m_selection;

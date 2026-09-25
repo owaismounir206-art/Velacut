@@ -10,6 +10,8 @@
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/mlt/MltRuntime.h"
 #include "ui/controllers/ClipInspector.h"
+#include "ui/items/AssetThumbnail.h"
+#include "ui/models/AssetLibraryModel.h"
 #include "ui/controllers/EditorController.h"
 
 #include <QElapsedTimer>
@@ -261,6 +263,97 @@ private slots:
         editor.undo();
         QCOMPARE(undo.index(), afterTyping);
         QCOMPARE(inspector.values().value(u"text.content"_s).toString(), u"Ciao a tutti"_s);
+        QVERIFY(editor.close());
+    }
+
+    // The libraries of the core pack and their pictures; transitions from the library onto the right cut.
+    void librariesAndTransitions()
+    {
+        AssetLibraryModel library;
+        QCOMPARE(library.kind(), AssetLibraryModel::Filters);
+        const int filters = library.rowCount();
+        QVERIFY(filters >= 30);
+        library.setCategory(u"bw"_s);
+        QVERIFY(library.rowCount() > 0 && library.rowCount() < filters);
+        library.setCategory({});
+        library.setSearch(u"sepia"_s);
+        QCOMPARE(library.rowCount(), 1);
+        library.setSearch({});
+        library.setKind(AssetLibraryModel::Transitions);
+        QVERIFY(library.rowCount() >= 18);
+        QVERIFY(!library.categories().isEmpty());
+        library.setKind(AssetLibraryModel::TextStyles);
+        QVERIFY(library.rowCount() >= 24);
+
+        // Pictures: a filter changes the sample, a transition goes from A (0) to B (1), a text style draws something.
+        const QSize size(96, 72);
+        const QImage plain = AssetThumbnail::render(AssetLibraryModel::Filters, u"filters/clear"_s, 0, {}, size);
+        const QImage bw = AssetThumbnail::render(AssetLibraryModel::Filters, u"filters/bw"_s, 0, {}, size);
+        QCOMPARE(plain.size(), size);
+        QVERIFY(plain != bw);
+        const QRgb grey = bw.pixel(48, 20);
+        QVERIFY(std::abs(qRed(grey) - qBlue(grey)) <= 2); // black and white
+        const QImage start = AssetThumbnail::render(AssetLibraryModel::Transitions, u"transitions/wipe-left"_s, 0, {}, size);
+        const QImage end = AssetThumbnail::render(AssetLibraryModel::Transitions, u"transitions/wipe-left"_s, 1, {}, size);
+        QVERIFY(start != end);
+        const QImage text = AssetThumbnail::render(AssetLibraryModel::TextStyles, u"text/outline-yellow"_s, 0, {}, size);
+        const QImage none = AssetThumbnail::render(AssetLibraryModel::TextStyles, u"missing"_s, 0, {}, size);
+        QVERIFY(text != none);
+
+        // Transitions: three clips; nothing selected = the cut nearest to the playhead.
+        document::DraftStore store(m_dir.filePath(u"drafts-transitions"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        ClipInspector &inspector = *editor.inspector();
+        editor.importAndInsertPaths({m_files.landscape, m_files.vertical, m_files.photo}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(3), 20000);
+        editor.clearSelection();
+        editor.player()->seek(230); // near the second cut (240)
+        QCOMPARE(editor.transitionTarget(), mainTrack(editor).clips[1].id);
+        QCOMPARE(editor.timeline()->cuts().size(), 2);
+        const QVariantMap window = inspector.previewTransition(u"transitions/dissolve"_s);
+        QCOMPARE(window.value(u"start"_s).toInt(), 240 - 7);
+        QCOMPARE(window.value(u"end"_s).toInt(), 240 - 7 + 15);
+        QVERIFY(mainTrack(editor).transitions.empty()); // a preview only
+        inspector.clearPreview();
+        QVERIFY(inspector.toggleTransition(u"transitions/dissolve"_s));
+        QCOMPARE(mainTrack(editor).transitions.size(), size_t(1));
+        QCOMPARE(inspector.kind(), int(ClipInspector::Transition));
+        QCOMPARE(inspector.values().value(u"transition.duration"_s).toDouble(), 0.5);
+        // Another type keeps the duration chosen; the same type again removes it.
+        QVERIFY(inspector.set(u"transition.duration"_s, 1.0));
+        inspector.endGesture();
+        QVERIFY(inspector.toggleTransition(u"transitions/wipe-left"_s));
+        QCOMPARE(mainTrack(editor).transitions.front().type.id, u"transitions/wipe-left"_s);
+        QCOMPARE(mainTrack(editor).transitions.front().duration.value(), 30);
+        QVERIFY(inspector.applyToAll(u"transition"_s));
+        QCOMPARE(mainTrack(editor).transitions.size(), size_t(2));
+        QVERIFY(inspector.toggleTransition(u"transitions/wipe-left"_s));
+        QCOMPARE(mainTrack(editor).transitions.size(), size_t(1));
+        QVERIFY(inspector.randomTransitions());
+        QCOMPARE(mainTrack(editor).transitions.size(), size_t(2));
+        QVERIFY(inspector.removeAllTransitions());
+        QVERIFY(mainTrack(editor).transitions.empty());
+
+        // A selected clip: the cut after it (the last clip: the cut before it).
+        editor.select(mainTrack(editor).clips[2].id.toString(), false);
+        QCOMPARE(editor.transitionTarget(), mainTrack(editor).clips[1].id);
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        QCOMPARE(editor.transitionTarget(), mainTrack(editor).clips[0].id);
+        // A cut clicked on the timeline.
+        QSignalSpy libraryRequests(&editor, &EditorController::libraryRequested);
+        editor.selectCut(mainTrack(editor).clips[1].id.toString());
+        QCOMPARE(libraryRequests.count(), 1);
+        QVERIFY(editor.selection().isEmpty());
+        QCOMPARE(editor.transitionTarget(), mainTrack(editor).clips[1].id);
+
+        // A filter with nothing selected: the clip on screen.
+        editor.clearSelection();
+        editor.player()->seek(10);
+        QVERIFY(inspector.toggleFilter(u"filters/vivid"_s));
+        QCOMPARE(editor.selection(), QStringList{mainTrack(editor).clips[0].id.toString()});
         QVERIFY(editor.close());
     }
 

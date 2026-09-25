@@ -2,6 +2,7 @@
 #include "TimelineModel.h"
 
 #include "core/project/Project.h"
+#include "fx/Library.h"
 
 #include <algorithm>
 
@@ -118,6 +119,7 @@ void TimelineModel::rebuild()
     std::vector<TrackRow> trackRows;
     QVariantList trackList;
     std::vector<Entry> all;
+    std::vector<Cut> allCuts;
     int duration = 0;
     int mainRow = 0;
     if (sequence) {
@@ -159,6 +161,32 @@ void TimelineModel::rebuild()
             }
         };
         const int visualCount = static_cast<int>(sequence->visualTracks.size());
+        // Cuts of the visual tracks, row by row as they are added below (row = visualCount - 1 - index).
+        for (int i = 0; i < visualCount; ++i) {
+            const Track &track = sequence->visualTracks[static_cast<size_t>(i)];
+            for (size_t k = 0; k + 1 < track.clips.size(); ++k) {
+                const Clip &from = track.clips[k];
+                const Clip &to = track.clips[k + 1];
+                if (!(from.end() == to.start)) {
+                    continue;
+                }
+                QVariantMap cut{{u"fromClip"_s, from.id.toString()},
+                                {u"trackRow"_s, visualCount - 1 - i},
+                                {u"frame"_s, frames(to.start, rate)},
+                                {u"transitionId"_s, QString()},
+                                {u"duration"_s, 0},
+                                {u"name"_s, QString()}};
+                for (const Transition &transition : track.transitions) {
+                    if (transition.from == from.id && transition.to == to.id) {
+                        const fx::TransitionPreset *preset = fx::Library::core().transition(transition.type.id);
+                        cut[u"transitionId"_s] = transition.id.toString();
+                        cut[u"duration"_s] = frames(transition.duration, rate);
+                        cut[u"name"_s] = preset ? preset->name.text() : transition.type.id;
+                    }
+                }
+                allCuts.push_back(Cut{frames(to.start, rate), cut});
+            }
+        }
         for (int i = visualCount - 1; i >= 0; --i) {
             if (i == 0) {
                 mainRow = static_cast<int>(trackRows.size());
@@ -170,6 +198,7 @@ void TimelineModel::rebuild()
         }
     }
     m_all = std::move(all);
+    m_allCuts = std::move(allCuts);
     if (trackList != m_trackList || mainRow != m_mainRow) {
         m_trackRows = std::move(trackRows);
         m_trackList = std::move(trackList);
@@ -193,6 +222,17 @@ bool TimelineModel::isVisible(const Entry &entry) const
 
 void TimelineModel::applyVisible()
 {
+    const int margin = std::max(1, m_lastFrame - m_firstFrame);
+    QVariantList cuts;
+    for (const Cut &cut : m_allCuts) {
+        if (cut.frame >= m_firstFrame - margin && cut.frame <= m_lastFrame + margin) {
+            cuts.append(cut.value);
+        }
+    }
+    if (cuts != m_cuts) {
+        m_cuts = std::move(cuts);
+        emit cutsChanged();
+    }
     QHash<ClipId, const Entry *> wanted;
     for (const Entry &entry : m_all) {
         if (isVisible(entry)) {

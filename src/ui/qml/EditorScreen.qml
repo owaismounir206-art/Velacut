@@ -16,6 +16,11 @@ Item {
     Connections {
         target: root.editor
         function onMessage(text, undoable) { root.message(text, undoable) }
+        function onLibraryRequested(name) {
+            const index = ["media", "audio", "text", "transitions", "filters"].indexOf(name)
+            if (index >= 0)
+                rail.currentIndex = index
+        }
         function onExportFinished(path) {
             // A desktop notification when vedit is in background (SPEC §5.15).
             if (!root.Window.window.active)
@@ -73,7 +78,10 @@ Item {
                     id: rail
                     Layout.fillHeight: true
                     model: [{ text: qsTr("Media"), iconName: "video_library" },
-                            { text: qsTr("Audio"), iconName: "music_note" }]
+                            { text: qsTr("Audio"), iconName: "music_note" },
+                            { text: qsTr("Text"), iconName: "title" },
+                            { text: qsTr("Transitions"), iconName: "transition_fade" },
+                            { text: qsTr("Filters"), iconName: "filter_vintage" }]
                     onActivated: (index) => { if (index === 1) App.audioLibrary.load() }
                 }
                 StackLayout {
@@ -88,6 +96,21 @@ Item {
                     }
                     AudioPanel {
                         editor: root.editor
+                    }
+                    AssetPanel {
+                        editor: root.editor
+                        kind: AssetLibraryModel.TextStyles
+                        title: qsTr("Text")
+                    }
+                    AssetPanel {
+                        editor: root.editor
+                        kind: AssetLibraryModel.Transitions
+                        title: qsTr("Transitions")
+                    }
+                    AssetPanel {
+                        editor: root.editor
+                        kind: AssetLibraryModel.Filters
+                        title: qsTr("Filters")
                     }
                 }
                 Divider { vertical: true; Layout.fillHeight: true }

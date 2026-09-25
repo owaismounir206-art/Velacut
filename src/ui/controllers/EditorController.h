@@ -60,6 +60,9 @@ class EditorController : public QObject
     Q_PROPERTY(vedit::engine::RenderJob *exportJob READ exportJob CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::ClipInspector *inspector READ inspector CONSTANT FINAL)
     Q_PROPERTY(QStringList selection READ selection NOTIFY selectionChanged FINAL)
+    // A transition selected on the timeline, or the cut (its first clip) chosen for a new one; "" = none.
+    Q_PROPERTY(QString selectedTransition READ selectedTransition NOTIFY selectionChanged FINAL)
+    Q_PROPERTY(QString selectedCut READ selectedCut NOTIFY selectionChanged FINAL)
     Q_PROPERTY(bool importing READ importing NOTIFY importingChanged FINAL)
     Q_PROPERTY(bool splitAvailable READ canSplit NOTIFY splitAvailableChanged FINAL)
     Q_PROPERTY(int canvasPreset READ canvasPreset NOTIFY formatChanged FINAL)
@@ -103,6 +106,17 @@ public:
     std::vector<ClipId> selectedClips() const;
     // The clip whose properties are shown: the last one clicked among the selected ones.
     std::optional<ClipId> focusClip() const;
+    QString selectedTransition() const;
+    QString selectedCut() const;
+    std::optional<TransitionId> focusTransition() const;
+    // Where a transition of the library goes: the selected transition or cut, else the cut after (or before) the
+    // selected clip, else the cut of the main track nearest to the playhead.
+    std::optional<ClipId> transitionTarget() const;
+    // No clip selected: the clip under the playhead (main track first) becomes the selection, so that a filter or an
+    // adjustment applies "to what is on screen". False if there is none.
+    bool selectClipAtPlayhead();
+    // The focused clip, else the one under the playhead (main track first), without selecting it.
+    std::optional<ClipId> clipForLibrary() const;
     // Pushes a command (a failed operation becomes a message for the user). Same non-empty key = one undo step.
     bool push(EditResult result, MergeKey mergeKey = {});
     bool importing() const;
@@ -134,6 +148,9 @@ public:
     Q_INVOKABLE bool duplicateSelection();
     Q_INVOKABLE void select(const QString &clipId, bool additive);
     Q_INVOKABLE void clearSelection();
+    Q_INVOKABLE void selectTransition(const QString &transitionId);
+    // A cut without a transition clicked on the timeline: the Transitions library opens for it.
+    Q_INVOKABLE void selectCut(const QString &fromClipId);
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
     // Snapping: the nearest clip edge, playhead or start within `threshold` frames of `frame` (else `frame`).
@@ -172,6 +189,8 @@ signals:
     // For the snackbar: `undoable` shows the "Undo" action.
     void message(const QString &text, bool undoable);
     void exportFinished(const QString &path);
+    // Asks the interface to show a library ("transitions", "filters", "text").
+    void libraryRequested(const QString &name);
 
 private:
     bool apply(EditResult result, bool selectResult = true);
@@ -192,6 +211,8 @@ private:
     std::unique_ptr<engine::RenderJob> m_exportJob;
     QSet<ClipId> m_selection;
     ClipId m_focus;
+    TransitionId m_transition;
+    ClipId m_cut;
     ClipInspector *m_inspector = nullptr; // child
     quint64 m_importBatch = 0;
     // Files dropped on the timeline, inserted as they are imported.
