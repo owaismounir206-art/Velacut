@@ -57,6 +57,12 @@ public:
     EditResult trimClip(const ClipId &clipId, ClipEdge edge, const RationalTime &time);
     EditResult splitClip(const ClipId &clipId, const RationalTime &time);
     EditResult deleteClips(const std::vector<ClipId> &clipIds);
+    // Places a copy of each clip right after it (on the main track the following clips move along; elsewhere a new
+    // track is created if there is no room). The last copy becomes the primary clip.
+    EditResult duplicateClips(const std::vector<ClipId> &clipIds);
+    // Moves a clip onto a new track created at `visualIndex` (visual clips, ≥ 1: above the main track) or at
+    // `audioIndex` (audio clips): dragging a clip into the free space above or below the tracks.
+    EditResult moveClipToNewTrack(const ClipId &clipId, const RationalTime &newStart, int index);
 
     // Duration of an image when inserted (SPEC 0bis, rule 6).
     static constexpr int kDefaultImageSeconds = 3;

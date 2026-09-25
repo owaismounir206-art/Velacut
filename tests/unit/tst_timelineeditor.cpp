@@ -283,6 +283,50 @@ private slots:
         QCOMPARE(session.data().findClip(c)->start, frames(300));
     }
 
+    void duplicatePlacesACopyRightAfter()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+        EditResult duplicate = session.editor().duplicateClips({b});
+        const ClipId copy = duplicate.primaryClip;
+        QVERIFY(session.apply(std::move(duplicate)));
+        // Main track: the copy follows the original and the rest moves along.
+        QCOMPARE(order(session.mainTrack()), (std::vector<ClipId>{a, b, copy, c}));
+        QCOMPARE(session.data().findClip(copy)->start, frames(420));
+        QCOMPARE(session.data().findClip(copy)->duration, frames(120));
+        QCOMPARE(session.data().findClip(c)->start, frames(540));
+        QVERIFY(copy != b);
+
+        // Off the main track, with no room after the clip: a new track above.
+        QVERIFY(session.apply(session.editor().insertMedia(session.data().media[0].id, frames(0), std::nullopt, Placement::Overlay)));
+        const ClipId overlay = session.sequence().visualTracks[1].clips.front().id;
+        QVERIFY(session.apply(session.editor().insertMedia(session.data().media[1].id, frames(300), std::nullopt, Placement::Overlay)));
+        QCOMPARE(session.sequence().visualTracks.size(), size_t(2)); // room after the first overlay clip
+        QVERIFY(session.apply(session.editor().duplicateClips({overlay})));
+        QCOMPARE(session.sequence().visualTracks.size(), size_t(3));
+        QCOMPARE(session.sequence().visualTracks[2].clips.front().start, frames(300));
+    }
+
+    void moveToANewTrack()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+        // Dragging B from the main track into the free space above it.
+        QVERIFY(session.apply(session.editor().moveClipToNewTrack(b, frames(50), 1)));
+        QCOMPARE(session.sequence().visualTracks.size(), size_t(2));
+        QCOMPARE(session.sequence().visualTracks[1].clips.front().id, b);
+        QCOMPARE(session.data().findClip(b)->start, frames(50));
+        QCOMPARE(order(session.mainTrack()), (std::vector<ClipId>{a, c})); // rippled
+        // Index 0 would be below the main track: clamped above it.
+        QVERIFY(session.apply(session.editor().moveClipToNewTrack(c, frames(0), 0)));
+        QCOMPARE(session.sequence().visualTracks[1].clips.front().id, c);
+        // The track left empty disappears.
+        QVERIFY(session.apply(session.editor().moveClipToNewTrack(b, frames(0), 3)));
+        QCOMPARE(session.sequence().visualTracks.size(), size_t(3));
+    }
+
     void lockedTrackRefusesEdits()
     {
         ClipId a;

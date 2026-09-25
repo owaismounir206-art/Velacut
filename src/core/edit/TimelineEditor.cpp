@@ -597,4 +597,84 @@ EditResult TimelineEditor::deleteClips(const std::vector<ClipId> &clipIds)
     return finish(std::move(modified), clipIds.size() == 1 ? tr("Delete clip") : tr("Delete clips"), {});
 }
 
+EditResult TimelineEditor::duplicateClips(const std::vector<ClipId> &clipIds)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    if (clipIds.empty()) {
+        return EditResult{};
+    }
+    Sequence modified = *m_sequence;
+    ClipId lastCopy;
+    for (const ClipId &clipId : clipIds) {
+        const auto ref = findClip(modified, clipId);
+        if (!ref) {
+            return fail(tr("The clip does not exist."));
+        }
+        if (ref->track->locked) {
+            return fail(tr("The track is locked."));
+        }
+        Clip copy = ref->clip();
+        copy.id = ClipId::create();
+        copy.linkId = {};
+        for (Effect &effect : copy.effects) {
+            effect.id = EffectId::create();
+        }
+        for (Marker &marker : copy.markers) {
+            marker.id = MarkerId::create();
+        }
+        copy.start = ref->clip().end();
+        lastCopy = copy.id;
+        Track &track = *ref->track;
+        if (isMagneticMain(modified, track)) {
+            track.clips.insert(track.clips.begin() + static_cast<std::ptrdiff_t>(ref->index + 1), std::move(copy));
+            pack(track, m_rate);
+        } else if (hasRoom(track, copy.range())) {
+            insertSorted(track, std::move(copy));
+        } else {
+            auto &tracks = ref->audio ? modified.audioTracks : modified.visualTracks;
+            Track fresh = makeTrack(track.kind);
+            insertSorted(fresh, std::move(copy));
+            tracks.insert(tracks.begin() + ref->trackIndex + 1, std::move(fresh));
+        }
+    }
+    return finish(std::move(modified), clipIds.size() == 1 ? tr("Duplicate clip") : tr("Duplicate clips"), lastCopy);
+}
+
+EditResult TimelineEditor::moveClipToNewTrack(const ClipId &clipId, const RationalTime &requestedStart, int index)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto source = findClip(modified, clipId);
+    if (!source) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (source->track->locked) {
+        return fail(tr("The track is locked."));
+    }
+    const bool audio = source->audio;
+    auto &tracks = audio ? modified.audioTracks : modified.visualTracks;
+    const int lowest = audio ? 0 : 1; // nothing goes below the main track
+    index = std::clamp(index, lowest, static_cast<int>(tracks.size()));
+    const TrackKind kind = source->track->kind;
+    const bool sourceMagnetic = isMagneticMain(modified, *source->track);
+    Clip clip = takeClip(*source->track, source->index);
+    if (sourceMagnetic) {
+        pack(*source->track, m_rate);
+    }
+    clip.start = requestedStart.rescaled(m_rate, Rounding::NearestEven);
+    if (clip.start.isNegative()) {
+        clip.start = RationalTime(0, m_rate);
+    }
+    Track fresh = makeTrack(kind);
+    insertSorted(fresh, std::move(clip));
+    tracks.insert(tracks.begin() + index, std::move(fresh));
+    removeEmptyTracks(modified);
+    cleanGroups(modified);
+    return finish(std::move(modified), tr("Move clip"), clipId);
+}
+
 } // namespace vedit
