@@ -426,6 +426,13 @@ soddisfatto qui tramite l'accento GNOME. Se il portale lo rende disponibile, ver
   e nell'indicatore globale.
 - **i18n**: stringhe sorgente in inglese con `qsTr()`/`tr()`, traduzioni italiano/inglese in `.ts` (Qt Linguist,
   `qt_add_translations`). Lingua dell'interfaccia di default = lingua di sistema.
+- **Stato dopo la Fase 1**: controller `AppController` (singleton `App`: bozze, libreria musicale, analisi dei media,
+  editor aperto) ed `EditorController` (un progetto aperto: ogni azione diventa un comando); modelli `DraftsModel`,
+  `MediaPoolModel`, `AudioLibraryModel`, `TimelineModel` (virtualizzato per intervallo visibile, aggiornato con un
+  diff); item `MediaThumbnail` e `WaveformView`. Lo snapping è una funzione di `EditorController` (`snap`,
+  `snapRange`: bordi delle clip, playhead, inizio), non ancora un `SnapEngine` separato. L'`ActionRegistry` (menu
+  contestuali, Ctrl+K, scorciatoie personalizzabili) non esiste ancora: le azioni della Fase 1 sono dichiarate in
+  barra, menu della clip e `Shortcut` QML; arriva quando le azioni diventano molte (Fase 2).
 
 ---
 
@@ -592,3 +599,34 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | Font WOFF2 in Qt | ✅ caricati (Inter corsivo e Material Symbols) |
 | QRhi in piattaforma `offscreen` con OpenGL | ⚠️ nessun QRhi: l'anteprima usa automaticamente la superficie software (`GraphicsInfo.api`) |
 | `timeremap`/`rbpitch`, `plant_filter` per i livelli di regolazione | da verificare quando servono (Fasi 2–3) |
+
+---
+
+## 19. Piano della Fase 1 (incrementi, ognuno compila, passa i test e ha un commit) — completato
+1. `src/fx` (composizione CPU di riferimento) + servizio `vedit.composite` + `MediaProducerCache` +
+   `TimelineProjection` con aggiornamenti incrementali; test "incrementale = ricostruito" su fotogrammi reali.
+2. `TimelinePlayer`: riproduzione della timeline viva, modifiche durante la riproduzione, J/K/L, skimming.
+3. Export: `Renderer`, `vedit-render` (processo), `RenderJob`; test con ffprobe e confronto dei fotogrammi.
+4. `src/document`: bozze, salvataggio continuo atomico, lock e recupero, `DraftStore`.
+5. Import: probe in processo separato, fingerprint, miniature e forme d'onda con cache; formato dalla prima clip.
+6. Core: duplica, sposta su nuova traccia. Interfaccia: schermata iniziale, editor, timeline, export a una schermata;
+   test dell'interfaccia reale (`tst_ui`) con i test di semplicità 1, 2, 8, 10.
+7. Prestazioni (500 clip), traduzioni, documentazione, verifica del criterio.
+
+## 20. Esiti delle verifiche della Fase 1
+| Punto | Esito |
+|---|---|
+| Profilo e producer "loader" | ✅ il loader adatta il media al canvas con bordi trasparenti e applica la rotazione (`projection_probe`) |
+| Modifica delle playlist durante la riproduzione | ✅ con il tractor bloccato, `purge` e nuovo seek; ASan pulito con modifiche ogni 30 ms in riproduzione |
+| Consumer con `real_time < 0` (worker paralleli) | ❌ risveglio perso in `worker_get_frame`: anteprima bloccata in pausa e deadlock nello stop → `real_time = 1` (D-24) |
+| Colori MLT a 8 cifre | ⚠️ sono `#AARRGGBB`: lo sfondo "nero" era blu trasparente → conversione esplicita (D-25) |
+| Durata del tractor | ✅ = traccia più lunga; lo sfondo viene dimensionato sulla durata |
+| Consumer `avformat` per l'export | ✅ `real_time = -1` (nessun fotogramma scartato), fine con `terminate_on_pause`, avanzamento con `position()` |
+| `Mlt::Factory::close()` a fine processo | ⚠️ scarica FFmpeg/x264 con le loro cache globali ancora allocate → falsi "leak" di LeakSanitizer; `vedit-render` non la chiama (D-30) |
+| Fps diversi all'export | ✅ la proiezione converte i tempi (entrambi i bordi) al rate del profilo: 6,5 s a 25 fps = 162 fotogrammi (arrotondamento pari) |
+| `QFile::moveToTrash` | ⚠️ fallisce se la cartella dati XDG non esiste ancora: viene creata prima |
+| Drag interno QML da un elemento in `Overlay.overlay` | ❌ l'overlay è invisibile senza popup aperti: nessun evento di drag → il "fantasma" sta nel `contentItem` della finestra |
+| Playlist MLT: `insert_blank`/`remove` | ✅ non fondono gli spazi vuoti da sole (lettura di `mlt_playlist.c`): la patch per indice è sicura |
+| 500 clip | ✅ una modifica (comando + patch del grafo + diff del modello) 3–6 ms; serializzazione per il salvataggio 6–19 ms (1 MiB di JSON); primo caricamento del grafo ~35 ms |
+| Backend grafici | ✅ smoke test dell'editor su Vulkan, OpenGL (Wayland), software e safe mode |
+

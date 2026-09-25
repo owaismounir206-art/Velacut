@@ -66,6 +66,16 @@ oppure `Theme.type.<stile>` (QFont) e `Theme.type.<stile>LineHeight`.
 | `Theme.elevation` | level0–5: 0, 1, 3, 6, 8, 12 dp (resa soprattutto con i colori tonali; ombra leggera `Shadow` solo dove serve, disattivata in rendering software) |
 | `Theme.motion` | short1–4 50–200, medium1–4 250–400, long1–4 450–600 ms (0 con "riduci animazioni"); `essentialMedium` 300 e `essentialLong` 500 restano (indicatori di progresso); curve `emphasized`, `emphasizedDecelerate`, `emphasizedAccelerate`, `standard`, `standardDecelerate`, `standardAccelerate` per `easing.type: Easing.BezierSpline` |
 
+### 4.1 Token dell'editor (`Theme.editor`)
+Dimensioni delle superfici proprie dell'editor, così che nessun QML scriva numeri a mano:
+pannelli (`libraryWidth`, `mediaTileWidth`/`Height`, `previewMinimumHeight`, `timelineMinimumHeight`,
+`timelineDefaultHeight`, `splitterSize`, `toolbarHeight`, `dialogWidth`), schermata iniziale (`draftCardWidth`,
+`draftThumbnailHeight`, `heroHeight`, `contentMaxWidth`), timeline (`rulerHeight`, `trackHeaderWidth`,
+`mainTrackHeight`, `overlayTrackHeight`, `audioTrackHeight`, `trackGap`, `newTrackZone`, `trimHandleWidth`,
+`playheadWidth`, `playheadKnob`, `selectionBorder`, `hairline`, `snapThreshold`, `rulerLabelSpacing`,
+`dragStartDistance`), zoom in pixel per fotogramma (`zoomDefault`, `zoomMinimum`, `zoomMaximum`, `zoomStep`) e
+`tailRatio` (spazio dopo l'ultima clip, in frazione della vista).
+
 ## 5. Icone
 **Material Symbols Rounded** (Apache-2.0), font variabile WOFF2. `Icon { name: "play_arrow"; filled: true }`.
 Il nome viene risolto tramite il file `.codepoints` (`Theme.icon(nome)`): un nome inesistente mostra l'icona `help`
@@ -95,8 +105,15 @@ e scrive un avviso nel log, invece di disegnare il nome come testo. Asse FILL pe
 **Ripple**: un rettangolo con lo stesso raggio del controllo cresce dal punto di pressione fino a coincidere con la
 forma, quindi niente shader (funziona anche col backend software) e niente angoli fuori forma.
 
-Da aggiungere nelle fasi successive (usati dall'editor): side sheet / bottom sheet, rich tooltip, time/date picker se
-servono, liste con elementi M3.
+Elementi C++ dell'editor (dipinti su CPU, quindi identici su ogni backend): `MediaThumbnail` (fotogrammi di un
+media: una tessera con skimming nel media pool, oppure tasselli lungo una clip) e `WaveformView` (picchi min/max
+dell'audio di una clip). Schermate e pannelli dell'editor: `HomeScreen`, `DraftCard`, `EditorScreen`, `EditorTopBar`,
+`MediaPanel`, `MediaTile`, `AudioPanel`, `PreviewPanel`, `ContextToolbar`, `TimelineView`, `TimelineClip`,
+`ExportDialog` (modulo `Vedit.UI`).
+
+Da aggiungere nelle fasi successive: side sheet / bottom sheet, rich tooltip, time/date picker se servono, liste con
+elementi M3. Nota: i componenti della Fase 0 contengono ancora alcune misure della specifica M3 scritte nel file
+(es. altezza 48 della snackbar, padding 8 dei pulsanti icona); vanno portate nei token nella rifinitura (Fase 8).
 
 ## 7. Accessibilità e desktop
 - `Accessible.role`/`name` su ogni componente; focus visibile (state layer di focus) e navigazione da tastiera

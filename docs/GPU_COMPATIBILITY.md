@@ -55,3 +55,15 @@ Legenda: ✅ provata (smoke test: file decodificato e **mostrato** ≥ 44 fotogr
 | `SDL_AUDIODRIVER=dummy` | nessuna uscita audio (test) |
 | `QT_LOGGING_RULES="vedit.*.debug=true"` | log dettagliati di vedit (anche in `~/.local/state/vedit/logs/vedit.log`) |
 | `./build/vedit-gpuprobe --vulkan\|--opengl\|--video` | esegue a mano un singolo probe (stampa JSON) |
+
+## 4. Verifiche della Fase 1 (editor completo)
+Su questa macchina (Intel Arc 140V, Mesa 26.2, Hyprland Wayland) lo smoke test dell'editor (`vedit --smoke-test`:
+nuovo progetto, import, timeline, proiezione MLT, anteprima; almeno 45 fotogrammi decodificati e 20 mostrati) passa con
+UI **Vulkan**, **OpenGL** (`QSG_RHI_BACKEND=opengl`), **software** headless (`QT_QUICK_BACKEND=software`
+`LIBGL_ALWAYS_SOFTWARE=1`, in CTest) e **safe mode**. Tutta la pipeline video dell'editor gira su CPU (composizione
+`vedit.composite`, miniature e forme d'onda FFmpeg, export libx264): la GPU serve solo alla UI.
+
+Variabili aggiunte per i test: `VEDIT_MUSIC_DIR` (cartella della libreria musicale), `VEDIT_UI_SHOTS` (screenshot di
+`tst_ui`), `VEDIT_NO_SANDBOX=1` (disattiva la sandbox XDG delle build di sviluppo: **attenzione**, così l'app scrive
+nella home vera).
+

@@ -104,7 +104,7 @@ Un parametro è **o** un valore letterale **o** un oggetto con `keyframes`:
 | `generator` | oggetto | app e versione che hanno scritto il file (informativo) |
 | `id` | Id | identità del progetto (anche id della bozza) |
 | `name` | stringa | nome mostrato nelle bozze |
-| `createdAt`, `modifiedAt` | stringa ISO 8601 UTC | |
+| `createdAt`, `modifiedAt` | stringa ISO 8601 UTC | `modifiedAt` è l'ora del salvataggio, scritta nel file e non nel modello (D-28) |
 | `settings` | oggetto | §4.1 |
 | `mediaFolders` | array | cartelle del media pool: `{ "id", "name", "parentId" \| null }` |
 | `media` | array | §5.1 |
@@ -418,14 +418,23 @@ e l'interfaccia propone di reinstallarlo.
 ```
 ~/.local/share/vedit/drafts/<projectId>/
 ├── project.vproj          # il progetto (unica fonte di verità)
-├── draft.json             # cache per la schermata iniziale: nome, durata, modifiedAt, formatVersion
-├── thumbnail.jpg          # miniatura della bozza
-├── state.json             # stato UI: layout dei pannelli, zoom, playhead, ultime impostazioni di export
-├── history/               # cronologia delle versioni (§9)
+├── draft.json             # cache per la schermata iniziale (sotto)
+├── thumbnail.jpg          # miniatura della bozza (fotogramma in anteprima alla chiusura, larga al massimo 320 px)
+├── state.json             # stato dell'interfaccia (sotto)
+├── history/               # cronologia delle versioni (§9.2, dalla Fase 8)
 │   └── 2026-09-24T17-50-00Z.vproj.gz
 └── lock                   # presente mentre la bozza è aperta (§9.3)
 ```
 `draft.json` e `thumbnail.jpg` sono cache: se mancano o non sono coerenti si rigenerano da `project.vproj`.
+```json
+// draft.json (scritto a ogni salvataggio)
+{ "name": "Vacanze", "modifiedAt": "2026-09-25T08:12:03Z", "formatVersion": 1,
+  "duration": "195@30", "canvas": { "width": 1920, "height": 1080 } }
+// state.json (scritto alla chiusura; campi sconosciuti ignorati)
+{ "playhead": 100, "export": { "folder": "/home/…/Video", "quality": 1 } }
+```
+`playhead` è in fotogrammi del progetto; `export.quality`: 0 bassa, 1 consigliata, 2 alta. Il nome della cartella è
+l'id del progetto. "Elimina" sposta la cartella nel cestino del sistema (recuperabile).
 
 ### 6.2 Progetti su file
 "Salva con nome" scrive un `.vproj` dove sceglie l'utente (con `relativePath` compilato). Un `.vproj` aperto da file
@@ -478,13 +487,13 @@ viene salvato; i media non trovati restano segnalati senza bloccare l'apertura.
    inoltre alla chiusura del progetto o dell'app e alla perdita del focus.
 2. Il modello viene serializzato sul thread UI in un buffer (JSON canonico); se il buffer è identico all'ultimo salvato
    non si scrive nulla.
-3. Sul thread I/O: scrittura in `project.vproj.tmp-<pid>` nella stessa cartella → `fsync` del file → `rename` sopra
-   `project.vproj` → `fsync` della cartella. Un'interruzione in qualsiasi momento lascia la versione precedente o quella
+3. Sul thread I/O: scrittura in un file temporaneo nella stessa cartella (`QSaveFile`: `project.vproj.XXXXXX`) →
+   `fsync` del file → `rename` sopra `project.vproj` → `fsync` della cartella. Un'interruzione in qualsiasi momento lascia la versione precedente o quella
    nuova, mai un file parziale.
 4. Errore di scrittura (disco pieno, permessi): banner persistente con la causa, nuovi tentativi con attesa crescente,
    stato in memoria intatto; nessuna perdita.
 
-### 9.2 Cronologia delle versioni
+### 9.2 Cronologia delle versioni (dalla Fase 8, D-31)
 - Snapshot gzip del JSON canonico in `history/`: ogni 10 minuti se ci sono modifiche, alla chiusura, prima di una
   migrazione e prima di ogni "Ripristina versione" (così anche il ripristino è annullabile).
 - Conservazione: tutti gli snapshot delle ultime 2 ore; poi uno all'ora per 2 giorni; poi uno al giorno per 30 giorni;
@@ -492,12 +501,13 @@ viene salvato; i media non trovati restano segnalati senza bloccare l'apertura.
 - Ripristinare una versione = un normale comando annullabile che sostituisce il contenuto del progetto.
 
 ### 9.3 Lock e recupero dopo crash
-- All'apertura si crea `lock` con `{ "pid", "hostname", "bootId", "openedAt" }` e lo si rimuove alla chiusura.
-- Se all'apertura esiste un lock il cui processo non esiste più (o il `bootId` è diverso), la sessione precedente
-  si è chiusa in modo anomalo: il progetto è già all'ultimo salvataggio (perdita massima ~2 s) e compare una snackbar
+- All'apertura si crea `lock` con `{ "pid", "hostname", "bootId", "program", "openedAt" }` e lo si rimuove alla
+  chiusura (`program` = nome del processo in `/proc/<pid>/comm`).
+- Se all'apertura esiste un lock il cui processo non esiste più (o il `bootId` è diverso, o quel pid ora è un altro
+  programma), la sessione precedente si è chiusa in modo anomalo: il progetto è già all'ultimo salvataggio (perdita massima ~2 s) e compare una snackbar
   "Progetto recuperato" con accesso alla cronologia.
-- Se il processo esiste ancora (bozza aperta in un'altra istanza), si porta in primo piano quella finestra invece di
-  aprire una seconda copia.
+- Se il processo esiste ancora (bozza aperta in un'altra istanza), la bozza non si apre una seconda volta. Fase 1:
+  un messaggio lo dice; portare in primo piano l'altra finestra richiede l'istanza singola (Fase 8).
 
 ### 9.4 Validazione al caricamento
 - JSON non valido o campi obbligatori mancanti: il progetto non si apre e viene proposto l'ultimo snapshot valido della

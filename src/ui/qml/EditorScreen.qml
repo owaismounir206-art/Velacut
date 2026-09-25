@@ -37,7 +37,7 @@ Item {
     Shortcut { sequences: [StandardKey.Delete, "Backspace"]; enabled: !root.typing; onActivated: root.editor.deleteSelection() }
     Shortcut { sequence: "Ctrl+D"; onActivated: root.editor.duplicateSelection() }
     Shortcut { sequences: [StandardKey.Undo]; enabled: !root.typing; onActivated: root.editor.undo() }
-    Shortcut { sequences: [StandardKey.Redo, "Ctrl+Shift+Z"]; enabled: !root.typing; onActivated: root.editor.redo() }
+    Shortcut { sequences: [StandardKey.Redo, "Ctrl+Shift+Z", "Ctrl+Y"]; enabled: !root.typing; onActivated: root.editor.redo() }
     Shortcut { sequence: "Ctrl+E"; onActivated: exportDialog.openDialog() }
     Shortcut { sequence: "Ctrl+I"; onActivated: library.importFiles() }
     Shortcut { sequence: "Escape"; enabled: !root.typing; onActivated: root.editor.clearSelection() }

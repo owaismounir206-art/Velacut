@@ -1,38 +1,71 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-09-25
+Ultimo aggiornamento: 2026-09-25 (fine Fase 1)
 
 ## Fase corrente
-**Fase 1 — MVP editor: in corso** (via dell'utente ricevuto il 2026-09-24). La Fase 0 è completata (sotto).
+**Fase 1 — MVP editor: completata, in attesa del via dell'utente per la Fase 2.**
 
-### Fase 1: fatto finora (un commit per incremento)
-1. `src/fx`: kernel CPU di composizione "over" (alfa non premoltiplicato, arrotondamento esatto) + test.
-   Servizio MLT `vedit.composite` (a fette su tutti i core). `MediaProducerCache` (un producer "loader" per media,
-   apertura sincrona o in background). `TimelineProjection`: sequenza → tractor (sfondo, tracce visive, audio),
-   aggiornamenti incrementali per traccia **identici** a una ricostruzione completa (test con fotogrammi reali).
-2. `TimelinePlayer`: riproduce la sequenza viva e segue `Project::changed` anche durante la riproduzione (modifiche
-   piccole = patch del grafo, strutturali = ricostruzione, nuovo canvas/fps = nuovo profilo), playhead separato dal
-   fotogramma mostrato (skimming), J/K/L fino a 8x, stop agli estremi. Test anche sotto ASan con modifiche continue in
-   riproduzione. Scoperte: race di MLT nei worker paralleli (D-24), colori MLT `#AARRGGBB` (D-25).
+## Criterio di completamento della Fase 1 (SPEC §8)
+| Requisito | Esito | Verifica |
+|---|---|---|
+| Importo 3 clip | ✅ | `tst_editor::phaseOneCriterion`: 3 file rilasciati sulla timeline, importati nell'ordine; canvas e fps dal primo |
+| Le taglio e riordino | ✅ | trim, divisione al playhead, eliminazione con ripple, spostamento in testa, annulla/ripeti |
+| Esporto un MP4 corretto | ✅ | ffprobe: H.264 yuv420p, 30 fps, 230 fotogrammi esatti, AAC 48 kHz stereo; fotogrammi decodificati uguali alla proiezione (`tst_export`) |
+| Chiudo e riapro la bozza identica senza "Salva" | ✅ | il progetto riaperto è uguale campo per campo (tranne l'ora di salvataggio); c'era già sul disco prima di chiudere; playhead ripristinato |
+| Primi 2 test di semplicità | ✅ | test 1: **4** azioni (limite 4); test 2: **2** (limite 2); inoltre test 8: **2** (limite 2) e test 10 ✅ (`docs/USABILITY.md`) |
+| Compila senza warning, test verdi | ✅ | 23/23 in `build` (RelWithDebInfo) e in `build-debug` (ASan + UBSan); smoke test dell'editor su Vulkan, OpenGL, software e safe mode |
 
-3. Export MP4 in `vedit-render` (processo separato, progetto congelato, avanzamento JSON, annullamento senza file
-   parziali), stessa proiezione dell'anteprima anche a dimensioni/fps diversi; test con ffprobe e fotogrammi decodificati.
-4. `src/document`: bozze con salvataggio continuo atomico (300 ms / max 2 s, thread di I/O, nuovi tentativi), lock con
-   recupero dopo crash, `DraftStore` (elenco, crea, rinomina, duplica, cestino).
-5. Import: probe in `vedit-render --probe` (un file che fa crashare il probe viene scartato), fingerprint campionato,
-   miniature e waveform con FFmpeg in background con cache su disco, canvas e fps dalla prima clip (un solo comando).
+## Fase 1: fatto (un commit per incremento)
+1. `src/fx` (composizione "over" CPU) + servizio MLT `vedit.composite`; `MediaProducerCache`; `TimelineProjection`
+   (sequenza → tractor) con aggiornamenti per traccia identici a una ricostruzione (test su fotogrammi reali), poi
+   **patch** delle playlist (solo le voci cambiate: una modifica su 500 clip costa ~3–6 ms).
+2. `TimelinePlayer`: timeline viva in anteprima, modifiche anche durante la riproduzione, J/K/L fino a 8×, skimming
+   (fotogramma sotto il puntatore senza spostare il playhead), nuovo profilo al cambio di canvas/fps.
+3. Export MP4 in `vedit-render` (processo separato: progetto congelato, avanzamento JSON, annullamento pulito, nessun
+   file parziale), anche a dimensioni/fps diversi; controllo dello spazio su disco; notifica di sistema a fine export
+   se vedit è in secondo piano; "Riproduci", "Apri cartella", "Copia percorso".
+4. `src/document`: bozze con salvataggio continuo atomico (300 ms / max 2 s, thread di I/O, nessuna scrittura se il
+   contenuto non cambia, nuovi tentativi se il disco dà errore), lock con recupero dopo crash, `DraftStore`
+   (elenco, crea, rinomina, duplica, cestino), stato dell'interfaccia (`state.json`).
+5. Import: probe in `vedit-render --probe` (un file che manda in crash il demuxer viene scartato come danneggiato e
+   gli altri proseguono), fingerprint `sha256-sampled-v1`, miniature e forme d'onda con FFmpeg in background, cache su
+   disco per fingerprint; canvas e fps dalla prima clip nello stesso comando (un solo annulla).
+6. Interfaccia: schermata iniziale (Nuovo progetto, bozze con miniatura/durata/data e menu), editor (barra in alto con
+   nome modificabile, "Salvato", annulla/ripeti, formato, Esporta; media pool con skimming, "+" e trascinamento; musica
+   locale; anteprima con trasporto; barra contestuale Dividi/Elimina/Duplica e menu del tasto destro; timeline
+   virtualizzata con traccia magnetica, tracce automatiche, trim, spostamento, snapping con linea guida, skimming,
+   zoom, rilascio di media e file; snackbar "Annulla"; export a una schermata). Italiano e inglese.
+7. Test dell'interfaccia reale guidata con mouse e tastiera (`tst_ui`), anche in ASan.
 
-### Fase 1: prossimi passi (in ordine)
-1. UI dell'editor: schermata iniziale, layout, media pool con skimming e "+", anteprima con J/K/L, timeline
-   virtualizzata (drag/trim/split/snapping/zoom/skimming), barra contestuale, snackbar "Annulla", export a una schermata.
-2. Test di semplicità 1, 2, 8, 10; verifica del criterio; README/SHORTCUTS/PROGRESS; attesa del via.
+## Fase 1: limiti noti (onestà, regola 4)
+- **Trascinare file dal file manager** (sulla timeline o sul media pool) è implementato ma non verificabile in un test
+  headless: da provare a mano. Il trascinamento dal media pool alla timeline è invece testato col mouse.
+- **Skimming nel media pool**: il fotogramma scorre nella tessera; l'anteprima grande mostra sempre la timeline.
+- **Audio durante lo skimming**: il consumer ha `scrub_audio` attivo, quindi anche passare sopra la timeline fa sentire
+  brevi frammenti; non verificato a orecchio (i test usano l'audio "dummy"). Se disturba, un interruttore arriva con
+  le preferenze.
+- **Export**: solo H.264 + AAC software (libx264); encoder hardware con fallback, altri formati e la sezione
+  "Avanzate" arrivano con la Fase 8 (una sezione "Avanzate" senza scelte reali sarebbe finta). La dimensione stimata è
+  un'euristica (70% del tetto di bitrate) non ancora tarata su filmati veri.
+- **Cronologia delle versioni** (snapshot e "Ripristina"): Fase 8 come da tabella SPEC §8 (D-31).
+- **Bozza già aperta in un'altra finestra**: messaggio; portare in primo piano l'altra finestra richiede l'istanza
+  singola (Fase 8).
+- Timeline: niente selezione a rettangolo, niente muto/nascondi traccia nell'interfaccia (il modello e la proiezione
+  li supportano già), niente Q/W (taglia a sinistra/destra del playhead).
+- Prestazioni misurate su progetti sintetici (500 clip, video 320×180); con filmati 1080p/4K reali e proxy: Fase 8.
+- Componenti M3 della Fase 0: alcune misure della specifica M3 sono ancora scritte nei file (vedi DESIGN_SYSTEM §6).
+- La classe `engine::Player` (riproduzione di un file, Fase 0) non è più usata dall'app: resta, testata, per
+  l'anteprima dei media del pool in una fase successiva.
 
-### Fase 1: limiti noti finora
-- Cronologia delle versioni: rimandata alla Fase 8 come da tabella SPEC §8 (D-31).
-- Stima della dimensione dell'export: ipotesi del 70% del tetto di bitrate, da tarare su filmati reali.
-- Encoder hardware all'export: Fase 8 (ora sempre libx264, disponibile ovunque).
+## Prossimi passi (Fase 2 — Editing essenziale), dopo il via
+Dalla SPEC §8: trasformazioni con maniglie sul canvas, sfondo del canvas, selettore del formato (già presente in forma
+base), testo base e preset con modifica sul canvas, audio base (volume, dissolvenze, mixer), velocità costante,
+freeze/inversione, transizioni base, filtri e regolazioni con anteprima dal vivo e "Applica a tutte", copia/incolla
+attributi, "Migliora automaticamente", ricerca universale Ctrl+K. Criterio: un video verticale 9:16 con testi, musica,
+transizioni e filtri rispettando i test di semplicità applicabili (3, 4, 6). Prima di iniziare: ActionRegistry e
+pannello proprietà, poi servizi MLT `vedit.transform`, `vedit.text`, `vedit.gain`, `vedit.transition` con i kernel CPU.
 
-## Fase 0 — Fondamenta: completata
+## Fase 0 — Fondamenta: completata (storico)
 
 ## Criterio di completamento della Fase 0 (SPEC §8)
 | Requisito | Esito |
@@ -64,21 +97,17 @@ Gli smoke test verificano fotogrammi **decodificati e mostrati** dall'anteprima 
    anteprima su ogni backend (QQuickRhiItem con shader, oppure nodi immagine), finestra QML del player.
 9. Stile `Vedit.Style` + `Vedit.Components` (29 componenti), galleria, traduzione italiana completa, smoke test in CTest.
 
-## Limiti noti e cose non ancora fatte (onestà, regola 4)
-- L'interfaccia è solo quella della Fase 0: finestra di riproduzione di un file e galleria. **Nessun editor ancora**
-  (schermata iniziale, bozze, timeline, media pool sono la Fase 1).
+## Limiti rimasti dalla Fase 0 (ancora validi)
 - Tipi di clip testo, sottotitolo, sticker, effetto e regolazione: nel modello sono conservati come JSON (nessuna perdita
   di dati), la loro modifica e il loro rendering arrivano nelle fasi 2–6. Movimento di clip collegate (`linkId`) non ancora
   gestito da TimelineEditor (serve dalla Fase 2, "scollega/collega audio e video").
-- Proiezione core → MLT (grafo della timeline), servizi MLT propri `vedit.*`, `vedit-render`, proxy, miniature,
-  waveform: Fase 1.
 - Preferenze → Prestazioni (interfaccia): Fase 8; i dati esistono (`GraphicsPreferences` in QSettings).
 - Il `FrameSink` copia ogni fotogramma mostrato (~1 ms in 1080p): va bene con anteprime a risoluzione ridotta; un
   percorso a copia zero richiede un protocollo di rilascio dei frame prima di chiudere il consumer (D-19).
-- Hardware video rilevato (VA-API/QSV) ma non ancora usato: decodifica hardware nel player e encoding in Fase 1/8.
+- Hardware video rilevato (VA-API/QSV) ma non ancora usato per decodifica ed encoding: Fase 8.
 - Matrice GPU: provata solo la GPU Intel di questa macchina (+ percorsi software); NVIDIA/AMD/VM progettati ma non provati
   (`docs/GPU_COMPATIBILITY.md`).
-- `tst_theme` impiega ~80 s nella build Debug con sanitizer (140 schemi generati); ~1 s in RelWithDebInfo.
+- `tst_theme` impiega ~90 s nella build Debug con sanitizer (140 schemi generati); ~1 s in RelWithDebInfo.
 
 ## Bug noti / avvisi
 - Avviso Qt "Failed to register with host portal … App info not found for 'vedit'": manca il file `.desktop`
@@ -92,14 +121,20 @@ Gli smoke test verificano fotogrammi **decodificati e mostrati** dall'anteprima 
 ## Come riprendere
 ```bash
 cmake --preset dev && cmake --build build && ctest --test-dir build --output-on-failure
-./build/vedit [file]                 # player della Fase 0
+./build/vedit                        # schermata iniziale (le bozze di sviluppo stanno in build/dev-home)
+./build/vedit video.mp4              # nuovo progetto con quel file
 ./build/vedit --component-gallery    # galleria M3
+VEDIT_UI_SHOTS=build/shots tools/run-test.sh build tst_ui   # interfaccia guidata + screenshot di ogni passo
 cmake -S . -B build -DVEDIT_BUILD_PROBES=ON   # programmi di prova in build/tools/
 ```
-Scaricamenti usati per il vendoring (non versionati): `.downloads/` (~1 GB, soprattutto il repository delle icone);
-si può cancellare, i file necessari sono già copiati in `third_party/` e `src/assets/`.
+Traduzioni: `cmake --build build --target update_translations`, poi completare `i18n/vedit_it.ts` (nessuna voce
+`unfinished` deve restare) e le forme plurali in `i18n/vedit_en.ts`.
+
+Scaricamenti non versionati in `.downloads/` (~1 GB): repository delle icone e dei font usati per il vendoring, e i
+sorgenti di MLT consultati per le verifiche (D-24, §20). Si possono cancellare: i file necessari sono già in
+`third_party/` e `src/assets/`.
 
 ## Decisioni
-Registro in `docs/ARCHITECTURE.md` §15 (D-01 … D-26) ed esiti delle verifiche in §18.
+Registro in `docs/ARCHITECTURE.md` §15 (D-01 … D-34), esiti delle verifiche in §18 (Fase 0) e §20 (Fase 1).
 `tools/run-test.sh <build-dir> <test> [funzione]` esegue un singolo test con lo stesso ambiente di CTest (utile per
 ripetere un test instabile: `for i in $(seq 20); do tools/run-test.sh build tst_timelineplayer || break; done`).
