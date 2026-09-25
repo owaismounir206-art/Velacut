@@ -222,6 +222,34 @@ private slots:
         QTRY_COMPARE(mainTrack().clips.size(), size_t(2));
     }
 
+    void dragMediaAndContextMenu()
+    {
+        // A media tile dragged from the pool onto the end of the main track.
+        click(byText(u"Media"_s));
+        const size_t before = mainTrack().clips.size();
+        QQuickItem *tile = findItem(m_window->contentItem(), [](QQuickItem *item) {
+            return QByteArray(item->metaObject()->className()).startsWith("MediaTile") &&
+                   item->property("kind").toString() == u"video"_s;
+        });
+        QVERIFY(tile);
+        QQuickItem *canvas = byName(u"timelineCanvas"_s);
+        const int mainY = static_cast<int>(canvas->mapToScene(QPointF(0, 0)).y()) + 24 + 32; // new-track zone + half track
+        drag(centre(tile), QPoint(frameX(editor()->timeline()->duration() + 30), mainY));
+        QTRY_COMPARE(mainTrack().clips.size(), before + 1);
+
+        // Right click on a clip: the toolbar's actions.
+        const ClipId last = mainTrack().clips.back().id;
+        QQuickItem *clip = byName(u"clip-"_s + last.toString());
+        QVERIFY(clip);
+        QTest::mouseClick(m_window, Qt::RightButton, {}, centre(clip));
+        QTRY_VERIFY(byName(u"clipMenu"_s) || byText(u"Duplicate"_s));
+        click(byText(u"Duplicate"_s));
+        QTRY_COMPARE(mainTrack().clips.size(), before + 2);
+        editor()->undo();
+        editor()->undo();
+        QTRY_COMPARE(mainTrack().clips.size(), before);
+    }
+
     // Usability test 8: export with the recommended settings ≤ 2 actions.
     void usability8Export()
     {

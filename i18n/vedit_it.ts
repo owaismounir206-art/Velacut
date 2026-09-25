@@ -101,7 +101,7 @@
         <translation>Apri %1</translation>
     </message>
     <message>
-        <location line="+49"/>
+        <location line="+50"/>
         <source>Project options</source>
         <translation>Opzioni del progetto</translation>
     </message>
@@ -926,12 +926,12 @@
         <translation>Aggiungi un video o una foto alla timeline: l&apos;anteprima compare qui.</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+15"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+8"/>
         <source>Go to start</source>
         <translation>Vai all&apos;inizio</translation>
     </message>
@@ -961,7 +961,7 @@
         <translation>Fine</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+10"/>
         <source>%1× · %2</source>
         <translation>%1× · %2</translation>
     </message>
@@ -985,6 +985,31 @@
         <location filename="../src/ui/qml/TimelineClip.qml" line="+46"/>
         <source>Clip %1</source>
         <translation>Clip %1</translation>
+    </message>
+    <message>
+        <location line="+72"/>
+        <source>Split</source>
+        <translation>Dividi</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Duplicate</source>
+        <translation>Duplica</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+D</source>
+        <translation>Ctrl+D</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Delete</source>
+        <translation>Elimina</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Del</source>
+        <translation>Canc</translation>
     </message>
 </context>
 <context>

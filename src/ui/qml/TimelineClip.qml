@@ -100,6 +100,41 @@ Item {
         }
     }
 
+    // Right click: the same actions as the contextual toolbar (SPEC 0bis rule 3).
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        enabled: !clip.locked
+        onTapped: {
+            if (!clip.selected)
+                clip.view.editor.select(clip.clipId, false)
+            contextMenu.popup()
+        }
+    }
+    Menu {
+        id: contextMenu
+        objectName: "clipMenu"
+        MenuItem {
+            iconName: "content_cut"
+            text: qsTr("Split")
+            shortcutText: "S"
+            enabled: clip.view.editor.splitAvailable
+            onTriggered: clip.view.editor.split()
+        }
+        MenuItem {
+            iconName: "content_copy"
+            text: qsTr("Duplicate")
+            shortcutText: qsTr("Ctrl+D")
+            onTriggered: clip.view.editor.duplicateSelection()
+        }
+        MenuSeparator {}
+        MenuItem {
+            iconName: "delete"
+            text: qsTr("Delete")
+            shortcutText: qsTr("Del")
+            onTriggered: clip.view.editor.deleteSelection()
+        }
+    }
+
     // Body: click selects (Ctrl/Shift adds), drag moves.
     MouseArea {
         id: mover

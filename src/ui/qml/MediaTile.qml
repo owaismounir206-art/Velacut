@@ -86,7 +86,9 @@ Item {
             dragThreshold: Theme.editor.dragStartDistance
             onActiveChanged: {
                 if (active) {
-                    ghost.parent = Overlay.overlay
+                    // Above everything in the window (not in Overlay.overlay: it is invisible without a popup, and an
+                    // invisible item delivers no drag events).
+                    ghost.parent = tile.Window.window.contentItem
                     ghost.visible = true
                     ghost.Drag.active = true
                 } else {
@@ -98,7 +100,7 @@ Item {
             }
             onCentroidChanged: {
                 if (active) {
-                    const point = picture.mapToItem(Overlay.overlay, centroid.position.x, centroid.position.y)
+                    const point = picture.mapToItem(ghost.parent, centroid.position.x, centroid.position.y)
                     ghost.x = point.x - ghost.width / 2
                     ghost.y = point.y - ghost.height / 2
                 }
@@ -118,6 +120,7 @@ Item {
         id: ghost
         readonly property string mediaId: tile.mediaId
         visible: false
+        z: Theme.elevation.level5
         width: picture.width / 2
         height: picture.height / 2
         radius: Theme.shape.small
