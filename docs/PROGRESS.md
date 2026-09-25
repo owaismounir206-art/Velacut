@@ -1,9 +1,31 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-09-24
+Ultimo aggiornamento: 2026-09-25
 
 ## Fase corrente
-**Fase 0 — Fondamenta: completata, in attesa del via dell'utente per la Fase 1.**
+**Fase 1 — MVP editor: in corso** (via dell'utente ricevuto il 2026-09-24). La Fase 0 è completata (sotto).
+
+### Fase 1: fatto finora (un commit per incremento)
+1. `src/fx`: kernel CPU di composizione "over" (alfa non premoltiplicato, arrotondamento esatto) + test.
+   Servizio MLT `vedit.composite` (a fette su tutti i core). `MediaProducerCache` (un producer "loader" per media,
+   apertura sincrona o in background). `TimelineProjection`: sequenza → tractor (sfondo, tracce visive, audio),
+   aggiornamenti incrementali per traccia **identici** a una ricostruzione completa (test con fotogrammi reali).
+2. `TimelinePlayer`: riproduce la sequenza viva e segue `Project::changed` anche durante la riproduzione (modifiche
+   piccole = patch del grafo, strutturali = ricostruzione, nuovo canvas/fps = nuovo profilo), playhead separato dal
+   fotogramma mostrato (skimming), J/K/L fino a 8x, stop agli estremi. Test anche sotto ASan con modifiche continue in
+   riproduzione. Scoperte: race di MLT nei worker paralleli (D-24), colori MLT `#AARRGGBB` (D-25).
+
+### Fase 1: prossimi passi (in ordine)
+1. Export: `vedit-render` (processo separato, `.vproj` congelato + job JSON, avanzamento JSON su stdout) + test ffprobe.
+2. Bozze: libreria `src/document` (Document = Project + undo + salvataggio continuo atomico, lock/recupero, cronologia),
+   `DraftStore` per la schermata iniziale.
+3. Import dei media: probe libavformat, fingerprint campionato, miniature e waveform in background con cache;
+   canvas e fps dalla prima clip nello stesso comando.
+4. UI dell'editor: schermata iniziale, layout, media pool con skimming e "+", anteprima con J/K/L, timeline
+   virtualizzata (drag/trim/split/snapping/zoom/skimming), barra contestuale, snackbar "Annulla", export a una schermata.
+5. Test di semplicità 1, 2, 8, 10; verifica del criterio; README/SHORTCUTS/PROGRESS; attesa del via.
+
+## Fase 0 — Fondamenta: completata
 
 ## Criterio di completamento della Fase 0 (SPEC §8)
 | Requisito | Esito |
@@ -59,17 +81,6 @@ Gli smoke test verificano fotogrammi **decodificati e mostrati** dall'anteprima 
 - LeakSanitizer: piccole allocazioni globali in MLT, SDL3, glib e libavcodec sono soppresse con motivazione in
   `tests/lsan.supp`; nessuna perdita nel codice vedit.
 
-## Prossimi passi (Fase 1 — MVP editor), dopo il via
-1. Proiezione core → MLT (tractor, playlist, cut, composizione di base) con aggiornamenti incrementali e test
-   "incrementale = ricostruito".
-2. Bozze: schermata iniziale, nuovo progetto istantaneo (canvas e fps dalla prima clip), salvataggio continuo atomico,
-   cronologia delle versioni, recupero dopo crash, lock.
-3. Media pool: import, probe, fingerprint, miniature, skimming, pulsante "+".
-4. Timeline QML virtualizzata: traccia magnetica, tracce automatiche, trim/split/ripple, snapping, asse di anteprima,
-   barra strumenti contestuale, snackbar "Annulla".
-5. Player J/K/L, scrubbing audio.
-6. Export MP4 a una schermata con `vedit-render` (processo separato).
-7. Test di semplicità 1, 2, 8 e 10 in `docs/USABILITY.md`.
 
 ## Come riprendere
 ```bash
@@ -82,4 +93,6 @@ Scaricamenti usati per il vendoring (non versionati): `.downloads/` (~1 GB, sopr
 si può cancellare, i file necessari sono già copiati in `third_party/` e `src/assets/`.
 
 ## Decisioni
-Registro in `docs/ARCHITECTURE.md` §15 (D-01 … D-22) ed esiti delle verifiche in §18.
+Registro in `docs/ARCHITECTURE.md` §15 (D-01 … D-26) ed esiti delle verifiche in §18.
+`build/run-test.sh <build-dir> <test> [funzione]` esegue un singolo test con lo stesso ambiente di CTest (utile per
+ripetere un test instabile: `for i in $(seq 20); do build/run-test.sh build tst_timelineplayer || break; done`).
