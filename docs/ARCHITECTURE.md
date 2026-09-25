@@ -89,6 +89,7 @@ della sezione 2 della specifica, motivate in §15: `third_party/`, `cmake/`, `to
 │   │   ├── edit/              # TimelineEditor (regole CapCut: traccia magnetica, tracce automatiche), SnapEngine
 │   │   ├── commands/          # un QUndoCommand per ogni operazione
 │   │   └── serialization/     # JSON <-> modello, migrazioni
+│   ├── document/              # bozza aperta (progetto + undo + salvataggio continuo + lock), cartella delle bozze
 │   ├── fx/                    # registro effetti/transizioni, manifest, kernel CPU (poi GPU)
 │   ├── engine/
 │   │   ├── mlt/               # proiezione modello -> grafo MLT, servizi MLT propri (vedit.*)
@@ -114,6 +115,7 @@ della sezione 2 della specifica, motivate in §15: `third_party/`, `cmake/`, `to
 | Target | Tipo | Dipende da |
 |---|---|---|
 | `vedit_core` | libreria statica | Qt6::Core, Qt6::Gui |
+| `vedit_document` | libreria statica | vedit_core (bozze, salvataggio continuo, lock: FILE_FORMAT §6, §9) |
 | `vedit_fx` | libreria statica | vedit_core |
 | `vedit_engine` | libreria statica | vedit_core, vedit_fx, MLT++ 7, FFmpeg (libavformat/libavcodec/libavutil per probe e capacità) |
 | `vedit_theme` | libreria statica | Qt6::Gui, Qt6::DBus, material-color-utilities |
@@ -530,6 +532,11 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | D-24 | Consumer dell'anteprima con `real_time = 1` invece di `-N` | Nei worker paralleli di MLT il controllo del flag `rendered` avviene fuori dal mutex (`worker_get_frame` in `mlt_consumer.c`): un risveglio perso blocca l'anteprima in pausa e fa andare in deadlock `mlt_consumer_stop()` (riprodotto da `tst_timelineplayer`). È anche il default di Shotcut |
 | D-25 | Colori verso MLT convertiti in `#AARRGGBB` | È il formato di MLT per 8 cifre; il modello usa `#RRGGBBAA` (FILE_FORMAT). Un test controlla i pixel |
 | D-26 | Le "cut" sostituite durante la riproduzione restano vive ~1 s | I frame già letti in anticipo dal consumer possono ancora riferirle (e i loro filtri) mentre vengono renderizzati |
+| D-27 | Libreria `src/document` (Document, AutoSaver, DraftLock, DraftStore) separata dalla UI | Salvataggio continuo, lock e bozze testabili senza QML; la UI chiede solo "apri/crea/chiudi" |
+| D-28 | Data di modifica scritta nel file al salvataggio, non nel modello | Cambiarla nel modello richiederebbe un comando (e un passo di undo) a ogni salvataggio; il confronto "contenuto invariato, non scrivere" ignora la data |
+| D-29 | Eliminare una bozza la sposta nel cestino di sistema | Recuperabile dal file manager: nessuna finestra di conferma necessaria (regola 10) |
+| D-30 | `vedit-render` non chiude la factory MLT all'uscita | `Factory::close()` scarica moduli, FFmpeg e x264 mentre le loro cache globali sono allocate: LeakSanitizer le segnala come perdite di "<unknown module>" (verificato: nessuna senza lo scaricamento). Il processo termina subito dopo |
+| D-31 | Cronologia delle versioni (snapshot in `history/`) rimandata alla Fase 8 | È nella riga della Fase 8 della tabella di SPEC §8; in Fase 1 bastano salvataggio atomico, lock e recupero |
 
 ---
 
