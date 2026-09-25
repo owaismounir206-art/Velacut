@@ -4,15 +4,18 @@
 // save screenshots of each step (visual review).
 #include "TestMedia.h"
 
+#include "document/Document.h"
 #include "engine/mlt/MltRuntime.h"
+#include "engine/timeline/MediaProducerCache.h"
+#include "engine/timeline/TimelineProjection.h"
 #include "theme/SystemAppearance.h"
 #include "theme/ThemeManager.h"
-#include "document/Document.h"
 #include "ui/controllers/AppController.h"
 #include "ui/controllers/ClipInspector.h"
 #include "ui/controllers/EditorController.h"
 #include "ui/models/TimelineModel.h"
 
+#include <QPainter>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickStyle>
@@ -20,6 +23,8 @@
 #include <QSignalSpy>
 #include <QTest>
 #include <QTemporaryDir>
+
+#include <mlt++/MltProfile.h>
 #include <QtQml/QQmlExtensionPlugin>
 
 Q_IMPORT_QML_PLUGIN(Vedit_ThemePlugin)
@@ -636,6 +641,67 @@ private slots:
         while (editor()->document().undoStack().index() > steps) {
             editor()->undo();
         }
+    }
+
+    // The Phase 3 criterion, second half (SPEC §8): a green screen composited with a mask, through the interface.
+    void phaseThreeCriterionGreenScreen()
+    {
+        // A "green screen" picture: green, with a red subject in the middle; over the video (setup, not counted).
+        QImage screen(320, 180, QImage::Format_RGB32);
+        screen.fill(QColor(0, 200, 0));
+        QPainter(&screen).fillRect(QRect(130, 60, 60, 60), QColor(220, 30, 30));
+        const QString path = m_dir.filePath(u"media/greenscreen.png"_s);
+        QVERIFY(screen.save(path));
+        editor()->clearSelection();
+        editor()->player()->seek(0);
+        const int steps = editor()->document().undoStack().index();
+        editor()->importAndInsert({QUrl::fromLocalFile(path)}, 0, -1);
+        QTRY_COMPARE_WITH_TIMEOUT(editor()->data().mainSequence()->visualTracks.size(), size_t(2), 20000);
+        const ClipId overlay = editor()->data().mainSequence()->visualTracks[1].clips.front().id;
+        editor()->player()->seek(10);
+        QTRY_COMPARE(editor()->player()->position(), 10);
+
+        click(byName(u"clip-"_s + overlay.toString()));
+        QTest::mouseMove(m_window, centre(byName(u"propertiesPanel"_s)) - QPoint(500, 0));
+        click(byText(u"Cutout"_s));
+        QTRY_VERIFY(byName(u"pickKeyColour"_s));
+        // The key colour: a click on the green, on the player.
+        ensureVisible(byName(u"pickKeyColour"_s));
+        click(byName(u"pickKeyColour"_s));
+        QTRY_VERIFY(byName(u"pickArea"_s));
+        QQuickItem *handles = byName(u"pickArea"_s)->parentItem();
+        const QPointF origin = handles->property("origin").toPointF();
+        const double factor = handles->property("factor").toDouble();
+        const auto onCanvas = [&](double x, double y) { return handles->mapToScene(origin + QPointF(x, y) * factor).toPoint(); };
+        QTest::mouseMove(m_window, onCanvas(40, 30));
+        QTest::mouseClick(m_window, Qt::LeftButton, {}, onCanvas(40, 30));
+        ++m_actions;
+        QTRY_VERIFY(editor()->inspector()->values().value(u"chroma.enabled"_s).toBool());
+        const QColor key = editor()->inspector()->values().value(u"chroma.color"_s).value<QColor>();
+        QVERIFY2(key.green() > 150 && key.red() < 60, qPrintable(key.name()));
+        // A circle mask around the subject, made larger from its corner on the player.
+        ensureVisible(byName(u"maskShape_2"_s));
+        click(byName(u"maskShape_2"_s));
+        QTRY_VERIFY(byName(u"maskCorner"_s));
+        const double before = editor()->inspector()->values().value(u"mask.width"_s).toDouble();
+        drag(centre(byName(u"maskCorner"_s)), centre(byName(u"maskCorner"_s)) + QPoint(20, 10));
+        QTRY_VERIFY(editor()->inspector()->values().value(u"mask.width"_s).toDouble() > before);
+        shot(u"26-green-screen-mask"_s);
+
+        // The result: where the picture was green, the video shows through; the subject stays.
+        auto profile = engine::makeProfile(editor()->data(), editor()->data().mainSequenceId);
+        engine::MediaProducerCache cache(*profile);
+        engine::TimelineProjection projection(*profile, cache, engine::TimelineProjection::MediaLoading::Wait);
+        projection.build(editor()->data(), editor()->data().mainSequenceId);
+        const QImage frame = projection.renderFrame(10);
+        const QColor subject = frame.pixelColor(frame.width() / 2, frame.height() / 2);
+        QVERIFY2(subject.red() > 180 && subject.green() < 80, qPrintable(subject.name()));
+        const QColor keyed = frame.pixelColor(frame.width() * 40 / 320, frame.height() * 30 / 180);
+        QVERIFY2(!(keyed.green() > 150 && keyed.red() < 60 && keyed.blue() < 60), qPrintable(keyed.name()));
+        while (editor()->document().undoStack().index() > steps) {
+            editor()->undo();
+        }
+        editor()->inspector()->setCanvasMode({});
     }
 
     // Usability test 8: export with the recommended settings ≤ 2 actions.

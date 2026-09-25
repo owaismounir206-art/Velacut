@@ -119,6 +119,17 @@ ActionRegistry::ActionRegistry(EditorController &editor)
     add({u"pasteAttributes"_s, tr("Paste attributes"), u"content_paste"_s, tr("Ctrl+Alt+V"), 0,
          [this, inspector] { return inspector->canPaste() && !m_editor.selectedClips().empty(); },
          [inspector] { return inspector->pasteAttributes(); }});
+    add({u"createCompound"_s, tr("Group into a compound clip"), u"stacks"_s, {}, 0,
+         [this] { return !m_editor.selectedClips().empty(); }, [this] { return m_editor.createCompoundClip(); }});
+    add({u"expandCompound"_s, tr("Ungroup the compound clip"), u"stacks"_s, {}, 0,
+         [this] {
+             const std::optional<ClipId> focus = m_editor.focusClip();
+             const Clip *clip = focus ? m_editor.data().findClip(*focus) : nullptr;
+             return clip && std::holds_alternative<CompoundClipData>(clip->payload);
+         },
+         [this] { return m_editor.expandCompoundClip(); }});
+    add({u"addAdjustment"_s, tr("Add an adjustment layer"), u"tune"_s, {}, 0, always,
+         [this] { return m_editor.insertAdjustment(); }});
     add({u"undo"_s, tr("Undo"), u"undo"_s, tr("Ctrl+Z"), 0, [this] { return m_editor.canUndo(); }, [this] {
              m_editor.undo();
              return true;

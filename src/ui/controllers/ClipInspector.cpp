@@ -5,6 +5,7 @@
 #include "core/edit/TimelineEditor.h"
 #include "core/project/ClipTime.h"
 #include "core/serialization/ProjectJson.h"
+#include "engine/analysis/Decoding.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/playback/TimelinePlayer.h"
 #include "engine/timeline/ClipPlacement.h"
@@ -16,6 +17,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 
 using namespace Qt::StringLiterals;
 
@@ -25,6 +27,8 @@ namespace {
 
 const QString kFilterType = u"vedit.filter"_s;
 const QString kAdjustType = u"vedit.adjust.basic"_s;
+const QString kChromaType = u"vedit.chroma_key"_s;
+constexpr int kBlendModeCount = 17;
 
 double numberOf(const Param &param, double fallback)
 {
@@ -290,6 +294,106 @@ std::optional<RationalTime> ClipInspector::playheadKeyTime(const Clip &clip) con
     return keyframeTime(clip, at - clip.start);
 }
 
+void ClipInspector::setCanvasMode(const QString &mode)
+{
+    if (mode != m_canvasMode) {
+        m_canvasMode = mode;
+        emit canvasModeChanged();
+    }
+}
+
+QVariantMap ClipInspector::maskBox() const
+{
+    const Clip *clip = focus();
+    if (!clip || clip->masks.empty() || !supports(*clip, u"cutout"_s)) {
+        return {};
+    }
+    const Mask &mask = clip->masks.front();
+    const engine::CanvasBox box = engine::canvasBox(*clip, m_editor.data().findMedia(clip->media()->mediaId), m_editor.canvasSize());
+    // Picture coordinates (−0.5…0.5, scaled to the clip's box) → canvas, through the clip's rotation.
+    const Vec2 centre = vectorOf(mask.center, {0, 0});
+    const Vec2 size = vectorOf(mask.size, {0.5, 0.5});
+    const double radians = box.rotation * std::numbers::pi / 180.0;
+    const double dx = centre.x * box.size.width();
+    const double dy = centre.y * box.size.height();
+    return {{u"x"_s, box.centre.x() + dx * std::cos(radians) - dy * std::sin(radians)},
+            {u"y"_s, box.centre.y() + dx * std::sin(radians) + dy * std::cos(radians)},
+            {u"width"_s, size.x * box.size.width()},
+            {u"height"_s, size.y * box.size.height()},
+            {u"rotation"_s, box.rotation + numberOf(mask.rotation, 0.0)},
+            {u"shape"_s, static_cast<int>(mask.shape)}};
+}
+
+bool ClipInspector::setMaskGeometry(double centreX, double centreY, double width, double height)
+{
+    const Clip *clip = focus();
+    if (!clip || clip->masks.empty() || !supports(*clip, u"cutout"_s)) {
+        return false;
+    }
+    const engine::CanvasBox box = engine::canvasBox(*clip, m_editor.data().findMedia(clip->media()->mediaId), m_editor.canvasSize());
+    if (box.size.isEmpty()) {
+        return false;
+    }
+    const double radians = -box.rotation * std::numbers::pi / 180.0;
+    const double dx = centreX - box.centre.x();
+    const double dy = centreY - box.centre.y();
+    const Vec2 centre{std::clamp((dx * std::cos(radians) - dy * std::sin(radians)) / box.size.width(), -1.0, 1.0),
+                      std::clamp((dx * std::sin(radians) + dy * std::cos(radians)) / box.size.height(), -1.0, 1.0)};
+    const Vec2 size{std::clamp(width / box.size.width(), 0.01, 4.0), std::clamp(height / box.size.height(), 0.01, 4.0)};
+    return update({clip->id}, [&](Clip &c) {
+        c.masks.front().center = Param(centre);
+        c.masks.front().size = Param(size);
+    }, tr("Change mask"), u"mask-geometry:"_s + clip->id.toString());
+}
+
+bool ClipInspector::pickKeyColor(double canvasX, double canvasY)
+{
+    setCanvasMode({});
+    const Clip *clip = focus();
+    const MediaClipData *media = clip ? clip->media() : nullptr;
+    const Media *source = media ? m_editor.data().findMedia(media->mediaId) : nullptr;
+    if (!source || !supports(*clip, u"cutout"_s)) {
+        return false;
+    }
+    // The canvas point in the clip's picture (0…1), through its box, rotation and mirrors.
+    const engine::CanvasBox box = engine::canvasBox(*clip, source, m_editor.canvasSize());
+    const double radians = -box.rotation * std::numbers::pi / 180.0;
+    const double dx = canvasX - box.centre.x();
+    const double dy = canvasY - box.centre.y();
+    double u = (dx * std::cos(radians) - dy * std::sin(radians)) / box.size.width() + 0.5;
+    double v = (dx * std::sin(radians) + dy * std::cos(radians)) / box.size.height() + 0.5;
+    if (clip->transform.flipH) {
+        u = 1.0 - u;
+    }
+    if (clip->transform.flipV) {
+        v = 1.0 - v;
+    }
+    if (u < 0 || u > 1 || v < 0 || v > 1) {
+        emit m_editor.message(tr("Click on the clip to pick the colour to remove."), false);
+        return false;
+    }
+    // The clip's own picture there: the source frame at the playhead (not the result, which may already be keyed).
+    const std::optional<RationalTime> time = playheadKeyTime(*clip);
+    const double seconds = source->kind == MediaKind::Image ? 0.0 : (time ? *time : media->sourceIn).toSecondsDouble();
+    const QImage frame = engine::extractFrame(source->path, seconds, 720);
+    if (frame.isNull()) {
+        emit m_editor.message(tr("This frame cannot be read from the file."), false);
+        return false;
+    }
+    const QColor colour = frame.pixelColor(std::clamp(static_cast<int>(u * frame.width()), 0, frame.width() - 1),
+                                           std::clamp(static_cast<int>(v * frame.height()), 0, frame.height() - 1));
+    endGesture();
+    return update({clip->id}, [&](Clip &c) {
+        Effect &effect = ensureEffect(c, kChromaType);
+        effect.params[u"keyColor"_s] = Param(toColor(colour));
+        for (const auto &[name, fallback] : {std::pair{u"similarity"_s, 0.4}, {u"smoothness"_s, 0.1}, {u"spill"_s, 0.5}}) {
+            if (!effect.params.contains(name)) {
+                effect.params[name] = Param(fallback);
+            }
+        }
+    }, tr("Remove a colour"), {});
+}
+
 QVariantList ClipInspector::keyframes() const
 {
     const Clip *clip = focus();
@@ -459,6 +563,9 @@ bool ClipInspector::supports(const Clip &clip, const QString &section) const
     if (section == u"animation"_s) {
         return !audioOnly;
     }
+    if (section == u"cutout"_s) {
+        return visualMedia;
+    }
     return false;
 }
 
@@ -472,8 +579,8 @@ QStringList ClipInspector::sections() const
         }
         return result;
     }
-    for (const QString &section : {u"text"_s, u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s, u"filter"_s,
-                                   u"adjust"_s}) {
+    for (const QString &section : {u"text"_s, u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s, u"cutout"_s,
+                                   u"filter"_s, u"adjust"_s}) {
         if (supports(*clip, section)) {
             result << section;
         }
@@ -506,6 +613,9 @@ QStringList ClipInspector::modifiedSections() const
     }
     if (!clip->animations.isEmpty()) {
         result << u"animation"_s;
+    }
+    if (!clip->masks.empty() || findEffect(*clip, kChromaType)) {
+        result << u"cutout"_s;
     }
     if (findEffect(*clip, kFilterType)) {
         result << u"filter"_s;
@@ -622,6 +732,32 @@ QVariantMap ClipInspector::values() const
     map[u"flipH"_s] = clip->transform.flipH;
     map[u"flipV"_s] = clip->transform.flipV;
     map[u"fit"_s] = clip->transform.fit == FitMode::Cover ? 1 : 0;
+    map[u"blend"_s] = static_cast<int>(clip->blendMode);
+    // The first mask (the interface edits one; more are kept).
+    const Mask *mask = clip->masks.empty() ? nullptr : &clip->masks.front();
+    map[u"mask.shape"_s] = mask && mask->shape != MaskShape::Path ? static_cast<int>(mask->shape) : -1;
+    const Vec2 maskCentre = mask ? vectorOf(mask->center, {0, 0}) : Vec2{0, 0};
+    const Vec2 maskSize = mask ? vectorOf(mask->size, {0.5, 0.5}) : Vec2{0.5, 0.5};
+    map[u"mask.x"_s] = maskCentre.x;
+    map[u"mask.y"_s] = maskCentre.y;
+    map[u"mask.width"_s] = maskSize.x;
+    map[u"mask.height"_s] = maskSize.y;
+    map[u"mask.rotation"_s] = mask ? numberOf(mask->rotation, 0.0) : 0.0;
+    map[u"mask.roundness"_s] = mask ? numberOf(mask->roundness, 0.0) : 0.0;
+    map[u"mask.feather"_s] = mask ? numberOf(mask->feather, 0.0) : 0.0;
+    map[u"mask.invert"_s] = mask && mask->invert;
+    const Effect *chroma = findEffect(*clip, kChromaType);
+    const auto chromaParam = [chroma](const QString &name, double fallback) {
+        const auto it = chroma ? chroma->params.find(name) : std::map<QString, Param>::const_iterator{};
+        return chroma && it != chroma->params.end() ? numberOf(it->second, fallback) : fallback;
+    };
+    map[u"chroma.enabled"_s] = chroma != nullptr;
+    map[u"chroma.color"_s] = toQColor(chroma && chroma->params.contains(u"keyColor"_s)
+                                          ? colorOf(chroma->params.at(u"keyColor"_s), Color{0, 255, 0, 255})
+                                          : Color{0, 255, 0, 255});
+    map[u"chroma.similarity"_s] = chromaParam(u"similarity"_s, 0.4);
+    map[u"chroma.smoothness"_s] = chromaParam(u"smoothness"_s, 0.1);
+    map[u"chroma.spill"_s] = chromaParam(u"spill"_s, 0.5);
 
     const Sequence *sequence = m_editor.data().mainSequence();
     const CanvasBackground background = clip->background ? *clip->background
@@ -686,7 +822,8 @@ QVariantMap ClipInspector::values() const
 
 QString ClipInspector::sectionOf(const QString &key) const
 {
-    static const QStringList video{u"x"_s, u"y"_s, u"scale"_s, u"rotation"_s, u"opacity"_s, u"flipH"_s, u"flipV"_s, u"fit"_s};
+    static const QStringList video{u"x"_s,     u"y"_s,     u"scale"_s, u"rotation"_s, u"opacity"_s,
+                                   u"flipH"_s, u"flipV"_s, u"fit"_s,   u"blend"_s};
     static const QStringList audio{u"volume"_s, u"fadeIn"_s, u"fadeOut"_s};
     static const QStringList speed{u"speed"_s, u"reversed"_s, u"preservePitch"_s};
     if (video.contains(key)) {
@@ -697,6 +834,9 @@ QString ClipInspector::sectionOf(const QString &key) const
     }
     if (speed.contains(key)) {
         return u"speed"_s;
+    }
+    if (key.startsWith(u"mask."_s) || key.startsWith(u"chroma."_s)) {
+        return u"cutout"_s;
     }
     const qsizetype dot = key.indexOf(u'.');
     return dot > 0 ? key.left(dot) : key; // background.*, filter.*, adjust.*, text.*
@@ -809,6 +949,84 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
     if (key == u"fit"_s) {
         return update(clips, [&](Clip &c) { c.transform.fit = value.toInt() == 1 ? FitMode::Cover : FitMode::Contain; },
                       value.toInt() == 1 ? tr("Fill the canvas") : tr("Show the whole picture"), {});
+    }
+
+    if (key == u"blend"_s) {
+        return update(clips, [&](Clip &c) { c.blendMode = static_cast<BlendMode>(std::clamp(value.toInt(), 0, kBlendModeCount - 1)); },
+                      tr("Change blend mode"), {});
+    }
+
+    // Mask (the first one)
+    if (key == u"mask.shape"_s) {
+        const int shape = value.toInt();
+        return update(clips, [&](Clip &c) {
+            if (shape < 0 || shape > static_cast<int>(MaskShape::Star)) {
+                c.masks.clear();
+                return;
+            }
+            if (c.masks.empty()) {
+                Mask mask;
+                mask.id = MaskId::create();
+                c.masks.push_back(mask);
+            }
+            c.masks.front().shape = static_cast<MaskShape>(shape);
+        }, shape < 0 ? tr("Remove mask") : tr("Change mask"), {});
+    }
+    if (key.startsWith(u"mask."_s)) {
+        const QString field = key.mid(5);
+        return update(clips, [&](Clip &c) {
+            if (c.masks.empty()) {
+                return;
+            }
+            Mask &mask = c.masks.front();
+            if (field == u"x"_s || field == u"y"_s) {
+                Vec2 centre = vectorOf(mask.center, {0, 0});
+                (field == u"x"_s ? centre.x : centre.y) = std::clamp(number, -1.0, 1.0);
+                mask.center = Param(centre);
+            } else if (field == u"width"_s || field == u"height"_s) {
+                Vec2 size = vectorOf(mask.size, {0.5, 0.5});
+                (field == u"width"_s ? size.x : size.y) = std::clamp(number, 0.01, 4.0);
+                mask.size = Param(size);
+            } else if (field == u"rotation"_s) {
+                mask.rotation = Param(std::fmod(number, 360.0));
+            } else if (field == u"roundness"_s) {
+                mask.roundness = Param(std::clamp(number, 0.0, 1.0));
+            } else if (field == u"feather"_s) {
+                mask.feather = Param(std::clamp(number, 0.0, 1.0));
+            } else if (field == u"invert"_s) {
+                mask.invert = flag;
+            }
+        }, tr("Change mask"), field == u"invert"_s ? QString() : mergeTarget);
+    }
+
+    // Chroma key
+    if (key == u"chroma.enabled"_s) {
+        return update(clips, [&](Clip &c) {
+            if (!flag) {
+                removeEffect(c, kChromaType);
+                return;
+            }
+            Effect &effect = ensureEffect(c, kChromaType);
+            for (const auto &[name, fallback] : {std::pair{u"similarity"_s, 0.4}, {u"smoothness"_s, 0.1}, {u"spill"_s, 0.5}}) {
+                if (!effect.params.contains(name)) {
+                    effect.params[name] = Param(fallback);
+                }
+            }
+            if (!effect.params.contains(u"keyColor"_s)) {
+                effect.params[u"keyColor"_s] = Param(Color{0, 255, 0, 255});
+            }
+        }, flag ? tr("Remove the background colour") : tr("Keep the background colour"), {});
+    }
+    if (key.startsWith(u"chroma."_s)) {
+        const QString field = key.mid(7);
+        return update(clips, [&](Clip &c) {
+            Effect &effect = ensureEffect(c, kChromaType);
+            if (field == u"color"_s) {
+                effect.params[u"keyColor"_s] = Param(toColor(value));
+            } else {
+                effect.params[field] = Param(std::clamp(number, 0.0, 1.0));
+            }
+        }, tr("Adjust the background removal"), field == u"color"_s ? QString() : mergeTarget);
     }
 
     // Background
@@ -974,6 +1192,11 @@ bool ClipInspector::reset(const QString &section)
         speed.primaryClip = {};
         speed.text = tr("Reset speed");
         done = m_editor.push(std::move(speed), gestureKey(target)) || done;
+    } else if (section == u"cutout"_s) {
+        done = update(clips, [](Clip &c) {
+            c.masks.clear();
+            removeEffect(c, kChromaType);
+        }, tr("Remove mask and green screen"), {});
     } else if (section == u"animation"_s) {
         done = update(clips, [](Clip &c) { c.animations = ClipAnimations{}; }, tr("Remove animations"), {});
     } else if (section == u"filter"_s) {

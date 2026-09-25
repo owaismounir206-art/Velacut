@@ -31,6 +31,8 @@ Rectangle {
             list.push({ text: qsTr("Speed"), page: "speed" })
         if (sections.includes("animation"))
             list.push({ text: qsTr("Animation"), page: "animation" })
+        if (sections.includes("cutout"))
+            list.push({ text: qsTr("Cutout"), page: "cutout" })
         if (sections.includes("adjust"))
             list.push({ text: qsTr("Adjust"), page: "adjust" })
         return list
@@ -44,6 +46,10 @@ Rectangle {
         return tabs.length > 0 ? tabs[0].page : ""
     }
     function showPage(name) { wantedPage = name }
+
+    // On the Cutout page with a mask, gestures on the player move and resize the mask (not the clip).
+    readonly property bool maskEditing: page === "cutout" && (values["mask.shape"] ?? -1) >= 0
+    onMaskEditingChanged: if (inspector.canvasMode !== "pick") inspector.canvasMode = maskEditing ? "mask" : ""
 
     color: Theme.color.surfaceContainerLow
 
@@ -427,6 +433,22 @@ Rectangle {
                         }
                         RowLayout {
                             Layout.fillWidth: true
+                            visible: panel.inspector.kind !== Inspector.Text
+                            Label { Layout.fillWidth: true; text: qsTr("Blend"); role: "bodyMedium" }
+                            ComboBox {
+                                objectName: "blendMode"
+                                // In the order of BlendMode (core/project/Clip.h).
+                                model: [qsTr("Normal"), qsTr("Lighten"), qsTr("Screen"), qsTr("Multiply"), qsTr("Overlay"),
+                                        qsTr("Soft light"), qsTr("Hard light"), qsTr("Difference"), qsTr("Darken"),
+                                        qsTr("Colour"), qsTr("Luminosity"), qsTr("Add"), qsTr("Colour dodge"),
+                                        qsTr("Colour burn"), qsTr("Exclusion"), qsTr("Hue"), qsTr("Saturation")]
+                                currentIndex: panel.values["blend"] ?? 0
+                                Accessible.name: qsTr("Blend mode")
+                                onActivated: (index) => panel.inspector.set("blend", index)
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
                             Label { Layout.fillWidth: true; text: qsTr("Mirror"); role: "bodyMedium" }
                             IconButton {
                                 iconName: "swap_horiz"
@@ -665,6 +687,140 @@ Rectangle {
                             iconName: "animation"
                             text: qsTr("Choose an animation")
                             onClicked: panel.editor.libraryRequested("animations")
+                        }
+                    }
+                }
+
+                // ---- Cutout: a mask, and a colour made transparent (green screen) ------------------------------
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: panel.page === "cutout"
+                    spacing: Theme.space.md
+
+                    PropertySection {
+                        inspector: panel.inspector
+                        section: "cutout"
+                        title: qsTr("Mask")
+                        applyToAll: false
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: Theme.space.xs
+                            Repeater {
+                                model: [{ shape: -1, text: qsTr("None") }, { shape: 0, text: qsTr("Line") },
+                                        { shape: 1, text: qsTr("Band") }, { shape: 2, text: qsTr("Circle") },
+                                        { shape: 3, text: qsTr("Rectangle") }, { shape: 4, text: qsTr("Heart") },
+                                        { shape: 5, text: qsTr("Star") }]
+                                delegate: Chip {
+                                    required property var modelData
+                                    objectName: "maskShape_" + modelData.shape
+                                    text: modelData.text
+                                    checkable: false
+                                    checked: (panel.values["mask.shape"] ?? -1) === modelData.shape
+                                    onClicked: panel.inspector.set("mask.shape", modelData.shape)
+                                }
+                            }
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            visible: panel.maskEditing
+                            wrapMode: Text.WordWrap
+                            role: "bodySmall"
+                            color: Theme.color.onSurfaceVariant
+                            text: qsTr("Drag the mask on the player to move it, its corner to resize it.")
+                        }
+                        PropertySlider {
+                            visible: panel.maskEditing
+                            inspector: panel.inspector
+                            key: "mask.feather"
+                            label: qsTr("Soft edge")
+                            format: v => Math.round(v * 100)
+                        }
+                        PropertySlider {
+                            visible: panel.maskEditing && panel.values["mask.shape"] === 3
+                            inspector: panel.inspector
+                            key: "mask.roundness"
+                            label: qsTr("Rounded corners")
+                            format: v => Math.round(v * 100)
+                        }
+                        PropertySlider {
+                            visible: panel.maskEditing
+                            inspector: panel.inspector
+                            key: "mask.rotation"
+                            label: qsTr("Rotation")
+                            from: -180
+                            to: 180
+                            stepSize: 1
+                            format: v => Math.round(v) + "°"
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: panel.maskEditing
+                            Label { Layout.fillWidth: true; text: qsTr("Invert"); role: "bodyMedium" }
+                            Switch {
+                                checked: panel.values["mask.invert"] ?? false
+                                Accessible.name: qsTr("Invert the mask")
+                                onToggled: panel.inspector.set("mask.invert", checked)
+                            }
+                        }
+
+                        // Chroma key
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Remove a colour (green screen)")
+                                role: "titleSmall"
+                                wrapMode: Text.WordWrap
+                            }
+                            Switch {
+                                objectName: "chromaSwitch"
+                                checked: panel.values["chroma.enabled"] ?? false
+                                Accessible.name: qsTr("Remove a colour")
+                                onToggled: panel.inspector.set("chroma.enabled", checked)
+                            }
+                        }
+                        Button {
+                            objectName: "pickKeyColour"
+                            Layout.fillWidth: true
+                            variant: panel.inspector.canvasMode === "pick" ? "filled" : "tonal"
+                            iconName: "colorize"
+                            text: panel.inspector.canvasMode === "pick" ? qsTr("Click the colour on the player…")
+                                                                       : qsTr("Pick the colour on the player")
+                            onClicked: panel.inspector.canvasMode = panel.inspector.canvasMode === "pick"
+                                       ? (panel.maskEditing ? "mask" : "") : "pick"
+                        }
+                        ColorSwatches {
+                            Layout.fillWidth: true
+                            visible: panel.values["chroma.enabled"] ?? false
+                            inspector: panel.inspector
+                            label: qsTr("Colour to remove")
+                            current: panel.values["chroma.color"] ?? "lime"
+                            onPicked: (value) => panel.inspector.set("chroma.color", value)
+                        }
+                        PropertySlider {
+                            visible: panel.values["chroma.enabled"] ?? false
+                            inspector: panel.inspector
+                            key: "chroma.similarity"
+                            label: qsTr("Strength")
+                            neutral: 0.4
+                            format: v => Math.round(v * 100)
+                        }
+                        PropertySlider {
+                            visible: panel.values["chroma.enabled"] ?? false
+                            inspector: panel.inspector
+                            key: "chroma.smoothness"
+                            label: qsTr("Soft edge")
+                            neutral: 0.1
+                            format: v => Math.round(v * 100)
+                        }
+                        PropertySlider {
+                            visible: panel.values["chroma.enabled"] ?? false
+                            inspector: panel.inspector
+                            key: "chroma.spill"
+                            label: qsTr("Remove the coloured glow")
+                            neutral: 0.5
+                            format: v => Math.round(v * 100)
                         }
                     }
                 }

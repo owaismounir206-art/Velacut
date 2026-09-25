@@ -142,7 +142,7 @@ private slots:
         QVERIFY(inspector.active());
         QCOMPARE(inspector.kind(), int(ClipInspector::Video));
         QCOMPARE(inspector.sections(), (QStringList{u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s,
-                                                   u"filter"_s, u"adjust"_s}));
+                                                   u"cutout"_s, u"filter"_s, u"adjust"_s}));
         QVERIFY(inspector.modifiedSections().isEmpty());
 
         // A slider drag: many values, one undo step.
@@ -638,6 +638,78 @@ private slots:
         seek(30);
         QVERIFY(std::abs(value("x").toDouble() - 0.125) < 0.01);
         QCOMPARE(value("y").toDouble(), 0.0);
+        QVERIFY(editor.close());
+    }
+
+    // Cutout (Phase 3): a mask from the canvas, a colour picked on the clip and removed, blend modes, grouping.
+    void cutoutBlendAndGrouping()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-cutout"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        ClipInspector &inspector = *editor.inspector();
+        editor.importAndInsertPaths({m_files.landscape, m_files.photo}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(2), 20000);
+        const ClipId video = mainTrack(editor).clips.front().id;
+        editor.select(video.toString(), false);
+        QVERIFY(inspector.sections().contains(u"cutout"_s));
+        const auto value = [&inspector](const char *key) { return inspector.values().value(QString::fromLatin1(key)); };
+
+        // A circle mask, moved and resized from its box on the canvas (320×180): the picture fills it.
+        QVERIFY(inspector.maskBox().isEmpty());
+        QVERIFY(inspector.set(u"mask.shape"_s, 2));
+        QCOMPARE(value("mask.shape").toInt(), 2);
+        QVariantMap box = inspector.maskBox();
+        QCOMPARE(box.value(u"x"_s).toDouble(), 160.0);
+        QCOMPARE(box.value(u"width"_s).toDouble(), 160.0);
+        QVERIFY(inspector.setMaskGeometry(200, 90, 80, 90));
+        inspector.endGesture();
+        QVERIFY(std::abs(value("mask.x").toDouble() - 0.125) < 1e-6);
+        QVERIFY(std::abs(value("mask.width").toDouble() - 0.25) < 1e-6);
+        QVERIFY(std::abs(value("mask.height").toDouble() - 0.5) < 1e-6);
+        box = inspector.maskBox();
+        QCOMPARE(box.value(u"x"_s).toDouble(), 200.0);
+        QVERIFY(inspector.set(u"mask.feather"_s, 0.3));
+        QVERIFY(inspector.set(u"mask.invert"_s, true));
+        QVERIFY(editor.data().findClip(video)->masks.front().invert);
+        QVERIFY(inspector.modifiedSections().contains(u"cutout"_s));
+
+        // Picking a colour on the picture: the red bar at the bottom left of the test pattern.
+        editor.player()->seek(10);
+        QTRY_COMPARE(editor.player()->position(), 10);
+        inspector.setCanvasMode(u"pick"_s);
+        QVERIFY(inspector.pickKeyColor(15, 150));
+        QCOMPARE(inspector.canvasMode(), QString());
+        QVERIFY(value("chroma.enabled").toBool());
+        const QColor key = value("chroma.color").value<QColor>();
+        QVERIFY2(key.red() > 150 && key.green() < 100 && key.blue() < 100, qPrintable(key.name()));
+        QVERIFY(!inspector.pickKeyColor(-50, 90)); // outside the clip
+        QVERIFY(inspector.set(u"chroma.similarity"_s, 0.6));
+        inspector.endGesture();
+        QVERIFY(inspector.reset(u"cutout"_s));
+        QVERIFY(editor.data().findClip(video)->masks.empty());
+        QVERIFY(!value("chroma.enabled").toBool());
+
+        // Blend mode.
+        QVERIFY(inspector.set(u"blend"_s, int(BlendMode::Screen)));
+        QCOMPARE(editor.data().findClip(video)->blendMode, BlendMode::Screen);
+
+        // Grouping into a compound clip and back; an adjustment layer.
+        ActionRegistry &actions = *editor.actions();
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        editor.select(mainTrack(editor).clips[1].id.toString(), true);
+        QVERIFY(actions.trigger(u"createCompound"_s));
+        QCOMPARE(mainTrack(editor).clips.size(), size_t(1));
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        QVERIFY(actions.isEnabled(u"expandCompound"_s));
+        QVERIFY(actions.trigger(u"expandCompound"_s));
+        QCOMPARE(mainTrack(editor).clips.size(), size_t(2));
+        editor.clearSelection();
+        const size_t tracks = editor.data().mainSequence()->visualTracks.size();
+        QVERIFY(actions.trigger(u"addAdjustment"_s));
+        QCOMPARE(editor.data().mainSequence()->visualTracks.size(), tracks + 1);
         QVERIFY(editor.close());
     }
 

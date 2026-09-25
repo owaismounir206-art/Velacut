@@ -23,7 +23,11 @@ class EditorController;
 //
 // Keys, by section:
 //   video       x, y (canvas fractions from the centre), scale (1 = fitted), rotation (degrees), opacity (0…1),
-//               flipH, flipV, fit (0 = whole picture, 1 = fill the canvas)
+//               flipH, flipV, fit (0 = whole picture, 1 = fill the canvas), blend (BlendMode, 0 = normal)
+//   cutout      mask.shape (-1 = none, 0 linear, 1 mirror, 2 circle, 3 rectangle, 4 heart, 5 star), mask.x, mask.y
+//               (centre, −0.5…0.5 of the picture), mask.width, mask.height (fractions of the picture), mask.rotation,
+//               mask.roundness, mask.feather (0…1), mask.invert; chroma.enabled, chroma.color, chroma.similarity,
+//               chroma.smoothness, chroma.spill
 //   background  background.type (0 = colour, 1 = blurred clip), background.color, background.blur (0…1)
 //   audio       volume (dB), fadeIn, fadeOut (seconds)
 //   speed       speed (0.1…100), reversed, preservePitch
@@ -62,6 +66,11 @@ class ClipInspector : public QObject
     Q_PROPERTY(QVariantMap canvasBox READ canvasBox NOTIFY changed FINAL)
     // Frames (from the clip's start) of the keyframes of the focused clip, for the diamonds on the timeline.
     Q_PROPERTY(QVariantList keyframes READ keyframes NOTIFY changed FINAL)
+    // The mask of the focused clip on the canvas: {x, y (centre), width, height, rotation} in canvas pixels, {shape};
+    // empty without a mask.
+    Q_PROPERTY(QVariantMap maskBox READ maskBox NOTIFY changed FINAL)
+    // What a gesture on the preview does: "" = move/resize the clip, "mask" = the mask, "pick" = pick the key colour.
+    Q_PROPERTY(QString canvasMode READ canvasMode WRITE setCanvasMode NOTIFY canvasModeChanged FINAL)
     // Colours offered for texts and backgrounds (content colours, not the theme's).
     Q_PROPERTY(QVariantList swatches READ swatches CONSTANT FINAL)
 
@@ -94,12 +103,20 @@ public:
     QVariantList swatches() const;
     QVariantMap canvasBox() const;
     QVariantList keyframes() const;
+    QVariantMap maskBox() const;
+    QString canvasMode() const { return m_canvasMode; }
+    void setCanvasMode(const QString &mode);
 
     Q_INVOKABLE bool set(const QString &key, const QVariant &value);
     // Keyframes (SPEC §5.6) of "position", "scale", "rotation" or "opacity" at the playhead: added (with the value shown)
     // or removed; the last one removed leaves that value. Easing of the movement from the keyframes at the playhead to
     // the next ones: "linear", "hold" or a preset name ("easeInOut"…). Jumping: -1 previous, +1 next keyframe.
     Q_INVOKABLE bool toggleKeyframe(const QString &key);
+    // The mask from its box on the canvas (canvas pixels), during a drag of its handles (one undo step per gesture).
+    Q_INVOKABLE bool setMaskGeometry(double centreX, double centreY, double width, double height);
+    // Chroma key: the colour of the clip's own picture (the source frame at the playhead) at a canvas point; turns the
+    // key on. Back to the normal canvas mode.
+    Q_INVOKABLE bool pickKeyColor(double canvasX, double canvasY);
     Q_INVOKABLE bool setKeyframeEasing(const QString &easing);
     Q_INVOKABLE void jumpKeyframe(int direction);
     // The end of a gesture (slider released): the next set() is a new undo step.
@@ -145,6 +162,7 @@ public:
 signals:
     void changed();
     void clipboardChanged();
+    void canvasModeChanged();
 
 private:
     const Clip *focus() const;
@@ -170,6 +188,7 @@ private:
     quint64 m_gesture = 1;
     std::optional<Clip> m_clipboard;
     bool m_playheadOnClip = false;
+    QString m_canvasMode;
 };
 
 } // namespace vedit::ui

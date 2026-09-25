@@ -9,7 +9,7 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
 | Requisito | Esito | Verifica |
 |---|---|---|
 | Animo un titolo con keyframe ed easing | ✅ | `tst_ui::phaseThreeCriterionTitle`: testo, due keyframe di opacità, andamento "Morbido", dall'interfaccia |
-| Compongo un green screen con maschera | In corso | Engine pronto (`tst_projection::greenScreenCompositionWithMaskInProjection`); manca l'interfaccia (P3.6d) |
+| Compongo un green screen con maschera | ✅ | `tst_ui::phaseThreeCriterionGreenScreen`: colore scelto con un clic sul player, maschera a cerchio ingrandita dal suo angolo; il fotogramma renderizzato mostra il video al posto del verde e il soggetto intatto |
 | Compila senza warning, test verdi | ✅ | 25/25 in `build` (RelWithDebInfo e Debug con sanitizers) |
 
 ### Fase 3: fatto (un commit per incremento)
@@ -75,9 +75,16 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
    (solo in pausa, se la clip è animata o il playhead entra/esce dalla clip): prima i test di avvio in ASan col
    rendering software mostravano 4 fotogrammi in 25 s.
 
+9. **Scontorno, fusione, raggruppamento (`P3.6d`)**: scheda **Scontorno** (maschera: linea, fascia, cerchio,
+   rettangolo, cuore, stella; bordo morbido, angoli arrotondati, rotazione, inverti; maniglie della maschera sul
+   player per spostarla e ridimensionarla; **rimozione di un colore** con il contagocce sul player, che legge il
+   fotogramma della sorgente, non il risultato già scontornato), **modalità di fusione** nella scheda Video, **clip
+   composta** (raggruppa/separa) e **livello di regolazione** dal menu del tasto destro e da Ctrl+K
+   (`tst_editor::cutoutBlendAndGrouping`, `tst_ui::phaseThreeCriterionGreenScreen`).
+
 ### Prossimi passi (Fase 3 — Keyframe e composizione)
-- P3.6d: selettore colore del chroma key, maschere sul canvas, modalità di fusione nel pannello, clip composta e
-  livello di regolazione dal menu della clip.
+- Chiusura della Fase 3: README, SHORTCUTS, USABILITY (ripetere i test di semplicità), riepilogo onesto, poi attesa
+  del via dell'utente.
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata

@@ -175,6 +175,23 @@ Item {
             }
         }
         MenuSeparator {}
+        // Grouping (Phase 3): shown when it applies.
+        Repeater {
+            model: [{ id: "createCompound", icon: "stacks", text: qsTr("Group into a compound clip") },
+                    { id: "expandCompound", icon: "stacks", text: qsTr("Ungroup the compound clip") }]
+            delegate: MenuItem {
+                required property var modelData
+                objectName: modelData.id + "Item"
+                // Re-evaluated with the toolbar (same signals); `clip` is null while a removed clip is destroyed.
+                readonly property bool applies: !!clip && !!clip.view.editor.actions.toolbar
+                                                && clip.view.editor.actions.isEnabled(modelData.id)
+                visible: applies
+                height: applies ? implicitHeight : 0
+                iconName: modelData.icon
+                text: modelData.text
+                onTriggered: clip.view.editor.actions.trigger(modelData.id)
+            }
+        }
         Repeater {
             model: ["copyAttributes", "pasteAttributes"]
             delegate: MenuItem {

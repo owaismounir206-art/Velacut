@@ -24,6 +24,9 @@ Item {
     readonly property int currentFrame: player.skimming ? player.shownPosition : player.position
     readonly property bool shown: box.width !== undefined && !player.playing
                                   && currentFrame >= box.start && currentFrame < box.end
+    // "" = the clip's handles, "mask" = the mask's, "pick" = a click picks the colour to remove (chroma key).
+    readonly property string mode: inspector.canvasMode
+    readonly property var mask: inspector.maskBox
     property bool editing: false
     // Guides while a move snapped to the centre.
     property bool snappedX: false
@@ -58,10 +61,125 @@ Item {
         color: Theme.color.tertiary
     }
 
+    // The mask of the clip: drag inside to move it, the corner to resize it (around its centre).
+    Item {
+        id: maskFrame
+        objectName: "maskBox"
+        visible: root.shown && root.mode === "mask" && root.mask.width !== undefined
+        width: (root.mask.width ?? 0) * root.factor
+        height: (root.mask.height ?? 0) * root.factor
+        x: root.origin.x + (root.mask.x ?? 0) * root.factor - width / 2
+        y: root.origin.y + (root.mask.y ?? 0) * root.factor - height / 2
+        rotation: root.mask.rotation ?? 0
+
+        // A circle shows as its ellipse (a circle scaled to the box); the other shapes as their box.
+        Rectangle {
+            visible: root.mask.shape !== 2
+            anchors.fill: parent
+            color: "transparent"
+            border.width: Theme.editor.selectionBorder
+            border.color: Theme.color.tertiary
+        }
+        Rectangle {
+            id: ellipse
+            readonly property real side: Math.max(1, Math.max(maskFrame.width, maskFrame.height))
+            visible: root.mask.shape === 2
+            width: side
+            height: side
+            radius: side / 2
+            color: "transparent"
+            border.width: Theme.editor.selectionBorder * side / Math.max(1, Math.min(maskFrame.width, maskFrame.height))
+            border.color: Theme.color.tertiary
+            transform: Scale { xScale: maskFrame.width / ellipse.side; yScale: maskFrame.height / ellipse.side }
+        }
+        MouseArea {
+            objectName: "maskMove"
+            anchors.fill: parent
+            cursorShape: Qt.SizeAllCursor
+            property point start
+            property point startCentre
+            onPressed: (mouse) => {
+                root.player.pause()
+                start = root.toCanvas(this, mouse.x, mouse.y)
+                startCentre = Qt.point(root.mask.x, root.mask.y)
+            }
+            onPositionChanged: (mouse) => {
+                if (!pressed)
+                    return
+                const p = root.toCanvas(this, mouse.x, mouse.y)
+                root.inspector.setMaskGeometry(startCentre.x + p.x - start.x, startCentre.y + p.y - start.y,
+                                               root.mask.width, root.mask.height)
+            }
+            onReleased: root.inspector.endGesture()
+        }
+        Rectangle {
+            objectName: "maskCorner"
+            width: Theme.editor.handleSize
+            height: Theme.editor.handleSize
+            radius: width / 2
+            x: parent.width - width / 2
+            y: parent.height - height / 2
+            color: Theme.color.surface
+            border.width: Theme.editor.selectionBorder
+            border.color: Theme.color.tertiary
+            MouseArea {
+                anchors.fill: parent
+                anchors.margins: -Theme.space.xs
+                cursorShape: Qt.SizeFDiagCursor
+                onPressed: root.player.pause()
+                onPositionChanged: (mouse) => {
+                    if (!pressed)
+                        return
+                    // The pointer in the mask's own (unrotated) axes, from its centre: half the new size.
+                    const p = root.toCanvas(this, mouse.x, mouse.y)
+                    const angle = -(root.mask.rotation ?? 0) * Math.PI / 180
+                    const dx = p.x - root.mask.x
+                    const dy = p.y - root.mask.y
+                    const localX = dx * Math.cos(angle) - dy * Math.sin(angle)
+                    const localY = dx * Math.sin(angle) + dy * Math.cos(angle)
+                    root.inspector.setMaskGeometry(root.mask.x, root.mask.y, Math.max(2, 2 * Math.abs(localX)),
+                                                   Math.max(2, 2 * Math.abs(localY)))
+                }
+                onReleased: root.inspector.endGesture()
+            }
+        }
+    }
+
+    // Picking the colour to remove: the next click on the player.
+    MouseArea {
+        objectName: "pickArea"
+        anchors.fill: parent
+        visible: root.mode === "pick"
+        z: 1
+        cursorShape: Qt.CrossCursor
+        onClicked: (mouse) => {
+            const p = Qt.point((mouse.x - root.origin.x) / root.factor, (mouse.y - root.origin.y) / root.factor)
+            root.inspector.pickKeyColor(p.x, p.y)
+        }
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: Theme.space.sm
+            padding: Theme.space.sm
+            role: "labelLarge"
+            color: Theme.color.inverseOnSurface
+            text: qsTr("Click the colour to remove (Esc: cancel)")
+            background: Rectangle {
+                radius: Theme.shape.full
+                color: Theme.color.inverseSurface
+            }
+        }
+    }
+    Shortcut {
+        sequence: "Escape"
+        enabled: root.mode === "pick"
+        onActivated: root.inspector.canvasMode = ""
+    }
+
     Item {
         id: frame
         objectName: "canvasBox"
-        visible: root.shown
+        visible: root.shown && root.mode === ""
         width: (root.box.width ?? 0) * root.factor
         height: (root.box.height ?? 0) * root.factor
         x: root.origin.x + (root.box.x ?? 0) * root.factor - width / 2

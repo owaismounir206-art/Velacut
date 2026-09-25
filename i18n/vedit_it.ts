@@ -85,7 +85,12 @@
 <context>
     <name>CanvasHandles</name>
     <message>
-        <location filename="../src/ui/qml/CanvasHandles.qml" line="+214"/>
+        <location filename="../src/ui/qml/CanvasHandles.qml" line="+166"/>
+        <source>Click the colour to remove (Esc: cancel)</source>
+        <translation>Fai clic sul colore da rimuovere (Esc: annulla)</translation>
+    </message>
+    <message>
+        <location line="+166"/>
         <source>Text — Esc to finish</source>
         <translation>Testo — Esc per terminare</translation>
     </message>
@@ -1082,12 +1087,12 @@
     <name>PropertiesPanel</name>
     <message>
         <location filename="../src/ui/qml/PropertiesPanel.qml" line="+25"/>
-        <location line="+131"/>
+        <location line="+137"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-129"/>
+        <location line="-135"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
@@ -1103,24 +1108,29 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+512"/>
+        <location line="+534"/>
         <location line="+6"/>
         <source>Speed</source>
         <translation>Velocità</translation>
     </message>
     <message>
-        <location line="-516"/>
+        <location line="-538"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+682"/>
+        <source>Cutout</source>
+        <translation>Scontorno</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+836"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
     <message>
-        <location line="-650"/>
+        <location line="-800"/>
         <source>Select a clip on the timeline to change it here.</source>
         <translation>Seleziona una clip sulla timeline per modificarla qui.</translation>
     </message>
@@ -1205,12 +1215,13 @@
     </message>
     <message>
         <location line="-157"/>
-        <location line="+235"/>
+        <location line="+208"/>
+        <location line="+43"/>
         <source>Colour</source>
         <translation>Colore</translation>
     </message>
     <message>
-        <location line="-231"/>
+        <location line="-247"/>
         <source>Text colour</source>
         <translation>Colore del testo</translation>
     </message>
@@ -1233,23 +1244,23 @@
     </message>
     <message>
         <location line="+6"/>
-        <location line="+186"/>
+        <location line="+202"/>
         <source>Background</source>
         <translation>Sfondo</translation>
     </message>
     <message>
-        <location line="-183"/>
+        <location line="-199"/>
         <source>Text background</source>
         <translation>Sfondo del testo</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+195"/>
+        <location line="+211"/>
         <source>Background colour</source>
         <translation>Colore dello sfondo</translation>
     </message>
     <message>
-        <location line="-185"/>
+        <location line="-201"/>
         <source>Outline thickness</source>
         <translation>Spessore del contorno</translation>
     </message>
@@ -1338,13 +1349,104 @@
     </message>
     <message>
         <location line="+9"/>
+        <location line="+330"/>
         <source>Rotation</source>
         <translation>Rotazione</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-320"/>
         <source>Opacity</source>
         <translation>Opacità</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Blend</source>
+        <translation>Fusione</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Normal</source>
+        <translation>Normale</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Lighten</source>
+        <translation>Schiarisci</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Screen</source>
+        <translation>Scherma</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Multiply</source>
+        <translation>Moltiplica</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Overlay</source>
+        <translation>Sovrapponi</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Soft light</source>
+        <translation>Luce soffusa</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Hard light</source>
+        <translation>Luce intensa</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Difference</source>
+        <translation>Differenza</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Darken</source>
+        <translation>Scurisci</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Luminosity</source>
+        <translation>Luminosità</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Add</source>
+        <translation>Aggiungi</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Colour dodge</source>
+        <translation>Colore scherma</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Colour burn</source>
+        <translation>Colore brucia</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Exclusion</source>
+        <translation>Esclusione</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Hue</source>
+        <translation>Tonalità</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Saturation</source>
+        <translation>Saturazione</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Blend mode</source>
+        <translation>Modalità di fusione</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -1389,31 +1491,31 @@
         <translation>Dissolvenza in entrata</translation>
     </message>
     <message>
-        <location line="-382"/>
-        <location line="+385"/>
+        <location line="-398"/>
+        <location line="+401"/>
         <location line="+8"/>
         <location line="+137"/>
         <source>%1 s</source>
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-635"/>
+        <location line="-657"/>
         <source>Transition</source>
         <translation>Transizione</translation>
     </message>
     <message>
-        <location line="+495"/>
+        <location line="+517"/>
         <source>Fade out</source>
         <translation>Dissolvenza in uscita</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+154"/>
+        <location line="+288"/>
         <source>Auto enhance</source>
         <translation>Migliora automaticamente</translation>
     </message>
     <message>
-        <location line="-129"/>
+        <location line="-263"/>
         <location line="+9"/>
         <source>%1×</source>
         <translation>%1×</translation>
@@ -1486,7 +1588,108 @@
         <translation>Scegli un&apos;animazione</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+15"/>
+        <source>Mask</source>
+        <translation>Maschera</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>None</source>
+        <translation>Nessuna</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Line</source>
+        <translation>Linea</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Band</source>
+        <translation>Fascia</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Circle</source>
+        <translation>Cerchio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rectangle</source>
+        <translation>Rettangolo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Heart</source>
+        <translation>Cuore</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Star</source>
+        <translation>Stella</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Drag the mask on the player to move it, its corner to resize it.</source>
+        <translation>Trascina la maschera sul player per spostarla, il suo angolo per ridimensionarla.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+77"/>
+        <source>Soft edge</source>
+        <translation>Bordo morbido</translation>
+    </message>
+    <message>
+        <location line="-70"/>
+        <source>Rounded corners</source>
+        <translation>Angoli arrotondati</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Invert</source>
+        <translation>Inverti</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Invert the mask</source>
+        <translation>Inverti la maschera</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Remove a colour (green screen)</source>
+        <translation>Rimuovi un colore (green screen)</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Remove a colour</source>
+        <translation>Rimuovi un colore</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Click the colour on the player…</source>
+        <translation>Fai clic sul colore nel player…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pick the colour on the player</source>
+        <translation>Scegli il colore dal player</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Colour to remove</source>
+        <translation>Colore da rimuovere</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Strength</source>
+        <translation>Intensità</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Remove the coloured glow</source>
+        <translation>Togli l&apos;alone colorato</translation>
+    </message>
+    <message>
+        <location line="+20"/>
         <source>Corrects light, colour and volume: you can change the result below</source>
         <translation>Corregge luce, colore e volume: puoi modificare il risultato qui sotto</translation>
     </message>
@@ -1563,7 +1766,17 @@
         <translation>Clip %1</translation>
     </message>
     <message>
-        <location line="+137"/>
+        <location line="+133"/>
+        <source>Group into a compound clip</source>
+        <translation>Raggruppa in una clip composta</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ungroup the compound clip</source>
+        <translation>Separa la clip composta</translation>
+    </message>
+    <message>
+        <location line="+20"/>
         <source>Copy attributes</source>
         <translation>Copia attributi</translation>
     </message>
@@ -2267,12 +2480,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+204"/>
+        <location line="+215"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-203"/>
+        <location line="-214"/>
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
@@ -2368,6 +2581,21 @@
     </message>
     <message>
         <location line="+3"/>
+        <source>Group into a compound clip</source>
+        <translation>Raggruppa in una clip composta</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Ungroup the compound clip</source>
+        <translation>Separa la clip composta</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Add an adjustment layer</source>
+        <translation>Aggiungi un livello di regolazione</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Undo</source>
         <translation>Annulla</translation>
     </message>
@@ -2484,8 +2712,8 @@
         <translation>Animazione in ciclo</translation>
     </message>
     <message>
-        <location line="-197"/>
-        <location line="+198"/>
+        <location line="-208"/>
+        <location line="+209"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -2525,7 +2753,29 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message>
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+321"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+346"/>
+        <location line="+627"/>
+        <location line="+26"/>
+        <source>Change mask</source>
+        <translation>Modifica maschera</translation>
+    </message>
+    <message>
+        <location line="-627"/>
+        <source>Click on the clip to pick the colour to remove.</source>
+        <translation>Fai clic sulla clip per scegliere il colore da rimuovere.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>This frame cannot be read from the file.</source>
+        <translation>Questo fotogramma non si può leggere dal file.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Remove a colour</source>
+        <translation>Rimuovi un colore</translation>
+    </message>
+    <message>
+        <location line="+53"/>
         <source>Remove keyframe</source>
         <translation>Rimuovi keyframe</translation>
     </message>
@@ -2540,7 +2790,7 @@
         <translation>Cambia l&apos;andamento del keyframe</translation>
     </message>
     <message>
-        <location line="+378"/>
+        <location line="+414"/>
         <source>Change transition duration</source>
         <translation>Cambia durata della transizione</translation>
     </message>
@@ -2578,6 +2828,31 @@
         <location line="+0"/>
         <source>Show the whole picture</source>
         <translation>Mostra l&apos;immagine intera</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Change blend mode</source>
+        <translation>Cambia modalità di fusione</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Remove mask</source>
+        <translation>Rimuovi maschera</translation>
+    </message>
+    <message>
+        <location line="+45"/>
+        <source>Remove the background colour</source>
+        <translation>Rimuovi il colore di sfondo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Keep the background colour</source>
+        <translation>Mantieni il colore di sfondo</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Adjust the background removal</source>
+        <translation>Regola la rimozione dello sfondo</translation>
     </message>
     <message>
         <location line="+19"/>
@@ -2636,12 +2911,12 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+226"/>
+        <location line="+231"/>
         <source>Change text style</source>
         <translation>Cambia stile del testo</translation>
     </message>
     <message>
-        <location line="-206"/>
+        <location line="-211"/>
         <source>Reset position and size</source>
         <translation>Ripristina posizione e dimensione</translation>
     </message>
@@ -2662,7 +2937,12 @@
         <translation>Ripristina velocità</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+6"/>
+        <source>Remove mask and green screen</source>
+        <translation>Rimuovi maschera e green screen</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Remove animations</source>
         <translation>Rimuovi animazioni</translation>
     </message>
