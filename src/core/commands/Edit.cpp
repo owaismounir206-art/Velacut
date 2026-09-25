@@ -77,6 +77,12 @@ struct SequenceCanvas
     Canvas canvas;
 };
 
+struct SequenceBackground
+{
+    SequenceId sequenceId;
+    std::optional<CanvasBackground> background;
+};
+
 } // namespace
 
 namespace edits {
@@ -120,6 +126,16 @@ std::unique_ptr<Edit> setCanvas(SequenceId sequenceId, Canvas before, Canvas aft
     return makeReplace<SequenceCanvas>(
         sequenceId.toString(), SequenceCanvas{sequenceId, before}, SequenceCanvas{sequenceId, after},
         [](ProjectMutator &m, const QString &, const SequenceCanvas &v) { m.setCanvas(v.sequenceId, v.canvas); });
+}
+
+std::unique_ptr<Edit> setDefaultBackground(SequenceId sequenceId, std::optional<CanvasBackground> before,
+                                           std::optional<CanvasBackground> after)
+{
+    return makeReplace<SequenceBackground>(sequenceId.toString(), SequenceBackground{sequenceId, std::move(before)},
+                                           SequenceBackground{sequenceId, std::move(after)},
+                                           [](ProjectMutator &m, const QString &, const SequenceBackground &v) {
+                                               m.setDefaultBackground(v.sequenceId, v.background);
+                                           });
 }
 
 std::unique_ptr<Edit> setSequenceMarkers(SequenceId sequenceId, std::vector<Marker> before, std::vector<Marker> after)

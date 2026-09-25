@@ -32,6 +32,7 @@ public:
 
     // Sequences
     void setCanvas(const SequenceId &sequenceId, const Canvas &canvas);
+    void setDefaultBackground(const SequenceId &sequenceId, const std::optional<CanvasBackground> &background);
     void setSequenceMarkers(const SequenceId &sequenceId, std::vector<Marker> markers);
     void setGroups(const SequenceId &sequenceId, std::vector<Group> groups);
 

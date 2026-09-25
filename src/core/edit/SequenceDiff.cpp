@@ -32,7 +32,8 @@ void diffTrackContent(const Track &before, const Track &after, EditScript &remov
 {
     if (before.kind != after.kind || before.name != after.name || before.locked != after.locked ||
         before.muted != after.muted || before.solo != after.solo || before.hidden != after.hidden ||
-        before.height != after.height || before.captions != after.captions || before.extras != after.extras) {
+        before.height != after.height || before.captions != after.captions || before.extras != after.extras ||
+        !(before.gainDb == after.gainDb)) {
         changes.push_back(edits::setTrackProperties(before, after));
     }
 
@@ -181,6 +182,9 @@ EditScript diffSequence(const Sequence &before, const Sequence &after)
     append(script, insertions);
     if (!(before.canvas == after.canvas)) {
         script.push_back(edits::setCanvas(before.id, before.canvas, after.canvas));
+    }
+    if (before.defaultBackground != after.defaultBackground) {
+        script.push_back(edits::setDefaultBackground(before.id, before.defaultBackground, after.defaultBackground));
     }
     if (before.markers != after.markers) {
         script.push_back(edits::setSequenceMarkers(before.id, before.markers, after.markers));

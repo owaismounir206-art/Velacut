@@ -64,6 +64,7 @@ struct Track
     bool hidden = false;
     double height = 1.0;
     bool captions = false;
+    Param gainDb{0.0}; // volume of the whole track (mixer), dB
     std::vector<Clip> clips; // sorted by start
     std::vector<Transition> transitions;
     QJsonObject extras; // e.g. captionStyle, preserved until typed

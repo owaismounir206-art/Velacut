@@ -197,6 +197,7 @@ Proxy, miniature, waveform, beat, scene e trascrizioni **non** sono nel file: so
     "hidden": false,
     "height": 1.0,
     "captions": false,
+    "gainDb": 0.0,
     "clips": [ … ],
     "transitions": [ … ]
 }
@@ -207,6 +208,7 @@ Proxy, miniature, waveform, beat, scene e trascrizioni **non** sono nel file: so
 | `height` | fattore rispetto all'altezza standard della traccia (1.0) |
 | `captions` | solo tracce `"text"`: `true` per una traccia di sottotitoli (contiene clip `subtitle`) |
 | `muted` | per le tracce visive silenzia l'audio delle clip; `hidden` le nasconde nell'anteprima e nell'export |
+| `gainDb` | volume dell'intera traccia (mixer), `Param` in dB. Aggiunto nella Fase 2 senza cambiare `formatVersion`: è facoltativo (assente = 0) e le versioni precedenti lo conservano come campo sconosciuto |
 
 ### 5.4 Clip: campi comuni
 ```json

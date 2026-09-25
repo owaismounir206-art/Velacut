@@ -327,6 +327,127 @@ private slots:
         QCOMPARE(session.sequence().visualTracks.size(), size_t(3));
     }
 
+    // ---- Phase 2 ------------------------------------------------------------------------------------------------
+    void textGoesOnTextTracks()
+    {
+        auto owner = threeClips();
+        Session &session = *owner;
+        TextClipData text;
+        text.text = QStringLiteral("Hello");
+        EditResult first = session.editor().insertText(frames(10), text, frames(90));
+        const ClipId firstId = first.primaryClip;
+        QVERIFY(session.apply(std::move(first)));
+        QCOMPARE(session.sequence().visualTracks.size(), size_t(2));
+        QCOMPARE(session.sequence().visualTracks[1].kind, TrackKind::Text);
+        QCOMPARE(session.data().findClip(firstId)->text()->text, QStringLiteral("Hello"));
+        // Overlapping in time: a second text track.
+        QVERIFY(session.apply(session.editor().insertText(frames(50), text, frames(0)))); // default duration
+        QCOMPARE(session.sequence().visualTracks.size(), size_t(3));
+        QCOMPARE(session.sequence().visualTracks[2].clips.front().duration, frames(90)); // 3 s
+    }
+
+    void attributesChangeWithoutMovingClips()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+        EditResult change = session.editor().updateClips(
+            {a, b},
+            [](Clip &clip) {
+                clip.opacity = Param(0.5);
+                clip.start = frames(999); // not an attribute: ignored
+                Effect effect;
+                effect.id = EffectId::create();
+                effect.type = QStringLiteral("vedit.adjust.basic");
+                effect.params[QStringLiteral("contrast")] = Param(0.3);
+                clip.effects.push_back(effect);
+            },
+            QStringLiteral("Apply"));
+        QVERIFY(session.apply(std::move(change)));
+        QCOMPARE(session.data().findClip(a)->opacity, Param(0.5));
+        QCOMPARE(session.data().findClip(b)->effects.size(), size_t(1));
+        QCOMPARE(session.data().findClip(b)->start, frames(300));
+        QCOMPARE(session.stack.count(), 4); // one undo step for both clips
+    }
+
+    void speedChangesDurationAndRipples()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+        QVERIFY(session.apply(session.editor().setSpeed(a, 2.0)));
+        QCOMPARE(session.data().findClip(a)->duration, frames(150));
+        QCOMPARE(session.data().findClip(a)->media()->speed, 2.0);
+        QCOMPARE(session.data().findClip(b)->start, frames(150));
+        QVERIFY(session.apply(session.editor().setSpeed(a, 0.5))); // back to the same material at half speed
+        QCOMPARE(session.data().findClip(a)->duration, frames(600));
+        QVERIFY(!session.editor().setSpeed(c, 2.0).ok()); // a photo
+    }
+
+    void freezeFrameInsertsAStill()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+        const MediaId still = session.data().media[3].id; // the photo of the fixture stands for the frame
+        EditResult freeze = session.editor().insertFreezeFrame(a, frames(100), still, frames(90));
+        const ClipId stillClip = freeze.primaryClip;
+        QVERIFY(session.apply(std::move(freeze)));
+        const Track &main = session.mainTrack();
+        QCOMPARE(main.clips.size(), size_t(5));
+        QCOMPARE(main.clips[0].duration, frames(100));
+        QCOMPARE(main.clips[1].id, stillClip);
+        QCOMPARE(main.clips[1].duration, frames(90));
+        QCOMPARE(main.clips[2].start, frames(190));
+        QCOMPARE(main.clips[2].media()->sourceIn, frames(100)); // the rest of the clip continues after the still
+        QCOMPARE(session.data().findClip(b)->start, frames(390));
+        // At the start of a clip: the still goes before it.
+        QVERIFY(session.apply(session.editor().insertFreezeFrame(b, frames(390), still, frames(30))));
+        QCOMPARE(session.data().findClip(b)->start, frames(420));
+    }
+
+    void transitionsBetweenClips()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+        const AssetRef dissolve{QStringLiteral("vedit.core"), QStringLiteral("transitions/dissolve"), 1};
+        QVERIFY(session.apply(session.editor().addTransition(a, dissolve, frames(15))));
+        QCOMPARE(session.mainTrack().transitions.size(), size_t(1));
+        QCOMPARE(session.mainTrack().transitions.front().to, b);
+        // The duration is limited by the shorter clip (B: 120 frames).
+        QVERIFY(session.apply(session.editor().addTransition(a, dissolve, frames(500))));
+        QCOMPARE(session.mainTrack().transitions.size(), size_t(1)); // replaced, not added
+        QCOMPARE(session.mainTrack().transitions.front().duration, frames(120));
+        QVERIFY(!session.editor().addTransition(c, dissolve, frames(15)).ok()); // last clip: nothing after it
+        const TransitionId id = session.mainTrack().transitions.front().id;
+        QVERIFY(session.apply(session.editor().updateTransition(id, [](Transition &t) { t.duration = RationalTime(10, Rational(30)); })));
+        QCOMPARE(session.mainTrack().transitions.front().duration, frames(10));
+        // On every cut, then none.
+        QVERIFY(session.apply(session.editor().applyTransitionToAll(session.mainTrack().id, dissolve, frames(20))));
+        QCOMPARE(session.mainTrack().transitions.size(), size_t(2));
+        QVERIFY(session.apply(session.editor().removeAllTransitions(session.mainTrack().id)));
+        QVERIFY(session.mainTrack().transitions.empty());
+        QVERIFY(session.apply(session.editor().addTransition(b, dissolve, frames(15))));
+        QVERIFY(session.apply(session.editor().removeTransitions({session.mainTrack().transitions.front().id})));
+        QVERIFY(session.mainTrack().transitions.empty());
+    }
+
+    void trackVolumeAndBackground()
+    {
+        auto owner = threeClips();
+        Session &session = *owner;
+        QVERIFY(session.apply(session.editor().updateTrack(session.mainTrack().id, [](Track &t) {
+            t.gainDb = Param(-12.0);
+            t.clips.clear(); // not a property: ignored
+        }, QStringLiteral("Volume"))));
+        QCOMPARE(session.mainTrack().gainDb, Param(-12.0));
+        QCOMPARE(session.mainTrack().clips.size(), size_t(3));
+        const CanvasBackground blur{BackgroundType::Blur, Color{}, 0.8, {}, std::nullopt};
+        QVERIFY(session.apply(session.editor().setDefaultBackground(blur)));
+        QCOMPARE(session.sequence().defaultBackground, std::optional<CanvasBackground>(blur));
+    }
+
     void lockedTrackRefusesEdits()
     {
         ClipId a;

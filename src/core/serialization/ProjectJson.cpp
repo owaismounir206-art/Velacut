@@ -69,6 +69,12 @@ constexpr EnumName<TransitionAlignment> kAlignments[] = {{TransitionAlignment::C
                                                          {TransitionAlignment::Overlap, "overlap"_L1}};
 constexpr EnumName<MissingMaterial> kMissingMaterial[] = {{MissingMaterial::Freeze, "freeze"_L1},
                                                           {MissingMaterial::None, "none"_L1}};
+constexpr EnumName<BackgroundType> kBackgroundTypes[] = {{BackgroundType::Color, "color"_L1},
+                                                         {BackgroundType::Blur, "blur"_L1},
+                                                         {BackgroundType::Image, "image"_L1},
+                                                         {BackgroundType::Pattern, "pattern"_L1}};
+constexpr EnumName<TextAlign> kTextAligns[] = {
+    {TextAlign::Left, "left"_L1}, {TextAlign::Center, "center"_L1}, {TextAlign::Right, "right"_L1}};
 
 template<typename E, size_t N>
 QString nameOf(const EnumName<E> (&table)[N], E value)
@@ -97,12 +103,18 @@ const QSet<QString> kProjectKeys{u"format"_s,     u"formatVersion"_s, u"generato
                                  u"name"_s,       u"createdAt"_s,     u"modifiedAt"_s,  u"settings"_s,
                                  u"mediaFolders"_s, u"media"_s,       u"sequences"_s,   u"mainSequenceId"_s};
 const QSet<QString> kSequenceKeys{u"id"_s,           u"name"_s,        u"canvas"_s,  u"magneticMain"_s,
-                                  u"visualTracks"_s, u"audioTracks"_s, u"markers"_s, u"groups"_s};
+                                  u"visualTracks"_s, u"audioTracks"_s, u"markers"_s, u"groups"_s,
+                                  u"defaultBackground"_s};
 const QSet<QString> kTrackKeys{u"id"_s,     u"kind"_s,   u"name"_s,     u"locked"_s, u"muted"_s,      u"solo"_s,
-                               u"hidden"_s, u"height"_s, u"captions"_s, u"clips"_s,  u"transitions"_s};
+                               u"hidden"_s, u"height"_s, u"captions"_s, u"clips"_s,  u"transitions"_s, u"gainDb"_s};
 const QSet<QString> kClipCommonKeys{u"id"_s,        u"kind"_s,    u"start"_s,     u"duration"_s,
                                     u"name"_s,      u"enabled"_s, u"linkId"_s,    u"transform"_s,
-                                    u"opacity"_s,   u"blendMode"_s, u"effects"_s, u"markers"_s};
+                                    u"opacity"_s,   u"blendMode"_s, u"effects"_s, u"markers"_s,
+                                    u"background"_s};
+const QSet<QString> kTextClipKeys{u"text"_s, u"style"_s, u"stylePreset"_s, u"box"_s};
+const QSet<QString> kTextStyleKeys{u"font"_s,          u"size"_s,       u"color"_s, u"stroke"_s,   u"shadow"_s,
+                                   u"background"_s,    u"letterSpacing"_s, u"lineHeight"_s, u"align"_s,
+                                   u"underline"_s};
 const QSet<QString> kMediaClipKeys{u"mediaId"_s,       u"streams"_s,  u"sourceIn"_s, u"speed"_s,
                                    u"preservePitch"_s, u"reversed"_s, u"audio"_s};
 const QSet<QString> kColorClipKeys{u"color"_s};
@@ -259,6 +271,54 @@ QJsonObject transformJson(const Transform &t)
             {u"fit"_s, nameOf(kFitModes, t.fit)}};
 }
 
+QJsonValue backgroundJson(const std::optional<CanvasBackground> &background)
+{
+    if (!background) {
+        return QJsonValue::Null;
+    }
+    QJsonObject object{{u"type"_s, nameOf(kBackgroundTypes, background->type)}};
+    switch (background->type) {
+    case BackgroundType::Color:
+        object.insert(u"color"_s, background->color.toString());
+        break;
+    case BackgroundType::Blur:
+        object.insert(u"amount"_s, background->amount);
+        break;
+    case BackgroundType::Image:
+        object.insert(u"mediaId"_s, idValue(background->mediaId));
+        break;
+    case BackgroundType::Pattern:
+        object.insert(u"asset"_s, background->pattern ? QJsonValue(assetRefJson(*background->pattern)) : QJsonValue::Null);
+        break;
+    }
+    return object;
+}
+
+QJsonObject textStyleJson(const TextStyle &style)
+{
+    QJsonObject object{
+        {u"font"_s, QJsonObject{{u"family"_s, style.fontFamily}, {u"weight"_s, style.fontWeight}, {u"italic"_s, style.italic}}},
+        {u"size"_s, paramJson(style.size)},
+        {u"color"_s, paramJson(style.color)},
+        {u"stroke"_s, style.stroke ? QJsonValue(QJsonObject{{u"color"_s, paramJson(style.stroke->color)},
+                                                            {u"width"_s, style.stroke->width}})
+                                   : QJsonValue::Null},
+        {u"shadow"_s, style.shadow ? QJsonValue(QJsonObject{{u"color"_s, style.shadow->color.toString()},
+                                                            {u"offset"_s, QJsonArray{style.shadow->offset.x, style.shadow->offset.y}},
+                                                            {u"blur"_s, style.shadow->blur}})
+                                   : QJsonValue::Null},
+        {u"background"_s, style.background ? QJsonValue(QJsonObject{{u"color"_s, style.background->color.toString()},
+                                                                    {u"padding"_s, style.background->padding},
+                                                                    {u"radius"_s, style.background->radius}})
+                                           : QJsonValue::Null},
+        {u"letterSpacing"_s, paramJson(style.letterSpacing)},
+        {u"lineHeight"_s, style.lineHeight},
+        {u"align"_s, nameOf(kTextAligns, style.align)},
+        {u"underline"_s, style.underline}};
+    mergeInto(object, style.extras);
+    return object;
+}
+
 QJsonObject clipJson(const Clip &clip)
 {
     QJsonObject object{{u"id"_s, idValue(clip.id)},
@@ -273,6 +333,9 @@ QJsonObject clipJson(const Clip &clip)
                        {u"blendMode"_s, nameOf(kBlendModes, clip.blendMode)},
                        {u"effects"_s, arrayOf(clip.effects, effectJson)},
                        {u"markers"_s, arrayOf(clip.markers, markerJson)}};
+    if (clip.background) {
+        object.insert(u"background"_s, backgroundJson(clip.background));
+    }
     std::visit(
         [&object](const auto &data) {
             using T = std::decay_t<decltype(data)>;
@@ -302,6 +365,12 @@ QJsonObject clipJson(const Clip &clip)
             } else if constexpr (std::is_same_v<T, CompoundClipData>) {
                 object.insert(u"sequenceId"_s, idValue(data.sequenceId));
                 object.insert(u"sourceIn"_s, timeValue(data.sourceIn));
+            } else if constexpr (std::is_same_v<T, TextClipData>) {
+                object.insert(u"text"_s, data.text);
+                object.insert(u"style"_s, textStyleJson(data.style));
+                object.insert(u"stylePreset"_s, data.stylePreset ? QJsonValue(assetRefJson(*data.stylePreset)) : QJsonValue::Null);
+                object.insert(u"box"_s, QJsonObject{{u"width"_s, data.boxWidth ? QJsonValue(*data.boxWidth) : QJsonValue::Null}});
+                mergeInto(object, data.fields);
             } else {
                 mergeInto(object, data.fields);
             }
@@ -335,6 +404,7 @@ QJsonObject trackJson(const Track &track)
                        {u"hidden"_s, track.hidden},
                        {u"height"_s, track.height},
                        {u"captions"_s, track.captions},
+                       {u"gainDb"_s, paramJson(track.gainDb)},
                        {u"clips"_s, arrayOf(track.clips, clipJson)},
                        {u"transitions"_s, arrayOf(track.transitions, transitionJson)}};
     mergeInto(object, track.extras);
@@ -347,6 +417,7 @@ QJsonObject sequenceJson(const Sequence &sequence)
                        {u"name"_s, sequence.name},
                        {u"canvas"_s, canvasJson(sequence.canvas)},
                        {u"magneticMain"_s, sequence.magneticMain},
+                       {u"defaultBackground"_s, backgroundJson(sequence.defaultBackground)},
                        {u"visualTracks"_s, arrayOf(sequence.visualTracks, trackJson)},
                        {u"audioTracks"_s, arrayOf(sequence.audioTracks, trackJson)},
                        {u"markers"_s, arrayOf(sequence.markers, markerJson)},
@@ -767,6 +838,91 @@ public:
         return t;
     }
 
+    Color colorValue(const QJsonValue &value, const QString &path, Color fallback)
+    {
+        if (value.isUndefined() || value.isNull()) {
+            return fallback;
+        }
+        if (const auto parsed = Color::fromString(value.toString())) {
+            return *parsed;
+        }
+        warn(path, u"invalid colour, default used"_s);
+        return fallback;
+    }
+
+    std::optional<CanvasBackground> background(const QJsonValue &value, const QString &path)
+    {
+        if (value.isUndefined() || value.isNull()) {
+            return std::nullopt;
+        }
+        if (!value.isObject()) {
+            warn(path, u"invalid background ignored"_s);
+            return std::nullopt;
+        }
+        const QJsonObject object = value.toObject();
+        CanvasBackground background;
+        background.type = enumeration(object, u"type"_s, path, kBackgroundTypes, BackgroundType::Color);
+        background.color = colorValue(object.value(u"color"_s), join(path, u"color"_s), Color{0, 0, 0, 255});
+        background.amount = number(object, u"amount"_s, path, 0.6, 0.0, 1.0);
+        background.mediaId = id<MediaTag>(object, u"mediaId"_s, path, false);
+        background.pattern = assetRef(object.value(u"asset"_s), join(path, u"asset"_s), false);
+        return background;
+    }
+
+    TextClipData text(const QJsonObject &object, const QString &path)
+    {
+        TextClipData data;
+        data.text = string(object, u"text"_s, path);
+        const QJsonObject style = this->object(object, u"style"_s, path, false);
+        const QString s = join(path, u"style"_s);
+        const QJsonObject font = this->object(style, u"font"_s, s, false);
+        const QString f = join(s, u"font"_s);
+        data.style.fontFamily = string(font, u"family"_s, f, u"Inter"_s);
+        data.style.fontWeight = integer(font, u"weight"_s, f, 700, 100, 1000);
+        data.style.italic = boolean(font, u"italic"_s, f, false);
+        data.style.size = param(style.value(u"size"_s), join(s, u"size"_s), Param(0.06));
+        data.style.color = param(style.value(u"color"_s), join(s, u"color"_s), Param(Color{255, 255, 255, 255}));
+        if (style.value(u"stroke"_s).isObject()) {
+            const QJsonObject stroke = style.value(u"stroke"_s).toObject();
+            const QString k = join(s, u"stroke"_s);
+            data.style.stroke = TextStroke{param(stroke.value(u"color"_s), join(k, u"color"_s), Param(Color{0, 0, 0, 255})),
+                                           number(stroke, u"width"_s, k, 0.08, 0.0, 1.0)};
+        }
+        if (style.value(u"shadow"_s).isObject()) {
+            const QJsonObject shadow = style.value(u"shadow"_s).toObject();
+            const QString k = join(s, u"shadow"_s);
+            TextShadow value;
+            value.color = colorValue(shadow.value(u"color"_s), join(k, u"color"_s), value.color);
+            const QJsonArray offset = shadow.value(u"offset"_s).toArray();
+            if (offset.size() == 2) {
+                value.offset = Vec2{offset[0].toDouble(), offset[1].toDouble()};
+            }
+            value.blur = number(shadow, u"blur"_s, k, 0.03, 0.0, 1.0);
+            data.style.shadow = value;
+        }
+        if (style.value(u"background"_s).isObject()) {
+            const QJsonObject box = style.value(u"background"_s).toObject();
+            const QString k = join(s, u"background"_s);
+            TextBackground value;
+            value.color = colorValue(box.value(u"color"_s), join(k, u"color"_s), value.color);
+            value.padding = number(box, u"padding"_s, k, 0.25, 0.0, 4.0);
+            value.radius = number(box, u"radius"_s, k, 0.2, 0.0, 4.0);
+            data.style.background = value;
+        }
+        data.style.letterSpacing = param(style.value(u"letterSpacing"_s), join(s, u"letterSpacing"_s), Param(0.0));
+        data.style.lineHeight = number(style, u"lineHeight"_s, s, 1.2, 0.5, 4.0);
+        data.style.align = enumeration(style, u"align"_s, s, kTextAligns, TextAlign::Center);
+        data.style.underline = boolean(style, u"underline"_s, s, false);
+        data.style.extras = unknownKeys(style, kTextStyleKeys);
+        data.stylePreset = assetRef(object.value(u"stylePreset"_s), join(path, u"stylePreset"_s), false);
+        const QJsonValue width = object.value(u"box"_s).toObject().value(u"width"_s);
+        if (width.isDouble() && width.toDouble() > 0.0) {
+            data.boxWidth = std::min(width.toDouble(), 4.0);
+        }
+        data.fields = unknownKeys(object, kClipCommonKeys, kTextClipKeys);
+        return data;
+    }
+
     Clip clip(const QJsonObject &object, const QString &path)
     {
         Clip clip;
@@ -785,6 +941,7 @@ public:
         clip.transform = transform(object, path);
         clip.opacity = param(object.value(u"opacity"_s), join(path, u"opacity"_s), Param(1.0));
         clip.blendMode = enumeration(object, u"blendMode"_s, path, kBlendModes, BlendMode::Normal);
+        clip.background = background(object.value(u"background"_s), join(path, u"background"_s));
         const QJsonArray effects = array(object, u"effects"_s, path);
         for (qsizetype i = 0; i < effects.size(); ++i) {
             clip.effects.push_back(effect(effects[i].toObject(), index(join(path, u"effects"_s), i)));
@@ -833,6 +990,9 @@ public:
             clip.payload = ColorClipData{param(object.value(u"color"_s), join(path, u"color"_s), Param(Color{}))};
             clip.extras = unknownKeys(object, kClipCommonKeys, kColorClipKeys);
             break;
+        case ClipKind::Text:
+            clip.payload = text(object, path);
+            break;
         case ClipKind::Compound:
             clip.payload = CompoundClipData{id<SequenceTag>(object, u"sequenceId"_s, path, true),
                                             requiredTime(object, u"sourceIn"_s, path)};
@@ -878,6 +1038,7 @@ public:
         track.hidden = boolean(object, u"hidden"_s, path, false);
         track.height = number(object, u"height"_s, path, 1.0, 0.25, 8.0);
         track.captions = boolean(object, u"captions"_s, path, false);
+        track.gainDb = param(object.value(u"gainDb"_s), join(path, u"gainDb"_s), Param(0.0));
         const QJsonArray clips = array(object, u"clips"_s, path);
         for (qsizetype i = 0; i < clips.size() && !failed(); ++i) {
             track.clips.push_back(clip(clips[i].toObject(), index(join(path, u"clips"_s), i)));
@@ -899,6 +1060,7 @@ public:
         sequence.name = string(object, u"name"_s, path);
         sequence.canvas = canvas(object, u"canvas"_s, path);
         sequence.magneticMain = boolean(object, u"magneticMain"_s, path, true);
+        sequence.defaultBackground = background(object.value(u"defaultBackground"_s), join(path, u"defaultBackground"_s));
         for (int pass = 0; pass < 2; ++pass) {
             const QString key = pass == 0 ? u"visualTracks"_s : u"audioTracks"_s;
             const QJsonArray tracks = array(object, key, path);

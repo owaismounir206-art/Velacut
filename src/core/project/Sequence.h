@@ -46,11 +46,12 @@ struct Sequence
     QString name;
     Canvas canvas;
     bool magneticMain = true;
+    std::optional<CanvasBackground> defaultBackground; // none = black
     std::vector<Track> visualTracks; // [0] = main track, then upwards (composition order)
     std::vector<Track> audioTracks;
     std::vector<Marker> markers;
     std::vector<Group> groups;
-    QJsonObject extras; // e.g. defaultBackground, preserved until typed
+    QJsonObject extras; // fields of later versions, preserved
 
     // End of the last clip on any track (the sequence duration is derived, never stored).
     RationalTime duration(const Rational &rate) const;

@@ -151,6 +151,91 @@ struct ColorClipData
     friend bool operator==(const ColorClipData &, const ColorClipData &) = default;
 };
 
+// Background of the canvas behind a clip of the main track (docs/FILE_FORMAT.md §5.2, §5.4).
+enum class BackgroundType
+{
+    Color,
+    Blur,    // the clip itself, enlarged to cover the canvas and blurred
+    Image,   // a picture of the media pool (rendered from a later phase; preserved)
+    Pattern, // a library pattern (rendered from a later phase; preserved)
+};
+
+struct CanvasBackground
+{
+    BackgroundType type = BackgroundType::Color;
+    Color color{0, 0, 0, 255};
+    double amount = 0.6; // blur strength 0…1
+    MediaId mediaId;     // Image
+    std::optional<AssetRef> pattern;
+
+    friend bool operator==(const CanvasBackground &, const CanvasBackground &) = default;
+};
+
+enum class TextAlign
+{
+    Left,
+    Center,
+    Right,
+};
+
+struct TextStroke
+{
+    Param color{Color{0, 0, 0, 255}};
+    double width = 0.08; // fraction of the font size
+
+    friend bool operator==(const TextStroke &, const TextStroke &) = default;
+};
+
+struct TextShadow
+{
+    Color color{0, 0, 0, 153};
+    Vec2 offset{0.0, 0.02}; // fractions of the canvas height
+    double blur = 0.03;     // fraction of the font size
+
+    friend bool operator==(const TextShadow &, const TextShadow &) = default;
+};
+
+struct TextBackground
+{
+    Color color{0, 0, 0, 160};
+    double padding = 0.25; // fractions of the font size
+    double radius = 0.2;
+
+    friend bool operator==(const TextBackground &, const TextBackground &) = default;
+};
+
+struct TextStyle
+{
+    QString fontFamily = QStringLiteral("Inter");
+    int fontWeight = 700;
+    bool italic = false;
+    Param size{0.06}; // fraction of the canvas height
+    Param color{Color{255, 255, 255, 255}};
+    std::optional<TextStroke> stroke;
+    std::optional<TextShadow> shadow;
+    std::optional<TextBackground> background;
+    Param letterSpacing{0.0}; // fraction of the font size
+    double lineHeight = 1.2;
+    TextAlign align = TextAlign::Center;
+    bool underline = false;
+    QJsonObject extras; // gradient and fields of later versions, preserved
+
+    friend bool operator==(const TextStyle &, const TextStyle &) = default;
+};
+
+// A text clip (docs/FILE_FORMAT.md §5.5 "text"). Fields of later phases (spans, path, textEffect, tts) are kept in
+// `fields` verbatim.
+struct TextClipData
+{
+    QString text;
+    TextStyle style;
+    std::optional<AssetRef> stylePreset;
+    std::optional<double> boxWidth; // fraction of the canvas width; none = automatic
+    QJsonObject fields;
+
+    friend bool operator==(const TextClipData &, const TextClipData &) = default;
+};
+
 struct CompoundClipData
 {
     SequenceId sequenceId;
@@ -170,7 +255,7 @@ struct PreservedClipData
     friend bool operator==(const PreservedClipData &, const PreservedClipData &) = default;
 };
 
-using ClipPayload = std::variant<MediaClipData, ColorClipData, CompoundClipData, PreservedClipData>;
+using ClipPayload = std::variant<MediaClipData, ColorClipData, CompoundClipData, TextClipData, PreservedClipData>;
 
 struct Clip
 {
@@ -183,6 +268,8 @@ struct Clip
     Transform transform;
     Param opacity{1.0};
     BlendMode blendMode = BlendMode::Normal;
+    // Main track only: the canvas behind this clip; none = the sequence default.
+    std::optional<CanvasBackground> background;
     std::vector<Effect> effects;
     std::vector<Marker> markers;
     ClipPayload payload = MediaClipData{};
@@ -196,6 +283,8 @@ struct Clip
 
     const MediaClipData *media() const { return std::get_if<MediaClipData>(&payload); }
     MediaClipData *media() { return std::get_if<MediaClipData>(&payload); }
+    const TextClipData *text() const { return std::get_if<TextClipData>(&payload); }
+    TextClipData *text() { return std::get_if<TextClipData>(&payload); }
 
     friend bool operator==(const Clip &, const Clip &) = default;
 };

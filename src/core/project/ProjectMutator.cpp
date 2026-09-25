@@ -101,6 +101,17 @@ void ProjectMutator::setCanvas(const SequenceId &sequenceId, const Canvas &canva
     changes().sequences.insert(sequenceId);
 }
 
+void ProjectMutator::setDefaultBackground(const SequenceId &sequenceId, const std::optional<CanvasBackground> &background)
+{
+    Sequence &target = sequence(sequenceId);
+    target.defaultBackground = background;
+    changes().sequences.insert(sequenceId);
+    // Every main-track clip without its own background shows it.
+    if (!target.visualTracks.empty()) {
+        changes().tracks.insert(target.visualTracks.front().id);
+    }
+}
+
 void ProjectMutator::setSequenceMarkers(const SequenceId &sequenceId, std::vector<Marker> markers)
 {
     sequence(sequenceId).markers = std::move(markers);
@@ -157,6 +168,7 @@ void ProjectMutator::setTrackProperties(const Track &properties)
     target.hidden = properties.hidden;
     target.height = properties.height;
     target.captions = properties.captions;
+    target.gainDb = properties.gainDb;
     target.extras = properties.extras;
     changes().tracks.insert(properties.id);
 }

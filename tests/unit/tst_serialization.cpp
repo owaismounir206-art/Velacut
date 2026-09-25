@@ -91,11 +91,13 @@ ProjectData richProject()
     group.clipIds = {main.clips[0].id, main.clips[1].id};
     sequence.groups.push_back(group);
 
-    sequence.extras.insert(u"defaultBackground"_s, QJsonObject{{u"type"_s, u"blur"_s}, {u"amount"_s, 0.6}});
+    sequence.defaultBackground = CanvasBackground{BackgroundType::Blur, Color{0, 0, 0, 255}, 0.6, {}, std::nullopt};
+    main.clips[1].background = CanvasBackground{BackgroundType::Color, Color{20, 40, 60, 255}, 0.6, {}, std::nullopt};
+    main.gainDb = Param(-6.0);
     main.extras.insert(u"futureTrackField"_s, 42);
     first.extras.insert(u"masks"_s, QJsonArray{QJsonObject{{u"shape"_s, u"circle"_s}}});
 
-    // A text clip (typed in a later phase) on a text track: preserved verbatim.
+    // A text clip on a text track, with the fields of later phases preserved verbatim.
     Track textTrack;
     textTrack.id = TrackId::create();
     textTrack.kind = TrackKind::Text;
@@ -103,8 +105,22 @@ ProjectData richProject()
     text.id = ClipId::create();
     text.start = frames(0);
     text.duration = frames(45);
-    text.payload = PreservedClipData{ClipKind::Text, QJsonObject{{u"text"_s, u"Ciao Roma!"_s},
-                                                                 {u"style"_s, QJsonObject{{u"size"_s, 0.06}}}}};
+    TextClipData textData;
+    textData.text = u"Ciao Roma!"_s;
+    textData.style.fontFamily = u"Noto Serif"_s;
+    textData.style.fontWeight = 400;
+    textData.style.italic = true;
+    textData.style.color = Param(Color{255, 213, 79, 255});
+    textData.style.stroke = TextStroke{Param(Color{0, 0, 0, 255}), 0.1};
+    textData.style.shadow = TextShadow{Color{0, 0, 0, 153}, Vec2{0.01, 0.02}, 0.05};
+    textData.style.background = TextBackground{Color{0, 0, 0, 128}, 0.3, 0.5};
+    textData.style.align = TextAlign::Left;
+    textData.style.lineHeight = 1.4;
+    textData.style.extras.insert(u"gradient"_s, QJsonObject{{u"type"_s, u"linear"_s}, {u"angle"_s, 90}});
+    textData.stylePreset = AssetRef{u"vedit.core"_s, u"text/bold-outline"_s, 1};
+    textData.boxWidth = 0.8;
+    textData.fields.insert(u"spans"_s, QJsonArray{QJsonObject{{u"start"_s, 5}, {u"end"_s, 9}}});
+    text.payload = textData;
     textTrack.clips.push_back(text);
     sequence.visualTracks.push_back(textTrack);
 
@@ -193,6 +209,9 @@ private slots:
         QCOMPARE(text.value(u"kind"_s).toString(), u"text"_s);
         QCOMPARE(text.value(u"text"_s).toString(), u"Ciao Roma!"_s);
         QCOMPARE(text.value(u"style"_s).toObject().value(u"size"_s).toDouble(), 0.06);
+        QCOMPARE(text.value(u"style"_s).toObject().value(u"gradient"_s).toObject().value(u"angle"_s).toInt(), 90);
+        QCOMPARE(text.value(u"spans"_s).toArray().size(), 1);
+        QCOMPARE(tracks[0].toObject().value(u"gainDb"_s).toDouble(), -6.0);
     }
 
     void exampleFromTheSpecificationLoads()

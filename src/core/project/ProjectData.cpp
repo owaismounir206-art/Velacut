@@ -21,6 +21,8 @@ ClipKind Clip::kind() const
                 return ClipKind::Color;
             } else if constexpr (std::is_same_v<T, CompoundClipData>) {
                 return ClipKind::Compound;
+            } else if constexpr (std::is_same_v<T, TextClipData>) {
+                return ClipKind::Text;
             } else {
                 return data.kind;
             }

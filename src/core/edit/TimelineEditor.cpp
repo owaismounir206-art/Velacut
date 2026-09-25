@@ -677,4 +677,381 @@ EditResult TimelineEditor::moveClipToNewTrack(const ClipId &clipId, const Ration
     return finish(std::move(modified), tr("Move clip"), clipId);
 }
 
+namespace {
+
+struct TransitionRef
+{
+    Track *track = nullptr;
+    size_t index = 0;
+};
+
+std::optional<TransitionRef> findTransition(Sequence &sequence, const TransitionId &transitionId)
+{
+    for (auto *tracks : {&sequence.visualTracks, &sequence.audioTracks}) {
+        for (Track &track : *tracks) {
+            for (size_t i = 0; i < track.transitions.size(); ++i) {
+                if (track.transitions[i].id == transitionId) {
+                    return TransitionRef{&track, i};
+                }
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+} // namespace
+
+EditResult TimelineEditor::insertText(const RationalTime &position, TextClipData text, const RationalTime &duration)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Clip clip;
+    clip.id = ClipId::create();
+    clip.start = position.rescaled(m_rate, Rounding::NearestEven);
+    if (clip.start.isNegative()) {
+        clip.start = RationalTime(0, m_rate);
+    }
+    clip.duration = duration.rescaled(m_rate, Rounding::NearestEven);
+    if (clip.duration.value() <= 0) {
+        clip.duration = RationalTime::fromSeconds(Rational(kDefaultTextSeconds), m_rate, Rounding::NearestEven);
+    }
+    clip.payload = std::move(text);
+    const ClipId clipId = clip.id;
+    Sequence modified = *m_sequence;
+    Track &track = overlayTrackFor(modified, TrackKind::Text, clip.range());
+    insertSorted(track, std::move(clip));
+    return finish(std::move(modified), tr("Add text"), clipId);
+}
+
+EditResult TimelineEditor::updateClips(const std::vector<ClipId> &clipIds, const std::function<void(Clip &)> &change,
+                                       const QString &text)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    if (clipIds.empty()) {
+        return fail(tr("Select a clip first."));
+    }
+    Sequence modified = *m_sequence;
+    for (const ClipId &clipId : clipIds) {
+        const auto ref = findClip(modified, clipId);
+        if (!ref) {
+            return fail(tr("The clip does not exist."));
+        }
+        if (ref->track->locked) {
+            return fail(tr("The track is locked."));
+        }
+        Clip &clip = ref->clip();
+        const Clip before = clip;
+        change(clip);
+        // Timing and identity are not attributes: restored if a caller changed them by mistake.
+        clip.id = before.id;
+        clip.start = before.start;
+        clip.duration = before.duration;
+        if (clip.kind() != before.kind()) {
+            clip.payload = before.payload;
+        }
+    }
+    return finish(std::move(modified), text, clipIds.size() == 1 ? clipIds.front() : ClipId{});
+}
+
+EditResult TimelineEditor::setSpeed(const ClipId &clipId, double speed)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (ref->track->locked) {
+        return fail(tr("The track is locked."));
+    }
+    Clip &clip = ref->clip();
+    MediaClipData *media = clip.media();
+    const Media *item = media ? m_project.findMedia(media->mediaId) : nullptr;
+    if (!media || !item || item->kind == MediaKind::Image) {
+        return fail(tr("The speed can be changed only on video and audio clips."));
+    }
+    speed = std::clamp(speed, 0.1, 100.0);
+    // The material used stays the same: duration × speed source frames.
+    const double currentSpeed = media->curve ? 1.0 : media->speed;
+    const double sourceSpan = static_cast<double>(clip.duration.value()) * currentSpeed;
+    const auto frames = std::max<std::int64_t>(1, std::llround(sourceSpan / speed));
+    media->speed = speed;
+    media->curve.reset();
+    clip.duration = RationalTime(frames, m_rate);
+    Track &track = *ref->track;
+    clampTransitions(track);
+    if (isMagneticMain(modified, track)) {
+        pack(track, m_rate);
+    } else if (!hasRoom(track, clip.range(), clip.id)) {
+        // Never overwrite: the clip moves onto a new track right above (or below, for audio).
+        Clip moved = takeClip(track, ref->index);
+        auto &tracks = ref->audio ? modified.audioTracks : modified.visualTracks;
+        Track fresh = makeTrack(track.kind);
+        insertSorted(fresh, std::move(moved));
+        tracks.insert(tracks.begin() + ref->trackIndex + 1, std::move(fresh));
+        removeEmptyTracks(modified);
+    }
+    return finish(std::move(modified), tr("Change speed"), clipId);
+}
+
+EditResult TimelineEditor::insertFreezeFrame(const ClipId &clipId, const RationalTime &requestedTime,
+                                             const MediaId &imageMediaId, const RationalTime &duration)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (ref->track->locked) {
+        return fail(tr("The track is locked."));
+    }
+    const RationalTime time = requestedTime.rescaled(m_rate, Rounding::NearestEven);
+    Clip &original = ref->clip();
+    if (!original.media() || time < original.start || time >= original.end()) {
+        return fail(tr("Move the playhead over a video clip to freeze a frame."));
+    }
+    Track &track = *ref->track;
+    size_t insertAt = ref->index;
+    if (time > original.start) {
+        // Split: the first part ends at `time`, the second part follows the still.
+        const RationalTime offset = time - original.start;
+        Clip second = original;
+        second.id = ClipId::create();
+        second.start = time;
+        second.duration = original.duration - offset;
+        for (Effect &effect : second.effects) {
+            effect.id = EffectId::create();
+        }
+        second.markers.clear();
+        MediaClipData *media = second.media();
+        media->sourceIn += RationalTime(sourceFrames(offset.value(), media->speed), m_rate);
+        media->audio.fadeIn.reset();
+        original.media()->audio.fadeOut.reset();
+        original.duration = offset;
+        for (Transition &transition : track.transitions) {
+            if (transition.from == original.id) {
+                transition.from = second.id;
+            }
+        }
+        insertAt = ref->index + 1;
+        track.clips.insert(track.clips.begin() + static_cast<std::ptrdiff_t>(insertAt), std::move(second));
+    }
+    const Clip &source = track.clips[insertAt < track.clips.size() ? insertAt : insertAt - 1];
+    Clip still;
+    still.id = ClipId::create();
+    still.start = time;
+    still.duration = duration.rescaled(m_rate, Rounding::NearestEven);
+    if (still.duration.value() <= 0) {
+        still.duration = RationalTime::fromSeconds(Rational(kDefaultTextSeconds), m_rate, Rounding::NearestEven);
+    }
+    still.transform = source.transform;
+    still.opacity = source.opacity;
+    still.blendMode = source.blendMode;
+    still.background = source.background;
+    still.effects = source.effects;
+    for (Effect &effect : still.effects) {
+        effect.id = EffectId::create();
+    }
+    MediaClipData data;
+    data.mediaId = imageMediaId;
+    data.streams = Streams::VideoOnly;
+    data.sourceIn = RationalTime(0, m_rate);
+    still.payload = data;
+    const ClipId stillId = still.id;
+    // Everything after `time` on this track moves along by the still's duration.
+    for (size_t i = insertAt; i < track.clips.size(); ++i) {
+        track.clips[i].start += still.duration;
+    }
+    track.clips.insert(track.clips.begin() + static_cast<std::ptrdiff_t>(insertAt), std::move(still));
+    pruneTransitions(track);
+    clampTransitions(track);
+    if (isMagneticMain(modified, track)) {
+        pack(track, m_rate);
+    }
+    return finish(std::move(modified), tr("Freeze frame"), stillId);
+}
+
+EditResult TimelineEditor::addTransition(const ClipId &fromClip, const AssetRef &type, const RationalTime &duration,
+                                         std::map<QString, Param> params)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, fromClip);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    Track &track = *ref->track;
+    if (track.locked) {
+        return fail(tr("The track is locked."));
+    }
+    if (ref->index + 1 >= track.clips.size() || !(track.clips[ref->index + 1].start == ref->clip().end())) {
+        return fail(tr("A transition goes between two clips that touch."));
+    }
+    const Clip &from = track.clips[ref->index];
+    const Clip &to = track.clips[ref->index + 1];
+    RationalTime length = duration.rescaled(m_rate, Rounding::NearestEven);
+    length = std::clamp(length, RationalTime(1, m_rate), std::min(from.duration, to.duration));
+    const auto existing = std::find_if(track.transitions.begin(), track.transitions.end(),
+                                       [&](const Transition &t) { return t.from == from.id && t.to == to.id; });
+    if (existing != track.transitions.end()) {
+        existing->type = type;
+        existing->duration = length;
+        existing->params = std::move(params);
+    } else {
+        Transition transition;
+        transition.id = TransitionId::create();
+        transition.type = type;
+        transition.from = from.id;
+        transition.to = to.id;
+        transition.duration = length;
+        transition.params = std::move(params);
+        track.transitions.push_back(std::move(transition));
+    }
+    return finish(std::move(modified), tr("Add transition"), {});
+}
+
+EditResult TimelineEditor::updateTransition(const TransitionId &transitionId, const std::function<void(Transition &)> &change)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findTransition(modified, transitionId);
+    if (!ref) {
+        return fail(tr("The transition does not exist."));
+    }
+    Transition &transition = ref->track->transitions[ref->index];
+    const Transition before = transition;
+    change(transition);
+    transition.id = before.id;
+    transition.from = before.from;
+    transition.to = before.to;
+    const Clip *from = ref->track->findClip(transition.from);
+    const Clip *to = ref->track->findClip(transition.to);
+    if (from && to) {
+        transition.duration = std::clamp(transition.duration.rescaled(m_rate, Rounding::NearestEven),
+                                         RationalTime(1, m_rate), std::min(from->duration, to->duration));
+    }
+    return finish(std::move(modified), tr("Change transition"), {});
+}
+
+EditResult TimelineEditor::removeTransitions(const std::vector<TransitionId> &transitionIds)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    for (const TransitionId &transitionId : transitionIds) {
+        const auto ref = findTransition(modified, transitionId);
+        if (!ref) {
+            return fail(tr("The transition does not exist."));
+        }
+        ref->track->transitions.erase(ref->track->transitions.begin() + static_cast<std::ptrdiff_t>(ref->index));
+    }
+    return finish(std::move(modified), transitionIds.size() == 1 ? tr("Remove transition") : tr("Remove transitions"), {});
+}
+
+EditResult TimelineEditor::applyTransitionToAll(const TrackId &trackId, const AssetRef &type, const RationalTime &duration,
+                                                std::map<QString, Param> params)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findTrack(modified, trackId);
+    if (!ref) {
+        return fail(tr("The track does not exist."));
+    }
+    Track &track = *ref->track;
+    if (track.locked) {
+        return fail(tr("The track is locked."));
+    }
+    const RationalTime length = std::max(RationalTime(1, m_rate), duration.rescaled(m_rate, Rounding::NearestEven));
+    int count = 0;
+    for (size_t i = 0; i + 1 < track.clips.size(); ++i) {
+        const Clip &from = track.clips[i];
+        const Clip &to = track.clips[i + 1];
+        if (!(to.start == from.end())) {
+            continue;
+        }
+        const RationalTime clamped = std::min(length, std::min(from.duration, to.duration));
+        const auto existing = std::find_if(track.transitions.begin(), track.transitions.end(),
+                                           [&](const Transition &t) { return t.from == from.id && t.to == to.id; });
+        if (existing != track.transitions.end()) {
+            existing->type = type;
+            existing->duration = clamped;
+            existing->params = params;
+        } else {
+            Transition transition;
+            transition.id = TransitionId::create();
+            transition.type = type;
+            transition.from = from.id;
+            transition.to = to.id;
+            transition.duration = clamped;
+            transition.params = params;
+            track.transitions.push_back(std::move(transition));
+        }
+        ++count;
+    }
+    if (count == 0) {
+        return fail(tr("There are no cuts between clips on this track."));
+    }
+    return finish(std::move(modified), tr("Transition on every cut"), {});
+}
+
+EditResult TimelineEditor::removeAllTransitions(const TrackId &trackId)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findTrack(modified, trackId);
+    if (!ref) {
+        return fail(tr("The track does not exist."));
+    }
+    ref->track->transitions.clear();
+    return finish(std::move(modified), tr("Remove transitions"), {});
+}
+
+EditResult TimelineEditor::updateTrack(const TrackId &trackId, const std::function<void(Track &)> &change, const QString &text)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findTrack(modified, trackId);
+    if (!ref) {
+        return fail(tr("The track does not exist."));
+    }
+    Track &track = *ref->track;
+    const std::vector<Clip> clips = track.clips;
+    const std::vector<Transition> transitions = track.transitions;
+    const TrackId id = track.id;
+    change(track);
+    track.id = id;
+    track.clips = clips;
+    track.transitions = transitions;
+    return finish(std::move(modified), text, {});
+}
+
+EditResult TimelineEditor::setDefaultBackground(const std::optional<CanvasBackground> &background)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    modified.defaultBackground = background;
+    return finish(std::move(modified), tr("Change background"), {});
+}
+
 } // namespace vedit
