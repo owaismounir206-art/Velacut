@@ -353,28 +353,42 @@ Rectangle {
                                 }
                             }
                             Label {
-                                visible: (panel.values["kf.easing"] ?? "") !== ""
+                                visible: panel.values["kf.here"] ?? false
                                 role: "bodySmall"
                                 color: Theme.color.onSurfaceVariant
                                 text: qsTr("Movement to the next keyframe")
                             }
                             Flow {
                                 Layout.fillWidth: true
-                                visible: (panel.values["kf.easing"] ?? "") !== ""
+                                visible: panel.values["kf.here"] ?? false
                                 spacing: Theme.space.xs
                                 Repeater {
                                     model: [{ id: "linear", text: qsTr("Steady") }, { id: "easeIn", text: qsTr("Speed up") },
                                             { id: "easeOut", text: qsTr("Slow down") }, { id: "easeInOut", text: qsTr("Smooth") },
-                                            { id: "hold", text: qsTr("Jump") }]
+                                            { id: "hold", text: qsTr("Jump") }, { id: "custom", text: qsTr("Custom") }]
                                     delegate: Chip {
                                         required property var modelData
                                         objectName: "easing_" + modelData.id
                                         text: modelData.text
                                         checkable: false
                                         checked: (panel.values["kf.easing"] ?? "") === modelData.id
-                                        onClicked: panel.inspector.setKeyframeEasing(modelData.id)
+                                        onClicked: {
+                                            if (modelData.id === "custom") {
+                                                // Starts from the curve shown, then drag its points.
+                                                const c = panel.values["kf.curve"] ?? [0, 0, 1, 1]
+                                                panel.inspector.setKeyframeCurve(c[0], c[1], c[2], c[3])
+                                                panel.inspector.endGesture()
+                                            } else {
+                                                panel.inspector.setKeyframeEasing(modelData.id)
+                                            }
+                                        }
                                     }
                                 }
+                            }
+                            CurveEditor {
+                                Layout.fillWidth: true
+                                visible: (panel.values["kf.here"] ?? false) && panel.values["kf.easing"] !== "hold"
+                                inspector: panel.inspector
                             }
                         }
 
@@ -833,6 +847,7 @@ Rectangle {
 
                     Button {
                         objectName: "autoEnhanceButton"
+                        visible: panel.inspector.kind !== Inspector.Adjustment // it reads the clip's own picture
                         Layout.fillWidth: true
                         variant: "tonal"
                         iconName: "auto_fix_high"

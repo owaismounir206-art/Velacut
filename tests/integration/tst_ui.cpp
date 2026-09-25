@@ -636,6 +636,11 @@ private slots:
         click(byName(u"easing_easeInOut"_s));
         QTRY_COMPARE(editor()->data().findClip(title)->opacity.keyframes().front().easing.name(), u"easeInOut"_s);
         QCOMPARE(editor()->data().findClip(title)->opacity.keyframes().front().interpolation, Interpolation::Bezier);
+        // A custom curve: a point of the curve dragged.
+        QTRY_VERIFY(byName(u"curvePoint0"_s));
+        ensureVisible(byName(u"curveEditor"_s));
+        drag(centre(byName(u"curvePoint0"_s)), centre(byName(u"curvePoint0"_s)) + QPoint(-20, -40));
+        QTRY_COMPARE(editor()->inspector()->values().value(u"kf.easing"_s).toString(), u"custom"_s);
         QTRY_VERIFY(byName(u"clipKeyframe_30"_s));
         shot(u"25-title-keyframes"_s);
         while (editor()->document().undoStack().index() > steps) {
@@ -702,6 +707,36 @@ private slots:
             editor()->undo();
         }
         editor()->inspector()->setCanvasMode({});
+    }
+
+    // Usability test 4: a text, written, with an entry animation ≤ 5 actions + typing.
+    void usability4AnimatedText()
+    {
+        editor()->clearSelection();
+        editor()->player()->seek(0);
+        QTRY_VERIFY(byName(u"addTextButton"_s));
+        QTest::qWait(50);
+        const int steps = editor()->document().undoStack().index();
+        m_actions = 0;
+        click(byName(u"addTextButton"_s));                                             // 1
+        QTRY_VERIFY(byName(u"textContent"_s));
+        click(byName(u"textContent"_s));                                               // 2
+        QTest::keyClick(m_window, Qt::Key_A, Qt::ControlModifier); // typing (select what is there to replace it)
+        for (const char c : {'H', 'e', 'l', 'l', 'o'}) {
+            QTest::keyClick(m_window, c);
+        }
+        QTRY_COMPARE(editor()->inspector()->values().value(u"text.content"_s).toString(), u"Hello"_s);
+        click(byText(u"Animations"_s));                                                // 3
+        QTRY_VERIFY(byName(u"asset_animations/in/fade"_s));
+        click(byName(u"asset_animations/in/fade"_s));                                  // 4
+        QTRY_COMPARE(editor()->inspector()->values().value(u"animation.in"_s).toString(), u"animations/in/fade"_s);
+        qInfo("usability test 4: %d actions", m_actions);
+        QVERIFY(m_actions <= 5);
+        QCOMPARE(editor()->inspector()->kind(), int(ui::ClipInspector::Text));
+        while (editor()->document().undoStack().index() > steps) {
+            editor()->undo();
+        }
+        click(byText(u"Media"_s));
     }
 
     // Usability test 8: export with the recommended settings ≤ 2 actions.

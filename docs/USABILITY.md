@@ -59,3 +59,21 @@ Misurati da `tests/integration/tst_ui.cpp` con l'interfaccia guidata reale.
 | 2 | Musica dalla libreria locale | 2 | ✅ **2** | invariato (confermato in `tst_ui`) |
 | 8 | Esportare con le impostazioni consigliate | 2 | ✅ **2** | invariato (confermato in `tst_ui`) |
 | 10 | Nessuna funzione principale oltre 2 livelli | 2 | ✅ | livello 1: formato sotto il player (1 clic), maniglie canvas, toolbar timeline; livello 2: schede proprietà, librerie (rail) |
+
+### Fase 3 — Keyframe e composizione
+Misurati da `tests/integration/tst_ui.cpp` con l'interfaccia guidata reale.
+
+| # | Scenario | Limite | Risultato | Percorso |
+|---|---|---|---|---|
+| 4 | Un testo, scritto, con un'animazione di ingresso | 5 + digitazione | ✅ **4** | "Aggiungi testo" nella barra → clic nel campo "Testo" a destra e digitazione → rail "Animazioni" → clic sull'animazione di entrata |
+| 3 | Filtro su tutte le clip | 3 | ✅ **3** | invariato |
+| 6 | Transizione tra tutte le clip | 3 | ✅ **3** | invariato |
+| 1 | Dall'avvio al primo taglio | 4 | ✅ **4** | invariato |
+| 2 | Musica dalla libreria locale | 2 | ✅ **2** | invariato |
+| 8 | Esportare con le impostazioni consigliate | 2 | ✅ **2** | invariato |
+| 10 | Nessuna funzione principale oltre 2 livelli | 2 | ✅ | livello 1: diamante dei keyframe accanto al parametro, marker (M), azioni della barra, Ctrl+K; livello 2: schede Animazione e Scontorno del pannello proprietà, libreria Animazioni, menu della clip (clip composta) |
+
+Criterio della Fase 3 verificato dall'interfaccia: `phaseThreeCriterionTitle` (titolo con due keyframe di opacità e
+andamento "Morbido") e `phaseThreeCriterionGreenScreen` (colore scelto col contagocce sul player, maschera a cerchio
+ridimensionata dal suo angolo, fotogramma renderizzato controllato).
+

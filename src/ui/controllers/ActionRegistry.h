@@ -37,7 +37,8 @@ public:
         Audio = 1 << 3,
         Text = 1 << 4,
         TransitionSelected = 1 << 5,
-        AnyClip = Video | Image | Audio | Text,
+        AdjustmentLayer = 1 << 6,
+        AnyClip = Video | Image | Audio | Text | AdjustmentLayer,
     };
 
     explicit ActionRegistry(EditorController &editor);

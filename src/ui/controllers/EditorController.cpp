@@ -1391,7 +1391,7 @@ bool EditorController::createCompoundClip(const QString &name)
     if (selected.empty()) {
         return false;
     }
-    return push(TimelineEditor(data(), data().mainSequenceId).createCompoundClip(selected, name));
+    return apply(TimelineEditor(data(), data().mainSequenceId).createCompoundClip(selected, name)); // selected
 }
 
 bool EditorController::expandCompoundClip(const QString &clipId)
@@ -1413,7 +1413,7 @@ bool EditorController::insertAdjustment(int durationFrames)
     const Rational rate = data().settings.frameRate;
     const RationalTime position(playhead(), rate);
     const RationalTime duration(durationFrames > 0 ? durationFrames : 90, rate);
-    return push(TimelineEditor(data(), data().mainSequenceId).insertAdjustment(position, duration));
+    return apply(TimelineEditor(data(), data().mainSequenceId).insertAdjustment(position, duration)); // selected
 }
 
 } // namespace vedit::ui

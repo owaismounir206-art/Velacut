@@ -138,6 +138,14 @@
     </message>
 </context>
 <context>
+    <name>CurveEditor</name>
+    <message>
+        <location filename="../src/ui/qml/CurveEditor.qml" line="+25"/>
+        <source>Movement curve</source>
+        <translation>Curva del movimento</translation>
+    </message>
+</context>
+<context>
     <name>DraftCard</name>
     <message>
         <location filename="../src/ui/qml/DraftCard.qml" line="+27"/>
@@ -1108,13 +1116,13 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+534"/>
+        <location line="+548"/>
         <location line="+6"/>
         <source>Speed</source>
         <translation>Velocità</translation>
     </message>
     <message>
-        <location line="-538"/>
+        <location line="-552"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -1125,12 +1133,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+836"/>
+        <location line="+851"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
     <message>
-        <location line="-800"/>
+        <location line="-815"/>
         <source>Select a clip on the timeline to change it here.</source>
         <translation>Seleziona una clip sulla timeline per modificarla qui.</translation>
     </message>
@@ -1209,19 +1217,19 @@
     </message>
     <message>
         <location line="+15"/>
-        <location line="+163"/>
+        <location line="+177"/>
         <source>Size</source>
         <translation>Dimensione</translation>
     </message>
     <message>
-        <location line="-157"/>
-        <location line="+208"/>
+        <location line="-171"/>
+        <location line="+222"/>
         <location line="+43"/>
         <source>Colour</source>
         <translation>Colore</translation>
     </message>
     <message>
-        <location line="-247"/>
+        <location line="-261"/>
         <source>Text colour</source>
         <translation>Colore del testo</translation>
     </message>
@@ -1244,23 +1252,23 @@
     </message>
     <message>
         <location line="+6"/>
-        <location line="+202"/>
+        <location line="+216"/>
         <source>Background</source>
         <translation>Sfondo</translation>
     </message>
     <message>
-        <location line="-199"/>
+        <location line="-213"/>
         <source>Text background</source>
         <translation>Sfondo del testo</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+211"/>
+        <location line="+225"/>
         <source>Background colour</source>
         <translation>Colore dello sfondo</translation>
     </message>
     <message>
-        <location line="-201"/>
+        <location line="-215"/>
         <source>Outline thickness</source>
         <translation>Spessore del contorno</translation>
     </message>
@@ -1328,7 +1336,12 @@
         <translation>Salto</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+0"/>
+        <source>Custom</source>
+        <translation>Personalizzata</translation>
+    </message>
+    <message>
+        <location line="+30"/>
         <source>Whole picture</source>
         <translation>Immagine intera</translation>
     </message>
@@ -1491,31 +1504,31 @@
         <translation>Dissolvenza in entrata</translation>
     </message>
     <message>
-        <location line="-398"/>
-        <location line="+401"/>
+        <location line="-412"/>
+        <location line="+415"/>
         <location line="+8"/>
         <location line="+137"/>
         <source>%1 s</source>
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-657"/>
+        <location line="-671"/>
         <source>Transition</source>
         <translation>Transizione</translation>
     </message>
     <message>
-        <location line="+517"/>
+        <location line="+531"/>
         <source>Fade out</source>
         <translation>Dissolvenza in uscita</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+288"/>
+        <location line="+289"/>
         <source>Auto enhance</source>
         <translation>Migliora automaticamente</translation>
     </message>
     <message>
-        <location line="-263"/>
+        <location line="-264"/>
         <location line="+9"/>
         <source>%1×</source>
         <translation>%1×</translation>
@@ -1689,7 +1702,7 @@
         <translation>Togli l&apos;alone colorato</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+21"/>
         <source>Corrects light, colour and volume: you can change the result below</source>
         <translation>Corregge luce, colore e volume: puoi modificare il risultato qui sotto</translation>
     </message>
@@ -2480,12 +2493,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+215"/>
+        <location line="+219"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-214"/>
+        <location line="-218"/>
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
@@ -2546,6 +2559,16 @@
     </message>
     <message>
         <location line="+2"/>
+        <source>Adjust</source>
+        <translation>Regola</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Filters</source>
+        <translation>Filtri</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Apply to all cuts</source>
         <translation>Applica a tutti i tagli</translation>
     </message>
@@ -2680,7 +2703,7 @@
         <translation>Formato 4:5 (post Instagram)</translation>
     </message>
     <message>
-        <location line="+122"/>
+        <location line="+124"/>
         <location line="+1"/>
         <source>Filter</source>
         <translation>Filtro</translation>
@@ -2712,8 +2735,8 @@
         <translation>Animazione in ciclo</translation>
     </message>
     <message>
-        <location line="-208"/>
-        <location line="+209"/>
+        <location line="-212"/>
+        <location line="+213"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -2754,13 +2777,13 @@
     <name>vedit::ui::ClipInspector</name>
     <message>
         <location filename="../src/ui/controllers/ClipInspector.cpp" line="+346"/>
-        <location line="+627"/>
+        <location line="+668"/>
         <location line="+26"/>
         <source>Change mask</source>
         <translation>Modifica maschera</translation>
     </message>
     <message>
-        <location line="-627"/>
+        <location line="-668"/>
         <source>Click on the clip to pick the colour to remove.</source>
         <translation>Fai clic sulla clip per scegliere il colore da rimuovere.</translation>
     </message>
@@ -2790,7 +2813,12 @@
         <translation>Cambia l&apos;andamento del keyframe</translation>
     </message>
     <message>
-        <location line="+414"/>
+        <location line="+24"/>
+        <source>Change keyframe curve</source>
+        <translation>Cambia la curva del keyframe</translation>
+    </message>
+    <message>
+        <location line="+431"/>
         <source>Change transition duration</source>
         <translation>Cambia durata della transizione</translation>
     </message>

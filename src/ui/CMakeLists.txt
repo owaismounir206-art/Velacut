@@ -50,6 +50,7 @@ qt_add_qml_module(vedit_ui
         qml/SearchDialog.qml
         qml/LevelMeter.qml
         qml/KeyframeButton.qml
+        qml/CurveEditor.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"
     PREFIX "/vedit/shaders"

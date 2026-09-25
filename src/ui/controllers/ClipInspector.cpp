@@ -163,7 +163,7 @@ QString easingName(const Keyframe &keyframe)
     case Interpolation::Bezier:
         break;
     }
-    return keyframe.easing.name();
+    return keyframe.easing.presetKind() == Easing::Preset::Custom ? u"custom"_s : keyframe.easing.name();
 }
 
 // "in", "out" or "loop": the kind of a preset animation.
@@ -475,6 +475,30 @@ bool ClipInspector::setKeyframeEasing(const QString &easing)
     }, tr("Change keyframe easing"), {});
 }
 
+bool ClipInspector::setKeyframeCurve(double x1, double y1, double x2, double y2)
+{
+    const Clip *clip = focus();
+    const std::optional<RationalTime> time = clip ? playheadKeyTime(*clip) : std::nullopt;
+    const std::optional<Easing> curve = Easing::cubicBezier(std::clamp(x1, 0.0, 1.0), std::clamp(y1, -1.0, 2.0),
+                                                            std::clamp(x2, 0.0, 1.0), std::clamp(y2, -1.0, 2.0));
+    if (!time || !curve) {
+        return false;
+    }
+    return update({clip->id}, [&](Clip &c) {
+        for (const QString &key : kKeyframeKeys) {
+            Param &param = *keyframeParam(c, key);
+            std::vector<Keyframe> keyframes = param.keyframes();
+            for (Keyframe &keyframe : keyframes) {
+                if (keyframe.time == *time) {
+                    keyframe.interpolation = Interpolation::Bezier;
+                    keyframe.easing = *curve;
+                }
+            }
+            param.setKeyframes(std::move(keyframes));
+        }
+    }, tr("Change keyframe curve"), u"keyframe-curve:"_s + clip->id.toString());
+}
+
 void ClipInspector::jumpKeyframe(int direction)
 {
     const Clip *clip = focus();
@@ -523,6 +547,9 @@ int ClipInspector::kind() const
     if (clip->text()) {
         return Text;
     }
+    if (clip->adjustment()) {
+        return Adjustment;
+    }
     if (const MediaClipData *media = clip->media()) {
         const Media *source = m_editor.data().findMedia(media->mediaId);
         if (!source || source->kind == MediaKind::Audio || media->streams == Streams::AudioOnly) {
@@ -540,6 +567,11 @@ bool ClipInspector::supports(const Clip &clip, const QString &section) const
     const bool audioOnly = media && (!source || source->kind == MediaKind::Audio || media->streams == Streams::AudioOnly);
     const bool image = source && source->kind == MediaKind::Image;
     const bool visualMedia = media && !audioOnly;
+    // An adjustment layer has no picture of its own: only the looks it gives to what is under it.
+    const bool adjustmentLayer = clip.adjustment() != nullptr;
+    if (adjustmentLayer) {
+        return section == u"filter"_s || section == u"adjust"_s;
+    }
     if (section == u"video"_s) {
         return !audioOnly;
     }
@@ -715,6 +747,7 @@ QVariantMap ClipInspector::values() const
     map[u"opacity"_s] = numberOf(valueOf(clip->opacity), 1.0);
     map[u"kf.available"_s] = keyTime.has_value();
     QString easing;
+    QVariantList curve{0.0, 0.0, 1.0, 1.0}; // the control points of the movement from the keyframe here
     for (const QString &key : kKeyframeKeys) {
         const Param &param = *keyframeParam(*clip, key);
         int state = param.isAnimated() ? 1 : 0;
@@ -723,12 +756,20 @@ QVariantMap ClipInspector::values() const
                 state = 2;
                 if (easing.isEmpty()) {
                     easing = easingName(keyframe);
+                    if (keyframe.interpolation == Interpolation::Bezier) {
+                        const std::array<double, 4> &b = keyframe.easing.bezier();
+                        if (!(b[0] == 0 && b[1] == 0 && b[2] == 0 && b[3] == 0)) {
+                            curve = {b[0], b[1], b[2], b[3]};
+                        }
+                    }
                 }
             }
         }
         map[u"kf."_s + key] = state;
     }
     map[u"kf.easing"_s] = easing;
+    map[u"kf.here"_s] = !easing.isEmpty();
+    map[u"kf.curve"_s] = curve;
     map[u"flipH"_s] = clip->transform.flipH;
     map[u"flipV"_s] = clip->transform.flipV;
     map[u"fit"_s] = clip->transform.fit == FitMode::Cover ? 1 : 0;

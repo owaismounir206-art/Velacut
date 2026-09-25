@@ -34,8 +34,9 @@ class EditorController;
 //   filter      filter (asset id, "" = none), filter.intensity (0…1)
 //   adjust      adjust.<name> (the parameters of "vedit.adjust.basic", see adjustParams)
 //   keyframes   kf.position, kf.scale, kf.rotation, kf.opacity: 0 = not animated, 1 = animated, 2 = a keyframe at the
-//               playhead; kf.available (the playhead is on the clip); kf.easing (of the keyframes at the playhead:
-//               "linear", "hold" or an easing preset name). An animated parameter changed with set() gets a keyframe
+//               playhead; kf.available (the playhead is on the clip); kf.here (a keyframe at the playhead);
+//               kf.easing (of the keyframes at the playhead: "linear", "hold", "custom" or a preset name); kf.curve
+//               ([x1, y1, x2, y2] of that movement). An animated parameter changed with set() gets a keyframe
 //               at the playhead (the values shown are those at the playhead).
 //   animation   animation.in / .out / .loop (asset id, "" = none), animation.<kind>.name, animation.<kind>.duration
 //               (seconds)
@@ -84,6 +85,7 @@ public:
         Text,
         Other,
         Transition,
+        Adjustment, // an adjustment layer: its filter and adjustments act on everything under it
     };
     Q_ENUM(Kind)
 
@@ -118,6 +120,8 @@ public:
     // key on. Back to the normal canvas mode.
     Q_INVOKABLE bool pickKeyColor(double canvasX, double canvasY);
     Q_INVOKABLE bool setKeyframeEasing(const QString &easing);
+    // A custom curve for that movement (cubic Bézier from (0,0) to (1,1), SPEC §5.6): one undo step per drag.
+    Q_INVOKABLE bool setKeyframeCurve(double x1, double y1, double x2, double y2);
     Q_INVOKABLE void jumpKeyframe(int direction);
     // The end of a gesture (slider released): the next set() is a new undo step.
     Q_INVOKABLE void endGesture();

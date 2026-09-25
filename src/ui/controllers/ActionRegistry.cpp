@@ -106,6 +106,8 @@ ActionRegistry::ActionRegistry(EditorController &editor)
          }});
     add({u"enhance"_s, tr("Enhance"), u"auto_fix_high"_s, {}, videoLike | Audio, clip,
          [inspector] { return inspector->autoEnhance(); }});
+    add({u"adjustLayer"_s, tr("Adjust"), u"tune"_s, {}, AdjustmentLayer, clip, properties(u"adjust"_s)});
+    add({u"filterLayer"_s, tr("Filters"), u"filter_vintage"_s, {}, AdjustmentLayer, clip, library(u"filters"_s)});
     add({u"transitionAll"_s, tr("Apply to all cuts"), u"transition_fade"_s, {}, TransitionSelected, always,
          [inspector] { return inspector->applyToAll(u"transition"_s); }});
     add({u"addText"_s, tr("Add text"), u"title"_s, {}, Nothing, always, [this] { return m_editor.addText(); }});
@@ -207,6 +209,8 @@ int ActionRegistry::currentContext() const
         return Audio;
     case ClipInspector::Text:
         return Text;
+    case ClipInspector::Adjustment:
+        return AdjustmentLayer;
     default:
         return Image; // other visual clips (colour, compound…): what applies to pictures
     }

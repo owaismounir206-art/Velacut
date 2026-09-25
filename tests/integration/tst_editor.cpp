@@ -613,6 +613,16 @@ private slots:
         seek(0);
         QVERIFY(inspector.setKeyframeEasing(u"easeInOut"_s));
         QCOMPARE(value("kf.easing").toString(), u"easeInOut"_s);
+        QCOMPARE(value("kf.curve").toList(), (QVariantList{0.42, 0.0, 0.58, 1.0}));
+        // A custom curve: fast at first (half way in time, most of the way done).
+        QVERIFY(inspector.setKeyframeCurve(0.0, 0.9, 0.3, 1.0));
+        inspector.endGesture();
+        QCOMPARE(value("kf.easing").toString(), u"custom"_s);
+        QVERIFY(value("kf.here").toBool());
+        seek(15);
+        QVERIFY(!value("kf.here").toBool());
+        QVERIFY2(value("opacity").toDouble() < 0.35, qPrintable(value("opacity").toString())); // from 1 to 0.2: mostly done
+        seek(0);
         // Jumping between keyframes.
         inspector.jumpKeyframe(1);
         QTRY_COMPARE(editor.player()->position(), 30);
@@ -710,6 +720,13 @@ private slots:
         const size_t tracks = editor.data().mainSequence()->visualTracks.size();
         QVERIFY(actions.trigger(u"addAdjustment"_s));
         QCOMPARE(editor.data().mainSequence()->visualTracks.size(), tracks + 1);
+        // Selected, it offers its looks: a filter and adjustments for everything under it.
+        QCOMPARE(inspector.kind(), int(ClipInspector::Adjustment));
+        QCOMPARE(inspector.sections(), (QStringList{u"filter"_s, u"adjust"_s}));
+        QVERIFY(actions.toolbar().first().toMap().value(u"id"_s) == u"split"_s);
+        QVERIFY(inspector.toggleFilter(u"filters/bw"_s));
+        QCOMPARE(value("filter").toString(), u"filters/bw"_s);
+        QVERIFY(inspector.set(u"adjust.contrast"_s, 0.3));
         QVERIFY(editor.close());
     }
 

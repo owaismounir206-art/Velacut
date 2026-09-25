@@ -1,16 +1,19 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
+Ultimo aggiornamento: 2026-09-25 (Fase 3 completata)
 
 ## Fase corrente
-**Fase 3 — Keyframe e composizione: in corso** (Fase 2 completata, storico sotto).
+**Fase 3 — Keyframe e composizione: completata, in attesa del via dell'utente per la Fase 4.**
+Nota: la Fase 3 è iniziata senza un via registrato dell'utente dopo la Fase 2 (la cui chiusura aveva lacune, recuperate:
+vedi sotto); l'utente ha poi chiesto di proseguire ("continua pure il lavoro").
 
 ### Criterio di completamento della Fase 3 (SPEC §8)
 | Requisito | Esito | Verifica |
 |---|---|---|
 | Animo un titolo con keyframe ed easing | ✅ | `tst_ui::phaseThreeCriterionTitle`: testo, due keyframe di opacità, andamento "Morbido", dall'interfaccia |
 | Compongo un green screen con maschera | ✅ | `tst_ui::phaseThreeCriterionGreenScreen`: colore scelto con un clic sul player, maschera a cerchio ingrandita dal suo angolo; il fotogramma renderizzato mostra il video al posto del verde e il soggetto intatto |
-| Compila senza warning, test verdi | ✅ | 25/25 in `build` (RelWithDebInfo e Debug con sanitizers) |
+| Compila senza warning, test verdi | ✅ | 25/25 in `build` (RelWithDebInfo) e in `build-debug` (ASan + UBSan) |
+| Test di semplicità applicabili | ✅ | scenario 4 (testo scritto e animato): **4** azioni su 5; 1, 2, 3, 6, 8, 10 confermati (`docs/USABILITY.md`) |
 
 ### Fase 3: fatto (un commit per incremento)
 1. **Core & Fx (`P3.1`)**:
@@ -82,9 +85,32 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
    composta** (raggruppa/separa) e **livello di regolazione** dal menu del tasto destro e da Ctrl+K
    (`tst_editor::cutoutBlendAndGrouping`, `tst_ui::phaseThreeCriterionGreenScreen`).
 
-### Prossimi passi (Fase 3 — Keyframe e composizione)
-- Chiusura della Fase 3: README, SHORTCUTS, USABILITY (ripetere i test di semplicità), riepilogo onesto, poi attesa
-  del via dell'utente.
+10. **Editor delle curve**: "Personalizzata" accanto agli andamenti predefiniti apre la curva del movimento verso il
+    keyframe successivo; si trascinano i due punti (Bézier cubica, anche oltre 0–1 per l'effetto rimbalzo).
+    Pannello: le clip livello di regolazione mostrano Filtro e Regola (prima non si potevano regolare).
+
+### Fase 3: limiti noti (onestà, regola 4)
+- **Keyframe nell'interfaccia** solo per posizione, dimensione, rotazione e opacità. Il modello e il formato li
+  ammettono su ogni parametro, e il renderer anima anche ritaglio e maschere, ma volume, filtri, regolazioni,
+  dimensione del testo e parametri delle maschere non hanno ancora il diamante (il renderer di volume, regolazioni e
+  testo usa valori fissi): arrivano con le Fasi 4–5 insieme ai rispettivi renderer animati.
+- **Maschere**: una per clip dall'interfaccia (il modello ne ammette più, unite); la maschera a tracciato (Bézier
+  libera) esiste nel modello e nel rasterizzatore ma non ha ancora l'editor sul canvas. La rotazione si cambia col
+  cursore, non con una maniglia.
+- **Rimozione di un colore**: il contagocce legge il fotogramma della sorgente; nessuna scelta del colore dell'alone
+  (si toglie il colore scelto).
+- **Clip composta**: raggruppa e separa; non si può ancora "entrare" nella clip per montarne l'interno.
+- **Marker**: aggiungi, salta, rimuovi; nome, colore e nota non si modificano ancora dall'interfaccia.
+- **Animazioni predefinite**: 90 movimenti di trasformazione (nessuna animazione per lettera o parola: Fase 5).
+- Una volta, in 6 esecuzioni della suite RelWithDebInfo, un test è fallito senza che il nome sia stato registrato;
+  non si è ripetuto (tst_ui eseguito 5 volte di fila senza errori). Da tenere d'occhio.
+
+### Prossimi passi (Fase 4 — Colore e audio avanzati), dopo il via
+Dalla SPEC §8: HSL, curve, ruote colore, LUT, scope, abbina colore, deflicker; EQ/compressore/effetti voce, "Migliora
+voce", loudness, ducking, registrazione voce con teleprompter, registrazione schermo + webcam, sincronizzazione audio
+esterno, multicamera. Criterio: correggo colore con LUT e curve, il mix audio rispetta −14 LUFS, e monto
+un'intervista a due camere sincronizzate dall'audio. Prima: pulizia all'avvio dei file di job rimasti dopo un
+export interrotto (bug noto sotto).
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata

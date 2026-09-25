@@ -3,10 +3,12 @@
 Editor video desktop per Linux (Arch), completamente offline, con interfaccia Material 3.
 Specifica: `SPEC-editor-video.md`. Architettura: `docs/ARCHITECTURE.md`. Stato: `docs/PROGRESS.md`.
 
-> Stato attuale: **Fase 2 (Editing essenziale) completata**, in attesa del via per la Fase 3.
-> Trasformazioni con maniglie sul canvas, formato 9:16/16:9 sotto il player, testi e preset sul canvas,
-> audio/fade/mixer, velocità/inversione (proxy), transizioni e filtri con anteprima dal vivo, "Applica a tutte",
-> "Migliora automaticamente", copia/incolla attributi. Dettagli e limiti in `docs/PROGRESS.md`.
+> Stato attuale: **Fase 3 (Keyframe e composizione) completata**, in attesa del via per la Fase 4.
+> Keyframe con andamento (diamanti accanto ai parametri e sulla clip), 90 animazioni predefinite (entrata, uscita,
+> ciclo), maschere con maniglie sul player, rimozione di un colore (green screen) col contagocce, modalità di fusione,
+> clip composte, livelli di regolazione, marker. Dalla Fase 2: trasformazioni sul canvas, testi e stili, filtri,
+> regolazioni, transizioni con anteprima dal vivo, velocità, inversione, fermo immagine, mixer, ricerca universale
+> **Ctrl+K**. Dettagli e limiti in `docs/PROGRESS.md`.
 
 ## Dipendenze (Arch)
 ```bash
@@ -24,6 +26,8 @@ QT_QUICK_BACKEND=software LIBGL_ALWAYS_SOFTWARE=1 ./build/vedit
 ```
 Nell'editor: importa (o trascina) video, foto e musica; "+" su un media lo mette al playhead; trascina le clip per
 spostarle, i bordi per accorciarle; `S` divide, `Canc` elimina, `Ctrl+Z` annulla; **Esporta** in alto a destra.
+A sinistra le librerie (Testo, Transizioni, Filtri, Animazioni: passa sopra per vedere, clic per applicare), a destra
+le proprietà della clip selezionata; `Ctrl+K` cerca qualsiasi comando, filtro, transizione, testo, animazione o brano.
 Non c'è un pulsante "Salva": ogni modifica è sul disco entro ~2 secondi. Scorciatoie: `docs/SHORTCUTS.md`.
 
 Lingua: quella del sistema (italiano o inglese). Documentazione: `docs/ARCHITECTURE.md`, `docs/FILE_FORMAT.md`,
