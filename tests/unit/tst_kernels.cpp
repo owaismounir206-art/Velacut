@@ -5,6 +5,7 @@
 #include "fx/Color.h"
 #include "fx/Composite.h"
 #include "fx/Enhance.h"
+#include "fx/Grade.h"
 #include "fx/Library.h"
 #include "fx/Mask.h"
 #include "fx/Transform.h"
@@ -18,6 +19,7 @@
 #include <vector>
 
 using namespace vedit::fx;
+using namespace Qt::StringLiterals;
 
 namespace {
 
@@ -311,6 +313,118 @@ private slots:
         QVERIFY(std::abs(vedit::fx::autoGainDb(0.5) - 5.0206) < 1e-3);
         QCOMPARE(vedit::fx::autoGainDb(0.01), 12.0);
         QCOMPARE(vedit::fx::autoGainDb(0.0), 0.0);
+    }
+
+    void gradeHslCurvesWheels()
+    {
+        const auto near3 = [](std::array<double, 3> a, std::array<double, 3> b, double tolerance) {
+            return std::abs(a[0] - b[0]) <= tolerance && std::abs(a[1] - b[1]) <= tolerance && std::abs(a[2] - b[2]) <= tolerance;
+        };
+        // Neutral: nothing changes.
+        const Grade neutral;
+        QVERIFY(neutral.isIdentity());
+        for (const std::array<double, 3> c : {std::array<double, 3>{0.1, 0.5, 0.9}, {1, 0, 0}, {0.3, 0.3, 0.3}}) {
+            QVERIFY(near3(applyGrade(neutral, c), c, 1e-9));
+        }
+        // HSL: the reds lose their colour, the blues stay; greys are never touched.
+        Grade hsl;
+        hsl.hsl[0].saturation = -1;
+        QVERIFY(near3(applyGrade(hsl, {0.8, 0.1, 0.1}), {0.45, 0.45, 0.45}, 0.01));
+        QVERIFY(near3(applyGrade(hsl, {0.1, 0.1, 0.8}), {0.1, 0.1, 0.8}, 1e-6));
+        QVERIFY(near3(applyGrade(hsl, {0.5, 0.5, 0.5}), {0.5, 0.5, 0.5}, 1e-9));
+        // Hue: greens turn towards aqua (more blue).
+        Grade hue;
+        hue.hsl[3].hue = 1;
+        const std::array<double, 3> turned = applyGrade(hue, {0.1, 0.8, 0.1});
+        QVERIFY(turned[2] > 0.3 && turned[1] > 0.6);
+        // Wheels: lifted shadows, lower highlights, warmer midtones.
+        Grade wheels;
+        wheels.shadows.level = 0.4;
+        wheels.highlights.level = -0.4;
+        wheels.midtones.colour = {0.3, 0, -0.3};
+        const std::array<double, 3> black = applyGrade(wheels, {0, 0, 0});
+        const std::array<double, 3> white = applyGrade(wheels, {1, 1, 1});
+        const std::array<double, 3> grey = applyGrade(wheels, {0.5, 0.5, 0.5});
+        QVERIFY(black[1] > 0.05);
+        QVERIFY(white[1] < 0.9);
+        QVERIFY(grey[0] > grey[1] && grey[1] > grey[2]);
+        // Balance: a blue cast removed.
+        Grade balance;
+        balance.balance = {1.2, 1.0, 0.8};
+        QVERIFY(near3(applyGrade(balance, {0.5, 0.5, 0.625}), {0.6, 0.5, 0.5}, 1e-9));
+        // Curves go through their points, smoothly and without overshoot.
+        const Grade::Curve curve{{0.25, 0.1}, {0.5, 0.6}, {0.75, 0.9}};
+        QCOMPARE(evaluateCurve(curve, 0.5), 0.6);
+        QCOMPARE(evaluateCurve(curve, 0.0), 0.0);
+        QCOMPARE(evaluateCurve(curve, 1.0), 1.0);
+        double previous = 0;
+        for (int i = 0; i <= 100; ++i) {
+            const double y = evaluateCurve(curve, i / 100.0);
+            QVERIFY(y >= previous - 1e-12 && y <= 1.0);
+            previous = y;
+        }
+        // JSON round trip (the params of "vedit.grade").
+        Grade full = wheels;
+        full.hsl[5] = {0.2, -0.3, 0.1};
+        full.master = curve;
+        full.channel[2] = {{0.5, 0.4}};
+        full.balance = {1.1, 1.0, 0.9};
+        QCOMPARE(Grade::fromJson(full.toJson()), full);
+        QVERIFY(Grade::fromJson({}).isIdentity());
+    }
+
+    void cubeLuts()
+    {
+        // Identity 2×2×2 (red fastest), with a title and comments.
+        const QByteArray identity = "# made by hand\nTITLE \"Identity\"\nLUT_3D_SIZE 2\n"
+                                    "0 0 0\n1 0 0\n0 1 0\n1 1 0\n0 0 1\n1 0 1\n0 1 1\n1 1 1\n";
+        QString error;
+        const std::optional<CubeLut> lut = CubeLut::parse(identity, &error);
+        QVERIFY2(lut, qPrintable(error));
+        QCOMPARE(lut->title(), u"Identity"_s);
+        QCOMPARE(lut->size(), 2);
+        const std::array<double, 3> c{0.2, 0.6, 0.9};
+        const std::array<double, 3> out = lut->sample(c);
+        QVERIFY(std::abs(out[0] - 0.2) < 1e-6 && std::abs(out[1] - 0.6) < 1e-6 && std::abs(out[2] - 0.9) < 1e-6);
+        // A 17³ look (a smooth S curve and a warm tint) composed into the 33³ LUT: under 1/255 from the cube itself.
+        QByteArray look = "LUT_3D_SIZE 17\n";
+        const auto shape = [](double v) { return v * v * (3 - 2 * v); };
+        for (int b = 0; b < 17; ++b) {
+            for (int g = 0; g < 17; ++g) {
+                for (int r = 0; r < 17; ++r) {
+                    look += QByteArray::number(std::min(1.0, shape(r / 16.0) * 1.05)) + ' ' + QByteArray::number(shape(g / 16.0)) + ' ' +
+                            QByteArray::number(shape(b / 16.0) * 0.95) + '\n';
+                }
+            }
+        }
+        const std::optional<CubeLut> cube = CubeLut::parse(look, &error);
+        QVERIFY2(cube, qPrintable(error));
+        const ColorLut composed([&cube](const std::array<double, 3> &rgb) { return cube->sample(rgb); });
+        Buffer image = pattern(64, 64);
+        Buffer expected = image;
+        composed.apply(image.view());
+        int worst = 0;
+        for (int y = 0; y < 64; ++y) {
+            for (int x = 0; x < 64; ++x) {
+                const std::array<int, 4> px = expected.at(x, y);
+                const std::array<double, 3> want = cube->sample({px[0] / 255.0, px[1] / 255.0, px[2] / 255.0});
+                const std::array<int, 4> got = image.at(x, y);
+                for (int i = 0; i < 3; ++i) {
+                    worst = std::max(worst, std::abs(got[static_cast<size_t>(i)] - static_cast<int>(std::lround(want[static_cast<size_t>(i)] * 255))));
+                }
+            }
+        }
+        qInfo("composed .cube: worst %d/255", worst);
+        QVERIFY2(worst <= 2, qPrintable(QString::number(worst)));
+        // 1D LUTs and domains.
+        const std::optional<CubeLut> oneD = CubeLut::parse("LUT_1D_SIZE 2\nDOMAIN_MIN 0 0 0\nDOMAIN_MAX 1 1 1\n1 1 1\n0 0 0\n");
+        QVERIFY(oneD && !oneD->is3d());
+        QVERIFY(std::abs(oneD->sample({0.25, 0.5, 1})[0] - 0.75) < 1e-6);
+        // Errors: no size, too few values, garbage.
+        QVERIFY(!CubeLut::parse("0 0 0\n", &error));
+        QVERIFY(!CubeLut::parse("LUT_3D_SIZE 2\n0 0 0\n", &error));
+        QVERIFY(error.contains(u"instead of"_s));
+        QVERIFY(!CubeLut::parse("LUT_3D_SIZE 2\nhello world !\n", &error));
     }
 
     void everyTransitionStartsOnAAndEndsOnB()

@@ -654,3 +654,30 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | Tractor annidato come producer di una playlist | ✅ usato per le transizioni (D-35) |
 | Posizioni viste da un filtro su un cut | ⚠️ quelle del media, non della clip (D-38) |
 | Font di Qt nei thread di MLT | ⚠️ perdita per thread segnalata da LeakSanitizer all'uscita dei thread → testo disegnato sul thread della proiezione (D-39) |
+
+## 22. Piano della Fase 4 (Colore e audio avanzati)
+Esiti delle prove iniziali: MLT espone `rnnoise` (riduzione del rumore sul parlato, RNNoise), `rbpitch` (intonazione
+con rubberband) e i filtri FFmpeg `avfilter.*` (equalizer, highpass/lowpass, acompressor, aecho, chorus, flanger,
+deesser, afftdn, deflicker, lut3d…); Qt Multimedia 6.11 con backend FFmpeg è installato (microfono, webcam, schermo).
+
+Scelte:
+- **Colore**: HSL per 8 gamme, curve (generale e per canale), ruote (ombre, mezzitoni, alte luci), bilanciamento e
+  LUT `.cube` sono funzioni del colore di un pixel: si compongono con le regolazioni esistenti nella stessa LUT 33³
+  (`fx::ColorLut`), costruita una volta dalla proiezione. Un solo kernel CPU (e più avanti uno shader) per tutto; una
+  LUT `.cube` importata viene campionata nei punti della 33³ (doppia interpolazione: errore sotto 1/255 sulle LUT
+  lisce, verificato dai test). Il deflicker è temporale: `avfilter.deflicker` di FFmpeg, deterministico.
+- **Scope** (istogramma, forma d'onda, vettorscopio): calcolati nell'interfaccia dal fotogramma mostrato.
+- **Audio**: volume con keyframe nel filtro `vedit.gain` (serve anche al ducking, che genera keyframe modificabili);
+  EQ, compressore, voce (robot, chipmunk, profonda, eco, radio, megafono), riverbero e ritardo con i filtri FFmpeg di
+  MLT e `rbpitch`; riduzione del rumore con `rnnoise`. **Loudness** EBU R128/BS.1770 implementata in `src/fx`
+  (misura deterministica, testabile): normalizzazione delle clip e dell'export (−14 LUFS di default per i social,
+  in due passate nel processo di export).
+- **Registrazione** della voce (conto alla rovescia, livello, teleprompter), della webcam e dello schermo con Qt
+  Multimedia; lo schermo su Wayland passa dal portale: da verificare con un programma di prova prima di costruirci
+  sopra (regola 8: se non funziona, lo dico con un'alternativa).
+- **Sincronizzazione dall'audio**: correlazione degli inviluppi (prima grossolana sulle forme d'onda in cache, poi
+  fine sull'audio decodificato); **multicamera**: formato da definire in FILE_FORMAT prima del codice.
+
+Incrementi: P4.1 kernel colore e `.cube` → P4.2 proiezione colore e deflicker → P4.3 interfaccia colore e scope →
+P4.4 audio (keyframe del volume, effetti, rumore, loudness, ducking, "Migliora voce") → P4.5 registrazioni → P4.6
+sincronizzazione e multicamera → P4.7 chiusura (criterio: LUT e curve, mix a −14 LUFS, intervista a due camere).

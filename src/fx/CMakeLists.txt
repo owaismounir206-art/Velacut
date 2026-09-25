@@ -8,6 +8,7 @@ add_library(vedit_fx STATIC
     Color.h Color.cpp
     Composite.h Composite.cpp
     Enhance.h Enhance.cpp
+    Grade.h Grade.cpp
     Library.h Library.cpp
     Mask.h Mask.cpp
     Transform.h Transform.cpp

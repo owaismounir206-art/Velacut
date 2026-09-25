@@ -4,6 +4,7 @@
 #include "fx/Image.h"
 
 #include <array>
+#include <functional>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -45,6 +46,8 @@ public:
 
     ColorLut(); // identity
     explicit ColorLut(const ColorAdjust &adjust);
+    // Any colour transform of RGB 0…1 (adjustments, grade and .cube composed: docs/ARCHITECTURE.md §22).
+    explicit ColorLut(const std::function<std::array<double, 3>(const std::array<double, 3> &)> &transform);
 
     // The colour transform on one RGB value 0…1 (the exact function the table samples).
     static std::array<double, 3> evaluate(const ColorAdjust &adjust, std::array<double, 3> rgb);

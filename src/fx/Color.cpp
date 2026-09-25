@@ -144,12 +144,17 @@ ColorLut::ColorLut()
 }
 
 ColorLut::ColorLut(const ColorAdjust &adjust)
+    : ColorLut([&adjust](const std::array<double, 3> &rgb) { return evaluate(adjust, rgb); })
+{
+}
+
+ColorLut::ColorLut(const std::function<std::array<double, 3>(const std::array<double, 3> &)> &transform)
     : m_table(static_cast<size_t>(kSize * kSize * kSize))
 {
     for (int r = 0; r < kSize; ++r) {
         for (int g = 0; g < kSize; ++g) {
             for (int b = 0; b < kSize; ++b) {
-                const auto out = evaluate(adjust, {r / double(kSize - 1), g / double(kSize - 1), b / double(kSize - 1)});
+                const auto out = transform({r / double(kSize - 1), g / double(kSize - 1), b / double(kSize - 1)});
                 m_table[static_cast<size_t>((r * kSize + g) * kSize + b)] = {float(out[0]), float(out[1]), float(out[2])};
             }
         }
