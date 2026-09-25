@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "MltRuntime.h"
 
+#include "engine/mlt/Services.h"
+
 #include <QLoggingCategory>
 
 #include <mlt++/Mlt.h>
@@ -43,6 +45,7 @@ void MltRuntime::initializeAsync()
         s_repository = std::async(std::launch::async, [] {
                            mlt_log_set_callback(logFromMlt);
                            Mlt::Repository *repository = Mlt::Factory::init();
+                           registerServices(repository);
                            s_ready = repository != nullptr;
                            if (!repository) {
                                qCCritical(lcMlt) << "MLT initialization failed";
