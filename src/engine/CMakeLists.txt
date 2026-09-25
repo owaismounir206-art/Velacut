@@ -8,6 +8,8 @@ add_library(vedit_engine STATIC
     mlt/Services.h mlt/Services.cpp
     playback/FrameSink.h playback/FrameSink.cpp
     playback/Player.h playback/Player.cpp
+    playback/PreviewConsumer.h playback/PreviewConsumer.cpp
+    playback/TimelinePlayer.h playback/TimelinePlayer.cpp
     timeline/MediaProducerCache.h timeline/MediaProducerCache.cpp
     timeline/TimelineProjection.h timeline/TimelineProjection.cpp
 )

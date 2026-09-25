@@ -7,6 +7,7 @@
 #include <QImage>
 #include <QStringList>
 
+#include <chrono>
 #include <memory>
 #include <vector>
 
@@ -44,8 +45,11 @@ public:
 
     // Full rebuild.
     void build(const ProjectData &project, const SequenceId &sequenceId);
-    // Rebuilds only the tracks listed in `changes` (and the background/duration); falls back to build() when the
-    // track structure changed. Returns true if a full rebuild happened.
+    // True if `changes` alter the structure of the graph (sequence, track list, project settings): update() would
+    // replace the whole tractor, so a running consumer must be stopped first.
+    bool needsRebuild(const ProjectData &project, const ChangeSet &changes) const;
+    // Rebuilds only the tracks listed in `changes` (and the background/duration) with the tractor locked, so it
+    // is safe while a consumer runs; falls back to build() when needsRebuild(). Returns true if it rebuilt.
     bool update(const ProjectData &project, const ChangeSet &changes);
     // Re-projects the tracks using a media whose producer just became ready.
     void mediaReady(const ProjectData &project, const MediaId &mediaId);
@@ -60,6 +64,11 @@ public:
     // Synchronous rendering of one frame (tests, thumbnails of drafts). Not for use while a consumer runs.
     QImage renderFrame(int position);
 
+    // Cuts removed by update() are kept alive for a while: frames already read ahead by a running consumer may
+    // still reference them (and their filters) while they are rendered in MLT's threads.
+    void releaseRetired(std::chrono::milliseconds olderThan);
+    bool hasRetired() const { return !m_retired.empty(); }
+
 private:
     struct TrackSlot
     {
@@ -69,7 +78,14 @@ private:
         QSet<MediaId> media;
     };
 
+    struct Retired
+    {
+        std::chrono::steady_clock::time_point since;
+        std::vector<std::unique_ptr<Mlt::Producer>> cuts;
+    };
+
     void fillTrack(TrackSlot &slot, const Track &track, const ProjectData &project, bool anySolo);
+    void retireEntries(Mlt::Playlist &playlist);
     void updateBackground();
     std::shared_ptr<Mlt::Producer> producerFor(const Media &media);
 
@@ -85,6 +101,7 @@ private:
     std::vector<std::shared_ptr<Mlt::Producer>> m_keepAlive; // colour producers used by cuts
     int m_duration = 1;
     QStringList m_warnings;
+    std::vector<Retired> m_retired;
 };
 
 } // namespace vedit::engine

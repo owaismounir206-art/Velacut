@@ -111,6 +111,30 @@ private slots:
         QCOMPARE(renderFresh(session.data(), {5, 20}), whole);
     }
 
+    void backgroundIsOpaqueBlackAndColorClipsKeepTheirColor()
+    {
+        // MLT's colour strings are #AARRGGBB: a wrong order shows up here as transparent or tinted pixels.
+        Session session(baseProject());
+        const auto centre = [](const ProjectData &data, int position) {
+            auto profile = makeProfile(data, data.mainSequenceId);
+            MediaProducerCache cache(*profile);
+            TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+            projection.build(data, data.mainSequenceId);
+            return projection.renderFrame(position).pixel(160, 90);
+        };
+        QCOMPARE(centre(session.data(), 0), qRgba(0, 0, 0, 255));
+        EditResult color;
+        Clip clip;
+        clip.id = ClipId::create();
+        clip.start = frames(0);
+        clip.duration = frames(20);
+        clip.payload = ColorClipData{Param(Color{255, 128, 0, 255})};
+        color.script.push_back(edits::insertClip(session.mainTrack().id, clip));
+        color.text = u"color"_s;
+        QVERIFY(session.apply(std::move(color)));
+        QCOMPARE(centre(session.data(), 10), qRgba(255, 128, 0, 255));
+    }
+
     void durationIsTheEndOfTheLastClip()
     {
         Session session(baseProject());

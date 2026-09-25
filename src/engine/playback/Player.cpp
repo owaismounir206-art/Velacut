@@ -2,6 +2,7 @@
 #include "Player.h"
 
 #include "engine/mlt/MltRuntime.h"
+#include "engine/playback/PreviewConsumer.h"
 
 #include <QCoreApplication>
 #include <QFileInfo>
@@ -23,19 +24,6 @@ struct Player::Loaded
     std::unique_ptr<Mlt::Producer> producer;
     QString error;
 };
-
-namespace {
-
-// Exact mlt_listener signature (mlt_event_data is a struct passed by value).
-void onConsumerFrameShow(mlt_properties, void *owner, mlt_event_data data)
-{
-    Mlt::Frame frame(mlt_event_data_to_frame(data));
-    if (frame.is_valid()) {
-        static_cast<Player *>(owner)->deliverFrame(frame);
-    }
-}
-
-} // namespace
 
 Player::Player(QObject *parent)
     : QObject(parent)
@@ -131,24 +119,15 @@ void Player::finishOpen(std::shared_ptr<Loaded> loaded, quint64 request)
     m_videoSize = QSize(m_profile->width(), m_profile->height());
     m_position = 0;
 
-    m_consumer = std::make_unique<Mlt::Consumer>(*m_profile, "sdl2_audio");
-    if (!m_consumer->is_valid()) {
-        m_consumer.reset();
+    m_consumer = createPreviewConsumer(*m_profile, m_volume);
+    if (!m_consumer) {
         m_producer.reset();
         m_error = tr("No audio output is available (SDL2).");
         emit stateChanged();
         return;
     }
-    // Frames are rendered by the consumer threads directly in RGBA, the format uploaded by the preview.
-    m_consumer->set("mlt_image_format", "rgba");
-    m_consumer->set("real_time", -2);
-    m_consumer->set("terminate_on_pause", 0);
-    m_consumer->set("scrub_audio", 1);
-    m_consumer->set("volume", m_volume);
-    m_consumer->set("frequency", 48000);
-    m_consumer->set("channels", 2);
     m_consumer->connect(*m_producer);
-    m_frameShowEvent.reset(m_consumer->listen("consumer-frame-show", this, onConsumerFrameShow));
+    m_frameShowEvent = listenFrameShow(*m_consumer, this);
     m_producer->set_speed(0.0);
     m_producer->seek(0);
     m_consumer->start();
@@ -162,21 +141,13 @@ void Player::finishOpen(std::shared_ptr<Loaded> loaded, quint64 request)
 
 void Player::deliverFrame(Mlt::Frame &frame)
 {
-    // MLT consumer thread.
-    mlt_image_format format = mlt_image_rgba;
-    int width = 0;
-    int height = 0;
-    const uint8_t *data = frame.get_image(format, width, height);
-    if (!data || format != mlt_image_rgba || width <= 0 || height <= 0) {
-        qCDebug(lcPlayer) << "frame without usable image:" << (data != nullptr) << format << width << height;
+    // MLT consumer thread. Cost of the copy: ~1 ms per frame at 1080p (D-19).
+    const QImage image = copyFrameImage(frame);
+    const int position = frame.get_position();
+    if (image.isNull()) {
+        qCDebug(lcPlayer) << "frame without usable image" << position;
         return;
     }
-    // Copy the pixels: an MLT frame kept alive after its consumer is closed prevents the consumer from ever
-    // being freed (verified with an ASan probe), and the preview may hold the image longer than the consumer.
-    // Cost: one copy per displayed frame (~1 ms at 1080p); a zero-copy path needs a release protocol (PROGRESS).
-    const QImage image = QImage(data, width, height, width * 4, QImage::Format_RGBA8888).copy();
-    const int position = frame.get_position();
-    qCDebug(lcPlayer) << "frame" << position << width << "x" << height;
     m_sink.push(image, position);
     QMetaObject::invokeMethod(this, [this, position] { onFrameShown(position); }, Qt::QueuedConnection);
 }

@@ -211,8 +211,8 @@ Il dettaglio di ogni campo è in `docs/FILE_FORMAT.md`: il formato ricalca il mo
 ## 5. Engine (MLT)
 
 ### 5.1 Principio
-L'engine è una **proiezione** del core: riceve i `ChangeSet` (con copie dei dati necessari, mai puntatori al modello)
-sul proprio thread e aggiorna il grafo MLT. Non legge mai lo stato da MLT per prendere decisioni. `rebuildAll()`
+L'engine è una **proiezione** del core: riceve i `ChangeSet` e aggiorna il grafo MLT. La proiezione gira sul thread UI
+(D-23): le operazioni lente (apertura dei file, decodifica, rendering) restano fuori, nei thread di MLT e in un pool. Non legge mai lo stato da MLT per prendere decisioni. `rebuildAll()`
 ricostruisce l'intero grafo da zero a partire dal modello: viene usato all'apertura del progetto, come verifica nei test
 (grafo incrementale e grafo ricostruito devono produrre gli stessi fotogrammi) e come recupero in caso di errore.
 
@@ -247,8 +247,8 @@ nel repository MLT all'avvio con `Mlt::Repository::register_service` (**verifica
 ### 5.3 Riproduzione e anteprima
 - Consumer MLT `sdl2_audio` (audio via SDL2 verso PipeWire/PulseAudio, detta anche il ritmo del video). I fotogrammi
   arrivano con l'evento `consumer-frame-show` sul thread di MLT e finiscono in un `FrameSink`, uno slot "ultimo frame"
-  senza lock bloccanti. `real_time = -N` per il rendering parallelo con scarto dei frame se necessario; frame persi
-  contati per l'indicatore.
+  senza lock bloccanti. `real_time = 1`: un thread di rendering in anticipo che scarta i frame in ritardo (D-24); il
+  parallelismo è dentro i decoder FFmpeg e nei nostri servizi (kernel a fette). Frame persi contati per l'indicatore.
 - `PreviewItem` (QQuickItem C++) sceglie la strategia in base al backend della scena:
   - **RHI (Vulkan, OpenGL, GLES):** `QQuickRhiItem` (Qt ≥ 6.7) con texture persistente aggiornata a ogni frame;
     shader compilati con `qt6-shadertools` (compatibili GLSL 100 ES / 120). In Fase 0 i frame arrivano già in RGBA;
@@ -432,7 +432,7 @@ soddisfatto qui tramite l'accento GNOME. Se il portale lo rende disponibile, ver
 | Contesto | Cosa fa | Regole |
 |---|---|---|
 | Thread UI | QML, modello core, undo stack, controller | Mai I/O bloccante o decodifica. Serializzazione del progetto per l'autosave misurata (obiettivo < 5 ms tipico, < 30 ms con 500 clip) |
-| Thread engine | proiezione core→MLT, controllo del consumer | Riceve copie dei dati tramite `ChangeSet`, non accede al modello |
+| Thread UI (engine) | proiezione core→MLT, controllo del consumer (D-23) | Solo modifiche di playlist con il tractor bloccato (microsecondi); i producer si aprono in un pool |
 | Thread di MLT | decodifica e rendering dei frame (interni al consumer) | I nostri servizi MLT sono rientranti e senza stato globale |
 | Thread del grafo di scena | upload delle texture dell'anteprima | Legge solo dal `FrameSink` |
 | Pool `TaskManager` | probe, fingerprint, miniature, waveform, analisi | Priorità, progresso, annullamento cooperativo (`CancellationToken`) |
@@ -526,6 +526,10 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | D-20 | Test e smoke test con `TMPDIR` e XDG dentro `build/`; smoke test dell'app in CTest | Nessun file scritto fuori dalla cartella; verifica automatica di avvio e riproduzione headless (software, safe mode, galleria) |
 | D-21 | Icone risolte tramite il file `.codepoints` invece delle legature | Un nome errato mostra un'icona di riserva invece di disegnare testo sopra l'interfaccia |
 | D-22 | Font UI: Inter Variable (OFL) | Ottima leggibilità a piccole dimensioni e corsivo separato ben supportato da Qt (Roboto Flex usa un asse `slnt`) |
+| D-23 | Proiezione core → MLT sul thread UI, producer aperti in un pool | Evita di copiare il progetto a ogni modifica verso un thread engine; le modifiche al grafo (playlist con il tractor bloccato) costano microsecondi, l'unica parte lenta (aprire un file, decine di ms) è in background e la clip appare quando è pronta |
+| D-24 | Consumer dell'anteprima con `real_time = 1` invece di `-N` | Nei worker paralleli di MLT il controllo del flag `rendered` avviene fuori dal mutex (`worker_get_frame` in `mlt_consumer.c`): un risveglio perso blocca l'anteprima in pausa e fa andare in deadlock `mlt_consumer_stop()` (riprodotto da `tst_timelineplayer`). È anche il default di Shotcut |
+| D-25 | Colori verso MLT convertiti in `#AARRGGBB` | È il formato di MLT per 8 cifre; il modello usa `#RRGGBBAA` (FILE_FORMAT). Un test controlla i pixel |
+| D-26 | Le "cut" sostituite durante la riproduzione restano vive ~1 s | I frame già letti in anticipo dal consumer possono ancora riferirle (e i loro filtri) mentre vengono renderizzati |
 
 ---
 

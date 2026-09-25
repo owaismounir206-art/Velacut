@@ -23,6 +23,12 @@ const Sequence *sequenceOf(const ProjectData &project, const SequenceId &sequenc
     return project.findSequence(sequenceId);
 }
 
+// MLT colour strings with alpha are "#AARRGGBB" (mlt_property.c), our model's are "#RRGGBBAA".
+QByteArray mltColor(const Color &color)
+{
+    return QByteArray("color:") + QString::asprintf("#%02X%02X%02X%02X", color.a, color.r, color.g, color.b).toLatin1();
+}
+
 // MLT "hide" flags of a track producer: 1 = video, 2 = audio.
 int hideFlags(const Track &track, bool audioTrack, bool anySolo)
 {
@@ -74,6 +80,7 @@ TimelineProjection::TimelineProjection(Mlt::Profile &profile, MediaProducerCache
 TimelineProjection::~TimelineProjection()
 {
     m_tractor.reset();
+    m_retired.clear();
 }
 
 std::shared_ptr<Mlt::Producer> TimelineProjection::producerFor(const Media &media)
@@ -89,7 +96,7 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
     m_keepAlive.clear();
     m_warnings.clear();
     m_tractor = std::make_unique<Mlt::Tractor>(m_profile);
-    m_black = std::make_unique<Mlt::Producer>(m_profile, "color:#000000ff");
+    m_black = std::make_unique<Mlt::Producer>(m_profile, mltColor(Color{0, 0, 0, 255}).constData());
     m_black->set("length", 0x7fffffff);
     m_background = std::make_unique<Mlt::Playlist>(m_profile);
     m_tractor->set_track(*m_background, 0);
@@ -138,6 +145,7 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
 void TimelineProjection::fillTrack(TrackSlot &slot, const Track &track, const ProjectData &project, bool anySolo)
 {
     Mlt::Playlist &playlist = *slot.playlist;
+    retireEntries(playlist);
     playlist.clear();
     slot.media.clear();
     playlist.set("hide", hideFlags(track, slot.audio, anySolo));
@@ -188,7 +196,7 @@ void TimelineProjection::fillTrack(TrackSlot &slot, const Track &track, const Pr
         } else if (const auto *color = std::get_if<ColorClipData>(&clip.payload)) {
             const ParamValue value = color->color.staticValue();
             const Color c = std::holds_alternative<Color>(value) ? std::get<Color>(value) : Color{};
-            auto producer = std::make_shared<Mlt::Producer>(m_profile, QByteArray("color:" + c.toString().toLatin1()).constData());
+            auto producer = std::make_shared<Mlt::Producer>(m_profile, mltColor(c).constData());
             producer->set("length", 0x7fffffff);
             playlist.append(*producer, 0, out);
             m_keepAlive.push_back(producer);
@@ -206,31 +214,63 @@ void TimelineProjection::updateBackground()
         duration = std::max(duration, slot.playlist->get_playtime());
     }
     m_duration = duration;
+    retireEntries(*m_background);
     m_background->clear();
     m_background->append(*m_black, 0, duration - 1);
 }
 
-bool TimelineProjection::update(const ProjectData &project, const ChangeSet &changes)
+void TimelineProjection::retireEntries(Mlt::Playlist &playlist)
 {
-    const Sequence *sequence = sequenceOf(project, m_sequenceId);
-    bool structureChanged = !m_tractor || !sequence || changes.settingsChanged || changes.sequences.contains(m_sequenceId);
-    if (!structureChanged) {
-        std::vector<TrackId> ids;
-        for (const Track &track : sequence->visualTracks) {
-            ids.push_back(track.id);
-        }
-        for (const Track &track : sequence->audioTracks) {
-            ids.push_back(track.id);
-        }
-        structureChanged = ids.size() != m_tracks.size();
-        for (size_t i = 0; !structureChanged && i < ids.size(); ++i) {
-            structureChanged = ids[i] != m_tracks[i].id;
+    Retired retired;
+    retired.since = std::chrono::steady_clock::now();
+    for (int i = 0; i < playlist.count(); ++i) {
+        // get_clip() returns a new reference to the entry's cut.
+        if (Mlt::Producer *cut = playlist.get_clip(i)) {
+            retired.cuts.emplace_back(cut);
         }
     }
-    if (structureChanged) {
+    if (!retired.cuts.empty()) {
+        m_retired.push_back(std::move(retired));
+    }
+}
+
+void TimelineProjection::releaseRetired(std::chrono::milliseconds olderThan)
+{
+    const auto limit = std::chrono::steady_clock::now() - olderThan;
+    std::erase_if(m_retired, [limit](const Retired &retired) { return retired.since <= limit; });
+}
+
+bool TimelineProjection::needsRebuild(const ProjectData &project, const ChangeSet &changes) const
+{
+    const Sequence *sequence = sequenceOf(project, m_sequenceId);
+    if (!m_tractor || !sequence || changes.settingsChanged || changes.sequences.contains(m_sequenceId)) {
+        return true;
+    }
+    std::vector<TrackId> ids;
+    for (const Track &track : sequence->visualTracks) {
+        ids.push_back(track.id);
+    }
+    for (const Track &track : sequence->audioTracks) {
+        ids.push_back(track.id);
+    }
+    if (ids.size() != m_tracks.size()) {
+        return true;
+    }
+    for (size_t i = 0; i < ids.size(); ++i) {
+        if (ids[i] != m_tracks[i].id) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool TimelineProjection::update(const ProjectData &project, const ChangeSet &changes)
+{
+    if (needsRebuild(project, changes)) {
         build(project, m_sequenceId);
         return true;
     }
+    const Sequence *sequence = sequenceOf(project, m_sequenceId);
     bool anySolo = false;
     for (const Track &track : sequence->audioTracks) {
         anySolo = anySolo || track.solo;
