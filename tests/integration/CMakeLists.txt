@@ -18,3 +18,4 @@ vedit_add_test(tst_ui SOURCES tst_ui.cpp TestMedia.h
 target_compile_definitions(tst_ui PRIVATE VEDIT_RENDER_EXECUTABLE="$<TARGET_FILE:vedit-render>")
 add_dependencies(tst_ui vedit-render)
 set_tests_properties(tst_ui PROPERTIES TIMEOUT 240)
+vedit_add_test(tst_services SOURCES tst_services.cpp TestMedia.h LIBRARIES vedit_engine)

@@ -14,16 +14,18 @@ add_library(vedit_engine STATIC
     mlt/Services.h mlt/Services.cpp
     playback/FrameSink.h playback/FrameSink.cpp
     playback/Player.h playback/Player.cpp
+    playback/AudioMeters.h playback/AudioMeters.cpp
     playback/PreviewConsumer.h playback/PreviewConsumer.cpp
     playback/TimelinePlayer.h playback/TimelinePlayer.cpp
     render/ExportSettings.h render/ExportSettings.cpp
+    text/TextRenderer.h text/TextRenderer.cpp
     render/Renderer.h render/Renderer.cpp
     render/RenderJob.h render/RenderJob.cpp
     timeline/MediaProducerCache.h timeline/MediaProducerCache.cpp
     timeline/TimelineProjection.h timeline/TimelineProjection.cpp
 )
 target_include_directories(vedit_engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
-target_link_libraries(vedit_engine PUBLIC Qt6::Core Qt6::Gui vedit_core vedit_common PkgConfig::MLTPP PRIVATE vedit_fx PkgConfig::FFMPEG)
+target_link_libraries(vedit_engine PUBLIC Qt6::Core Qt6::Gui vedit_core vedit_common PkgConfig::MLTPP PUBLIC vedit_fx PRIVATE PkgConfig::FFMPEG)
 vedit_target_options(vedit_engine)
 
 # vedit-render: export in a separate process (docs/ARCHITECTURE.md §5.4).
