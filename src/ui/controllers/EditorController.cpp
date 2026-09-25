@@ -72,6 +72,7 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     m_media = std::make_unique<MediaPoolModel>(project);
     m_timeline = std::make_unique<TimelineModel>(project, sequence);
     engine::MltRuntime::waitUntilReady(); // started at launch: normally ready long before a project opens
+    m_player->setHelperExecutable(helperExecutable);
     m_player->setSequence(&project, sequence);
     // Back where the user left the project.
     m_player->seek(m_document->uiState().value(u"playhead"_s).toInt());

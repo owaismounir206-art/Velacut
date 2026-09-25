@@ -5,6 +5,7 @@
 #include "TestMedia.h"
 
 #include "engine/mlt/MltRuntime.h"
+#include "engine/analysis/ReverseProxy.h"
 #include "engine/playback/TimelinePlayer.h"
 #include "engine/timeline/MediaProducerCache.h"
 #include "engine/timeline/TimelineProjection.h"
@@ -246,6 +247,36 @@ private slots:
         QCOMPARE(player.duration(), 100);
         QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
         QCOMPARE(player.sink()->latest().size(), QSize(180, 320));
+    }
+
+    void reversedClipGetsABackwardsCopy()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const ClipId clip = session.mainTrack().clips.front().id;
+        QFile::remove(reverseProxyPath(*session.data().findMedia(m_landscape.id))); // left by an earlier run
+        TimelinePlayer player;
+        player.setVolume(0.0);
+        player.setHelperExecutable(QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        player.setSequence(&session.project, session.data().mainSequenceId);
+        QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
+        const QImage lastForward = [&] {
+            auto profile = makeProfile(session.data(), session.data().mainSequenceId);
+            MediaProducerCache cache(*profile);
+            TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+            projection.build(session.data(), session.data().mainSequenceId);
+            return projection.renderFrame(119);
+        }();
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [](Clip &c) { c.media()->reversed = true; }, u"reverse"_s)));
+        QTRY_VERIFY_WITH_TIMEOUT(player.preparingReverse(), 5000);
+        QTRY_VERIFY_WITH_TIMEOUT(!player.preparingReverse(), 60000);
+        QVERIFY(QFileInfo::exists(reverseProxyPath(*session.data().findMedia(m_landscape.id))));
+        // The preview now reads the copy: the first frame is (a slightly compressed) last frame of the original.
+        player.seek(1);
+        player.seek(0);
+        QVERIFY(waitForShown(player, 0));
+        const QImage first = player.sink()->latest();
+        QVERIFY2(meanDifference(first, lastForward) < 8.0, qPrintable(QString::number(meanDifference(first, lastForward))));
     }
 
     void closeReleasesEverything()

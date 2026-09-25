@@ -2,12 +2,16 @@
 #include "TimelineProjection.h"
 
 #include "engine/timeline/MediaProducerCache.h"
+#include "fx/Library.h"
 
 #include <QCoreApplication>
+#include <QDataStream>
+#include <QIODevice>
 #include <QLoggingCategory>
 
 #include <mlt++/Mlt.h>
 
+#include <cmath>
 #include <numeric>
 
 Q_LOGGING_CATEGORY(lcProjection, "vedit.engine.projection")
@@ -40,6 +44,111 @@ int hideFlags(const Track &track, bool audioTrack, bool anySolo)
         flags |= 2;
     }
     return flags;
+}
+
+// The value a static renderer uses for a parameter (keyframes: the first one; animations are rendered from Phase 3).
+ParamValue valueOf(const Param &param)
+{
+    return param.isAnimated() ? param.keyframes().front().value : param.staticValue();
+}
+
+double numberOf(const Param &param, double fallback)
+{
+    const ParamValue value = valueOf(param);
+    return std::holds_alternative<double>(value) ? std::get<double>(value) : fallback;
+}
+
+Vec2 vectorOf(const Param &param, Vec2 fallback)
+{
+    const ParamValue value = valueOf(param);
+    return std::holds_alternative<Vec2>(value) ? std::get<Vec2>(value) : fallback;
+}
+
+bool clipIsAnimated(const Clip &clip)
+{
+    const Transform &t = clip.transform;
+    if (t.position.isAnimated() || t.scale.isAnimated() || t.rotation.isAnimated() || clip.opacity.isAnimated() ||
+        t.crop.left.isAnimated() || t.crop.top.isAnimated() || t.crop.right.isAnimated() || t.crop.bottom.isAnimated()) {
+        return true;
+    }
+    for (const Effect &effect : clip.effects) {
+        if (effect.intensity.isAnimated()) {
+            return true;
+        }
+        for (const auto &[name, param] : effect.params) {
+            if (param.isAnimated()) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Displayed size of a media item (rotation and pixel aspect applied).
+void displaySize(const Media &media, double &width, double &height)
+{
+    width = 1920;
+    height = 1080;
+    if (!media.info.video || media.info.video->width <= 0 || media.info.video->height <= 0) {
+        return;
+    }
+    const VideoStreamInfo &video = *media.info.video;
+    width = video.width * video.sampleAspectRatio.toDouble();
+    height = video.height;
+    if (video.rotation == 90 || video.rotation == 270) {
+        std::swap(width, height);
+    }
+}
+
+fx::Easing easingOf(const QString &name)
+{
+    if (name == u"linear"_s) {
+        return fx::Easing::Linear;
+    }
+    if (name == u"easeIn"_s) {
+        return fx::Easing::EaseIn;
+    }
+    if (name == u"easeOut"_s) {
+        return fx::Easing::EaseOut;
+    }
+    return fx::Easing::EaseInOut;
+}
+
+QByteArray textKey(const TextClipData &text)
+{
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    const TextStyle &s = text.style;
+    stream << text.text << s.fontFamily << s.fontWeight << s.italic << numberOf(s.size, 0) << numberOf(s.letterSpacing, 0)
+           << s.lineHeight << int(s.align) << s.underline << text.boxWidth.value_or(-1.0);
+    const ParamValue color = valueOf(s.color);
+    stream << (std::holds_alternative<Color>(color) ? std::get<Color>(color).toString() : QString());
+    stream << s.stroke.has_value() << s.shadow.has_value() << s.background.has_value();
+    if (s.stroke) {
+        const ParamValue strokeColor = valueOf(s.stroke->color);
+        stream << (std::holds_alternative<Color>(strokeColor) ? std::get<Color>(strokeColor).toString() : QString())
+               << s.stroke->width;
+    }
+    if (s.shadow) {
+        stream << s.shadow->color.toString() << s.shadow->offset.x << s.shadow->offset.y << s.shadow->blur;
+    }
+    if (s.background) {
+        stream << s.background->color.toString() << s.background->padding << s.background->radius;
+    }
+    return bytes;
+}
+
+// Static copy of a text clip's data for the renderer (animated values at their first keyframe).
+TextClipData staticText(const TextClipData &text)
+{
+    TextClipData copy = text;
+    copy.style.size = Param(numberOf(text.style.size, 0.06));
+    copy.style.color = Param(valueOf(text.style.color));
+    copy.style.letterSpacing = Param(numberOf(text.style.letterSpacing, 0.0));
+    if (copy.style.stroke) {
+        copy.style.stroke->color = Param(valueOf(text.style.stroke->color));
+    }
+    return copy;
 }
 
 } // namespace
@@ -91,6 +200,8 @@ TimelineProjection::TimelineProjection(Mlt::Profile &profile, MediaProducerCache
 TimelineProjection::~TimelineProjection()
 {
     m_tractor.reset();
+    m_tracks.clear();
+    m_masterMeter.reset();
     m_retired.clear();
 }
 
@@ -100,9 +211,28 @@ std::int64_t TimelineProjection::toFrames(const RationalTime &time) const
     return time.rate() == m_rate ? time.value() : time.rescaled(m_rate, Rounding::NearestEven).value();
 }
 
-std::shared_ptr<Mlt::Producer> TimelineProjection::producerFor(const Media &media)
+std::shared_ptr<Mlt::Producer> TimelineProjection::producerFor(const Media &media, double speed, bool preservePitch)
 {
-    return m_loading == MediaLoading::Wait ? m_cache.open(media) : m_cache.producerOrRequest(media);
+    return m_loading == MediaLoading::Wait ? m_cache.open(media, speed, preservePitch)
+                                           : m_cache.producerOrRequest(media, speed, preservePitch);
+}
+
+const Clip &TimelineProjection::previewed(const Clip &clip) const
+{
+    return m_preview.clip && m_preview.clip->id == clip.id ? *m_preview.clip : clip;
+}
+
+std::vector<TimelineProjection::StructureSlot> TimelineProjection::structureOf(const Sequence &sequence)
+{
+    std::vector<StructureSlot> layout;
+    for (const Track &track : sequence.visualTracks) {
+        layout.push_back({track.id, SlotKind::Clips});
+        layout.push_back({track.id, SlotKind::Transitions});
+    }
+    for (const Track &track : sequence.audioTracks) {
+        layout.push_back({track.id, SlotKind::Clips});
+    }
+    return layout;
 }
 
 void TimelineProjection::build(const ProjectData &project, const SequenceId &sequenceId)
@@ -110,6 +240,7 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
     m_sequenceId = sequenceId;
     m_transitions.clear();
     m_tracks.clear();
+    m_masterMeter.reset();
     m_warnings.clear();
     m_backgroundLength = 0;
     m_tractor = std::make_unique<Mlt::Tractor>(m_profile);
@@ -117,6 +248,11 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
     m_black->set("length", 0x7fffffff);
     m_background = std::make_unique<Mlt::Playlist>(m_profile);
     m_tractor->set_track(*m_background, 0);
+    // Level of the whole mix, for the master meter.
+    GainSettings master;
+    master.meterKey = "master";
+    m_masterMeter = makeGainFilter(m_profile, master);
+    m_tractor->attach(*m_masterMeter);
 
     const Sequence *sequence = sequenceOf(project, sequenceId);
     if (!sequence) {
@@ -129,40 +265,66 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
         anySolo = anySolo || track.solo;
     }
     int index = 1;
-    const auto addTrack = [&](const Track &track, bool audio) {
+    for (const StructureSlot &structure : structureOf(*sequence)) {
+        const Track *track = project.findTrack(structure.id);
         TrackSlot slot;
-        slot.id = track.id;
-        slot.audio = audio;
+        slot.id = structure.id;
+        slot.kind = structure.kind;
+        slot.audio = !isVisualTrackKind(track->kind);
         slot.playlist = std::make_unique<Mlt::Playlist>(m_profile);
-        fillTrack(slot, track, project, anySolo);
+        fillSlot(slot, *track, project, anySolo);
         m_tractor->set_track(*slot.playlist, index);
-        if (!audio) {
+        if (!slot.audio) {
             auto composite = std::make_unique<Mlt::Transition>(m_profile, "vedit.composite");
             composite->set("always_active", 1);
             m_tractor->plant_transition(*composite, 0, index);
             m_transitions.push_back(std::move(composite));
         }
-        auto mix = std::make_unique<Mlt::Transition>(m_profile, "mix");
-        mix->set("always_active", 1);
-        mix->set("sum", 1);
-        m_tractor->plant_transition(*mix, 0, index);
-        m_transitions.push_back(std::move(mix));
+        if (slot.kind == SlotKind::Clips) {
+            auto mix = std::make_unique<Mlt::Transition>(m_profile, "mix");
+            mix->set("always_active", 1);
+            mix->set("sum", 1);
+            m_tractor->plant_transition(*mix, 0, index);
+            m_transitions.push_back(std::move(mix));
+        }
         m_tracks.push_back(std::move(slot));
         ++index;
-    };
-    for (const Track &track : sequence->visualTracks) {
-        addTrack(track, false);
-    }
-    for (const Track &track : sequence->audioTracks) {
-        addTrack(track, true);
     }
     updateBackground();
 }
 
-void TimelineProjection::fillTrack(TrackSlot &slot, const Track &track, const ProjectData &project, bool anySolo)
+void TimelineProjection::fillSlot(TrackSlot &slot, const Track &track, const ProjectData &project, bool anySolo)
 {
+    if (slot.kind == SlotKind::Transitions) {
+        // Only pictures: the audio of the two clips plays from the clips track.
+        slot.playlist->set("hide", 2 | (track.hidden ? 1 : 0));
+        patch(slot, transitionEntries(slot, track, project));
+        return;
+    }
     slot.playlist->set("hide", hideFlags(track, slot.audio, anySolo));
-    patch(slot, entriesFor(slot, track, project));
+    updateTrackGain(slot, track);
+    patch(slot, clipEntries(slot, track, project));
+}
+
+void TimelineProjection::updateTrackGain(TrackSlot &slot, const Track &track)
+{
+    GainSettings settings;
+    settings.gainDb = numberOf(track.gainDb, 0.0);
+    settings.meterKey = track.id.toString().toLatin1();
+    const QByteArray key = settings.key();
+    if (slot.gainFilter && key == slot.gainKey) {
+        return;
+    }
+    if (slot.gainFilter) {
+        slot.playlist->detach(*slot.gainFilter);
+        Retired retired;
+        retired.since = std::chrono::steady_clock::now();
+        retired.filters.push_back(std::move(slot.gainFilter));
+        m_retired.push_back(std::move(retired));
+    }
+    slot.gainFilter = makeGainFilter(m_profile, settings);
+    slot.playlist->attach(*slot.gainFilter);
+    slot.gainKey = key;
 }
 
 std::shared_ptr<Mlt::Producer> TimelineProjection::colorProducer(const Color &color)
@@ -177,32 +339,227 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::colorProducer(const Color &co
     return producer;
 }
 
-std::vector<TimelineProjection::Entry> TimelineProjection::entriesFor(TrackSlot &slot, const Track &track,
-                                                                     const ProjectData &project)
+std::shared_ptr<Mlt::Producer> TimelineProjection::textProducer(const TextClipData &text)
+{
+    const QByteArray key = textKey(text);
+    if (auto existing = m_texts.value(key)) {
+        return existing;
+    }
+    std::shared_ptr<Mlt::Producer> producer = makeTextProducer(m_profile, staticText(text));
+    m_texts.insert(key, producer);
+    return producer;
+}
+
+std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::renderOf(const Clip &clip, const Track &track,
+                                                                                const ProjectData &project, const Media *media,
+                                                                                bool mainTrack, int in, std::int64_t length)
+{
+    Q_UNUSED(track);
+    auto render = std::make_shared<ClipRender>();
+    const bool visual = !(media && media->kind == MediaKind::Audio) &&
+                        !(clip.media() && clip.media()->streams == Streams::AudioOnly);
+    if (visual) {
+        for (const Effect &effect : clip.effects) {
+            if (!effect.enabled) {
+                continue;
+            }
+            AdjustSettings adjust;
+            adjust.intensity = numberOf(effect.intensity, 1.0);
+            if (effect.type == u"vedit.filter"_s) {
+                const fx::FilterPreset *preset =
+                    effect.preset && effect.preset->pack == QLatin1StringView(fx::Library::kCorePack)
+                        ? fx::Library::core().filter(effect.preset->id)
+                        : nullptr;
+                if (!preset) {
+                    m_warnings << u"clip %1: filter %2 is not installed"_s.arg(clip.id.toString(),
+                                                                              effect.preset ? effect.preset->id : QString());
+                    continue;
+                }
+                adjust.look = preset->look;
+                adjust.vignette = preset->vignette;
+                adjust.grain = preset->grain;
+                adjust.sharpness = preset->sharpness;
+            } else if (effect.type == u"vedit.adjust.basic"_s) {
+                QJsonObject look;
+                for (const auto &[name, param] : effect.params) {
+                    look.insert(name, numberOf(param, 0.0));
+                }
+                adjust.look = fx::Library::adjustFromJson(look);
+                adjust.vignette = look.value(u"vignette"_s).toDouble();
+                adjust.grain = look.value(u"grain"_s).toDouble();
+                adjust.sharpness = look.value(u"sharpness"_s).toDouble();
+            } else {
+                m_warnings << u"clip %1: effect %2 is rendered from a later phase"_s.arg(clip.id.toString(), effect.type);
+                continue;
+            }
+            render->adjusts.push_back(adjust);
+        }
+        TransformSettings transform;
+        if (media) {
+            displaySize(*media, transform.sourceWidth, transform.sourceHeight);
+            transform.fit = clip.transform.fit;
+        } else {
+            // Text and colour clips are canvas-sized layers.
+            transform.sourceWidth = m_profile.width();
+            transform.sourceHeight = m_profile.height();
+            transform.fit = FitMode::Stretch;
+        }
+        const Vec2 position = vectorOf(clip.transform.position, {0, 0});
+        const Vec2 scale = vectorOf(clip.transform.scale, {1, 1});
+        transform.x = position.x;
+        transform.y = position.y;
+        transform.scaleX = scale.x;
+        transform.scaleY = clip.transform.uniformScale ? scale.x : scale.y;
+        transform.rotation = numberOf(clip.transform.rotation, 0.0);
+        transform.flipH = clip.transform.flipH;
+        transform.flipV = clip.transform.flipV;
+        transform.cropLeft = std::clamp(numberOf(clip.transform.crop.left, 0.0), 0.0, 1.0);
+        transform.cropTop = std::clamp(numberOf(clip.transform.crop.top, 0.0), 0.0, 1.0);
+        transform.cropRight = std::clamp(numberOf(clip.transform.crop.right, 0.0), 0.0, 1.0);
+        transform.cropBottom = std::clamp(numberOf(clip.transform.crop.bottom, 0.0), 0.0, 1.0);
+        transform.opacity = std::clamp(numberOf(clip.opacity, 1.0), 0.0, 1.0);
+        if (mainTrack) {
+            const Sequence *sequence = sequenceOf(project, m_sequenceId);
+            std::optional<CanvasBackground> background = clip.background;
+            if (!background && sequence) {
+                background = sequence->defaultBackground;
+            }
+            // Plain black is already the canvas: no work.
+            if (background && !(background->type == BackgroundType::Color && background->color == Color{0, 0, 0, 255})) {
+                if (background->type == BackgroundType::Image || background->type == BackgroundType::Pattern) {
+                    m_warnings << u"clip %1: image and pattern backgrounds are rendered from a later phase"_s.arg(clip.id.toString());
+                } else {
+                    transform.background = background;
+                }
+            }
+        }
+        if (!(media == nullptr && transform.isIdentityLayer())) {
+            render->transform = transform;
+        }
+    }
+    if (media && media->info.audio && media->kind != MediaKind::Image) {
+        const MediaClipData *data = clip.media();
+        GainSettings gain;
+        gain.gainDb = numberOf(data->audio.gainDb, 0.0);
+        gain.muted = data->audio.muted || data->streams == Streams::VideoOnly;
+        gain.pan = std::clamp(numberOf(data->audio.pan, 0.0), -1.0, 1.0);
+        gain.fadeInFrames = data->audio.fadeIn ? static_cast<int>(toFrames(*data->audio.fadeIn)) : 0;
+        gain.fadeOutFrames = data->audio.fadeOut ? static_cast<int>(toFrames(*data->audio.fadeOut)) : 0;
+        gain.length = static_cast<int>(length);
+        gain.firstFrame = in;
+        if (!gain.isNeutral()) {
+            render->gain = gain;
+        }
+    }
+    if (clipIsAnimated(clip)) {
+        m_warnings << u"clip %1: keyframe animations are rendered from Phase 3"_s.arg(clip.id.toString());
+    }
+    QByteArray key;
+    QDataStream stream(&key, QIODevice::WriteOnly);
+    for (const AdjustSettings &adjust : render->adjusts) {
+        stream << adjust.key();
+    }
+    stream << render->transform.has_value() << (render->transform ? render->transform->key() : QByteArray());
+    stream << render->gain.has_value() << (render->gain ? render->gain->key() : QByteArray());
+    render->key = key;
+    return render;
+}
+
+std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &modelClip, const Track &track,
+                                                                    const ProjectData &project, bool mainTrack,
+                                                                    QSet<MediaId> &usedMedia)
+{
+    const Clip &clip = previewed(modelClip);
+    Placed placed;
+    placed.clip = &clip;
+    placed.start = toFrames(clip.start);
+    placed.length = toFrames(clip.end()) - placed.start;
+    if (placed.length <= 0) {
+        return std::nullopt; // shorter than one frame at the output rate
+    }
+    if (!clip.enabled) {
+        return placed;
+    }
+    if (const MediaClipData *data = clip.media()) {
+        usedMedia.insert(data->mediaId);
+        const Media *media = project.findMedia(data->mediaId);
+        if (!media) {
+            return placed;
+        }
+        const bool image = media->kind == MediaKind::Image;
+        if (data->curve) {
+            m_warnings << u"clip %1: speed curves are rendered from a later phase"_s.arg(clip.id.toString());
+        }
+        const double speed = image || data->curve ? 1.0 : data->speed;
+        const double signedSpeed = data->reversed && !image ? -speed : speed;
+        placed.producer = producerFor(*media, signedSpeed, data->preservePitch);
+        if (!placed.producer) {
+            if (!m_cache.error(media->id).isEmpty()) {
+                m_warnings << m_cache.error(media->id);
+            }
+            return placed;
+        }
+        const std::int64_t sourceIn = toFrames(data->sourceIn);
+        if (image) {
+            placed.in = 0;
+        } else if (!data->reversed) {
+            placed.in = static_cast<int>(std::llround(static_cast<double>(sourceIn) / speed));
+        } else {
+            // Backwards: the clip plays [sourceIn, sourceIn + length × speed) from its end (phase2_probe: frame n of
+            // "timewarp:-s" is source frame length − 1 − n·s).
+            const std::int64_t warpedLength = placed.producer->get_length();
+            placed.in = static_cast<int>(std::max<std::int64_t>(
+                0, warpedLength - std::llround(static_cast<double>(sourceIn) / speed) - placed.length));
+        }
+        placed.render = renderOf(clip, track, project, media, mainTrack, placed.in, placed.length);
+        return placed;
+    }
+    if (const auto *color = std::get_if<ColorClipData>(&clip.payload)) {
+        const ParamValue value = valueOf(color->color);
+        placed.producer = colorProducer(std::holds_alternative<Color>(value) ? std::get<Color>(value) : Color{});
+        placed.render = renderOf(clip, track, project, nullptr, mainTrack, 0, placed.length);
+        return placed;
+    }
+    if (const TextClipData *text = clip.text()) {
+        placed.producer = textProducer(*text);
+        placed.render = renderOf(clip, track, project, nullptr, false, 0, placed.length);
+        return placed;
+    }
+    m_warnings << u"clip %1: this kind of clip is rendered from a later phase"_s.arg(clip.id.toString());
+    return placed;
+}
+
+std::vector<TimelineProjection::Entry> TimelineProjection::clipEntries(TrackSlot &slot, const Track &track,
+                                                                       const ProjectData &project)
 {
     std::vector<Entry> entries;
     slot.media.clear();
+    const Sequence *sequence = sequenceOf(project, m_sequenceId);
+    const bool mainTrack = sequence && !sequence->visualTracks.empty() && sequence->visualTracks.front().id == track.id;
     const auto addBlank = [&entries](std::int64_t length) {
         // Adjacent blanks (a gap next to a disabled clip) are one entry.
         if (!entries.empty() && !entries.back().producer) {
             entries.back().out += static_cast<int>(length);
         } else {
-            entries.push_back(Entry{nullptr, 0, static_cast<int>(length - 1), false});
+            entries.push_back(Entry{nullptr, 0, static_cast<int>(length - 1), nullptr, {}});
         }
     };
     std::int64_t cursor = 0;
-    for (const Clip &clip : track.clips) {
-        // Both edges are converted (not start and duration) so that adjacent clips stay adjacent.
-        std::int64_t start = toFrames(clip.start);
-        std::int64_t length = toFrames(clip.end()) - start;
-        if (length <= 0) {
-            continue; // shorter than one frame at the output rate
+    for (const Clip &modelClip : track.clips) {
+        std::optional<Placed> placed = place(modelClip, track, project, mainTrack, slot.media);
+        if (!placed) {
+            continue;
         }
+        std::int64_t start = placed->start;
+        std::int64_t length = placed->length;
+        int in = placed->in;
         if (start < cursor) {
-            // Overlap transitions are rendered from Phase 2: until then the overlapping head is skipped.
-            length -= cursor - start;
+            // Overlapping clips are not allowed on a track except through transitions (rendered on their layer).
+            const std::int64_t skip = cursor - start;
+            length -= skip;
             start = cursor;
-            m_warnings << u"clip %1: overlap transition not rendered yet"_s.arg(clip.id.toString());
+            in += static_cast<int>(skip);
+            m_warnings << u"clip %1: overlaps the previous clip"_s.arg(modelClip.id.toString());
             if (length <= 0) {
                 continue;
             }
@@ -211,37 +568,215 @@ std::vector<TimelineProjection::Entry> TimelineProjection::entriesFor(TrackSlot 
             addBlank(start - cursor);
         }
         cursor = start + length;
-        const int out = static_cast<int>(length - 1);
-        if (!clip.enabled) {
+        if (!placed->producer) {
             addBlank(length);
             continue;
         }
-        if (const MediaClipData *data = clip.media()) {
-            slot.media.insert(data->mediaId);
-            const Media *media = project.findMedia(data->mediaId);
-            std::shared_ptr<Mlt::Producer> producer = media ? producerFor(*media) : nullptr;
-            if (!producer) {
-                if (media && !m_cache.error(media->id).isEmpty()) {
-                    m_warnings << m_cache.error(media->id);
-                }
-                addBlank(length);
-                continue;
-            }
-            if (data->speed != 1.0 || data->curve || data->reversed) {
-                m_warnings << u"clip %1: speed and reverse are rendered from Phase 2"_s.arg(clip.id.toString());
-            }
-            const int in = media->kind == MediaKind::Image ? 0 : static_cast<int>(toFrames(data->sourceIn));
-            entries.push_back(Entry{producer, in, in + out, data->streams == Streams::VideoOnly && media->info.audio.has_value()});
-        } else if (const auto *color = std::get_if<ColorClipData>(&clip.payload)) {
-            const ParamValue value = color->color.staticValue();
-            const Color c = std::holds_alternative<Color>(value) ? std::get<Color>(value) : Color{};
-            entries.push_back(Entry{colorProducer(c), 0, out, false});
-        } else {
-            m_warnings << u"clip %1: this kind of clip is rendered from a later phase"_s.arg(clip.id.toString());
-            addBlank(length);
-        }
+        const QByteArray key = placed->render ? placed->render->key : QByteArray();
+        entries.push_back(Entry{placed->producer, in, in + static_cast<int>(length) - 1, placed->render, key});
     }
     return entries;
+}
+
+std::shared_ptr<Mlt::Producer> TimelineProjection::transitionProducer(TrackSlot &slot, const Transition &transition,
+                                                                      const Placed &from, const Placed &to,
+                                                                      std::int64_t windowStart, std::int64_t length)
+{
+    const fx::TransitionPreset *preset = transition.type.pack == QLatin1StringView(fx::Library::kCorePack)
+                                             ? fx::Library::core().transition(transition.type.id)
+                                             : nullptr;
+    if (!preset) {
+        m_warnings << u"transition %1 is not installed"_s.arg(transition.type.id);
+        return nullptr;
+    }
+    TransitionSettings settings;
+    settings.kind = preset->kernel;
+    QString easing = preset->params.value(u"easing"_s).toString();
+    if (const auto it = transition.params.find(u"easing"_s); it != transition.params.end()) {
+        const ParamValue value = valueOf(it->second);
+        if (std::holds_alternative<QString>(value)) {
+            easing = std::get<QString>(value);
+        }
+    }
+    settings.easing = easingOf(easing);
+    settings.softness = preset->params.value(u"softness"_s).toDouble(0.02);
+    if (const auto it = transition.params.find(u"softness"_s); it != transition.params.end()) {
+        settings.softness = numberOf(it->second, settings.softness);
+    }
+
+    // The frames each side shows during [windowStart, windowStart + length): its own frames beyond the cut when the
+    // material exists, else its edge frame frozen (FILE_FORMAT §5.8 fillMissing "freeze").
+    struct Side
+    {
+        const Placed *placed;
+        std::int64_t first;  // producer frame for windowStart (may be outside the material)
+    };
+    const Side sides[2] = {{&from, from.in + (windowStart - from.start)}, {&to, to.in + (windowStart - to.start)}};
+    QByteArray key;
+    QDataStream stream(&key, QIODevice::WriteOnly);
+    stream << int(settings.kind) << int(settings.easing) << settings.softness << qint64(length);
+    for (const Side &side : sides) {
+        stream << reinterpret_cast<quintptr>(side.placed->producer.get()) << qint64(side.first)
+               << (side.placed->render ? side.placed->render->key : QByteArray());
+    }
+    if (auto existing = slot.transitions.value(key)) {
+        return existing;
+    }
+
+    struct Parts
+    {
+        std::unique_ptr<Mlt::Tractor> tractor;
+        std::unique_ptr<Mlt::Playlist> a;
+        std::unique_ptr<Mlt::Playlist> b;
+        std::unique_ptr<Mlt::Transition> transition;
+    };
+    auto parts = std::make_shared<Parts>();
+    parts->tractor = std::make_unique<Mlt::Tractor>(m_profile);
+    parts->a = std::make_unique<Mlt::Playlist>(m_profile);
+    parts->b = std::make_unique<Mlt::Playlist>(m_profile);
+    Mlt::Playlist *playlists[2] = {parts->a.get(), parts->b.get()};
+    for (int i = 0; i < 2; ++i) {
+        const Placed &placed = *sides[i].placed;
+        Mlt::Playlist &playlist = *playlists[i];
+        if (!placed.producer) {
+            playlist.blank(static_cast<int>(length - 1));
+            continue;
+        }
+        const std::int64_t available = placed.producer->get_length();
+        std::int64_t first = sides[i].first;
+        std::int64_t last = first + length - 1;
+        const auto appendCut = [&](int in, int out, int repeat) {
+            playlist.append(*placed.producer, in, out);
+            if (repeat > 1) {
+                playlist.repeat(playlist.count() - 1, repeat);
+            }
+            if (placed.render) {
+                std::unique_ptr<Mlt::Producer> cut(playlist.get_clip(playlist.count() - 1));
+                attachFilters(*cut, *placed.render, false);
+            }
+        };
+        if (first < 0) {
+            appendCut(0, 0, static_cast<int>(-first)); // before the material: the first frame frozen
+            first = 0;
+        }
+        const std::int64_t end = std::min(last, available - 1);
+        if (end >= first) {
+            appendCut(static_cast<int>(first), static_cast<int>(end), 1);
+        }
+        if (last > end) {
+            const std::int64_t missing = last - std::max(end, first - 1);
+            appendCut(static_cast<int>(available - 1), static_cast<int>(available - 1), static_cast<int>(missing));
+        }
+    }
+    parts->tractor->set_track(*parts->a, 0);
+    parts->tractor->set_track(*parts->b, 1);
+    parts->transition = makeTransition(m_profile, settings);
+    parts->transition->set_in_and_out(0, static_cast<int>(length - 1));
+    parts->tractor->plant_transition(*parts->transition, 0, 1);
+    // Aliasing: the producer pointer keeps every part of the small graph alive.
+    std::shared_ptr<Mlt::Producer> producer(parts, parts->tractor.get());
+    slot.transitions.insert(key, producer);
+    return producer;
+}
+
+std::vector<TimelineProjection::Entry> TimelineProjection::transitionEntries(TrackSlot &slot, const Track &track,
+                                                                             const ProjectData &project)
+{
+    std::vector<Entry> entries;
+    slot.media.clear();
+    std::vector<Transition> transitions = track.transitions;
+    if (m_preview.transition && m_preview.transitionTrack == track.id) {
+        const auto same = std::find_if(transitions.begin(), transitions.end(), [&](const Transition &t) {
+            return t.from == m_preview.transition->from && t.to == m_preview.transition->to;
+        });
+        if (same != transitions.end()) {
+            *same = *m_preview.transition;
+        } else {
+            transitions.push_back(*m_preview.transition);
+        }
+    }
+    const Sequence *sequence = sequenceOf(project, m_sequenceId);
+    const bool mainTrack = sequence && !sequence->visualTracks.empty() && sequence->visualTracks.front().id == track.id;
+    struct Window
+    {
+        std::int64_t start;
+        std::int64_t length;
+        std::shared_ptr<Mlt::Producer> producer;
+    };
+    std::vector<Window> windows;
+    QHash<QByteArray, std::shared_ptr<Mlt::Producer>> used;
+    for (const Transition &transition : transitions) {
+        const Clip *from = track.findClip(transition.from);
+        const Clip *to = track.findClip(transition.to);
+        if (!from || !to || !(previewed(*from).end() == previewed(*to).start)) {
+            continue;
+        }
+        const std::optional<Placed> a = place(*from, track, project, mainTrack, slot.media);
+        const std::optional<Placed> b = place(*to, track, project, mainTrack, slot.media);
+        if (!a || !b) {
+            continue;
+        }
+        const std::int64_t cut = b->start;
+        const std::int64_t length = std::clamp<std::int64_t>(toFrames(transition.duration), 1, std::min(a->length, b->length));
+        const std::int64_t start = cut - length / 2;
+        std::shared_ptr<Mlt::Producer> producer = transitionProducer(slot, transition, *a, *b, start, length);
+        if (producer) {
+            windows.push_back({start, length, producer});
+        }
+    }
+    std::sort(windows.begin(), windows.end(), [](const Window &x, const Window &y) { return x.start < y.start; });
+    std::int64_t cursor = 0;
+    for (const Window &window : windows) {
+        if (window.start < cursor) {
+            m_warnings << u"two transitions overlap: the second is skipped"_s;
+            continue;
+        }
+        if (window.start > cursor) {
+            entries.push_back(Entry{nullptr, 0, static_cast<int>(window.start - cursor - 1), nullptr, {}});
+        }
+        QByteArray key = QByteArray::number(reinterpret_cast<quintptr>(window.producer.get()));
+        entries.push_back(Entry{window.producer, 0, static_cast<int>(window.length - 1), nullptr, key});
+        cursor = window.start + window.length;
+        for (auto it = slot.transitions.constBegin(); it != slot.transitions.constEnd(); ++it) {
+            if (it.value() == window.producer) {
+                used.insert(it.key(), it.value());
+            }
+        }
+    }
+    slot.transitions = used; // tractors no longer used are dropped (the playlist and retired cuts keep them alive)
+    return entries;
+}
+
+void TimelineProjection::attachFilters(Mlt::Producer &cut, const ClipRender &render, bool withAudio)
+{
+    for (const AdjustSettings &adjust : render.adjusts) {
+        auto filter = makeAdjustFilter(m_profile, adjust);
+        cut.attach(*filter);
+    }
+    if (render.transform) {
+        auto filter = makeTransformFilter(m_profile, *render.transform);
+        cut.attach(*filter);
+    }
+    if (withAudio && render.gain) {
+        auto filter = makeGainFilter(m_profile, *render.gain);
+        cut.attach(*filter);
+    }
+}
+
+void TimelineProjection::updateBackground()
+{
+    int duration = 1;
+    for (const TrackSlot &slot : m_tracks) {
+        duration = std::max(duration, slot.playlist->get_playtime());
+    }
+    m_duration = duration;
+    if (duration == m_backgroundLength) {
+        return;
+    }
+    m_backgroundLength = duration;
+    retireEntries(*m_background);
+    m_background->clear();
+    m_background->append(*m_black, 0, duration - 1);
 }
 
 void TimelineProjection::patch(TrackSlot &slot, std::vector<Entry> desired)
@@ -286,30 +821,12 @@ void TimelineProjection::patch(TrackSlot &slot, std::vector<Entry> desired)
         } else {
             playlist.insert(*entry.producer, where, entry.in, entry.out);
         }
-        if (entry.silent) {
+        if (entry.render) {
             std::unique_ptr<Mlt::Producer> cut(playlist.get_clip(where));
-            Mlt::Filter silence(m_profile, "volume");
-            silence.set("gain", 0.0);
-            cut->attach(silence);
+            attachFilters(*cut, *entry.render, slot.kind == SlotKind::Clips);
         }
     }
     slot.entries = std::move(desired);
-}
-
-void TimelineProjection::updateBackground()
-{
-    int duration = 1;
-    for (const TrackSlot &slot : m_tracks) {
-        duration = std::max(duration, slot.playlist->get_playtime());
-    }
-    m_duration = duration;
-    if (duration == m_backgroundLength) {
-        return;
-    }
-    m_backgroundLength = duration;
-    retireEntries(*m_background);
-    m_background->clear();
-    m_background->append(*m_black, 0, duration - 1);
 }
 
 void TimelineProjection::retireEntries(Mlt::Playlist &playlist)
@@ -339,18 +856,12 @@ bool TimelineProjection::needsRebuild(const ProjectData &project, const ChangeSe
     if (!m_tractor || !sequence || changes.settingsChanged || changes.sequences.contains(m_sequenceId)) {
         return true;
     }
-    std::vector<TrackId> ids;
-    for (const Track &track : sequence->visualTracks) {
-        ids.push_back(track.id);
-    }
-    for (const Track &track : sequence->audioTracks) {
-        ids.push_back(track.id);
-    }
-    if (ids.size() != m_tracks.size()) {
+    const std::vector<StructureSlot> structure = structureOf(*sequence);
+    if (structure.size() != m_tracks.size()) {
         return true;
     }
-    for (size_t i = 0; i < ids.size(); ++i) {
-        if (ids[i] != m_tracks[i].id) {
+    for (size_t i = 0; i < structure.size(); ++i) {
+        if (structure[i].id != m_tracks[i].id || structure[i].kind != m_tracks[i].kind) {
             return true;
         }
     }
@@ -376,9 +887,11 @@ bool TimelineProjection::update(const ProjectData &project, const ChangeSet &cha
         for (const MediaId &media : changes.media) {
             usesChangedMedia = usesChangedMedia || slot.media.contains(media);
         }
-        if (changes.tracks.contains(slot.id) || usesChangedMedia) {
-            fillTrack(slot, *track, project, anySolo);
-        } else {
+        const bool previewed = (m_preview.clip && track->findClip(m_preview.clip->id)) ||
+                               (m_preview.transition && m_preview.transitionTrack == slot.id);
+        if (changes.tracks.contains(slot.id) || usesChangedMedia || previewed) {
+            fillSlot(slot, *track, project, anySolo);
+        } else if (slot.kind == SlotKind::Clips) {
             // Mute/solo of another track may change this one's audio.
             slot.playlist->set("hide", hideFlags(*track, slot.audio, anySolo));
         }
@@ -392,6 +905,32 @@ void TimelineProjection::mediaReady(const ProjectData &project, const MediaId &m
 {
     ChangeSet changes;
     changes.media.insert(mediaId);
+    update(project, changes);
+}
+
+void TimelineProjection::setPreview(const ProjectData &project, Preview preview)
+{
+    if (!m_tractor) {
+        m_preview = std::move(preview);
+        return;
+    }
+    // The tracks of the old and of the new preview are re-projected.
+    ChangeSet changes;
+    const auto mark = [&](const Preview &p) {
+        if (p.clip) {
+            for (const TrackSlot &slot : m_tracks) {
+                if (const Track *track = project.findTrack(slot.id); track && track->findClip(p.clip->id)) {
+                    changes.tracks.insert(slot.id);
+                }
+            }
+        }
+        if (p.transition && p.transitionTrack) {
+            changes.tracks.insert(*p.transitionTrack);
+        }
+    };
+    mark(m_preview);
+    m_preview = std::move(preview);
+    mark(m_preview);
     update(project, changes);
 }
 

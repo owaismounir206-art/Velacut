@@ -10,7 +10,6 @@
 #include <QCryptographicHash>
 #include <QDataStream>
 #include <QIODevice>
-#include <QMutex>
 #include <QtGlobal>
 
 #include <mlt++/Mlt.h>
@@ -378,11 +377,11 @@ mlt_frame transitionProcess(mlt_transition transition, mlt_frame aFrame, mlt_fra
 
 // ---- vedit.text -----------------------------------------------------------------------------------------------
 
+// The layer is drawn once, by makeTextProducer() on the calling thread (the projection's): fonts are never used in
+// MLT's threads. Besides the cost, Qt's per-thread FreeType data leaks when such a thread exits.
 struct TextState
 {
-    TextClipData text;
-    QMutex mutex;
-    QImage cached; // at the last requested size
+    QImage layer; // at the profile size
 };
 
 int textGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
@@ -392,17 +391,10 @@ int textGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int
     int w = *width;
     int h = *height;
     profileSize(MLT_PRODUCER_SERVICE(producer), w, h);
-    QImage layer;
-    if (state) {
-        QMutexLocker lock(&state->mutex);
-        if (state->cached.size() != QSize(w, h)) {
-            state->cached = TextRenderer::render(state->text, QSize(w, h));
-        }
-        layer = state->cached;
-    }
+    const QImage layer = state ? state->layer : QImage();
     const int size = w * h * 4;
     auto *buffer = static_cast<uint8_t *>(mlt_pool_alloc(size));
-    if (layer.isNull()) {
+    if (layer.size() != QSize(w, h)) {
         std::memset(buffer, 0, static_cast<size_t>(size));
     } else {
         for (int y = 0; y < h; ++y) {
@@ -566,7 +558,7 @@ std::unique_ptr<Mlt::Producer> makeTextProducer(Mlt::Profile &profile, const Tex
 {
     auto producer = std::make_unique<Mlt::Producer>(profile, "vedit.text");
     auto *state = new TextState;
-    state->text = text;
+    state->layer = TextRenderer::render(text, QSize(profile.width(), profile.height()));
     producer->set(kSettings, state, 0, [](void *p) { delete static_cast<TextState *>(p); });
     return producer;
 }

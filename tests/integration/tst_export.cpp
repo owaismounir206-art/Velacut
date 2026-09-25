@@ -216,6 +216,44 @@ private slots:
         QVERIFY(QDir(paths::cacheDir() + u"/render"_s).entryList(QDir::Files).isEmpty());
     }
 
+    // Phase 2 content through the separate process: text (QPainter on the offscreen platform), a filter, a transition.
+    void exportsTextFiltersAndTransitions()
+    {
+        ProjectData data = editedProject();
+        Session session(data);
+        TextClipData text;
+        text.text = u"HELLO"_s;
+        text.style.size = Param(0.2);
+        text.style.color = Param(Color{255, 255, 0, 255});
+        text.style.stroke = TextStroke{Param(Color{0, 0, 0, 255}), 0.1};
+        QVERIFY(session.apply(session.editor().insertText(frames(0), text, frames(60))));
+        Effect filter;
+        filter.id = EffectId::create();
+        filter.type = u"vedit.filter"_s;
+        filter.preset = AssetRef{u"vedit.core"_s, u"filters/bw"_s, 1};
+        const ClipId second = session.mainTrack().clips[1].id;
+        QVERIFY(session.apply(session.editor().updateClips({second}, [&](Clip &c) { c.effects.push_back(filter); }, u"bw"_s)));
+        QVERIFY(session.apply(session.editor().addTransition(session.mainTrack().clips[0].id,
+                                                             AssetRef{u"vedit.core"_s, u"transitions/dissolve"_s, 1}, frames(10))));
+        data = session.data();
+        const QString path = outputPath(u"phase2.mp4"_s);
+        RenderJob job;
+        job.setExecutable(QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        QSignalSpy finished(&job, &RenderJob::finished);
+        QSignalSpy failed(&job, &RenderJob::failed);
+        QVERIFY(job.start(data, data.mainSequenceId, settingsFor(data, path)));
+        QVERIFY2(finished.wait(60000), failed.isEmpty() ? "timeout" : qPrintable(failed.first().at(1).toString()));
+        QVERIFY(finished.first().at(1).toStringList().isEmpty()); // no warnings: everything rendered
+        auto profile = makeProfile(data, data.mainSequenceId);
+        MediaProducerCache cache(*profile);
+        TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+        projection.build(data, data.mainSequenceId);
+        for (int frame : {20, 88, 100}) { // text over clip 1, inside the transition, the black and white clip
+            const double difference = meanDifference(decodeFrame(path, frame, m_dir.path()), projection.renderFrame(frame));
+            QVERIFY2(difference >= 0 && difference < 6.0, qPrintable(u"frame %1: %2"_s.arg(frame).arg(difference)));
+        }
+    }
+
     void processCancelLeavesNoFiles()
     {
         // Long enough to be cancelled while running: the same clips at a large size.
@@ -278,5 +316,5 @@ private slots:
     // Mlt::Factory::close() unloads the modules that reference them).
 };
 
-QTEST_GUILESS_MAIN(TestExport)
+QTEST_MAIN(TestExport) // the projection of texts draws with QPainter
 #include "tst_export.moc"

@@ -6,9 +6,13 @@
 #include <QFileInfo>
 #include <QLoggingCategory>
 
+#include "engine/analysis/ReverseProxy.h"
+
 #include <mlt++/Mlt.h>
 
 Q_LOGGING_CATEGORY(lcMedia, "vedit.engine.media")
+
+using namespace Qt::StringLiterals;
 
 namespace vedit::engine {
 
@@ -25,9 +29,21 @@ MediaProducerCache::~MediaProducerCache()
     clear();
 }
 
-std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media)
+QString MediaProducerCache::keyOf(const MediaId &mediaId, double speed, bool preservePitch)
 {
-    if (auto existing = cached(media.id)) {
+    if (speed == 1.0) {
+        return mediaId.toString();
+    }
+    return mediaId.toString() + u'@' + QString::number(speed, 'g', 12) + (preservePitch ? u"p"_s : u""_s);
+}
+
+std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media, double speed, bool preservePitch)
+{
+    if (media.kind == MediaKind::Image) {
+        speed = 1.0; // a still has no speed
+    }
+    const QString key = keyOf(media.id, speed, preservePitch);
+    if (auto existing = cached(media.id, speed, preservePitch)) {
         return existing;
     }
     std::shared_ptr<Mlt::Producer> producer;
@@ -37,7 +53,16 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media)
     } else {
         // The "loader" producer adds MLT's normalizers: the image keeps its aspect ratio inside the profile with
         // transparent borders, and the rotation stored in the file is applied (verified by projection_probe).
-        const QByteArray resource = QFile::encodeName(media.path);
+        QByteArray resource = QFile::encodeName(media.path);
+        double warp = speed;
+        if (speed < 0 && m_useReverseProxies && reverseProxyReady(media)) {
+            // Already backwards, every frame a keyframe: read forwards (same frame numbering as timewarp:-1).
+            resource = QFile::encodeName(reverseProxyPath(media));
+            warp = -speed;
+        }
+        if (warp != 1.0) {
+            resource = "timewarp:" + QByteArray::number(warp, 'g', 12) + ':' + resource;
+        }
         producer = std::make_shared<Mlt::Producer>(m_profile, resource.constData());
         if (!producer->is_valid()) {
             producer.reset();
@@ -47,11 +72,13 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media)
             // Stills: any duration (the default length of MLT's image producer is only 10 minutes at 25 fps).
             producer->set("length", 0x7fffffff);
             producer->set("out", 0x7ffffffe);
+        } else if (speed != 1.0) {
+            producer->set("warp_pitch", preservePitch ? 1 : 0);
         }
     }
     QMutexLocker lock(&m_mutex);
     if (producer) {
-        m_producers.insert(media.id, producer);
+        m_producers.insert(key, producer);
         m_errors.remove(media.id);
     } else {
         qCWarning(lcMedia) << "cannot open" << media.path << error;
@@ -60,25 +87,26 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media)
     return producer;
 }
 
-std::shared_ptr<Mlt::Producer> MediaProducerCache::producerOrRequest(const Media &media)
+std::shared_ptr<Mlt::Producer> MediaProducerCache::producerOrRequest(const Media &media, double speed, bool preservePitch)
 {
+    const QString key = keyOf(media.id, media.kind == MediaKind::Image ? 1.0 : speed, preservePitch);
     {
         QMutexLocker lock(&m_mutex);
-        if (auto it = m_producers.constFind(media.id); it != m_producers.constEnd()) {
+        if (auto it = m_producers.constFind(key); it != m_producers.constEnd()) {
             return *it;
         }
-        if (m_pending.contains(media.id) || m_errors.contains(media.id)) {
+        if (m_pending.contains(key) || m_errors.contains(media.id)) {
             return nullptr;
         }
-        m_pending.insert(media.id);
+        m_pending.insert(key);
     }
-    m_pool.start([this, media] {
-        open(media);
+    m_pool.start([this, media, speed, preservePitch, key] {
+        open(media, speed, preservePitch);
         // Delivered in the owner's thread; dropped by Qt if the cache is destroyed first.
-        QMetaObject::invokeMethod(this, [this, id = media.id] {
+        QMetaObject::invokeMethod(this, [this, key, id = media.id] {
             {
                 QMutexLocker lock(&m_mutex);
-                m_pending.remove(id);
+                m_pending.remove(key);
             }
             emit ready(id);
         });
@@ -86,16 +114,25 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::producerOrRequest(const Media
     return nullptr;
 }
 
-std::shared_ptr<Mlt::Producer> MediaProducerCache::cached(const MediaId &mediaId) const
+std::shared_ptr<Mlt::Producer> MediaProducerCache::cached(const MediaId &mediaId, double speed, bool preservePitch) const
 {
     QMutexLocker lock(&m_mutex);
-    return m_producers.value(mediaId);
+    return m_producers.value(keyOf(mediaId, speed, preservePitch));
 }
 
 QString MediaProducerCache::error(const MediaId &mediaId) const
 {
     QMutexLocker lock(&m_mutex);
     return m_errors.value(mediaId);
+}
+
+void MediaProducerCache::forget(const MediaId &mediaId)
+{
+    QMutexLocker lock(&m_mutex);
+    const QString prefix = mediaId.toString();
+    for (auto it = m_producers.begin(); it != m_producers.end();) {
+        it = it.key().startsWith(prefix) ? m_producers.erase(it) : std::next(it);
+    }
 }
 
 void MediaProducerCache::clear()

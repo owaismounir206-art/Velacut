@@ -37,6 +37,12 @@ public:
 
     static Result render(const ProjectData &project, const SequenceId &sequenceId, const ExportSettings &settings,
                          const Progress &progress, const std::atomic<bool> &cancel);
+
+    // (vedit-render --backwards) The media file played backwards, for the preview of reversed clips (reading backwards a long-GOP file costs
+    // ~12× more than forwards: 119 vs 10 ms per 1080p frame, measured): every frame a keyframe, at most 720 p high,
+    // audio reversed too. Written next to `outputPath` and renamed when complete.
+    static Result renderReversed(const QString &inputPath, const QString &outputPath, const Progress &progress,
+                                 const std::atomic<bool> &cancel);
 };
 
 } // namespace vedit::engine

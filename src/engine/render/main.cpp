@@ -9,6 +9,9 @@
 //   {"event":"done","output":"…"}   {"event":"error","code":"…","detail":"…"}   {"event":"cancelled"}
 // Exit code 0 = done, 1 = error, 2 = cancelled. SIGTERM/SIGINT cancel cleanly (no partial file is left).
 //
+//   vedit-render --backwards file --output copy.mp4
+// The file played backwards for the preview of reversed clips; progress lines as for an export.
+//
 //   vedit-render --probe file…
 // Reads the metadata of media files for the import (D-07: a file that crashes the demuxer is rejected instead of
 // crashing the editor). For each file: {"event":"probing","path":"…"} then {"event":"media","path":"…","media":{…}}
@@ -19,7 +22,7 @@
 #include "engine/render/Renderer.h"
 
 #include <QCommandLineParser>
-#include <QCoreApplication>
+#include <QGuiApplication>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -100,6 +103,31 @@ int run(const QString &jobPath)
     return fail(result.error, result.detail);
 }
 
+int reverse(const QString &input, const QString &output)
+{
+    int lastReported = -1;
+    const Renderer::Result result = Renderer::renderReversed(
+        input, output,
+        [&lastReported](int frame, int total) {
+            if (frame != lastReported) {
+                lastReported = frame;
+                emitEvent({{u"event"_s, u"progress"_s}, {u"frame"_s, frame}, {u"total"_s, total}});
+            }
+        },
+        s_cancel);
+    switch (result.status) {
+    case Renderer::Status::Done:
+        emitEvent({{u"event"_s, u"done"_s}, {u"output"_s, output}});
+        return 0;
+    case Renderer::Status::Cancelled:
+        emitEvent({{u"event"_s, u"cancelled"_s}});
+        return 2;
+    case Renderer::Status::Failed:
+        break;
+    }
+    return fail(result.error, result.detail);
+}
+
 int probe(const QStringList &paths)
 {
     for (const QString &path : paths) {
@@ -123,19 +151,33 @@ int main(int argc, char *argv[])
 {
     std::signal(SIGTERM, onTerminate);
     std::signal(SIGINT, onTerminate);
-    QCoreApplication app(argc, argv);
+    // Texts are drawn with QPainter, which needs a QGuiApplication: on the "offscreen" platform (no display).
+    if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM")) {
+        qputenv("QT_QPA_PLATFORM", "offscreen");
+    }
+    QGuiApplication app(argc, argv);
     QCoreApplication::setApplicationName(u"vedit-render"_s);
     QCommandLineParser parser;
     parser.setApplicationDescription(u"Exports a vedit project (used by vedit)."_s);
     parser.addHelpOption();
     const QCommandLineOption jobOption(u"job"_s, u"Export job (JSON)."_s, u"file"_s);
     const QCommandLineOption probeOption(u"probe"_s, u"Read the metadata of the media files given as arguments."_s);
+    // Not "--reverse": QGuiApplication takes "-reverse" (right-to-left layout) out of the arguments.
+    const QCommandLineOption reverseOption(u"backwards"_s, u"Write the given media file played backwards (preview proxy)."_s,
+                                           u"file"_s);
+    const QCommandLineOption outputOption(u"output"_s, u"Output file (with --reverse)."_s, u"file"_s);
     parser.addOption(jobOption);
     parser.addOption(probeOption);
+    parser.addOption(reverseOption);
+    parser.addOption(outputOption);
     parser.addPositionalArgument(u"files"_s, u"Media files (with --probe)."_s);
     parser.process(app);
     if (parser.isSet(probeOption)) {
         return probe(parser.positionalArguments());
+    }
+    if (parser.isSet(reverseOption)) {
+        MltRuntime::initializeAsync();
+        return reverse(parser.value(reverseOption), parser.value(outputOption));
     }
     if (!parser.isSet(jobOption)) {
         parser.showHelp(1);

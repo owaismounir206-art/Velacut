@@ -4,6 +4,7 @@
 #include "core/project/ChangeSet.h"
 #include "core/project/Id.h"
 #include "engine/playback/FrameSink.h"
+#include "engine/timeline/TimelineProjection.h"
 
 #include <QObject>
 #include <QPointer>
@@ -28,6 +29,7 @@ class Project;
 namespace vedit::engine {
 
 class MediaProducerCache;
+class ReverseProxyQueue;
 class TimelineProjection;
 
 // Plays a sequence of the live project in the preview (docs/ARCHITECTURE.md §5.3). The MLT graph is a projection
@@ -52,6 +54,9 @@ class TimelinePlayer : public QObject
     Q_PROPERTY(double volume READ volume WRITE setVolume NOTIFY volumeChanged FINAL)
     Q_PROPERTY(QString error READ error NOTIFY stateChanged FINAL)
     Q_PROPERTY(QStringList warnings READ warnings NOTIFY warningsChanged FINAL)
+    // A backwards copy of a reversed clip is being prepared (the clip plays, slowly, meanwhile).
+    Q_PROPERTY(bool preparingReverse READ preparingReverse NOTIFY reverseChanged FINAL)
+    Q_PROPERTY(double reverseProgress READ reverseProgress NOTIFY reverseChanged FINAL)
 
 public:
     explicit TimelinePlayer(QObject *parent = nullptr);
@@ -78,6 +83,10 @@ public:
     void setVolume(double volume);
     QString error() const { return m_error; }
     QStringList warnings() const { return m_warnings; }
+    bool preparingReverse() const;
+    double reverseProgress() const;
+    // vedit-render, for the backwards copies (default: next to the running executable).
+    void setHelperExecutable(const QString &path);
 
     Q_INVOKABLE void play();
     Q_INVOKABLE void pause();
@@ -92,6 +101,12 @@ public:
     Q_INVOKABLE void skim(int frame);
     Q_INVOKABLE void endSkim();
     Q_INVOKABLE QString timecode(int frame) const;
+    // Level 0…1 of a track's audio (key: its id) or of the mix ("master"), for the meters; ~30 reads per second.
+    Q_INVOKABLE double audioLevel(const QString &key) const;
+
+    // Live preview (pointer over a library item): shown until cleared, never saved.
+    void setPreview(TimelineProjection::Preview preview);
+    void clearPreview();
 
     // Called from the MLT consumer thread for every frame shown.
     void deliverFrame(Mlt::Frame &frame);
@@ -104,6 +119,7 @@ signals:
     void formatChanged();
     void volumeChanged();
     void warningsChanged();
+    void reverseChanged();
 
 private:
     void createGraph();
@@ -117,6 +133,7 @@ private:
     void onFrameShown(int position, quint64 generation);
     void setPosition(int position);
     void updateWarnings();
+    void requestReverseProxies();
 
     FrameSink m_sink;
     QPointer<Project> m_project;
@@ -129,6 +146,7 @@ private:
     std::unique_ptr<Mlt::Consumer> m_consumer;
     std::unique_ptr<Mlt::Event> m_frameShowEvent;
     QTimer m_retiredTimer;
+    std::unique_ptr<ReverseProxyQueue> m_reverse;
     // Frames queued from the consumer thread before a graph change are ignored.
     std::atomic<quint64> m_generation{0};
     double m_rate = 0.0;

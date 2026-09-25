@@ -228,19 +228,19 @@ ricostruisce l'intero grafo da zero a partire dal modello: viene usato all'apert
 | Traccia audio / audio delle tracce visive | stessa playlist; transizione `mix` (somma) verso la traccia 0 per ogni traccia che ha audio |
 | Media | `Mlt::Chain` (producer `avformat`, o `qimage`/`pixbuf` per le immagini) condiviso da tutte le clip di quel media |
 | Clip media | `chain.cut(in, out)` nella playlist; spazi vuoti = `blank` |
-| Velocità costante | link `timeremap` sulla chain (o producer `timewarp`) + `rbpitch` per mantenere l'intonazione **[verifica]** |
-| Clip invertita | proxy invertito generato in background (MLT non inverte in modo efficiente); fino ad allora avviso "preparazione…" |
+| Velocità costante | producer `timewarp:<velocità>:<file>` (uno per media e velocità, nella stessa cache); `warp_pitch=1` mantiene l'intonazione (**verificato**, `phase2_probe`) |
+| Clip invertita | `timewarp` a velocità negativa. All'export dal file originale; nell'anteprima da un proxy invertito (`vedit-render --backwards`, all-intra ≤720p) letto in avanti, perché leggere all'indietro un GOP lungo costa ~119 ms a fotogramma contro 10 (D-37); fino ad allora avviso "preparazione…" |
 | Effetti della clip | `Mlt::Filter` attaccati al cut, nell'ordine del modello |
 | Trasformazione, maschere, sfondo della clip | filtro proprio `vedit.transform` (produce un fotogramma RGBA del canvas con alfa); modalità di fusione e opacità passate come proprietà del frame e lette da `vedit.composite` |
 | Keyframe | filtri propri: la lista di keyframe (JSON) viene valutata dalla **stessa** funzione del core; filtri MLT/frei0r: stringa animata MLT, campionata fotogramma per fotogramma quando l'easing non esiste in MLT |
-| Transizione sulla traccia | `Playlist::mix()` con la transizione `vedit.transition` (id del tipo + parametri); le maniglie oltre il taglio sono calcolate dalla proiezione (**verificato**: `mix` accorcia la playlist della durata del mix, quindi per le transizioni centrate la proiezione estende le clip oltre il taglio) |
+| Transizione sulla traccia | playlist "transizioni" sopra la playlist delle clip della stessa traccia: nella finestra della transizione (centrata sul taglio) un piccolo tractor con le due clip e `vedit.transition`; il materiale mancante oltre il taglio è un fotogramma fermo (`repeat`) (D-35) |
 | Transizione in ingresso/uscita di una clip sovrapposta | filtro `vedit.transition` sulla clip, con A = trasparente |
-| Testo e sottotitoli | producer proprio `vedit.text` (QPainter/QTextLayout su QImage, CPU) |
+| Testo e sottotitoli | producer proprio `vedit.text` (QPainter/QTextLayout su QImage, CPU), disegnato una volta alla creazione sul thread della proiezione (D-39) |
 | Sticker | producer `avformat`/`qimage` (PNG, GIF, WebP); Lottie da valutare in Fase 5 |
 | Colore | producer `color` |
 | Traccia effetti / livello di regolazione | filtro piantato sul campo (`Mlt::Field::plant_filter`) sulla traccia 0 **dopo** le composizioni delle tracce sottostanti e **prima** di quelle sopra, con in/out della clip **[verifica]** |
 | Compound clip | tractor annidato usato come producer |
-| Volume, dissolvenze audio, pan | filtro proprio `vedit.gain` (guadagno in dB con keyframe) + `panner` |
+| Volume, dissolvenze audio, pan | filtro proprio `vedit.gain` sul cut (volume, dissolvenze, pan; posizioni del media, D-38) e un altro sulla playlist per il volume della traccia; misura dei picchi per il mixer (per traccia e master) |
 
 Servizi propri (`vedit.composite`, `vedit.transform`, `vedit.transition`, `vedit.text`, `vedit.gain`, …) sono registrati
 nel repository MLT all'avvio con `Mlt::Repository::register_service` (**verificato** con `tools/probes/mlt_probe.cpp`), sia in `vedit` sia in
@@ -547,6 +547,11 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | D-32 | Probe dei media in `vedit-render --probe` (processo), miniature e waveform in thread del processo principale | Un file che manda in crash il demuxer viene scartato come "danneggiato" prima che MLT lo apra nell'editor; miniature e waveform decodificano solo file già passati dal probe |
 | D-33 | Miniature e waveform con FFmpeg diretto (non MLT) | Seek al keyframe + decodifica fino al punto e scalatura con swscale: molto più rapido di un producer MLT per ogni fotogramma; rotazione e aspetto dei pixel applicati a mano (test contro i fotogrammi decodificati) |
 | D-34 | Canvas e fps dalla prima clip nello stesso comando dell'inserimento (`insertMediaAdoptingFormat`) | Un solo passo di annulla riporta tutto com'era; fps agganciato allo standard più vicino (29,99 → 30; 120 → 60), canvas al massimo 4K |
+| D-35 | Transizioni come piccoli tractor su una playlist "transizioni" per traccia, non `Playlist::mix()` | `mix` accorcia la playlist e sposta tutto ciò che segue: il modello (transizione centrata sul taglio, durata della timeline invariata) non corrisponderebbe al grafo. Il tractor copre esattamente la finestra; oltre la fine del materiale si ripete l'ultimo fotogramma (`repeat`, come CapCut). L'audio resta quello delle clip (taglio netto per ora) |
+| D-36 | Anteprima dal vivo delle librerie solo nella proiezione (`TimelineProjection::Preview`) | Passare sopra un filtro o una transizione non tocca il modello né la cronologia di annulla; si aggiornano solo le tracce interessate |
+| D-37 | Proxy invertiti generati da `vedit-render --backwards`, usati solo dall'anteprima | Leggere all'indietro è ~12× più lento (misurato su 1080p GOP lungo). L'opzione non si chiama `--reverse` perché `QGuiApplication` si prende `-reverse` dagli argomenti |
+| D-38 | I filtri sui cut ricevono le posizioni del media: `vedit.gain` riceve il primo fotogramma della clip | Verificato: un filtro attaccato a un cut vede la posizione nel producer, non nella clip; le dissolvenze sono calcolate su (posizione − primo fotogramma) |
+| D-39 | Il livello di testo si disegna alla creazione del producer, non nei thread di MLT | I font di Qt nei thread non-Qt lasciano dati FreeType per thread che Qt libera male all'uscita del thread (LeakSanitizer in `vedit-render`); il testo della Fase 2 è statico e il profilo ha dimensione fissa, quindi un solo disegno basta |
 
 ---
 
@@ -630,3 +635,13 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | 500 clip | ✅ una modifica (comando + patch del grafo + diff del modello) 3–6 ms; serializzazione per il salvataggio 6–19 ms (1 MiB di JSON); primo caricamento del grafo ~35 ms |
 | Backend grafici | ✅ smoke test dell'editor su Vulkan, OpenGL (Wayland), software e safe mode |
 
+## 21. Esiti delle verifiche della Fase 2
+| Punto | Esito |
+|---|---|
+| `timewarp` a velocità costante | ✅ mappa i fotogrammi esattamente (fotogramma k → k·v); `warp_pitch=1` mantiene l'intonazione (`phase2_probe`) |
+| `timewarp` a velocità −1 | ✅ riproduce all'indietro, ma decodifica 119 ms/fotogramma contro 10 in avanti → proxy invertito (D-37) |
+| `Playlist::repeat` | ✅ ripete un fotogramma: fermo immagine per il riempimento delle transizioni |
+| Loader alla proporzione della sorgente | ✅ nessun bordo: `vedit.transform` posiziona il fotogramma intero sul canvas |
+| Tractor annidato come producer di una playlist | ✅ usato per le transizioni (D-35) |
+| Posizioni viste da un filtro su un cut | ⚠️ quelle del media, non della clip (D-38) |
+| Font di Qt nei thread di MLT | ⚠️ perdita per thread segnalata da LeakSanitizer all'uscita dei thread → testo disegnato sul thread della proiezione (D-39) |

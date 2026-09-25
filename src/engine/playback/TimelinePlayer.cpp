@@ -2,6 +2,8 @@
 #include "TimelinePlayer.h"
 
 #include "core/project/Project.h"
+#include "engine/analysis/ReverseProxy.h"
+#include "engine/playback/AudioMeters.h"
 #include "engine/playback/PreviewConsumer.h"
 #include "engine/timeline/MediaProducerCache.h"
 #include "engine/timeline/TimelineProjection.h"
@@ -22,7 +24,16 @@ constexpr double kMaxShuttleRate = 8.0;
 
 TimelinePlayer::TimelinePlayer(QObject *parent)
     : QObject(parent)
+    , m_reverse(std::make_unique<ReverseProxyQueue>())
 {
+    connect(m_reverse.get(), &ReverseProxyQueue::busyChanged, this, &TimelinePlayer::reverseChanged);
+    connect(m_reverse.get(), &ReverseProxyQueue::progressChanged, this, &TimelinePlayer::reverseChanged);
+    connect(m_reverse.get(), &ReverseProxyQueue::ready, this, [this](const MediaId &mediaId) {
+        if (m_cache) {
+            m_cache->forget(mediaId); // the next producer reads the backwards copy
+            onMediaReady(mediaId);
+        }
+    });
     // Cuts replaced during playback are released once no frame read ahead can reference them any more.
     m_retiredTimer.setInterval(1000);
     connect(&m_retiredTimer, &QTimer::timeout, this, [this] {
@@ -75,6 +86,7 @@ void TimelinePlayer::createGraph()
     m_error.clear();
     m_profile = makeProfile(data, m_sequenceId);
     m_cache = std::make_unique<MediaProducerCache>(*m_profile);
+    m_cache->setUseReverseProxies(true);
     connect(m_cache.get(), &MediaProducerCache::ready, this, &TimelinePlayer::onMediaReady);
     m_projection = std::make_unique<TimelineProjection>(*m_profile, *m_cache, TimelineProjection::MediaLoading::Background);
     m_projection->build(data, m_sequenceId);
@@ -99,6 +111,45 @@ void TimelinePlayer::createGraph()
     emit durationChanged();
     emit stateChanged();
     updateWarnings();
+    requestReverseProxies();
+}
+
+void TimelinePlayer::requestReverseProxies()
+{
+    if (!m_project) {
+        return;
+    }
+    const ProjectData &data = m_project->data();
+    const Sequence *sequence = data.findSequence(m_sequenceId);
+    if (!sequence) {
+        return;
+    }
+    for (const auto *tracks : {&sequence->visualTracks, &sequence->audioTracks}) {
+        for (const Track &track : *tracks) {
+            for (const Clip &clip : track.clips) {
+                if (const MediaClipData *media = clip.media(); media && media->reversed) {
+                    if (const Media *item = data.findMedia(media->mediaId)) {
+                        m_reverse->request(*item);
+                    }
+                }
+            }
+        }
+    }
+}
+
+bool TimelinePlayer::preparingReverse() const
+{
+    return m_reverse->busy();
+}
+
+double TimelinePlayer::reverseProgress() const
+{
+    return m_reverse->progress();
+}
+
+void TimelinePlayer::setHelperExecutable(const QString &path)
+{
+    m_reverse->setExecutable(path);
 }
 
 void TimelinePlayer::destroyGraph()
@@ -154,10 +205,11 @@ void TimelinePlayer::onProjectChanged(const ChangeSet &changes)
     }
     if (m_projection->needsRebuild(data, changes)) {
         rebuildGraph();
-        return;
+    } else {
+        m_projection->update(data, changes);
+        afterProjectionChange();
     }
-    m_projection->update(data, changes);
-    afterProjectionChange();
+    requestReverseProxies();
 }
 
 void TimelinePlayer::onMediaReady(const MediaId &mediaId)
@@ -329,6 +381,25 @@ QString TimelinePlayer::timecode(int frame) const
         .arg(totalSeconds / 60, 2, 10, QLatin1Char('0'))
         .arg(totalSeconds % 60, 2, 10, QLatin1Char('0'))
         .arg(frames, 2, 10, QLatin1Char('0'));
+}
+
+double TimelinePlayer::audioLevel(const QString &key) const
+{
+    return AudioMeters::level(key.toLatin1());
+}
+
+void TimelinePlayer::setPreview(TimelineProjection::Preview preview)
+{
+    if (!m_project || !m_projection) {
+        return;
+    }
+    m_projection->setPreview(m_project->data(), std::move(preview));
+    afterProjectionChange();
+}
+
+void TimelinePlayer::clearPreview()
+{
+    setPreview({});
 }
 
 void TimelinePlayer::deliverFrame(Mlt::Frame &frame)

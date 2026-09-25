@@ -165,4 +165,96 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
     return result;
 }
 
+Renderer::Result Renderer::renderReversed(const QString &inputPath, const QString &outputPath, const Progress &progress,
+                                          const std::atomic<bool> &cancel)
+{
+    if (!MltRuntime::waitUntilReady()) {
+        return failure(RenderError::MltUnavailable);
+    }
+    const QFileInfo output(outputPath);
+    QDir().mkpath(output.absolutePath());
+    const QString partial = output.absolutePath() + u"/."_s + output.completeBaseName() + u".part-"_s +
+                            QUuid::createUuid().toString(QUuid::Id128).left(8) + u"."_s + output.suffix();
+    int total = 0;
+    int reached = -1;
+    bool cancelled = false;
+    {
+        // The profile of the file itself (size capped at 720 p, frame rate kept).
+        Mlt::Profile profile;
+        {
+            Mlt::Producer probe(profile, "avformat", QFile::encodeName(inputPath).constData());
+            if (!probe.is_valid()) {
+                return failure(RenderError::ProjectUnreadable, inputPath);
+            }
+            profile.from_producer(probe);
+        }
+        if (profile.height() > 720) {
+            const int height = 720;
+            const int width = std::max(2, static_cast<int>(std::lround(profile.width() * 720.0 / profile.height() / 2.0)) * 2);
+            profile.set_width(width);
+            profile.set_height(height);
+        }
+        profile.set_sample_aspect(1, 1);
+        profile.set_explicit(1);
+        const QByteArray resource = QByteArray("timewarp:-1.0:") + QFile::encodeName(inputPath);
+        Mlt::Producer reversed(profile, resource.constData());
+        if (!reversed.is_valid()) {
+            return failure(RenderError::ProjectUnreadable, inputPath);
+        }
+        total = reversed.get_length();
+        MltRuntime::clearLastError();
+        Mlt::Consumer consumer(profile, "avformat", QFile::encodeName(partial).constData());
+        consumer.set("f", "mp4");
+        consumer.set("vcodec", "libx264");
+        consumer.set("pix_fmt", "yuv420p");
+        consumer.set("g", 1); // every frame a keyframe: instant seeks in any direction
+        consumer.set("crf", 16);
+        consumer.set("preset", "veryfast");
+        consumer.set("acodec", "aac");
+        consumer.set("ab", "192k");
+        consumer.set("ar", 48000);
+        consumer.set("ac", 2);
+        consumer.set("threads", 0);
+        consumer.set("real_time", -1);
+        consumer.set("terminate_on_pause", 1);
+        consumer.connect(reversed);
+        reversed.set_speed(1.0);
+        reversed.seek(0);
+        consumer.start();
+        while (!consumer.is_stopped()) {
+            if (cancel.load()) {
+                cancelled = true;
+                consumer.stop();
+                break;
+            }
+            reached = std::max(reached, consumer.position());
+            if (progress) {
+                progress(std::clamp(reached + 1, 0, total), total);
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        reached = std::max(reached, consumer.position());
+        consumer.stop();
+    }
+    Result result;
+    if (cancelled) {
+        QFile::remove(partial);
+        result.status = Status::Cancelled;
+        return result;
+    }
+    if (QFileInfo(partial).size() <= 0 || reached < total - 1) {
+        QFile::remove(partial);
+        return failure(RenderError::EncoderFailed, MltRuntime::lastError());
+    }
+    std::error_code error;
+    std::filesystem::rename(QFile::encodeName(partial).toStdString(), QFile::encodeName(output.absoluteFilePath()).toStdString(),
+                            error);
+    if (error) {
+        QFile::remove(partial);
+        return failure(RenderError::OutputNotWritable, QString::fromStdString(error.message()));
+    }
+    result.status = Status::Done;
+    return result;
+}
+
 } // namespace vedit::engine

@@ -71,6 +71,43 @@ class TestProjection : public QObject
         return hashes;
     }
 
+    static QImage renderFresh1(const ProjectData &data, int position)
+    {
+        auto profile = makeProfile(data, data.mainSequenceId);
+        MediaProducerCache cache(*profile);
+        TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+        projection.build(data, data.mainSequenceId);
+        return projection.renderFrame(position);
+    }
+
+    static Effect filterEffect(const QString &id)
+    {
+        Effect effect;
+        effect.id = EffectId::create();
+        effect.type = u"vedit.filter"_s;
+        effect.preset = AssetRef{u"vedit.core"_s, id, 1};
+        return effect;
+    }
+
+    static AssetRef dissolveRef() { return AssetRef{u"vedit.core"_s, u"transitions/dissolve"_s, 1}; }
+
+    ProjectData baseProjectWithClip()
+    {
+        Session session(baseProject());
+        if (!session.apply(session.editor().insertMedia(m_landscape.id, frames(0)))) {
+            qWarning("setup failed");
+        }
+        return session.data();
+    }
+
+    QImage lastOfAHelper(const ProjectData &withTransition)
+    {
+        // The same timeline without the transition, at frame 100 (outside the transition window).
+        ProjectData data = withTransition;
+        data.sequences.front().visualTracks.front().transitions.clear();
+        return renderFresh1(data, 100);
+    }
+
 private slots:
     void initTestCase()
     {
@@ -230,7 +267,181 @@ private slots:
         check("undo x2");
         session.stack.redo();
         check("redo");
+        // Phase 2 edits patch the running graph too.
+        const std::vector<ClipId> all{session.mainTrack().clips[0].id, session.mainTrack().clips[1].id};
+        QVERIFY(session.apply(session.editor().updateClips(all, [](Clip &clip) { clip.effects.push_back(filterEffect(u"filters/bw"_s)); }, u"filter"_s)));
+        check("filter on all");
+        QVERIFY(session.apply(session.editor().updateClips({all[1]}, [](Clip &clip) {
+            clip.transform.position = Param(Vec2{0.2, -0.1});
+            clip.transform.scale = Param(Vec2{0.7, 0.7});
+        }, u"move"_s)));
+        check("transform");
+        QVERIFY(session.apply(session.editor().addTransition(all[0], dissolveRef(), frames(12))));
+        check("transition");
+        QVERIFY(session.apply(session.editor().setSpeed(all[1], 2.0)));
+        check("speed");
         QVERIFY(fullRebuilds <= 1);
+    }
+
+    // ---- Phase 2 ------------------------------------------------------------------------------------------------
+    void transformMovesTheClip()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const QImage plain = renderFresh1(session.data(), 10);
+        const ClipId clip = session.mainTrack().clips.front().id;
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [](Clip &c) { c.transform.position = Param(Vec2{0.25, 0.0}); }, u"move"_s)));
+        const QImage moved = renderFresh1(session.data(), 10);
+        QCOMPARE(pixel(moved, 40, 90), 0u); // the black canvas where the picture was
+        QCOMPARE(pixel(moved, 80 + 120, 90), pixel(plain, 120, 90));
+    }
+
+    void filtersAndAdjustments()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const ClipId clip = session.mainTrack().clips.front().id;
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [](Clip &c) { c.effects.push_back(filterEffect(u"filters/bw"_s)); }, u"bw"_s)));
+        const QImage grey = renderFresh1(session.data(), 10);
+        for (const QPoint p : {QPoint(30, 30), QPoint(160, 90), QPoint(290, 150)}) {
+            const QRgb c = grey.pixel(p);
+            QVERIFY(std::abs(qRed(c) - qGreen(c)) <= 2 && std::abs(qGreen(c) - qBlue(c)) <= 2);
+        }
+        // Intensity 0: the original.
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [](Clip &c) { c.effects.front().intensity = Param(0.0); }, u"0"_s)));
+        Session plain(baseProject());
+        QVERIFY(plain.apply(plain.editor().insertMedia(m_landscape.id, frames(0))));
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 10)), rgbHash(renderFresh1(plain.data(), 10)));
+        // Adjust: exposure up brightens.
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [](Clip &c) {
+            Effect adjust;
+            adjust.id = EffectId::create();
+            adjust.type = u"vedit.adjust.basic"_s;
+            adjust.params[u"exposure"_s] = Param(1.0);
+            c.effects = {adjust};
+        }, u"exposure"_s)));
+        const QImage brighter = renderFresh1(session.data(), 10);
+        const QImage original = renderFresh1(plain.data(), 10);
+        long sumA = 0, sumB = 0;
+        for (int x = 0; x < 320; x += 7) {
+            sumA += qGray(brighter.pixel(x, 90));
+            sumB += qGray(original.pixel(x, 90));
+        }
+        QVERIFY(sumA > sumB);
+    }
+
+    void speedAndReverse()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const QByteArray source20 = rgbHash(renderFresh1(session.data(), 20));
+        const QByteArray source119 = rgbHash(renderFresh1(session.data(), 119));
+        const ClipId clip = session.mainTrack().clips.front().id;
+        QVERIFY(session.apply(session.editor().setSpeed(clip, 2.0)));
+        QCOMPARE(session.mainTrack().clips.front().duration, frames(60));
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 10)), source20); // frame 10 at 2x = source frame 20
+        QVERIFY(session.apply(session.editor().setSpeed(clip, 1.0)));
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [](Clip &c) { c.media()->reversed = true; }, u"reverse"_s)));
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 0)), source119); // backwards: starts with the last frame
+    }
+
+    void textOverTheVideo()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const QImage before = renderFresh1(session.data(), 10);
+        TextClipData text;
+        text.text = u"TITLE"_s;
+        text.style.size = Param(0.2);
+        text.style.color = Param(Color{255, 255, 0, 255});
+        QVERIFY(session.apply(session.editor().insertText(frames(0), text, frames(60))));
+        const QImage after = renderFresh1(session.data(), 10);
+        int changed = 0;
+        for (int x = 60; x < 260; ++x) {
+            changed += pixel(after, x, 90) != pixel(before, x, 90) ? 1 : 0;
+        }
+        QVERIFY2(changed > 20, qPrintable(QString::number(changed)));
+        QCOMPARE(pixel(after, 5, 5), pixel(before, 5, 5)); // outside the text: the video
+        // Outside the text clip's time: just the video.
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 90)), rgbHash(renderFresh1(Session(baseProjectWithClip()).data(), 90)));
+    }
+
+    void dissolveBetweenClipsFreezesMissingFrames()
+    {
+        // Two whole clips: no material beyond the cut, so the edge frames are frozen during the transition.
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        QVERIFY(session.apply(session.editor().insertMedia(m_vertical.id, frames(1000))));
+        const QImage lastOfA = renderFresh1(session.data(), 119);
+        const QImage firstOfB = renderFresh1(session.data(), 120);
+        const ClipId a = session.mainTrack().clips.front().id;
+        std::map<QString, Param> linear{{u"easing"_s, Param(u"linear"_s)}};
+        QVERIFY(session.apply(session.editor().addTransition(a, dissolveRef(), frames(10), linear)));
+        // Window [115, 125): at frame 119 (5 of 10) the mix is (5 + 1) / 11 of B.
+        const QImage middle = renderFresh1(session.data(), 119);
+        const QRgb m = middle.pixel(160, 90);
+        const QRgb pa = lastOfA.pixel(160, 90);
+        const double t = 6.0 / 11.0;
+        const QRgb pb = renderFresh1(session.data(), 125).pixel(160, 90); // B at frame 125 = first frame + 5
+        Q_UNUSED(pb);
+        // B's frame shown at 119 is its first frame frozen (no material before its start).
+        const QRgb pbFrozen = firstOfB.pixel(160, 90);
+        QVERIFY2(std::abs(qRed(m) - (qRed(pa) * (1 - t) + qRed(pbFrozen) * t)) <= 3,
+                 qPrintable(u"%1 vs %2/%3"_s.arg(qRed(m)).arg(qRed(pa)).arg(qRed(pbFrozen))));
+        // Outside the window: untouched.
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 100)), rgbHash(lastOfAHelper(session.data())));
+        QCOMPARE(session.mainTrack().transitions.size(), size_t(1));
+    }
+
+    void backgroundAndTrackVolume()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_vertical.id, frames(0))));
+        QCOMPARE(pixel(renderFresh1(session.data(), 5), 10, 90), 0u); // pillarbox: black canvas
+        QVERIFY(session.apply(session.editor().setDefaultBackground(CanvasBackground{BackgroundType::Blur, Color{}, 0.6, {}, std::nullopt})));
+        QVERIFY(pixel(renderFresh1(session.data(), 5), 10, 90) != 0u);
+        const auto peak = [](const ProjectData &data) {
+            auto profile = makeProfile(data, data.mainSequenceId);
+            MediaProducerCache cache(*profile);
+            TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+            projection.build(data, data.mainSequenceId);
+            projection.tractor()->seek(30);
+            std::unique_ptr<Mlt::Frame> frame(projection.tractor()->get_frame());
+            mlt_audio_format format = mlt_audio_s16;
+            int frequency = 48000, channels = 2;
+            int samples = mlt_audio_calculate_frame_samples(30.0f, frequency, 30);
+            const auto *pcm = static_cast<const std::int16_t *>(frame->get_audio(format, frequency, channels, samples));
+            int result = 0;
+            for (int i = 0; pcm && i < samples * channels; ++i) {
+                result = std::max(result, std::abs(int(pcm[i])));
+            }
+            return result;
+        };
+        const int full = peak(session.data());
+        QVERIFY(session.apply(session.editor().updateTrack(session.mainTrack().id, [](Track &t) { t.gainDb = Param(-6.0206); }, u"vol"_s)));
+        const int half = peak(session.data());
+        QVERIFY2(std::abs(half - full / 2) <= full / 20, qPrintable(u"%1 %2"_s.arg(full).arg(half)));
+    }
+
+    void livePreviewDoesNotTouchTheModel()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        auto profile = makeProfile(session.data(), session.data().mainSequenceId);
+        MediaProducerCache cache(*profile);
+        TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+        projection.build(session.data(), session.data().mainSequenceId);
+        const QByteArray original = rgbHash(projection.renderFrame(10));
+        Clip previewed = session.mainTrack().clips.front();
+        previewed.effects.push_back(filterEffect(u"filters/bw"_s));
+        const ProjectData before = session.data();
+        projection.setPreview(session.data(), TimelineProjection::Preview{previewed, std::nullopt, std::nullopt});
+        const QImage grey = projection.renderFrame(10);
+        QVERIFY(rgbHash(grey) != original);
+        QVERIFY(std::abs(qRed(grey.pixel(160, 90)) - qGreen(grey.pixel(160, 90))) <= 2);
+        projection.setPreview(session.data(), {});
+        QCOMPARE(rgbHash(projection.renderFrame(10)), original);
+        QVERIFY(session.data() == before);
     }
 
     void mutedAudioIsSilent()
@@ -268,5 +479,5 @@ private slots:
     void cleanupTestCase() { MltRuntime::shutdown(); }
 };
 
-QTEST_GUILESS_MAIN(TestProjection)
+QTEST_MAIN(TestProjection) // text is drawn with QPainter: needs a QGuiApplication (offscreen)
 #include "tst_projection.moc"
