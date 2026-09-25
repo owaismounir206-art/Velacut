@@ -90,6 +90,7 @@ ActionRegistry::ActionRegistry(EditorController &editor)
     add({u"speed"_s, tr("Speed"), u"speed"_s, {}, Video | Audio, clip, properties(u"speed"_s)});
     add({u"volume"_s, tr("Volume"), u"volume_up"_s, {}, Video | Audio, clip, properties(u"audio"_s)});
     add({u"fades"_s, tr("Fades"), u"graphic_eq"_s, {}, Audio, clip, properties(u"audio"_s)});
+    add({u"animation"_s, tr("Animation"), u"animation"_s, {}, videoLike | Text, clip, library(u"animations"_s)});
     add({u"freeze"_s, tr("Freeze"), u"ac_unit"_s, {}, Video | Nothing, always, [this] { return m_editor.freezeFrame(); }});
     add({u"reverse"_s, tr("Reverse"), u"swap_horiz"_s, {}, Video, clip, [inspector] {
              return inspector->set(u"reversed"_s, !inspector->values().value(u"reversed"_s).toBool());
@@ -332,7 +333,8 @@ bool ActionRegistry::activate(const QString &kind, const QString &id)
         return inspector->kind() == ClipInspector::Text ? inspector->applyTextStyle(id) : m_editor.addText(id);
     }
     if (kind == u"animation"_s) {
-        return m_editor.applyAnimation(id);
+        emit m_editor.libraryRequested(u"animations"_s);
+        return inspector->toggleAnimation(id);
     }
     if (kind == u"music"_s) {
         return m_music && m_editor.addFromLibrary(m_music, id.toInt());

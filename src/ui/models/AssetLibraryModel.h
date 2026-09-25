@@ -9,8 +9,8 @@
 
 namespace vedit::ui {
 
-// The items of an asset library of the core pack (filters, transitions, text styles) for the panels on the left:
-// filtered by category chip and by search text (name in either language, or id).
+// The items of an asset library of the core pack (filters, transitions, text styles, animations) for the panels on the
+// left, filtered by category chip and by search text (name in either language, or id).
 class AssetLibraryModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -28,6 +28,7 @@ public:
         Filters,
         Transitions,
         TextStyles,
+        Animations,
     };
     Q_ENUM(Kind)
 

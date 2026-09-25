@@ -29,6 +29,8 @@ Rectangle {
             list.push({ text: qsTr("Audio"), page: "audio" })
         if (sections.includes("speed"))
             list.push({ text: qsTr("Speed"), page: "speed" })
+        if (sections.includes("animation"))
+            list.push({ text: qsTr("Animation"), page: "animation" })
         if (sections.includes("adjust"))
             list.push({ text: qsTr("Adjust"), page: "adjust" })
         return list
@@ -546,6 +548,68 @@ Rectangle {
                                 Layout.fillWidth: true
                                 value: panel.editor.player.reverseProgress
                             }
+                        }
+                    }
+                }
+
+                // ---- Animation: the entry, exit and loop animations and their length ------------------------------
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: panel.page === "animation"
+                    spacing: Theme.space.md
+
+                    PropertySection {
+                        inspector: panel.inspector
+                        section: "animation"
+                        title: qsTr("Animations")
+                        applyToAll: false
+
+                        Repeater {
+                            model: [{ kind: "in", title: qsTr("Entry") }, { kind: "out", title: qsTr("Exit") },
+                                    { kind: "loop", title: qsTr("Loop") }]
+                            delegate: ColumnLayout {
+                                id: animationRow
+                                required property var modelData
+                                readonly property string assetId: panel.values["animation." + modelData.kind] ?? ""
+                                Layout.fillWidth: true
+                                spacing: 0
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Label {
+                                        Layout.fillWidth: true
+                                        role: "bodyMedium"
+                                        elide: Text.ElideRight
+                                        text: animationRow.assetId !== ""
+                                              ? qsTr("%1: %2").arg(animationRow.modelData.title).arg(panel.values["animation." + animationRow.modelData.kind + ".name"])
+                                              : qsTr("%1: none").arg(animationRow.modelData.title)
+                                        color: animationRow.assetId !== "" ? Theme.color.onSurface : Theme.color.onSurfaceVariant
+                                    }
+                                    IconButton {
+                                        visible: animationRow.assetId !== ""
+                                        iconName: "close"
+                                        label: qsTr("Remove")
+                                        onClicked: panel.inspector.toggleAnimation(animationRow.assetId)
+                                    }
+                                }
+                                PropertySlider {
+                                    visible: animationRow.assetId !== ""
+                                    inspector: panel.inspector
+                                    key: "animation." + animationRow.modelData.kind + ".duration"
+                                    label: animationRow.modelData.kind === "loop" ? qsTr("One cycle") : qsTr("Length")
+                                    from: 0.1
+                                    to: Math.max(0.2, Math.min(5, panel.inspector.durationSeconds))
+                                    neutral: 0.5
+                                    stepSize: 0.1
+                                    format: v => qsTr("%1 s").arg(v.toLocaleString(Qt.locale(), "f", 1))
+                                }
+                            }
+                        }
+                        Button {
+                            Layout.fillWidth: true
+                            variant: "tonal"
+                            iconName: "animation"
+                            text: qsTr("Choose an animation")
+                            onClicked: panel.editor.libraryRequested("animations")
                         }
                     }
                 }

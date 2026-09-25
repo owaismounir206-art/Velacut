@@ -20,7 +20,7 @@ Item {
         function onExportRequested() { exportDialog.openDialog() }
         function onImportRequested() { library.importFiles() }
         function onLibraryRequested(name) {
-            const index = ["media", "audio", "text", "transitions", "filters"].indexOf(name)
+            const index = ["media", "audio", "text", "transitions", "filters", "animations"].indexOf(name)
             if (index >= 0)
                 rail.currentIndex = index
         }
@@ -89,7 +89,8 @@ Item {
                             { text: qsTr("Audio"), iconName: "music_note" },
                             { text: qsTr("Text"), iconName: "title" },
                             { text: qsTr("Transitions"), iconName: "transition_fade" },
-                            { text: qsTr("Filters"), iconName: "filter_vintage" }]
+                            { text: qsTr("Filters"), iconName: "filter_vintage" },
+                            { text: qsTr("Animations"), iconName: "animation" }]
                     onActivated: (index) => { if (index === 1) App.audioLibrary.load() }
                 }
                 StackLayout {
@@ -119,6 +120,11 @@ Item {
                         editor: root.editor
                         kind: AssetLibraryModel.Filters
                         title: qsTr("Filters")
+                    }
+                    AssetPanel {
+                        editor: root.editor
+                        kind: AssetLibraryModel.Animations
+                        title: qsTr("Animations")
                     }
                 }
                 Divider { vertical: true; Layout.fillHeight: true }

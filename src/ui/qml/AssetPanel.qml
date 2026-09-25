@@ -18,10 +18,13 @@ Rectangle {
     readonly property bool filters: kind === AssetLibraryModel.Filters
     readonly property bool transitions: kind === AssetLibraryModel.Transitions
     readonly property bool texts: kind === AssetLibraryModel.TextStyles
+    readonly property bool animations: kind === AssetLibraryModel.Animations
     // The item applied to what the library acts on (marked in the grid).
-    readonly property string current: filters ? (inspector.values["filter"] ?? "")
-                                    : transitions ? (inspector.values["transition.type"] ?? "")
-                                    : (inspector.values["text.preset"] ?? "")
+    readonly property var current: filters ? [inspector.values["filter"] ?? ""]
+                                 : transitions ? [inspector.values["transition.type"] ?? ""]
+                                 : animations ? [inspector.values["animation.in"] ?? "", inspector.values["animation.out"] ?? "",
+                                                 inspector.values["animation.loop"] ?? ""]
+                                 : [inspector.values["text.preset"] ?? ""]
 
     function preview(assetId) {
         if (filters) {
@@ -29,8 +32,8 @@ Rectangle {
         } else if (texts) {
             inspector.previewTextStyle(assetId)
         } else {
-            // The transition plays in a loop on the player, without moving the playhead.
-            const range = inspector.previewTransition(assetId)
+            // Transitions and animations play in a loop on the player, without moving the playhead.
+            const range = transitions ? inspector.previewTransition(assetId) : inspector.previewAnimation(assetId)
             if (range.start !== undefined) {
                 loop.first = range.start
                 loop.last = range.end
@@ -52,6 +55,8 @@ Rectangle {
             inspector.toggleFilter(assetId)
         else if (transitions)
             inspector.toggleTransition(assetId)
+        else if (animations)
+            inspector.toggleAnimation(assetId)
         else if (inspector.kind === Inspector.Text)
             inspector.applyTextStyle(assetId)
         else
@@ -147,9 +152,9 @@ Rectangle {
         Button {
             objectName: "filterApplyAll"
             Layout.fillWidth: true
-            visible: panel.filters && panel.current !== ""
+            visible: panel.filters && panel.current[0] !== ""
             variant: "tonal"
-            text: qsTr("Apply %1 to all clips").arg(library.nameOf(panel.current))
+            text: qsTr("Apply %1 to all clips").arg(library.nameOf(panel.current[0]))
             onClicked: panel.inspector.applyToAll("filter")
         }
         Flow {
@@ -201,7 +206,7 @@ Rectangle {
                 id: tile
                 required property string assetId
                 required property string name
-                readonly property bool applied: panel.current === assetId
+                readonly property bool applied: panel.current.includes(assetId)
 
                 objectName: "asset_" + assetId
                 width: grid.cellWidth
@@ -236,7 +241,7 @@ Rectangle {
                             // Transitions play while the pointer is over them.
                             progress: 0.5
                             NumberAnimation on progress {
-                                running: panel.transitions && mouse.containsMouse
+                                running: (panel.transitions || panel.animations) && mouse.containsMouse
                                 from: 0
                                 to: 1
                                 duration: Theme.motion.long4 * 2

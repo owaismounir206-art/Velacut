@@ -14,7 +14,8 @@ class EditorController;
 //  - filter: a frame of the clip it would apply to (the selected one, or the one under the playhead), else a sample
 //    scene, with the filter's look;
 //  - transition: two sample scenes mixed by the transition at `progress` (the panel animates it while hovered);
-//  - text style: a word in the style.
+//  - text style: a word in the style;
+//  - animation: a sample picture placed as the animation places a clip at `progress` (animated while hovered).
 // Rendered in the thread pool and cached, so scrolling a library never blocks the interface.
 class AssetThumbnail : public QQuickPaintedItem
 {

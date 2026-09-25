@@ -527,6 +527,25 @@ private slots:
         editor()->player()->pause();
     }
 
+    // The Animations library: a click animates the clip on screen.
+    void animationsLibrary()
+    {
+        editor()->clearSelection();
+        editor()->player()->seek(10);
+        const int steps = editor()->document().undoStack().index();
+        click(byText(u"Animations"_s));
+        QTRY_VERIFY(byName(u"asset_animations/in/zoom_in"_s));
+        QTest::mouseMove(m_window, centre(byName(u"asset_animations/in/spin"_s)));
+        QTest::qWait(300);
+        shot(u"23-library-animations"_s);
+        click(byName(u"asset_animations/in/zoom_in"_s));
+        QTRY_COMPARE(editor()->inspector()->values().value(u"animation.in"_s).toString(), u"animations/in/zoom_in"_s);
+        while (editor()->document().undoStack().index() > steps) {
+            editor()->undo();
+        }
+        click(byText(u"Media"_s));
+    }
+
     // Usability test 8: export with the recommended settings ≤ 2 actions.
     void usability8Export()
     {

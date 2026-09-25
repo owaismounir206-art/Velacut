@@ -4,7 +4,7 @@
 <context>
     <name>AssetPanel</name>
     <message>
-        <location filename="../src/ui/qml/AssetPanel.qml" line="+108"/>
+        <location filename="../src/ui/qml/AssetPanel.qml" line="+113"/>
         <source>Default text</source>
         <translation>Testo predefinito</translation>
     </message>
@@ -189,21 +189,27 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+21"/>
+        <location line="+22"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-20"/>
-        <location line="+25"/>
+        <location line="-21"/>
+        <location line="+26"/>
         <source>Transitions</source>
         <translation>Transizioni</translation>
     </message>
     <message>
-        <location line="-24"/>
-        <location line="+29"/>
+        <location line="-25"/>
+        <location line="+30"/>
         <source>Filters</source>
         <translation>Filtri</translation>
+    </message>
+    <message>
+        <location line="-29"/>
+        <location line="+34"/>
+        <source>Animations</source>
+        <translation>Animazioni</translation>
     </message>
 </context>
 <context>
@@ -1053,12 +1059,12 @@
     <name>PropertiesPanel</name>
     <message>
         <location filename="../src/ui/qml/PropertiesPanel.qml" line="+25"/>
-        <location line="+129"/>
+        <location line="+131"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-127"/>
+        <location line="-129"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
@@ -1074,19 +1080,24 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+455"/>
+        <location line="+457"/>
         <location line="+6"/>
         <source>Speed</source>
         <translation>Velocità</translation>
     </message>
     <message>
-        <location line="-459"/>
-        <location line="+565"/>
+        <location line="-461"/>
+        <source>Animation</source>
+        <translation>Animazione</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+627"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
     <message>
-        <location line="-533"/>
+        <location line="-595"/>
         <source>Select a clip on the timeline to change it here.</source>
         <translation>Seleziona una clip sulla timeline per modificarla qui.</translation>
     </message>
@@ -1310,27 +1321,28 @@
         <location line="-327"/>
         <location line="+330"/>
         <location line="+8"/>
+        <location line="+137"/>
         <source>%1 s</source>
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-441"/>
+        <location line="-580"/>
         <source>Transition</source>
         <translation>Transizione</translation>
     </message>
     <message>
-        <location line="+438"/>
+        <location line="+440"/>
         <source>Fade out</source>
         <translation>Dissolvenza in uscita</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+92"/>
+        <location line="+154"/>
         <source>Auto enhance</source>
         <translation>Migliora automaticamente</translation>
     </message>
     <message>
-        <location line="-67"/>
+        <location line="-129"/>
         <location line="+9"/>
         <source>%1×</source>
         <translation>%1×</translation>
@@ -1353,7 +1365,57 @@
         <translation>Preparazione dell&apos;anteprima al contrario…</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+21"/>
+        <source>Animations</source>
+        <translation>Animazioni</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Entry</source>
+        <translation>Entrata</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Exit</source>
+        <translation>Uscita</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Loop</source>
+        <translation>Ciclo</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1: none</source>
+        <translation>%1: nessuna</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Remove</source>
+        <translation>Rimuovi</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>One cycle</source>
+        <translation>Un ciclo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Length</source>
+        <translation>Durata</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Choose an animation</source>
+        <translation>Scegli un&apos;animazione</translation>
+    </message>
+    <message>
+        <location line="+19"/>
         <source>Corrects light, colour and volume: you can change the result below</source>
         <translation>Corregge luce, colore e volume: puoi modificare il risultato qui sotto</translation>
     </message>
@@ -2134,12 +2196,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+203"/>
+        <location line="+204"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-202"/>
+        <location line="-203"/>
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
@@ -2174,7 +2236,7 @@
         <translation>Dissolvenze</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>Freeze</source>
         <translation>Congela</translation>
     </message>
@@ -2351,7 +2413,8 @@
         <translation>Animazione in ciclo</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-197"/>
+        <location line="+198"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -2383,7 +2446,7 @@
 <context>
     <name>vedit::ui::AssetThumbnail</name>
     <message>
-        <location filename="../src/ui/items/AssetThumbnail.cpp" line="+228"/>
+        <location filename="../src/ui/items/AssetThumbnail.cpp" line="+260"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
@@ -2391,7 +2454,7 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message>
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+486"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+530"/>
         <source>Change transition duration</source>
         <translation>Cambia durata della transizione</translation>
     </message>
@@ -2467,6 +2530,11 @@
     </message>
     <message>
         <location line="+12"/>
+        <source>Change animation length</source>
+        <translation>Cambia durata dell&apos;animazione</translation>
+    </message>
+    <message>
+        <location line="+12"/>
         <source>Change filter intensity</source>
         <translation>Cambia intensità del filtro</translation>
     </message>
@@ -2482,12 +2550,12 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+224"/>
+        <location line="+226"/>
         <source>Change text style</source>
         <translation>Cambia stile del testo</translation>
     </message>
     <message>
-        <location line="-204"/>
+        <location line="-206"/>
         <source>Reset position and size</source>
         <translation>Ripristina posizione e dimensione</translation>
     </message>
@@ -2509,6 +2577,11 @@
     </message>
     <message>
         <location line="+3"/>
+        <source>Remove animations</source>
+        <translation>Rimuovi animazioni</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <location line="+146"/>
         <source>Remove filter</source>
         <translation>Rimuovi filtro</translation>
@@ -2597,7 +2670,22 @@
         <translation>Transizioni casuali</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+40"/>
+        <source>Select a video, a photo or a text first.</source>
+        <translation>Seleziona prima un video, una foto o un testo.</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Remove animation</source>
+        <translation>Rimuovi animazione</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Animate clip</source>
+        <translation>Anima clip</translation>
+    </message>
+    <message>
+        <location line="+16"/>
         <source>Attributes copied</source>
         <translation>Attributi copiati</translation>
     </message>

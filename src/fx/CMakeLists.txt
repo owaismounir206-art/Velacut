@@ -2,6 +2,7 @@
 # (docs/ARCHITECTURE.md §6).
 add_library(vedit_fx STATIC
     Image.h
+    Animation.h Animation.cpp
     Audio.h Audio.cpp
     ChromaKey.h ChromaKey.cpp
     Color.h Color.cpp

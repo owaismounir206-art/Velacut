@@ -5,6 +5,7 @@
 #include "core/serialization/ProjectJson.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/text/TextRenderer.h"
+#include "fx/Animation.h"
 #include "fx/Color.h"
 #include "fx/Library.h"
 #include "fx/Transition.h"
@@ -162,8 +163,9 @@ void AssetThumbnail::request()
     const QSize size(static_cast<int>(std::ceil(width() * ratio)), static_cast<int>(std::ceil(height() * ratio)));
     QString sampleKey;
     const QImage frame = sample(&sampleKey);
-    // Transitions are drawn at a few steps of progress: smooth enough for the hover animation, and cached.
-    const double progress = m_kind == AssetLibraryModel::Transitions ? std::round(m_progress * 24) / 24 : 0.0;
+    // Transitions and animations are drawn at a few steps of progress: smooth enough for the hover animation, cached.
+    const bool animated = m_kind == AssetLibraryModel::Transitions || m_kind == AssetLibraryModel::Animations;
+    const double progress = animated ? std::round(m_progress * 24) / 24 : 0.0;
     const QString key = u"%1|%2|%3|%4|%5x%6"_s.arg(m_kind).arg(m_assetId, sampleKey).arg(progress).arg(size.width()).arg(size.height());
     if (const QImage *cached = cache().object(key)) {
         m_image = *cached;
@@ -219,6 +221,36 @@ QImage AssetThumbnail::render(int kind, const QString &assetId, double progress,
                              fx::ConstImageView(b.constBits(), b.width(), b.height(), static_cast<int>(b.bytesPerLine())),
                              fx::ease(fx::Easing::EaseInOut, progress), params, 0, out.height());
         return out;
+    }
+    if (kind == AssetLibraryModel::Animations) {
+        // The sample scene as a card, placed as the animation places a clip at `progress`.
+        QImage image(size, QImage::Format_RGBA8888);
+        image.fill(QColor(0x5F, 0x63, 0x68));
+        double x = 0, y = 0, scaleX = 1, scaleY = 1, rotation = 0, opacity = 1, cropL = 0, cropT = 0, cropR = 0, cropB = 0;
+        const fx::AnimationPreset *preset = library.animation(assetId);
+        const QString category = preset ? preset->category : QString();
+        if (category == u"out"_s) {
+            fx::applyOutAnimation(assetId, progress, x, y, scaleX, scaleY, rotation, opacity, cropL, cropT, cropR, cropB);
+        } else if (category == u"loop"_s) {
+            fx::applyLoopAnimation(assetId, progress, x, y, scaleX, scaleY, rotation, opacity);
+        } else {
+            fx::applyInAnimation(assetId, progress, x, y, scaleX, scaleY, rotation, opacity, cropL, cropT, cropR, cropB);
+        }
+        const QSize cardSize(size.width() * 3 / 5, size.height() * 3 / 5);
+        const QImage card = scene(cardSize, true);
+        QPainter painter(&image);
+        painter.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+        painter.setClipRect(image.rect());
+        painter.translate(size.width() / 2.0 + x * size.width(), size.height() / 2.0 + y * size.height());
+        painter.rotate(rotation);
+        painter.scale(scaleX, scaleY);
+        painter.setOpacity(std::clamp(opacity, 0.0, 1.0));
+        const QRectF target(-cardSize.width() / 2.0, -cardSize.height() / 2.0, cardSize.width(), cardSize.height());
+        const QRectF visible(target.left() + cropL * target.width(), target.top() + cropT * target.height(),
+                             target.width() * std::max(0.0, 1.0 - cropL - cropR), target.height() * std::max(0.0, 1.0 - cropT - cropB));
+        painter.setClipRect(visible, Qt::IntersectClip);
+        painter.drawImage(target, card);
+        return image;
     }
     // Text style: a word in the style, large enough to see it, on a neutral grey that shows light and dark styles.
     QImage image(size, QImage::Format_RGBA8888);

@@ -141,7 +141,8 @@ private slots:
         editor.select(video, false);
         QVERIFY(inspector.active());
         QCOMPARE(inspector.kind(), int(ClipInspector::Video));
-        QCOMPARE(inspector.sections(), (QStringList{u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"filter"_s, u"adjust"_s}));
+        QCOMPARE(inspector.sections(), (QStringList{u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s,
+                                                   u"filter"_s, u"adjust"_s}));
         QVERIFY(inspector.modifiedSections().isEmpty());
 
         // A slider drag: many values, one undo step.
@@ -244,7 +245,7 @@ private slots:
         editor.player()->seek(30);
         QVERIFY(editor.addText());
         QCOMPARE(inspector.kind(), int(ClipInspector::Text));
-        QCOMPARE(inspector.sections(), (QStringList{u"text"_s, u"video"_s}));
+        QCOMPARE(inspector.sections(), (QStringList{u"text"_s, u"video"_s, u"animation"_s}));
         QVERIFY(inspector.values().value(u"text.stroke"_s).toBool()); // readable on any picture
         QVERIFY(inspector.set(u"text.content"_s, u"Ciao"_s));
         QVERIFY(inspector.set(u"text.content"_s, u"Ciao a tutti"_s));
@@ -467,6 +468,21 @@ private slots:
         editor.previousMarker();
         QTRY_COMPARE(editor.player()->position(), 30);
 
+        // From the library: preview (only the projection), click adds, click again removes; the length is editable.
+        ClipInspector &inspector = *editor.inspector();
+        const QVariantMap window = inspector.previewAnimation(u"animations/out/fade"_s);
+        QCOMPARE(window.value(u"end"_s).toInt(), 120 + 60 - 1); // the clip ends at 180 (2×)
+        QVERIFY(editor.data().findClip(second)->animations.isEmpty());
+        QVERIFY(inspector.toggleAnimation(u"animations/out/fade"_s));
+        QCOMPARE(inspector.values().value(u"animation.out"_s).toString(), u"animations/out/fade"_s);
+        QVERIFY(inspector.set(u"animation.out.duration"_s, 1.5));
+        inspector.endGesture();
+        QCOMPARE(editor.data().findClip(second)->animations.out->duration.value(), 45);
+        QVERIFY(inspector.toggleAnimation(u"animations/out/zoom_in"_s)); // same kind: replaced, length kept
+        QCOMPARE(editor.data().findClip(second)->animations.out->duration.value(), 45);
+        QVERIFY(inspector.toggleAnimation(u"animations/out/zoom_in"_s));
+        QVERIFY(!editor.data().findClip(second)->animations.out);
+
         // Preset animations on the selected clip: one per kind, replaced, removed.
         QVERIFY(editor.applyAnimation(u"animations/in/zoom_in"_s));
         QVERIFY(editor.applyAnimation(u"animations/out/fade"_s, 1.0));
@@ -504,8 +520,8 @@ private slots:
         editor.clearSelection();
         QCOMPARE(ids(), (QStringList{u"split"_s, u"freeze"_s, u"addText"_s, u"addAudio"_s}));
         editor.select(mainTrack(editor).clips[0].id.toString(), false);
-        QCOMPARE(ids(), (QStringList{u"split"_s, u"delete"_s, u"duplicate"_s, u"speed"_s, u"volume"_s, u"freeze"_s,
-                                     u"reverse"_s, u"mirror"_s, u"rotate"_s, u"enhance"_s}));
+        QCOMPARE(ids(), (QStringList{u"split"_s, u"delete"_s, u"duplicate"_s, u"speed"_s, u"volume"_s, u"animation"_s,
+                                     u"freeze"_s, u"reverse"_s, u"mirror"_s, u"rotate"_s, u"enhance"_s}));
         editor.select(mainTrack(editor).clips[1].id.toString(), false);
         QVERIFY(!ids().contains(u"speed"_s) && ids().contains(u"mirror"_s));
 

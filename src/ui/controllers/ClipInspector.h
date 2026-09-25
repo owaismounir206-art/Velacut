@@ -29,6 +29,8 @@ class EditorController;
 //   speed       speed (0.1…100), reversed, preservePitch
 //   filter      filter (asset id, "" = none), filter.intensity (0…1)
 //   adjust      adjust.<name> (the parameters of "vedit.adjust.basic", see adjustParams)
+//   animation   animation.in / .out / .loop (asset id, "" = none), animation.<kind>.name, animation.<kind>.duration
+//               (seconds)
 //   transition  transition.type (asset id), transition.name, transition.duration, transition.maxDuration (seconds)
 //               — when a transition is selected on the timeline instead of clips
 //   text        text.content, text.font, text.size (fraction of the canvas height), text.color, text.bold,
@@ -111,6 +113,10 @@ public:
     // (SPEC §5.11bis "rimuovi tutte", "transizione casuale"). One undo step.
     Q_INVOKABLE bool removeAllTransitions();
     Q_INVOKABLE bool randomTransitions();
+    // Preset animations of the library (SPEC §5.6) on the clip on screen: the preview returns the frames that show it
+    // {start, end}; a click adds it (replacing the one of the same kind), a click on the one applied removes it.
+    Q_INVOKABLE QVariantMap previewAnimation(const QString &animationId);
+    Q_INVOKABLE bool toggleAnimation(const QString &animationId);
     Q_INVOKABLE void clearPreview();
 
     // Copy/paste attributes: look, placement, background, volume and text style (not the speed: it changes the length).

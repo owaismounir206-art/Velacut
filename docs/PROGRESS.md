@@ -56,11 +56,18 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
      (`markersAndAnimations`), `tst_kernels` (30 animazioni per tipo). Traduzioni complete.
    - Nell'interfaccia non c'è ancora niente di tutto questo (P3.6).
 
+6. **Interfaccia delle animazioni (`P3.6a`)**: scheda **Animazioni** nella barra laterale (entrata, uscita, ciclo;
+   miniature animate al passaggio del mouse, anteprima in ciclo sul player, clic applica, di nuovo rimuove), pagina
+   **Animazione** del pannello proprietà (durata di ognuna, rimozione), azione "Animazione" nella barra contestuale e
+   nella ricerca. La matematica delle animazioni sta in `fx/Animation` (la usano il renderer e le miniature).
+
 ### Prossimi passi (Fase 3 — Keyframe e composizione)
-- P3.6: interfaccia: marker sulla timeline e sul righello (tasto M, salto con Maiusc+frecce), scheda Animazioni con
-  anteprima al passaggio del mouse, diamanti dei keyframe accanto ai parametri e sulla clip, scelta dell'easing,
-  selettore colore del chroma key, maschere sul canvas, clip composta e livello di regolazione dal menu della clip;
-  verifica del criterio ("Animo un titolo con keyframe ed easing").
+- P3.6b: marker sulla timeline e sul righello (M aggiunge; clic salta; tasto destro rimuove).
+- P3.6c: keyframe nell'interfaccia: diamanti accanto ai parametri animabili (aggiungi/rimuovi al playhead, salto tra
+  keyframe), diamanti sulla clip selezionata, scelta dell'easing; verifica del criterio ("Animo un titolo con keyframe
+  ed easing").
+- P3.6d: selettore colore del chroma key, maschere sul canvas, modalità di fusione nel pannello, clip composta e
+  livello di regolazione dal menu della clip.
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata

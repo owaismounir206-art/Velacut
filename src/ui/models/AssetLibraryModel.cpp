@@ -47,6 +47,7 @@ QVariantList AssetLibraryModel::categories() const
     const fx::Library &library = fx::Library::core();
     const std::vector<fx::Category> &list = m_kind == Filters       ? library.filterCategories()
                                             : m_kind == Transitions ? library.transitionCategories()
+                                            : m_kind == Animations  ? library.animationCategories()
                                                                     : library.textStyleCategories();
     QVariantList result;
     for (const fx::Category &category : list) {
@@ -75,6 +76,11 @@ std::vector<AssetLibraryModel::Item> AssetLibraryModel::itemsOfKind() const
         break;
     case TextStyles:
         for (const fx::TextStylePreset &preset : library.textStyles()) {
+            add(preset);
+        }
+        break;
+    case Animations:
+        for (const fx::AnimationPreset &preset : library.animations()) {
             add(preset);
         }
         break;

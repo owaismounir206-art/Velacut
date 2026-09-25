@@ -105,6 +105,35 @@ AssetRef coreAsset(const QString &id, int version)
     return AssetRef{QString::fromLatin1(fx::Library::kCorePack), id, version};
 }
 
+// "in", "out" or "loop": the kind of a preset animation.
+QString animationKind(const QString &animationId)
+{
+    const fx::AnimationPreset *preset = fx::Library::core().animation(animationId);
+    if (preset && !preset->category.isEmpty()) {
+        return preset->category;
+    }
+    return animationId.section(u'/', 1, 1);
+}
+
+std::optional<ClipAnimation> &animationSlot(ClipAnimations &animations, const QString &kind)
+{
+    return kind == u"in"_s ? animations.in : kind == u"out"_s ? animations.out : animations.loop;
+}
+
+// The animation of a preset at its default length (kept when another preset of the same kind replaces it).
+ClipAnimation animationOf(const fx::AnimationPreset &preset, const std::optional<ClipAnimation> &current, Rational rate)
+{
+    ClipAnimation animation;
+    animation.type = coreAsset(preset.id, preset.version);
+    animation.duration = current ? current->duration
+                                 : RationalTime(std::max<std::int64_t>(1, std::llround(preset.defaultSeconds * rate.toDouble())), rate);
+    if (const std::optional<Easing> easing = Easing::fromName(preset.easing)) {
+        animation.easing = *easing;
+    }
+    animation.params = preset.params;
+    return animation;
+}
+
 // The params of the adjust effect as the colour adjustments they describe (names of effects.json).
 void writeAdjust(Effect &effect, const fx::ColorAdjust &adjust)
 {
@@ -228,6 +257,9 @@ bool ClipInspector::supports(const Clip &clip, const QString &section) const
     if (section == u"text"_s) {
         return clip.text() != nullptr;
     }
+    if (section == u"animation"_s) {
+        return !audioOnly;
+    }
     return false;
 }
 
@@ -241,7 +273,8 @@ QStringList ClipInspector::sections() const
         }
         return result;
     }
-    for (const QString &section : {u"text"_s, u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"filter"_s, u"adjust"_s}) {
+    for (const QString &section : {u"text"_s, u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s, u"filter"_s,
+                                   u"adjust"_s}) {
         if (supports(*clip, section)) {
             result << section;
         }
@@ -271,6 +304,9 @@ QStringList ClipInspector::modifiedSections() const
         if (media->speed != 1.0 || media->reversed || !media->preservePitch) {
             result << u"speed"_s;
         }
+    }
+    if (!clip->animations.isEmpty()) {
+        result << u"animation"_s;
     }
     if (findEffect(*clip, kFilterType)) {
         result << u"filter"_s;
@@ -383,6 +419,14 @@ QVariantMap ClipInspector::values() const
         map[u"speed"_s] = media->speed;
         map[u"reversed"_s] = media->reversed;
         map[u"preservePitch"_s] = media->preservePitch;
+    }
+    ClipAnimations animations = clip->animations;
+    for (const QString &kind : {u"in"_s, u"out"_s, u"loop"_s}) {
+        const std::optional<ClipAnimation> &animation = animationSlot(animations, kind);
+        const fx::AnimationPreset *preset = animation ? fx::Library::core().animation(animation->type.id) : nullptr;
+        map[u"animation."_s + kind] = animation ? animation->type.id : QString();
+        map[u"animation."_s + kind + u".name"_s] = preset ? preset->name.text() : QString();
+        map[u"animation."_s + kind + u".duration"_s] = animation ? animation->duration.toSecondsDouble() : 0.0;
     }
     const Effect *filter = findEffect(*clip, kFilterType);
     map[u"filter"_s] = filter && filter->preset ? filter->preset->id : QString();
@@ -583,6 +627,18 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
         return update(clips, [&](Clip &c) { c.media()->preservePitch = flag; }, tr("Change pitch"), {});
     }
 
+    // Preset animations: their length (at most the clip's)
+    if (key.startsWith(u"animation."_s) && key.endsWith(u".duration"_s)) {
+        const QString kind = key.section(u'.', 1, 1);
+        const Rational rate = m_editor.data().settings.frameRate;
+        return update(clips, [&](Clip &c) {
+            if (std::optional<ClipAnimation> &animation = animationSlot(c.animations, kind)) {
+                const std::int64_t frames = std::llround(number * rate.toDouble());
+                animation->duration = RationalTime(std::clamp<std::int64_t>(frames, 1, c.duration.rescaled(rate, Rounding::NearestEven).value()), rate);
+            }
+        }, tr("Change animation length"), mergeTarget);
+    }
+
     // Filter and adjustments
     if (key == u"filter"_s) {
         return toggleFilter(value.toString());
@@ -681,6 +737,8 @@ bool ClipInspector::reset(const QString &section)
         speed.primaryClip = {};
         speed.text = tr("Reset speed");
         done = m_editor.push(std::move(speed), gestureKey(target)) || done;
+    } else if (section == u"animation"_s) {
+        done = update(clips, [](Clip &c) { c.animations = ClipAnimations{}; }, tr("Remove animations"), {});
     } else if (section == u"filter"_s) {
         done = update(clips, [](Clip &c) { removeEffect(c, kFilterType); }, tr("Remove filter"), {});
     } else if (section == u"adjust"_s) {
@@ -1032,6 +1090,59 @@ bool ClipInspector::randomTransitions()
     endGesture();
     emit m_editor.message(tr("Transition on %n cut(s)", nullptr, static_cast<int>(cuts.size())), true);
     return true;
+}
+
+QVariantMap ClipInspector::previewAnimation(const QString &animationId)
+{
+    const Clip *clip = libraryClip();
+    const fx::AnimationPreset *preset = fx::Library::core().animation(animationId);
+    if (!clip || !preset || !supports(*clip, u"animation"_s)) {
+        return {};
+    }
+    const Rational rate = m_editor.data().settings.frameRate;
+    const QString kind = animationKind(animationId);
+    Clip previewed = *clip;
+    std::optional<ClipAnimation> &slot = animationSlot(previewed.animations, kind);
+    slot = animationOf(*preset, slot, rate);
+    const std::int64_t start = clip->start.rescaled(rate, Rounding::NearestEven).value();
+    const std::int64_t end = clip->end().rescaled(rate, Rounding::NearestEven).value();
+    const std::int64_t length = std::min(end - start, slot->duration.rescaled(rate, Rounding::NearestEven).value());
+    engine::TimelineProjection::Preview preview;
+    preview.clip = std::move(previewed);
+    m_editor.player()->setPreview(std::move(preview));
+    // The frames that show it: the start or the end of the clip; a loop, one cycle (at least a second).
+    const std::int64_t shown = kind == u"loop"_s ? std::min(end - start, std::max<std::int64_t>(length, std::llround(rate.toDouble())))
+                                                 : length;
+    const std::int64_t first = kind == u"out"_s ? end - shown : start;
+    return {{u"start"_s, static_cast<int>(first)}, {u"end"_s, static_cast<int>(first + shown - 1)}};
+}
+
+bool ClipInspector::toggleAnimation(const QString &animationId)
+{
+    m_editor.selectClipAtPlayhead(); // nothing selected: the clip on screen
+    const Clip *clip = focus();
+    const fx::AnimationPreset *preset = fx::Library::core().animation(animationId);
+    clearPreview();
+    if (!clip || !preset || !supports(*clip, u"animation"_s)) {
+        emit m_editor.message(tr("Select a video, a photo or a text first."), false);
+        return false;
+    }
+    const QString kind = animationKind(animationId);
+    const Rational rate = m_editor.data().settings.frameRate;
+    const bool applied = [&] {
+        ClipAnimations animations = clip->animations;
+        const std::optional<ClipAnimation> &slot = animationSlot(animations, kind);
+        return slot && slot->type.id == animationId;
+    }();
+    endGesture();
+    return update(targets(u"animation"_s), [&](Clip &c) {
+        std::optional<ClipAnimation> &slot = animationSlot(c.animations, kind);
+        if (applied) {
+            slot.reset();
+        } else {
+            slot = animationOf(*preset, slot, rate);
+        }
+    }, applied ? tr("Remove animation") : tr("Animate clip"), {});
 }
 
 void ClipInspector::clearPreview()
