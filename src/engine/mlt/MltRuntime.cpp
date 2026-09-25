@@ -20,6 +20,8 @@ namespace {
 std::once_flag s_started;
 std::shared_future<Mlt::Repository *> s_repository;
 std::atomic<bool> s_ready{false};
+std::mutex s_errorMutex;
+QString s_lastError;
 
 void logFromMlt(void *, int level, const char *format, va_list arguments)
 {
@@ -32,6 +34,8 @@ void logFromMlt(void *, int level, const char *format, va_list arguments)
     text = text.trimmed();
     if (level <= MLT_LOG_ERROR) {
         qCWarning(lcMlt).noquote() << "MLT:" << text;
+        std::lock_guard lock(s_errorMutex);
+        s_lastError = QString::fromUtf8(text);
     } else {
         qCInfo(lcMlt).noquote() << "MLT:" << text;
     }
@@ -76,6 +80,18 @@ void MltRuntime::shutdown()
     if (s_ready.exchange(false)) {
         Mlt::Factory::close();
     }
+}
+
+QString MltRuntime::lastError()
+{
+    std::lock_guard lock(s_errorMutex);
+    return s_lastError;
+}
+
+void MltRuntime::clearLastError()
+{
+    std::lock_guard lock(s_errorMutex);
+    s_lastError.clear();
 }
 
 } // namespace vedit::engine

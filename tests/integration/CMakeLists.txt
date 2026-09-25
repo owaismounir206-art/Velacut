@@ -2,3 +2,6 @@ vedit_add_test(tst_projectroundtrip SOURCES tst_projectroundtrip.cpp LIBRARIES v
 vedit_add_test(tst_player SOURCES tst_player.cpp LIBRARIES vedit_engine)
 vedit_add_test(tst_projection SOURCES tst_projection.cpp TestMedia.h LIBRARIES vedit_engine)
 vedit_add_test(tst_timelineplayer SOURCES tst_timelineplayer.cpp TestMedia.h LIBRARIES vedit_engine)
+vedit_add_test(tst_export SOURCES tst_export.cpp TestMedia.h LIBRARIES vedit_engine)
+target_compile_definitions(tst_export PRIVATE VEDIT_RENDER_EXECUTABLE="$<TARGET_FILE:vedit-render>")
+add_dependencies(tst_export vedit-render)

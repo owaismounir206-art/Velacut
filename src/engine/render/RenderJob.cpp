@@ -1,0 +1,241 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+#include "RenderJob.h"
+
+#include "common/Paths.h"
+#include "core/serialization/ProjectFile.h"
+
+#include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QLoggingCategory>
+#include <QStorageInfo>
+#include <QUuid>
+
+#include <cmath>
+
+Q_LOGGING_CATEGORY(lcRenderJob, "vedit.engine.renderjob")
+
+using namespace Qt::StringLiterals;
+
+namespace vedit::engine {
+
+RenderJob::RenderJob(QObject *parent)
+    : QObject(parent)
+    , m_executable(QCoreApplication::applicationDirPath() + u"/vedit-render"_s)
+{
+}
+
+RenderJob::~RenderJob()
+{
+    if (m_process) {
+        m_process->disconnect(this);
+        m_process->terminate();
+        if (!m_process->waitForFinished(5000)) {
+            m_process->kill();
+            m_process->waitForFinished(1000);
+        }
+        delete m_process;
+        m_process = nullptr;
+        removePartialFiles();
+        QFile::remove(m_frozenProject);
+        QFile::remove(m_jobFile);
+    }
+}
+
+QString RenderJob::errorMessage(RenderError error)
+{
+    switch (error) {
+    case RenderError::None:
+        break;
+    case RenderError::MltUnavailable:
+        return tr("The video engine could not be started.");
+    case RenderError::ProjectUnreadable:
+        return tr("The project could not be prepared for the export.");
+    case RenderError::SequenceMissing:
+        return tr("The timeline to export no longer exists.");
+    case RenderError::NothingToExport:
+        return tr("The timeline is empty: add a clip first.");
+    case RenderError::OutputNotWritable:
+        return tr("The video cannot be saved in this folder. Choose another folder.");
+    case RenderError::EncoderFailed:
+        return tr("The export stopped because of an encoding error.");
+    }
+    return {};
+}
+
+bool RenderJob::start(const ProjectData &project, const SequenceId &sequenceId, const ExportSettings &settings)
+{
+    if (m_process) {
+        return false;
+    }
+    m_settings = settings;
+    m_warnings.clear();
+    m_errorCode.clear();
+    m_errorDetail.clear();
+    m_done = false;
+    m_cancelled = false;
+    m_frame = 0;
+    m_total = 0;
+    m_buffer.clear();
+
+    const Sequence *sequence = project.findSequence(sequenceId);
+    const RationalTime duration = sequence ? sequence->duration(settings.frameRate) : RationalTime();
+    if (!sequence || duration.isZero()) {
+        emit failed(errorMessage(RenderError::NothingToExport), {});
+        return false;
+    }
+    // Check the space before starting rather than failing at 90% (SPEC §5.15).
+    const QString folder = QFileInfo(settings.outputPath).absolutePath();
+    const QStorageInfo storage(folder);
+    const qint64 needed = estimatedFileSize(settings, duration);
+    if (storage.isValid() && storage.bytesAvailable() >= 0 && storage.bytesAvailable() < needed) {
+        emit failed(tr("There is not enough free space in this folder: about %1 MB are needed, %2 MB are free.")
+                        .arg(std::ceil(needed / 1e6))
+                        .arg(std::floor(storage.bytesAvailable() / 1e6)),
+                    folder);
+        return false;
+    }
+
+    const QString directory = paths::cacheDir() + u"/render"_s;
+    QDir().mkpath(directory);
+    const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    m_frozenProject = directory + u"/"_s + id + u".vproj"_s;
+    m_jobFile = directory + u"/"_s + id + u".json"_s;
+    if (const auto written = projectfile::save(m_frozenProject, project); !written) {
+        emit failed(errorMessage(RenderError::ProjectUnreadable), written.error);
+        return false;
+    }
+    const QJsonObject job{{u"project"_s, m_frozenProject},
+                          {u"sequence"_s, sequenceId.toString()},
+                          {u"settings"_s, settings.toJson()}};
+    if (const auto written = projectfile::writeAtomically(m_jobFile, QJsonDocument(job).toJson()); !written) {
+        QFile::remove(m_frozenProject);
+        emit failed(errorMessage(RenderError::ProjectUnreadable), written.error);
+        return false;
+    }
+
+    m_process = new QProcess(this);
+    m_process->setProcessChannelMode(QProcess::SeparateChannels);
+    connect(m_process, &QProcess::readyReadStandardOutput, this, &RenderJob::onOutput);
+    connect(m_process, &QProcess::readyReadStandardError, this, [this] {
+        // Technical log of the child (MLT, FFmpeg): kept in our log, the last lines become the error detail.
+        const QByteArray text = m_process->readAllStandardError();
+        qCDebug(lcRenderJob).noquote() << text.trimmed();
+        m_errorDetail = QString::fromUtf8(text.right(2000)).trimmed();
+    });
+    connect(m_process, &QProcess::finished, this, &RenderJob::onFinished);
+    connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
+        if (error == QProcess::FailedToStart) {
+            onFinished(-1, QProcess::CrashExit);
+        }
+    });
+    m_elapsed.start();
+    qCInfo(lcRenderJob) << "starting" << m_executable << "for" << settings.outputPath;
+    m_process->start(m_executable, {u"--job"_s, m_jobFile});
+    emit runningChanged();
+    emit progressChanged();
+    return true;
+}
+
+void RenderJob::cancel()
+{
+    if (m_process && m_process->state() != QProcess::NotRunning) {
+        m_cancelled = true;
+        m_process->terminate(); // SIGTERM: vedit-render stops and removes its partial file
+    }
+}
+
+int RenderJob::secondsLeft() const
+{
+    if (!m_process || m_frame <= 0 || m_total <= 0 || m_elapsed.elapsed() < 1000) {
+        return -1;
+    }
+    const double perFrame = static_cast<double>(m_elapsed.elapsed()) / m_frame;
+    return static_cast<int>(std::ceil(perFrame * (m_total - m_frame) / 1000.0));
+}
+
+void RenderJob::onOutput()
+{
+    m_buffer += m_process->readAllStandardOutput();
+    qsizetype end = 0;
+    while ((end = m_buffer.indexOf('\n')) >= 0) {
+        const QByteArray line = m_buffer.left(end);
+        m_buffer.remove(0, end + 1);
+        const QJsonObject event = QJsonDocument::fromJson(line).object();
+        if (!event.isEmpty()) {
+            handleEvent(event);
+        }
+    }
+}
+
+void RenderJob::handleEvent(const QJsonObject &event)
+{
+    const QString type = event.value(u"event"_s).toString();
+    if (type == u"progress"_s) {
+        m_frame = event.value(u"frame"_s).toInt();
+        m_total = event.value(u"total"_s).toInt();
+        emit progressChanged();
+    } else if (type == u"warning"_s) {
+        m_warnings << event.value(u"message"_s).toString();
+    } else if (type == u"done"_s) {
+        m_done = true;
+    } else if (type == u"cancelled"_s) {
+        m_cancelled = true;
+    } else if (type == u"error"_s) {
+        m_errorCode = event.value(u"code"_s).toString();
+        m_errorDetail = event.value(u"detail"_s).toString();
+    }
+}
+
+void RenderJob::onFinished(int exitCode, QProcess::ExitStatus status)
+{
+    if (!m_process) {
+        return;
+    }
+    onOutput();
+    const bool crashed = status == QProcess::CrashExit && !m_cancelled;
+    qCInfo(lcRenderJob) << "vedit-render finished with" << exitCode << (crashed ? "(crash)" : "");
+    const bool done = m_done && exitCode == 0;
+    const bool cancelledRun = m_cancelled && !done;
+    const QString errorCode = m_errorCode;
+    const QString detail = m_errorDetail;
+    finish();
+    if (!done) {
+        removePartialFiles(); // normally already removed by vedit-render, unless it was killed
+    }
+    if (done) {
+        emit finished(m_settings.outputPath, m_warnings);
+    } else if (cancelledRun) {
+        emit cancelled();
+    } else if (crashed || errorCode.isEmpty()) {
+        emit failed(tr("The export stopped unexpectedly."), detail);
+    } else {
+        emit failed(errorMessage(renderErrorFromCode(errorCode)), detail);
+    }
+}
+
+void RenderJob::finish()
+{
+    m_process->deleteLater();
+    m_process = nullptr;
+    QFile::remove(m_frozenProject);
+    QFile::remove(m_jobFile);
+    emit runningChanged();
+    emit progressChanged();
+}
+
+void RenderJob::removePartialFiles() const
+{
+    // Left only if vedit-render was killed: ".<name>.part-XXXXXXXX.<ext>" next to the output (see Renderer).
+    const QFileInfo output(m_settings.outputPath);
+    const QString pattern = u"."_s + output.completeBaseName() + u".part-*."_s + output.suffix();
+    QDir folder(output.absolutePath());
+    for (const QString &name : folder.entryList({pattern}, QDir::Files | QDir::Hidden)) {
+        folder.remove(name);
+    }
+}
+
+} // namespace vedit::engine

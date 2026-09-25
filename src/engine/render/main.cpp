@@ -1,0 +1,119 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// vedit-render: exports a frozen copy of a project in a separate process (docs/ARCHITECTURE.md §5.4, D-07/D-08).
+//
+//   vedit-render --job job.json
+//   job.json: {"project": "<frozen .vproj>", "sequence": "<sequence id>", "settings": ExportSettings}
+//
+// Writes one JSON object per line on stdout:
+//   {"event":"progress","frame":N,"total":T}   {"event":"warning","message":"…"}
+//   {"event":"done","output":"…"}   {"event":"error","code":"…","detail":"…"}   {"event":"cancelled"}
+// Exit code 0 = done, 1 = error, 2 = cancelled. SIGTERM/SIGINT cancel cleanly (no partial file is left).
+#include "core/serialization/ProjectFile.h"
+#include "engine/mlt/MltRuntime.h"
+#include "engine/render/Renderer.h"
+
+#include <QCommandLineParser>
+#include <QCoreApplication>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+
+#include <atomic>
+#include <csignal>
+#include <cstdio>
+
+using namespace vedit;
+using namespace vedit::engine;
+using namespace Qt::StringLiterals;
+
+namespace {
+
+std::atomic<bool> s_cancel{false};
+static_assert(std::atomic<bool>::is_always_lock_free);
+
+extern "C" void onTerminate(int)
+{
+    s_cancel = true;
+}
+
+void emitEvent(const QJsonObject &event)
+{
+    const QByteArray line = QJsonDocument(event).toJson(QJsonDocument::Compact) + '\n';
+    std::fwrite(line.constData(), 1, static_cast<size_t>(line.size()), stdout);
+    std::fflush(stdout);
+}
+
+int fail(RenderError error, const QString &detail)
+{
+    emitEvent({{u"event"_s, u"error"_s}, {u"code"_s, renderErrorCode(error)}, {u"detail"_s, detail}});
+    return 1;
+}
+
+int run(const QString &jobPath)
+{
+    QFile file(jobPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return fail(RenderError::ProjectUnreadable, file.errorString());
+    }
+    const QJsonObject job = QJsonDocument::fromJson(file.readAll()).object();
+    const std::optional<ExportSettings> settings = ExportSettings::fromJson(job.value(u"settings"_s).toObject());
+    if (!settings) {
+        return fail(RenderError::ProjectUnreadable, u"invalid job settings"_s);
+    }
+    const ProjectLoadResult loaded = projectfile::load(job.value(u"project"_s).toString());
+    if (!loaded.ok()) {
+        return fail(RenderError::ProjectUnreadable, loaded.error);
+    }
+    const std::optional<SequenceId> sequenceId = SequenceId::fromString(job.value(u"sequence"_s).toString());
+    if (!sequenceId) {
+        return fail(RenderError::SequenceMissing, job.value(u"sequence"_s).toString());
+    }
+    int lastReported = -1;
+    const Renderer::Result result = Renderer::render(
+        *loaded.project, *sequenceId, *settings,
+        [&lastReported](int frame, int total) {
+            if (frame != lastReported) {
+                lastReported = frame;
+                emitEvent({{u"event"_s, u"progress"_s}, {u"frame"_s, frame}, {u"total"_s, total}});
+            }
+        },
+        s_cancel);
+    for (const QString &warning : result.warnings) {
+        emitEvent({{u"event"_s, u"warning"_s}, {u"message"_s, warning}});
+    }
+    switch (result.status) {
+    case Renderer::Status::Done:
+        emitEvent({{u"event"_s, u"done"_s}, {u"output"_s, settings->outputPath}});
+        return 0;
+    case Renderer::Status::Cancelled:
+        emitEvent({{u"event"_s, u"cancelled"_s}});
+        return 2;
+    case Renderer::Status::Failed:
+        break;
+    }
+    return fail(result.error, result.detail);
+}
+
+} // namespace
+
+int main(int argc, char *argv[])
+{
+    std::signal(SIGTERM, onTerminate);
+    std::signal(SIGINT, onTerminate);
+    QCoreApplication app(argc, argv);
+    QCoreApplication::setApplicationName(u"vedit-render"_s);
+    QCommandLineParser parser;
+    parser.setApplicationDescription(u"Exports a vedit project (used by vedit)."_s);
+    parser.addHelpOption();
+    const QCommandLineOption jobOption(u"job"_s, u"Export job (JSON)."_s, u"file"_s);
+    parser.addOption(jobOption);
+    parser.process(app);
+    if (!parser.isSet(jobOption)) {
+        parser.showHelp(1);
+    }
+    MltRuntime::initializeAsync();
+    // Every MLT object is released by run(). The factory is deliberately not closed: this process ends here, and
+    // Mlt::Factory::close() unloads the modules (and FFmpeg, x264) while their global caches are still allocated,
+    // which LeakSanitizer then reports as leaks from "<unknown module>" (verified: none without the unload).
+    return run(parser.value(jobOption));
+}

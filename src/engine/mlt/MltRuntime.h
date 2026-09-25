@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include <QString>
+
 namespace Mlt {
 class Repository;
 }
@@ -21,6 +23,10 @@ public:
     static Mlt::Repository *repository();
     // Call at exit, after every MLT object has been destroyed.
     static void shutdown();
+    // The most recent error logged by MLT (any thread), for technical details of a failure; clearLastError()
+    // before an operation to know whether it logged one.
+    static QString lastError();
+    static void clearLastError();
 };
 
 } // namespace vedit::engine

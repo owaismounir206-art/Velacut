@@ -44,21 +44,31 @@ int hideFlags(const Track &track, bool audioTrack, bool anySolo)
 
 } // namespace
 
-std::unique_ptr<Mlt::Profile> makeProfile(const ProjectData &project, const SequenceId &sequenceId)
+VideoFormat sequenceFormat(const ProjectData &project, const SequenceId &sequenceId)
 {
     const Sequence *sequence = sequenceOf(project, sequenceId);
     const Canvas canvas = sequence ? sequence->canvas : project.settings.defaultCanvas;
+    return VideoFormat{QSize(canvas.width, canvas.height), project.settings.frameRate};
+}
+
+std::unique_ptr<Mlt::Profile> makeProfile(const VideoFormat &format)
+{
     auto profile = std::make_unique<Mlt::Profile>();
-    profile->set_width(canvas.width);
-    profile->set_height(canvas.height);
-    profile->set_frame_rate(static_cast<int>(project.settings.frameRate.num()), static_cast<int>(project.settings.frameRate.den()));
+    profile->set_width(format.size.width());
+    profile->set_height(format.size.height());
+    profile->set_frame_rate(static_cast<int>(format.frameRate.num()), static_cast<int>(format.frameRate.den()));
     profile->set_sample_aspect(1, 1);
-    const int divisor = std::gcd(canvas.width, canvas.height);
-    profile->set_display_aspect(canvas.width / divisor, canvas.height / divisor);
+    const int divisor = std::gcd(format.size.width(), format.size.height());
+    profile->set_display_aspect(format.size.width() / divisor, format.size.height() / divisor);
     profile->set_progressive(1);
     profile->set_colorspace(709);
     profile->set_explicit(1);
     return profile;
+}
+
+std::unique_ptr<Mlt::Profile> makeProfile(const ProjectData &project, const SequenceId &sequenceId)
+{
+    return makeProfile(sequenceFormat(project, sequenceId));
 }
 
 bool profileMatches(const Mlt::Profile &profile, const ProjectData &project, const SequenceId &sequenceId)
@@ -72,6 +82,7 @@ bool profileMatches(const Mlt::Profile &profile, const ProjectData &project, con
 
 TimelineProjection::TimelineProjection(Mlt::Profile &profile, MediaProducerCache &cache, MediaLoading loading)
     : m_profile(profile)
+    , m_rate(profile.frame_rate_num(), profile.frame_rate_den())
     , m_cache(cache)
     , m_loading(loading)
 {
@@ -81,6 +92,12 @@ TimelineProjection::~TimelineProjection()
 {
     m_tractor.reset();
     m_retired.clear();
+}
+
+std::int64_t TimelineProjection::toFrames(const RationalTime &time) const
+{
+    // Identity when the profile has the project frame rate (D-04); otherwise the nearest frame.
+    return time.rate() == m_rate ? time.value() : time.rescaled(m_rate, Rounding::NearestEven).value();
 }
 
 std::shared_ptr<Mlt::Producer> TimelineProjection::producerFor(const Media &media)
@@ -151,8 +168,12 @@ void TimelineProjection::fillTrack(TrackSlot &slot, const Track &track, const Pr
     playlist.set("hide", hideFlags(track, slot.audio, anySolo));
     std::int64_t cursor = 0;
     for (const Clip &clip : track.clips) {
-        std::int64_t start = clip.start.value();
-        std::int64_t length = clip.duration.value();
+        // Both edges are converted (not start and duration) so that adjacent clips stay adjacent.
+        std::int64_t start = toFrames(clip.start);
+        std::int64_t length = toFrames(clip.end()) - start;
+        if (length <= 0) {
+            continue; // shorter than one frame at the output rate
+        }
         if (start < cursor) {
             // Overlap transitions are rendered from Phase 2: until then the overlapping head is skipped.
             length -= cursor - start;
@@ -185,7 +206,7 @@ void TimelineProjection::fillTrack(TrackSlot &slot, const Track &track, const Pr
             if (data->speed != 1.0 || data->curve || data->reversed) {
                 m_warnings << u"clip %1: speed and reverse are rendered from Phase 2"_s.arg(clip.id.toString());
             }
-            const int in = media->kind == MediaKind::Image ? 0 : static_cast<int>(data->sourceIn.value());
+            const int in = media->kind == MediaKind::Image ? 0 : static_cast<int>(toFrames(data->sourceIn));
             playlist.append(*producer, in, in + out);
             if (data->streams == Streams::VideoOnly && media->info.audio) {
                 std::unique_ptr<Mlt::Producer> cut(playlist.get_clip(playlist.count() - 1));

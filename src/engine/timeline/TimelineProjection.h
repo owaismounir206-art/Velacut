@@ -5,6 +5,7 @@
 #include "core/project/ProjectData.h"
 
 #include <QImage>
+#include <QSize>
 #include <QStringList>
 
 #include <chrono>
@@ -23,7 +24,17 @@ namespace vedit::engine {
 
 class MediaProducerCache;
 
-// Profile matching a sequence: canvas size, project frame rate, square pixels, progressive, Rec.709.
+// Frame size and rate of a rendering: the sequence's canvas and the project frame rate for the preview, any
+// size and rate for an export (the projection converts the model's times to the profile's frame rate).
+struct VideoFormat
+{
+    QSize size;
+    Rational frameRate;
+};
+VideoFormat sequenceFormat(const ProjectData &project, const SequenceId &sequenceId);
+
+// Square pixels, progressive, Rec.709.
+std::unique_ptr<Mlt::Profile> makeProfile(const VideoFormat &format);
 std::unique_ptr<Mlt::Profile> makeProfile(const ProjectData &project, const SequenceId &sequenceId);
 bool profileMatches(const Mlt::Profile &profile, const ProjectData &project, const SequenceId &sequenceId);
 
@@ -88,8 +99,11 @@ private:
     void retireEntries(Mlt::Playlist &playlist);
     void updateBackground();
     std::shared_ptr<Mlt::Producer> producerFor(const Media &media);
+    // A model time in frames of the profile.
+    std::int64_t toFrames(const RationalTime &time) const;
 
     Mlt::Profile &m_profile;
+    Rational m_rate; // of the profile
     MediaProducerCache &m_cache;
     MediaLoading m_loading;
     SequenceId m_sequenceId;
