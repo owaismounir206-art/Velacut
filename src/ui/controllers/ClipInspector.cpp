@@ -1,0 +1,902 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+#include "ClipInspector.h"
+
+#include "EditorController.h"
+#include "core/edit/TimelineEditor.h"
+#include "core/serialization/ProjectJson.h"
+#include "engine/analysis/MediaAnalysis.h"
+#include "engine/playback/TimelinePlayer.h"
+#include "fx/Enhance.h"
+#include "fx/Library.h"
+
+#include <QColor>
+
+#include <algorithm>
+#include <cmath>
+
+using namespace Qt::StringLiterals;
+
+namespace vedit::ui {
+
+namespace {
+
+const QString kFilterType = u"vedit.filter"_s;
+const QString kAdjustType = u"vedit.adjust.basic"_s;
+
+double numberOf(const Param &param, double fallback)
+{
+    const double *value = std::get_if<double>(&param.staticValue());
+    return value ? *value : fallback;
+}
+
+Vec2 vectorOf(const Param &param, Vec2 fallback)
+{
+    const Vec2 *value = std::get_if<Vec2>(&param.staticValue());
+    return value ? *value : fallback;
+}
+
+Color colorOf(const Param &param, Color fallback)
+{
+    const Color *value = std::get_if<Color>(&param.staticValue());
+    return value ? *value : fallback;
+}
+
+QColor toQColor(const Color &c)
+{
+    return QColor(c.r, c.g, c.b, c.a);
+}
+
+Color toColor(const QVariant &value)
+{
+    const QColor c = value.value<QColor>();
+    return Color{static_cast<std::uint8_t>(c.red()), static_cast<std::uint8_t>(c.green()),
+                 static_cast<std::uint8_t>(c.blue()), static_cast<std::uint8_t>(c.alpha())};
+}
+
+const Effect *findEffect(const Clip &clip, const QString &type)
+{
+    const auto it = std::find_if(clip.effects.begin(), clip.effects.end(),
+                                 [&type](const Effect &effect) { return effect.type == type; });
+    return it == clip.effects.end() ? nullptr : &*it;
+}
+
+// The effect of `type`, created (filters before adjustments: a look, then the user's corrections) if missing.
+Effect &ensureEffect(Clip &clip, const QString &type)
+{
+    const auto it = std::find_if(clip.effects.begin(), clip.effects.end(),
+                                 [&type](const Effect &effect) { return effect.type == type; });
+    if (it != clip.effects.end()) {
+        return *it;
+    }
+    Effect effect;
+    effect.id = EffectId::create();
+    effect.type = type;
+    if (type == kFilterType) {
+        clip.effects.insert(clip.effects.begin(), std::move(effect));
+        return clip.effects.front();
+    }
+    clip.effects.push_back(std::move(effect));
+    return clip.effects.back();
+}
+
+void removeEffect(Clip &clip, const QString &type)
+{
+    std::erase_if(clip.effects, [&type](const Effect &effect) { return effect.type == type; });
+}
+
+// Copies the effect of `type` of `from` (or its absence) onto `to`, with a new id.
+void copyEffect(const Clip &from, Clip &to, const QString &type)
+{
+    const Effect *source = findEffect(from, type);
+    if (!source) {
+        removeEffect(to, type);
+        return;
+    }
+    const EffectId id = findEffect(to, type) ? findEffect(to, type)->id : EffectId::create();
+    Effect &target = ensureEffect(to, type);
+    target = *source;
+    target.id = id;
+}
+
+AssetRef coreAsset(const QString &id, int version)
+{
+    return AssetRef{QString::fromLatin1(fx::Library::kCorePack), id, version};
+}
+
+// The params of the adjust effect as the colour adjustments they describe (names of effects.json).
+void writeAdjust(Effect &effect, const fx::ColorAdjust &adjust)
+{
+    const std::pair<const char *, double> values[] = {
+        {"exposure", adjust.exposure},       {"contrast", adjust.contrast}, {"highlights", adjust.highlights},
+        {"shadows", adjust.shadows},         {"temperature", adjust.temperature}, {"tint", adjust.tint},
+        {"vibrance", adjust.vibrance},
+    };
+    for (const auto &[name, value] : values) {
+        effect.params[QString::fromLatin1(name)] = Param(std::round(value * 100.0) / 100.0);
+    }
+}
+
+} // namespace
+
+ClipInspector::ClipInspector(EditorController &editor)
+    : QObject(&editor)
+    , m_editor(editor)
+{
+    connect(&editor, &EditorController::selectionChanged, this, &ClipInspector::changed);
+    connect(&editor, &EditorController::modelChanged, this, &ClipInspector::changed);
+}
+
+TextStyle ClipInspector::defaultTextStyle()
+{
+    const fx::TextStylePreset *preset = fx::Library::core().textStyle(u"text/outline"_s);
+    return preset ? projectjson::textStyleFromJson(preset->style) : TextStyle{};
+}
+
+const Clip *ClipInspector::focus() const
+{
+    const std::optional<ClipId> id = m_editor.focusClip();
+    return id ? m_editor.data().findClip(*id) : nullptr;
+}
+
+bool ClipInspector::active() const
+{
+    return focus() != nullptr;
+}
+
+QString ClipInspector::clipId() const
+{
+    const Clip *clip = focus();
+    return clip ? clip->id.toString() : QString();
+}
+
+int ClipInspector::selectedCount() const
+{
+    return static_cast<int>(m_editor.selectedClips().size());
+}
+
+int ClipInspector::kind() const
+{
+    const Clip *clip = focus();
+    if (!clip) {
+        return None;
+    }
+    if (clip->text()) {
+        return Text;
+    }
+    if (const MediaClipData *media = clip->media()) {
+        const Media *source = m_editor.data().findMedia(media->mediaId);
+        if (!source || source->kind == MediaKind::Audio || media->streams == Streams::AudioOnly) {
+            return Audio;
+        }
+        return source->kind == MediaKind::Image ? Image : Video;
+    }
+    return Other;
+}
+
+bool ClipInspector::supports(const Clip &clip, const QString &section) const
+{
+    const MediaClipData *media = clip.media();
+    const Media *source = media ? m_editor.data().findMedia(media->mediaId) : nullptr;
+    const bool audioOnly = media && (!source || source->kind == MediaKind::Audio || media->streams == Streams::AudioOnly);
+    const bool image = source && source->kind == MediaKind::Image;
+    const bool visualMedia = media && !audioOnly;
+    if (section == u"video"_s) {
+        return !audioOnly;
+    }
+    if (section == u"background"_s) {
+        const Sequence *sequence = m_editor.data().mainSequence();
+        return visualMedia && sequence && !sequence->visualTracks.empty() &&
+               sequence->visualTracks.front().findClip(clip.id) != nullptr;
+    }
+    if (section == u"audio"_s) {
+        return media && !image && media->streams != Streams::VideoOnly && source && source->info.audio.has_value();
+    }
+    if (section == u"speed"_s) {
+        return media && !image;
+    }
+    if (section == u"filter"_s || section == u"adjust"_s) {
+        return visualMedia;
+    }
+    if (section == u"text"_s) {
+        return clip.text() != nullptr;
+    }
+    return false;
+}
+
+QStringList ClipInspector::sections() const
+{
+    const Clip *clip = focus();
+    QStringList result;
+    if (!clip) {
+        return result;
+    }
+    for (const QString &section : {u"text"_s, u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"filter"_s, u"adjust"_s}) {
+        if (supports(*clip, section)) {
+            result << section;
+        }
+    }
+    return result;
+}
+
+QStringList ClipInspector::modifiedSections() const
+{
+    const Clip *clip = focus();
+    QStringList result;
+    if (!clip) {
+        return result;
+    }
+    Transform plainTransform;
+    plainTransform.fit = clip->transform.fit;
+    if (clip->transform != plainTransform || numberOf(clip->opacity, 1.0) != 1.0) {
+        result << u"video"_s;
+    }
+    if (clip->background) {
+        result << u"background"_s;
+    }
+    if (const MediaClipData *media = clip->media()) {
+        if (media->audio != ClipAudio{}) {
+            result << u"audio"_s;
+        }
+        if (media->speed != 1.0 || media->reversed || !media->preservePitch) {
+            result << u"speed"_s;
+        }
+    }
+    if (findEffect(*clip, kFilterType)) {
+        result << u"filter"_s;
+    }
+    if (const Effect *adjust = findEffect(*clip, kAdjustType)) {
+        if (std::any_of(adjust->params.begin(), adjust->params.end(),
+                        [](const auto &entry) { return numberOf(entry.second, 0.0) != 0.0; })) {
+            result << u"adjust"_s;
+        }
+    }
+    if (const TextClipData *text = clip->text(); text && text->style != defaultTextStyle()) {
+        result << u"text"_s;
+    }
+    return result;
+}
+
+double ClipInspector::durationSeconds() const
+{
+    const Clip *clip = focus();
+    return clip ? clip->duration.toSecondsDouble() : 0.0;
+}
+
+QVariantList ClipInspector::adjustParams() const
+{
+    QVariantList list;
+    if (const fx::EffectSpec *spec = fx::Library::core().effect(kAdjustType)) {
+        for (const fx::ParamSpec &param : spec->params) {
+            list << QVariantMap{{u"name"_s, param.name},
+                                {u"label"_s, param.label.text()},
+                                {u"min"_s, param.min},
+                                {u"max"_s, param.max},
+                                {u"default"_s, param.defaultValue},
+                                {u"advanced"_s, param.advanced}};
+        }
+    }
+    return list;
+}
+
+QVariantList ClipInspector::swatches() const
+{
+    QVariantList list;
+    for (const char *name : {"#FFFFFF", "#000000", "#9E9E9E", "#F44336", "#FF9800", "#FFD54F", "#8BC34A", "#26C6DA",
+                             "#2196F3", "#7E57C2", "#EC407A", "#795548"}) {
+        list << QColor(QLatin1StringView(name));
+    }
+    return list;
+}
+
+QVariantMap ClipInspector::values() const
+{
+    QVariantMap map;
+    const Clip *clip = focus();
+    if (!clip) {
+        return map;
+    }
+    const Vec2 position = vectorOf(clip->transform.position, {0, 0});
+    map[u"x"_s] = position.x;
+    map[u"y"_s] = position.y;
+    map[u"scale"_s] = vectorOf(clip->transform.scale, {1, 1}).x;
+    map[u"rotation"_s] = numberOf(clip->transform.rotation, 0.0);
+    map[u"opacity"_s] = numberOf(clip->opacity, 1.0);
+    map[u"flipH"_s] = clip->transform.flipH;
+    map[u"flipV"_s] = clip->transform.flipV;
+    map[u"fit"_s] = clip->transform.fit == FitMode::Cover ? 1 : 0;
+
+    const Sequence *sequence = m_editor.data().mainSequence();
+    const CanvasBackground background = clip->background ? *clip->background
+                                        : sequence && sequence->defaultBackground ? *sequence->defaultBackground
+                                                                                  : CanvasBackground{};
+    map[u"background.type"_s] = background.type == BackgroundType::Blur ? 1 : 0;
+    map[u"background.color"_s] = toQColor(background.color);
+    map[u"background.blur"_s] = background.amount;
+
+    if (const MediaClipData *media = clip->media()) {
+        map[u"volume"_s] = numberOf(media->audio.gainDb, 0.0);
+        map[u"fadeIn"_s] = media->audio.fadeIn ? media->audio.fadeIn->toSecondsDouble() : 0.0;
+        map[u"fadeOut"_s] = media->audio.fadeOut ? media->audio.fadeOut->toSecondsDouble() : 0.0;
+        map[u"speed"_s] = media->speed;
+        map[u"reversed"_s] = media->reversed;
+        map[u"preservePitch"_s] = media->preservePitch;
+    }
+    const Effect *filter = findEffect(*clip, kFilterType);
+    map[u"filter"_s] = filter && filter->preset ? filter->preset->id : QString();
+    const fx::FilterPreset *preset = filter && filter->preset ? fx::Library::core().filter(filter->preset->id) : nullptr;
+    map[u"filter.name"_s] = preset ? preset->name.text() : QString();
+    map[u"filter.intensity"_s] = filter ? numberOf(filter->intensity, 1.0) : 1.0;
+    const Effect *adjust = findEffect(*clip, kAdjustType);
+    for (const QVariant &spec : adjustParams()) {
+        const QVariantMap param = spec.toMap();
+        const QString name = param.value(u"name"_s).toString();
+        const auto it = adjust ? adjust->params.find(name) : std::map<QString, Param>::const_iterator{};
+        map[u"adjust."_s + name] = adjust && it != adjust->params.end() ? numberOf(it->second, 0.0)
+                                                                         : param.value(u"default"_s).toDouble();
+    }
+
+    if (const TextClipData *text = clip->text()) {
+        const TextStyle &style = text->style;
+        map[u"text.content"_s] = text->text;
+        map[u"text.font"_s] = style.fontFamily;
+        map[u"text.size"_s] = numberOf(style.size, 0.06);
+        map[u"text.color"_s] = toQColor(colorOf(style.color, Color{255, 255, 255, 255}));
+        map[u"text.bold"_s] = style.fontWeight >= 600;
+        map[u"text.italic"_s] = style.italic;
+        map[u"text.underline"_s] = style.underline;
+        map[u"text.align"_s] = static_cast<int>(style.align);
+        map[u"text.stroke"_s] = style.stroke.has_value();
+        map[u"text.strokeColor"_s] = toQColor(style.stroke ? colorOf(style.stroke->color, Color{}) : Color{});
+        map[u"text.strokeWidth"_s] = style.stroke ? style.stroke->width : TextStroke{}.width;
+        map[u"text.shadow"_s] = style.shadow.has_value();
+        map[u"text.background"_s] = style.background.has_value();
+        map[u"text.backgroundColor"_s] = toQColor(style.background ? style.background->color : TextBackground{}.color);
+        map[u"text.letterSpacing"_s] = numberOf(style.letterSpacing, 0.0);
+        map[u"text.lineHeight"_s] = style.lineHeight;
+        map[u"text.preset"_s] = text->stylePreset ? text->stylePreset->id : QString();
+    }
+    return map;
+}
+
+QString ClipInspector::sectionOf(const QString &key) const
+{
+    static const QStringList video{u"x"_s, u"y"_s, u"scale"_s, u"rotation"_s, u"opacity"_s, u"flipH"_s, u"flipV"_s, u"fit"_s};
+    static const QStringList audio{u"volume"_s, u"fadeIn"_s, u"fadeOut"_s};
+    static const QStringList speed{u"speed"_s, u"reversed"_s, u"preservePitch"_s};
+    if (video.contains(key)) {
+        return u"video"_s;
+    }
+    if (audio.contains(key)) {
+        return u"audio"_s;
+    }
+    if (speed.contains(key)) {
+        return u"speed"_s;
+    }
+    const qsizetype dot = key.indexOf(u'.');
+    return dot > 0 ? key.left(dot) : key; // background.*, filter.*, adjust.*, text.*
+}
+
+std::vector<ClipId> ClipInspector::targets(const QString &section) const
+{
+    std::vector<ClipId> result;
+    for (const ClipId &id : m_editor.selectedClips()) {
+        const Clip *clip = m_editor.data().findClip(id);
+        if (clip && supports(*clip, section)) {
+            result.push_back(id);
+        }
+    }
+    return result;
+}
+
+MergeKey ClipInspector::gestureKey(const QString &target)
+{
+    return MergeKey{u"inspector:"_s + target, m_gesture};
+}
+
+bool ClipInspector::update(const std::vector<ClipId> &clips, const std::function<void(Clip &)> &change,
+                           const QString &text, const QString &mergeTarget)
+{
+    if (clips.empty()) {
+        return false;
+    }
+    EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId).updateClips(clips, change, text);
+    result.primaryClip = {}; // the selection stays as it is
+    return m_editor.push(std::move(result), mergeTarget.isEmpty() ? MergeKey{} : gestureKey(mergeTarget));
+}
+
+void ClipInspector::endGesture()
+{
+    ++m_gesture;
+}
+
+bool ClipInspector::set(const QString &key, const QVariant &value)
+{
+    const Clip *clip = focus();
+    if (!clip) {
+        return false;
+    }
+    const std::vector<ClipId> clips = targets(sectionOf(key));
+    QString mergeTarget = key;
+    for (const ClipId &id : clips) {
+        mergeTarget += u':' + id.toString();
+    }
+    const double number = value.toDouble();
+    const bool flag = value.toBool();
+
+    // Transform and opacity
+    if (key == u"x"_s || key == u"y"_s) {
+        return update(clips, [&](Clip &c) {
+            Vec2 position = vectorOf(c.transform.position, {0, 0});
+            (key == u"x"_s ? position.x : position.y) = std::clamp(number, -4.0, 4.0);
+            c.transform.position = Param(position);
+        }, tr("Move clip"), mergeTarget);
+    }
+    if (key == u"scale"_s) {
+        return update(clips, [&](Clip &c) {
+            const double s = std::clamp(number, 0.01, 20.0);
+            c.transform.scale = Param(Vec2{s, s});
+            c.transform.uniformScale = true;
+        }, tr("Resize clip"), mergeTarget);
+    }
+    if (key == u"rotation"_s) {
+        return update(clips, [&](Clip &c) { c.transform.rotation = Param(std::fmod(number, 360.0)); }, tr("Rotate clip"),
+                      mergeTarget);
+    }
+    if (key == u"opacity"_s) {
+        return update(clips, [&](Clip &c) { c.opacity = Param(std::clamp(number, 0.0, 1.0)); }, tr("Change opacity"),
+                      mergeTarget);
+    }
+    if (key == u"flipH"_s || key == u"flipV"_s) {
+        return update(clips, [&](Clip &c) { (key == u"flipH"_s ? c.transform.flipH : c.transform.flipV) = flag; },
+                      tr("Mirror clip"), {});
+    }
+    if (key == u"fit"_s) {
+        return update(clips, [&](Clip &c) { c.transform.fit = value.toInt() == 1 ? FitMode::Cover : FitMode::Contain; },
+                      value.toInt() == 1 ? tr("Fill the canvas") : tr("Show the whole picture"), {});
+    }
+
+    // Background
+    if (key.startsWith(u"background."_s)) {
+        const Sequence *sequence = m_editor.data().mainSequence();
+        const std::optional<CanvasBackground> fallback = sequence ? sequence->defaultBackground : std::nullopt;
+        return update(clips, [&](Clip &c) {
+            CanvasBackground background = c.background ? *c.background : fallback.value_or(CanvasBackground{});
+            if (key == u"background.type"_s) {
+                background.type = value.toInt() == 1 ? BackgroundType::Blur : BackgroundType::Color;
+            } else if (key == u"background.color"_s) {
+                background.type = BackgroundType::Color;
+                background.color = toColor(value);
+            } else if (key == u"background.blur"_s) {
+                background.type = BackgroundType::Blur;
+                background.amount = std::clamp(number, 0.0, 1.0);
+            }
+            c.background = background;
+        }, tr("Change background"), mergeTarget);
+    }
+
+    // Audio
+    if (key == u"volume"_s) {
+        return update(clips, [&](Clip &c) { c.media()->audio.gainDb = Param(std::clamp(number, -60.0, 20.0)); },
+                      tr("Change volume"), mergeTarget);
+    }
+    if (key == u"fadeIn"_s || key == u"fadeOut"_s) {
+        const Rational rate = m_editor.data().settings.frameRate;
+        return update(clips, [&](Clip &c) {
+            std::optional<RationalTime> fade;
+            const double seconds = std::clamp(number, 0.0, c.duration.toSecondsDouble());
+            if (seconds > 0.0) {
+                fade = RationalTime(std::llround(seconds * rate.toDouble()), rate);
+            }
+            (key == u"fadeIn"_s ? c.media()->audio.fadeIn : c.media()->audio.fadeOut) = fade;
+        }, key == u"fadeIn"_s ? tr("Change fade in") : tr("Change fade out"), mergeTarget);
+    }
+
+    // Speed: changes the length of the clip, so only the focused one.
+    if (key == u"speed"_s) {
+        if (!supports(*clip, u"speed"_s)) {
+            return false;
+        }
+        EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                                .setSpeed(clip->id, std::clamp(number, 0.1, 100.0));
+        result.primaryClip = {};
+        return m_editor.push(std::move(result), gestureKey(u"speed:"_s + clip->id.toString()));
+    }
+    if (key == u"reversed"_s) {
+        return update(clips, [&](Clip &c) { c.media()->reversed = flag; }, flag ? tr("Reverse clip") : tr("Play forwards"), {});
+    }
+    if (key == u"preservePitch"_s) {
+        return update(clips, [&](Clip &c) { c.media()->preservePitch = flag; }, tr("Change pitch"), {});
+    }
+
+    // Filter and adjustments
+    if (key == u"filter"_s) {
+        return toggleFilter(value.toString());
+    }
+    if (key == u"filter.intensity"_s) {
+        return update(clips, [&](Clip &c) {
+            if (findEffect(c, kFilterType)) {
+                ensureEffect(c, kFilterType).intensity = Param(std::clamp(number, 0.0, 1.0));
+            }
+        }, tr("Change filter intensity"), mergeTarget);
+    }
+    if (key.startsWith(u"adjust."_s)) {
+        const QString name = key.mid(7);
+        return update(clips, [&](Clip &c) { ensureEffect(c, kAdjustType).params[name] = Param(number); },
+                      tr("Adjust colour"), mergeTarget);
+    }
+
+    // Text
+    if (key == u"text.preset"_s) {
+        return applyTextStyle(value.toString());
+    }
+    if (key.startsWith(u"text."_s)) {
+        const QString field = key.mid(5);
+        return update(clips, [&](Clip &c) {
+            TextClipData &text = *c.text();
+            TextStyle &style = text.style;
+            if (field == u"content"_s) {
+                text.text = value.toString();
+            } else if (field == u"font"_s) {
+                style.fontFamily = value.toString();
+            } else if (field == u"size"_s) {
+                style.size = Param(std::clamp(number, 0.01, 1.0));
+            } else if (field == u"color"_s) {
+                style.color = Param(toColor(value));
+            } else if (field == u"bold"_s) {
+                style.fontWeight = flag ? 700 : 400;
+            } else if (field == u"italic"_s) {
+                style.italic = flag;
+            } else if (field == u"underline"_s) {
+                style.underline = flag;
+            } else if (field == u"align"_s) {
+                style.align = static_cast<TextAlign>(std::clamp(value.toInt(), 0, 2));
+            } else if (field == u"stroke"_s) {
+                style.stroke = flag ? std::optional<TextStroke>(TextStroke{}) : std::nullopt;
+            } else if (field == u"strokeColor"_s) {
+                style.stroke = style.stroke.value_or(TextStroke{});
+                style.stroke->color = Param(toColor(value));
+            } else if (field == u"strokeWidth"_s) {
+                style.stroke = style.stroke.value_or(TextStroke{});
+                style.stroke->width = std::clamp(number, 0.0, 0.5);
+            } else if (field == u"shadow"_s) {
+                style.shadow = flag ? std::optional<TextShadow>(TextShadow{}) : std::nullopt;
+            } else if (field == u"background"_s) {
+                style.background = flag ? std::optional<TextBackground>(TextBackground{}) : std::nullopt;
+            } else if (field == u"backgroundColor"_s) {
+                style.background = style.background.value_or(TextBackground{});
+                style.background->color = toColor(value);
+            } else if (field == u"letterSpacing"_s) {
+                style.letterSpacing = Param(std::clamp(number, -0.5, 2.0));
+            } else if (field == u"lineHeight"_s) {
+                style.lineHeight = std::clamp(number, 0.5, 4.0);
+            }
+        }, field == u"content"_s ? tr("Edit text") : tr("Change text style"), mergeTarget);
+    }
+    return false;
+}
+
+bool ClipInspector::reset(const QString &section)
+{
+    const Clip *clip = focus();
+    if (!clip) {
+        return false;
+    }
+    const std::vector<ClipId> clips = targets(section);
+    endGesture();
+    bool done = false;
+    if (section == u"video"_s) {
+        done = update(clips, [](Clip &c) {
+            const FitMode fit = c.transform.fit;
+            c.transform = Transform{};
+            c.transform.fit = fit;
+            c.opacity = Param(1.0);
+        }, tr("Reset position and size"), {});
+    } else if (section == u"background"_s) {
+        done = update(clips, [](Clip &c) { c.background.reset(); }, tr("Reset background"), {});
+    } else if (section == u"audio"_s) {
+        done = update(clips, [](Clip &c) { c.media()->audio = ClipAudio{}; }, tr("Reset volume"), {});
+    } else if (section == u"speed"_s) {
+        // One undo step: the direction, then the speed (which moves the following clips).
+        const QString target = u"reset-speed:"_s + clip->id.toString();
+        done = update({clip->id}, [](Clip &c) {
+            c.media()->reversed = false;
+            c.media()->preservePitch = true;
+        }, tr("Reset speed"), target);
+        EditResult speed = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId).setSpeed(clip->id, 1.0);
+        speed.primaryClip = {};
+        speed.text = tr("Reset speed");
+        done = m_editor.push(std::move(speed), gestureKey(target)) || done;
+    } else if (section == u"filter"_s) {
+        done = update(clips, [](Clip &c) { removeEffect(c, kFilterType); }, tr("Remove filter"), {});
+    } else if (section == u"adjust"_s) {
+        done = update(clips, [](Clip &c) { removeEffect(c, kAdjustType); }, tr("Reset adjustments"), {});
+    } else if (section == u"text"_s) {
+        done = update(clips, [](Clip &c) {
+            c.text()->style = defaultTextStyle();
+            c.text()->stylePreset.reset();
+        }, tr("Reset text style"), {});
+    }
+    endGesture();
+    return done;
+}
+
+bool ClipInspector::applyToAll(const QString &section)
+{
+    const Clip *clip = focus();
+    const Sequence *sequence = m_editor.data().mainSequence();
+    if (!clip || !sequence || !supports(*clip, section) || section == u"speed"_s) {
+        return false;
+    }
+    const Clip source = *clip;
+    endGesture();
+    const QString target = u"apply-all:"_s + section;
+    int count = 0;
+    std::vector<ClipId> clips;
+    const auto sameKind = [this, &section](const Clip &c) { return supports(c, section); };
+    for (const Track &track : sequence->visualTracks) {
+        for (const Clip &c : track.clips) {
+            if (sameKind(c)) {
+                clips.push_back(c.id);
+            }
+        }
+    }
+    for (const Track &track : sequence->audioTracks) {
+        for (const Clip &c : track.clips) {
+            if (sameKind(c)) {
+                clips.push_back(c.id);
+            }
+        }
+    }
+    bool done = false;
+    if (section == u"background"_s) {
+        // The default of the video (new clips get it too) and no clip with its own.
+        std::vector<ClipId> own;
+        for (const Clip &c : sequence->visualTracks.front().clips) {
+            if (c.background) {
+                own.push_back(c.id);
+            }
+        }
+        const CanvasBackground background = source.background ? *source.background
+                                                               : sequence->defaultBackground.value_or(CanvasBackground{});
+        if (!own.empty()) {
+            done = update(own, [](Clip &c) { c.background.reset(); }, tr("Apply background to all"), target);
+        }
+        EditResult setDefault =
+            TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId).setDefaultBackground(background);
+        setDefault.text = tr("Apply background to all");
+        done = m_editor.push(std::move(setDefault), gestureKey(target)) || done;
+        count = static_cast<int>(clips.size());
+    } else {
+        std::function<void(Clip &)> change;
+        QString text;
+        if (section == u"video"_s) {
+            change = [&source](Clip &c) {
+                c.transform = source.transform;
+                c.opacity = source.opacity;
+            };
+            text = tr("Apply position and size to all");
+        } else if (section == u"audio"_s) {
+            change = [&source](Clip &c) { c.media()->audio = source.media()->audio; };
+            text = tr("Apply volume to all");
+        } else if (section == u"filter"_s) {
+            change = [&source](Clip &c) { copyEffect(source, c, kFilterType); };
+            text = tr("Apply filter to all");
+        } else if (section == u"adjust"_s) {
+            change = [&source](Clip &c) { copyEffect(source, c, kAdjustType); };
+            text = tr("Apply adjustments to all");
+        } else if (section == u"text"_s) {
+            change = [&source](Clip &c) {
+                c.text()->style = source.text()->style;
+                c.text()->stylePreset = source.text()->stylePreset;
+            };
+            text = tr("Apply text style to all");
+        }
+        if (!change) {
+            return false;
+        }
+        done = update(clips, change, text, {});
+        count = static_cast<int>(clips.size());
+    }
+    endGesture();
+    if (done) {
+        emit m_editor.message(tr("Applied to %n clip(s)", nullptr, count), true);
+    }
+    return done;
+}
+
+void ClipInspector::previewFilter(const QString &filterId)
+{
+    const Clip *clip = focus();
+    const fx::FilterPreset *preset = fx::Library::core().filter(filterId);
+    if (!clip || !preset || !supports(*clip, u"filter"_s)) {
+        return;
+    }
+    Clip previewed = *clip;
+    Effect &filter = ensureEffect(previewed, kFilterType);
+    filter.preset = coreAsset(preset->id, preset->version);
+    engine::TimelineProjection::Preview preview;
+    preview.clip = std::move(previewed);
+    m_editor.player()->setPreview(std::move(preview));
+}
+
+bool ClipInspector::toggleFilter(const QString &filterId)
+{
+    const Clip *clip = focus();
+    if (!clip) {
+        emit m_editor.message(tr("Select a video or a photo first."), false);
+        return false;
+    }
+    const std::vector<ClipId> clips = targets(u"filter"_s);
+    const fx::FilterPreset *preset = fx::Library::core().filter(filterId);
+    const Effect *current = findEffect(*clip, kFilterType);
+    endGesture();
+    bool done = false;
+    if (!preset || (current && current->preset && current->preset->id == filterId)) {
+        done = update(clips, [](Clip &c) { removeEffect(c, kFilterType); }, tr("Remove filter"), {});
+    } else {
+        const AssetRef ref = coreAsset(preset->id, preset->version);
+        done = update(clips, [&ref](Clip &c) { ensureEffect(c, kFilterType).preset = ref; }, tr("Apply filter"), {});
+    }
+    clearPreview();
+    return done;
+}
+
+void ClipInspector::previewTextStyle(const QString &styleId)
+{
+    const Clip *clip = focus();
+    const fx::TextStylePreset *preset = fx::Library::core().textStyle(styleId);
+    if (!clip || !clip->text() || !preset) {
+        return;
+    }
+    Clip previewed = *clip;
+    TextStyle style = projectjson::textStyleFromJson(preset->style);
+    style.size = previewed.text()->style.size; // the size is layout, not look
+    style.align = previewed.text()->style.align;
+    previewed.text()->style = style;
+    engine::TimelineProjection::Preview preview;
+    preview.clip = std::move(previewed);
+    m_editor.player()->setPreview(std::move(preview));
+}
+
+bool ClipInspector::applyTextStyle(const QString &styleId)
+{
+    const fx::TextStylePreset *preset = fx::Library::core().textStyle(styleId);
+    if (!preset) {
+        return false;
+    }
+    const TextStyle look = projectjson::textStyleFromJson(preset->style);
+    const AssetRef ref = coreAsset(preset->id, preset->version);
+    endGesture();
+    const bool done = update(targets(u"text"_s), [&look, &ref](Clip &c) {
+        TextStyle style = look;
+        style.size = c.text()->style.size;
+        style.align = c.text()->style.align;
+        c.text()->style = style;
+        c.text()->stylePreset = ref;
+    }, tr("Change text style"), {});
+    clearPreview();
+    return done;
+}
+
+void ClipInspector::clearPreview()
+{
+    m_editor.player()->clearPreview();
+}
+
+void ClipInspector::copyAttributes()
+{
+    const Clip *clip = focus();
+    if (!clip) {
+        return;
+    }
+    m_clipboard = *clip;
+    emit clipboardChanged();
+    emit m_editor.message(tr("Attributes copied"), false);
+}
+
+bool ClipInspector::pasteAttributes()
+{
+    if (!m_clipboard) {
+        return false;
+    }
+    const Clip source = *m_clipboard;
+    endGesture();
+    const bool done = update(m_editor.selectedClips(), [this, &source](Clip &c) {
+        if (supports(c, u"video"_s) && supports(source, u"video"_s)) {
+            c.transform = source.transform;
+            c.opacity = source.opacity;
+            c.blendMode = source.blendMode;
+        }
+        if (supports(c, u"background"_s) && supports(source, u"background"_s)) {
+            c.background = source.background;
+        }
+        if (supports(c, u"filter"_s) && supports(source, u"filter"_s)) {
+            copyEffect(source, c, kFilterType);
+            copyEffect(source, c, kAdjustType);
+        }
+        if (c.media() && source.media()) {
+            c.media()->audio = source.media()->audio;
+        }
+        if (c.text() && source.text()) {
+            c.text()->style = source.text()->style;
+            c.text()->stylePreset = source.text()->stylePreset;
+        }
+    }, tr("Paste attributes"), {});
+    endGesture();
+    return done;
+}
+
+bool ClipInspector::autoEnhance()
+{
+    const Clip *clip = focus();
+    const MediaClipData *media = clip ? clip->media() : nullptr;
+    const Media *source = media ? m_editor.data().findMedia(media->mediaId) : nullptr;
+    if (!source) {
+        emit m_editor.message(tr("Select a video, a photo or a sound first."), false);
+        return false;
+    }
+    // The part of the media the clip uses, in seconds of the source.
+    const double from = media->sourceIn.toSecondsDouble();
+    const double length = clip->duration.toSecondsDouble() * media->speed;
+    const double mediaSeconds = source->info.duration ? source->info.duration->toSecondsDouble() : 0.0;
+
+    std::optional<fx::ColorAdjust> look;
+    if (supports(*clip, u"adjust"_s)) {
+        const QImage strip = m_editor.analysis().thumbnails(*source);
+        if (strip.isNull()) {
+            emit m_editor.message(tr("The clip is still being analysed: try again in a moment."), false);
+            return false;
+        }
+        const QImage rgba = strip.convertToFormat(QImage::Format_RGBA8888);
+        const int count = std::max(1, engine::MediaAnalysis::thumbnailCount(*source));
+        const int width = rgba.width() / count;
+        std::vector<fx::ConstImageView> frames;
+        for (int i = 0; i < count; ++i) {
+            // Thumbnail i shows the media at (i + 0.5) / count of its duration.
+            const double time = mediaSeconds > 0 ? (i + 0.5) * mediaSeconds / count : from;
+            if (count > 1 && (time < from || time > from + length)) {
+                continue;
+            }
+            frames.emplace_back(rgba.constBits() + static_cast<qsizetype>(i) * width * 4, width, rgba.height(),
+                                static_cast<int>(rgba.bytesPerLine()));
+        }
+        if (frames.empty()) { // a clip shorter than the spacing of the thumbnails: the nearest one
+            const int nearest = mediaSeconds > 0 ? std::clamp(static_cast<int>(from / mediaSeconds * count), 0, count - 1) : 0;
+            frames.emplace_back(rgba.constBits() + static_cast<qsizetype>(nearest) * width * 4, width, rgba.height(),
+                                static_cast<int>(rgba.bytesPerLine()));
+        }
+        look = fx::autoEnhance(frames);
+    }
+    std::optional<double> gainDb;
+    if (supports(*clip, u"audio"_s)) {
+        if (const std::shared_ptr<const engine::Waveform> waveform = m_editor.analysis().waveform(*source)) {
+            const int first = std::max(0, static_cast<int>(from * waveform->bucketsPerSecond));
+            const int last = std::min(waveform->bucketCount(), static_cast<int>((from + length) * waveform->bucketsPerSecond) + 1);
+            int peak = 0;
+            for (int i = first; i < last; ++i) {
+                peak = std::max({peak, std::abs(int(waveform->peaks[2 * i])), std::abs(int(waveform->peaks[2 * i + 1]))});
+            }
+            gainDb = std::round(fx::autoGainDb(peak / 127.0) * 10.0) / 10.0;
+        }
+    }
+    if (!look && !gainDb) {
+        emit m_editor.message(tr("The clip is still being analysed: try again in a moment."), false);
+        return false;
+    }
+    endGesture();
+    const bool done = update({clip->id}, [&look, &gainDb](Clip &c) {
+        if (look) {
+            writeAdjust(ensureEffect(c, kAdjustType), *look);
+        }
+        if (gainDb) {
+            c.media()->audio.gainDb = Param(*gainDb);
+        }
+    }, tr("Auto enhance"), {});
+    endGesture();
+    if (done) {
+        emit m_editor.message(tr("Enhanced: light, colour and volume are in Adjust and Audio"), true);
+    }
+    return done;
+}
+
+} // namespace vedit::ui

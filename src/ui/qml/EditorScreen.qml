@@ -97,6 +97,14 @@ Item {
                     Layout.fillHeight: true
                     editor: root.editor
                 }
+                Divider { vertical: true; Layout.fillHeight: true }
+                PropertiesPanel {
+                    objectName: "propertiesPanel"
+                    Layout.preferredWidth: Math.min(Theme.editor.propertiesWidth, root.width / 4)
+                    Layout.fillWidth: false
+                    Layout.fillHeight: true
+                    editor: root.editor
+                }
             }
 
             ColumnLayout {

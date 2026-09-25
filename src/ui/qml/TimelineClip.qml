@@ -50,7 +50,8 @@ Item {
         id: body
         anchors.fill: parent
         radius: Theme.shape.small
-        color: clip.kind === "audio" ? Theme.color.tertiaryContainer : Theme.color.secondaryContainer
+        color: clip.kind === "audio" ? Theme.color.tertiaryContainer
+             : clip.kind === "text" ? Theme.color.primaryContainer : Theme.color.secondaryContainer
         clip: true
 
         MediaThumbnail {

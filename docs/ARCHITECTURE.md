@@ -552,6 +552,8 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | D-37 | Proxy invertiti generati da `vedit-render --backwards`, usati solo dall'anteprima | Leggere all'indietro è ~12× più lento (misurato su 1080p GOP lungo). L'opzione non si chiama `--reverse` perché `QGuiApplication` si prende `-reverse` dagli argomenti |
 | D-38 | I filtri sui cut ricevono le posizioni del media: `vedit.gain` riceve il primo fotogramma della clip | Verificato: un filtro attaccato a un cut vede la posizione nel producer, non nella clip; le dissolvenze sono calcolate su (posizione − primo fotogramma) |
 | D-39 | Il livello di testo si disegna alla creazione del producer, non nei thread di MLT | I font di Qt nei thread non-Qt lasciano dati FreeType per thread che Qt libera male all'uscita del thread (LeakSanitizer in `vedit-render`); il testo della Fase 2 è statico e il profilo ha dimensione fissa, quindi un solo disegno basta |
+| D-40 | Pannello proprietà guidato da `ClipInspector` con valori per chiave (`values["opacity"]`, `set(chiave, valore)`) | Un solo punto C++ testabile per tutte le proprietà (e per "Applica a tutte", "Ripristina", copia/incolla attributi); il QML resta presentazione. Le chiamate di `set` di un trascinamento si fondono in un passo di annulla fino a `endGesture()` |
+| D-41 | "Migliora automaticamente": regolazioni calcolate dalle miniature già in cache (statistiche: esposizione verso il grigio medio, contrasto, alte luci/ombre, bilanciamento "grey world", vividezza) e volume dai picchi della forma d'onda (−1 dBFS) | Nessuna decodifica extra, risultato immediato e modificabile (valori normali di "Regola"); correzioni parziali e limitate: un'immagine già corretta non cambia. La normalizzazione LUFS arriva in Fase 4 |
 
 ---
 

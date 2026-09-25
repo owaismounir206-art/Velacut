@@ -1,5 +1,5 @@
 // Contextual toolbar above the timeline (SPEC 0bis rule 3): the actions for what is selected, always one click away.
-// Only actions that work today are shown (Phase 1: split, delete, duplicate); zoom on the right.
+// Only actions that work today are shown; zoom on the right.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
@@ -52,6 +52,17 @@ Rectangle {
             ToolTip.visible: hovered
             ToolTip.text: qsTr("Place a copy right after (Ctrl+D)")
             onClicked: bar.editor.duplicateSelection()
+        }
+
+        Button {
+            objectName: "addTextButton"
+            variant: "text"
+            iconName: "title"
+            text: qsTr("Add text")
+            visible: !bar.hasSelection
+            ToolTip.visible: hovered
+            ToolTip.text: qsTr("A text at the playhead: write it in the panel on the right")
+            onClicked: bar.editor.addText()
         }
 
         Item { Layout.fillWidth: true }

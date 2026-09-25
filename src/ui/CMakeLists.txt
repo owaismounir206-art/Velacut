@@ -20,6 +20,7 @@ qt_add_qml_module(vedit_ui
         controllers/EngineTypes.h
         controllers/AppController.h controllers/AppController.cpp
         controllers/EditorController.h controllers/EditorController.cpp
+        controllers/ClipInspector.h controllers/ClipInspector.cpp
     QML_FILES
         qml/Main.qml
         qml/Gallery.qml
@@ -36,6 +37,10 @@ qt_add_qml_module(vedit_ui
         qml/TimelineView.qml
         qml/TimelineClip.qml
         qml/ExportDialog.qml
+        qml/PropertiesPanel.qml
+        qml/PropertySection.qml
+        qml/PropertySlider.qml
+        qml/ColorSwatches.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"
     PREFIX "/vedit/shaders"

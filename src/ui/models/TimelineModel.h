@@ -43,7 +43,7 @@ public:
         StartRole,
         DurationRole,
         NameRole,
-        KindRole, // "video", "image", "audio", "color", "other"
+        KindRole, // "video", "image", "audio", "text", "color", "other"
         MediaIdRole,
         SourceInRole,
         SelectedRole,

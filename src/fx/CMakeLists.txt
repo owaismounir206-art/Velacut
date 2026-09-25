@@ -5,6 +5,7 @@ add_library(vedit_fx STATIC
     Audio.h Audio.cpp
     Color.h Color.cpp
     Composite.h Composite.cpp
+    Enhance.h Enhance.cpp
     Library.h Library.cpp
     Transform.h Transform.cpp
     Transition.h Transition.cpp

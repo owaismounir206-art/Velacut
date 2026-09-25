@@ -31,6 +31,9 @@ QString kindOf(const Clip &clip, const ProjectData &project)
     if (std::holds_alternative<ColorClipData>(clip.payload)) {
         return u"color"_s;
     }
+    if (clip.text()) {
+        return u"text"_s;
+    }
     return u"other"_s;
 }
 
@@ -144,6 +147,8 @@ void TimelineModel::rebuild()
                     if (item && item->kind != MediaKind::Image && item->info.duration) {
                         entry.mediaLength = frames(item->info.duration->rescaled(rate, Rounding::Floor), rate);
                     }
+                } else if (const TextClipData *text = clip.text(); text && clip.name.isEmpty()) {
+                    entry.name = text->text.section(u'\n', 0, 0); // what the text says
                 } else {
                     entry.name = clip.name;
                 }

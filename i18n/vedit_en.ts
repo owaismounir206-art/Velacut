@@ -13,9 +13,31 @@
     </message>
 </context>
 <context>
+    <name>PropertiesPanel</name>
+    <message numerus="yes">
+        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+88"/>
+        <source>%n clip(s) selected: changes apply to all of them.</source>
+        <translation>
+            <numerusform>%n clip selected: changes apply to it.</numerusform>
+            <numerusform>%n clips selected: changes apply to all of them.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ui::ClipInspector</name>
+    <message numerus="yes">
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+702"/>
+        <source>Applied to %n clip(s)</source>
+        <translation>
+            <numerusform>Applied to %n clip</numerusform>
+            <numerusform>Applied to %n clips</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+603"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+654"/>
         <source>%n clips deleted</source>
         <translation>
             <numerusform>%n clip deleted</numerusform>

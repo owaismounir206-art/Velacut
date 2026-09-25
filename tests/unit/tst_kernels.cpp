@@ -2,6 +2,7 @@
 // CPU reference kernels of Phase 2 (SPEC 1bis rule 1): transform, colour, spatial filters, transitions, audio gain.
 #include "fx/Audio.h"
 #include "fx/Color.h"
+#include "fx/Enhance.h"
 #include "fx/Library.h"
 #include "fx/Transform.h"
 #include "fx/Transition.h"
@@ -255,6 +256,60 @@ private slots:
     }
 
     // ---- transitions --------------------------------------------------------------------------------------------
+    void autoEnhance()
+    {
+        // A grey ramp over the whole range: already right, nothing to correct.
+        const auto ramp = [](double scale, std::array<double, 3> tint) {
+            Buffer b(256, 16);
+            for (int y = 0; y < 16; ++y) {
+                for (int x = 0; x < 256; ++x) {
+                    b.set(x, y, {std::uint8_t(std::lround(x * scale * tint[0])), std::uint8_t(std::lround(x * scale * tint[1])),
+                                 std::uint8_t(std::lround(x * scale * tint[2])), 255});
+                }
+            }
+            return b;
+        };
+        const auto meanOf = [](const Buffer &b) {
+            std::array<double, 3> sum{};
+            for (int i = 0; i < b.width * b.height; ++i) {
+                for (int c = 0; c < 3; ++c) {
+                    sum[static_cast<size_t>(c)] += b.pixels[static_cast<size_t>(i * 4 + c)] / 255.0;
+                }
+            }
+            for (double &v : sum) {
+                v /= b.width * b.height;
+            }
+            return sum;
+        };
+        const Buffer good = ramp(1.0, {1, 1, 1});
+        const std::array<ConstImageView, 1> goodFrames{good.constView()};
+        QVERIFY(vedit::fx::autoEnhance(goodFrames).isIdentity());
+
+        // Dark and bluish: brighter and warmer, and the result is closer to neutral grey at a middle level.
+        Buffer dark = ramp(0.4, {0.75, 0.9, 1.0});
+        const std::array<ConstImageView, 1> darkFrames{dark.constView()};
+        const ColorAdjust fix = vedit::fx::autoEnhance(darkFrames);
+        QVERIFY(fix.exposure > 0.3);
+        QVERIFY(fix.temperature > 0.1);
+        QVERIFY(fix.contrast > 0.0);
+        const std::array<double, 3> before = meanOf(dark);
+        ColorLut(fix).apply(dark.view());
+        const std::array<double, 3> after = meanOf(dark);
+        const auto luma = [](const std::array<double, 3> &c) { return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+        QVERIFY(std::abs(luma(after) - 0.45) < std::abs(luma(before) - 0.45));
+        QVERIFY(std::abs(after[2] / after[0] - 1.0) < 0.5 * std::abs(before[2] / before[0] - 1.0));
+
+        // Nothing to measure: no change.
+        const Buffer empty(8, 8);
+        const std::array<ConstImageView, 1> emptyFrames{empty.constView()};
+        QVERIFY(vedit::fx::autoEnhance(emptyFrames).isIdentity());
+
+        QCOMPARE(vedit::fx::autoGainDb(1.0), -1.0);
+        QVERIFY(std::abs(vedit::fx::autoGainDb(0.5) - 5.0206) < 1e-3);
+        QCOMPARE(vedit::fx::autoGainDb(0.01), 12.0);
+        QCOMPARE(vedit::fx::autoGainDb(0.0), 0.0);
+    }
+
     void everyTransitionStartsOnAAndEndsOnB()
     {
         const Buffer a = pattern(24, 16);

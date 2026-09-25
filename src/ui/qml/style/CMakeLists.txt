@@ -9,7 +9,7 @@ qt_add_qml_module(vedit_style
     IMPORTS QtQuick.Controls.Material
     DEPENDENCIES QtQuick Vedit.Theme Vedit.Components
     QML_FILES
-        Label.qml Button.qml Slider.qml Switch.qml CheckBox.qml RadioButton.qml TextField.qml
+        Label.qml Button.qml Slider.qml Switch.qml CheckBox.qml RadioButton.qml TextField.qml TextArea.qml
         ProgressBar.qml BusyIndicator.qml ToolTip.qml Menu.qml MenuItem.qml MenuSeparator.qml Dialog.qml
 )
 target_link_libraries(vedit_style PRIVATE Qt6::Quick Qt6::QuickControls2 vedit_theme vedit_components)

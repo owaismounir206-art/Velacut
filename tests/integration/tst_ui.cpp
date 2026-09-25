@@ -7,7 +7,10 @@
 #include "engine/mlt/MltRuntime.h"
 #include "theme/SystemAppearance.h"
 #include "theme/ThemeManager.h"
+#include "document/Document.h"
 #include "ui/controllers/AppController.h"
+#include "ui/controllers/ClipInspector.h"
+#include "ui/controllers/EditorController.h"
 #include "ui/models/TimelineModel.h"
 
 #include <QQmlApplicationEngine>
@@ -135,6 +138,8 @@ private slots:
             fprintf(stderr, "%s\n", qPrintable(message));
         });
 
+        // No translation is loaded: the interface is in English (the source strings), so are the library names.
+        QLocale::setDefault(QLocale(QLocale::English, QLocale::UnitedKingdom));
         QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
         m_appearance = std::make_unique<theme::SystemAppearance>();
         theme::ThemeManager::loadFonts();
@@ -248,6 +253,53 @@ private slots:
         editor()->undo();
         editor()->undo();
         QTRY_COMPARE(mainTrack().clips.size(), before);
+    }
+
+    // The properties panel on the right: tabs by clip kind, a slider drag is one undo step, auto enhance.
+    void propertiesPanel()
+    {
+        const ClipId first = mainTrack().clips.front().id;
+        click(byName(u"clip-"_s + first.toString()));
+        QTRY_VERIFY(byName(u"propertiesTabs"_s));
+        shot(u"10-properties-video"_s);
+
+        // Opacity from 100 % to about half, with a drag of the slider: one undo step.
+        QQuickItem *row = byName(u"property_opacity"_s);
+        QVERIFY(row);
+        QQuickItem *slider = findItem(row, [](QQuickItem *item) { return QByteArray(item->metaObject()->className()).contains("Slider"); });
+        QVERIFY(slider);
+        const int steps = editor()->document().undoStack().index();
+        const QPoint end = slider->mapToScene(QPointF(slider->width() - 12, slider->height() / 2)).toPoint();
+        drag(end, slider->mapToScene(QPointF(slider->width() / 2, slider->height() / 2)).toPoint());
+        QTRY_VERIFY(std::abs(std::get<double>(editor()->data().findClip(first)->opacity.staticValue()) - 0.5) < 0.1);
+        QCOMPARE(editor()->document().undoStack().index(), steps + 1);
+        QTRY_VERIFY(byName(u"reset_video"_s));
+        click(byName(u"reset_video"_s));
+        QTRY_COMPARE(std::get<double>(editor()->data().findClip(first)->opacity.staticValue()), 1.0);
+
+        // Adjust: auto enhance fills in the adjustments.
+        click(byText(u"Adjust"_s));
+        QTRY_VERIFY(byName(u"autoEnhanceButton"_s));
+        click(byName(u"autoEnhanceButton"_s));
+        QTRY_VERIFY(editor()->inspector()->modifiedSections().contains(u"adjust"_s));
+        shot(u"11-properties-adjust"_s);
+        editor()->undo();
+
+        // A text: added from the toolbar, written in the panel.
+        editor()->clearSelection();
+        click(byName(u"addTextButton"_s));
+        QTRY_COMPARE(editor()->inspector()->kind(), int(ui::ClipInspector::Text));
+        QQuickItem *content = byName(u"textContent"_s);
+        QVERIFY(content);
+        click(content);
+        QTest::keyClick(m_window, Qt::Key_A, Qt::ControlModifier);
+        for (const char c : {'C', 'i', 'a', 'o'}) {
+            QTest::keyClick(m_window, c);
+        }
+        QTRY_COMPARE(editor()->inspector()->values().value(u"text.content"_s).toString(), u"Ciao"_s);
+        shot(u"12-properties-text"_s);
+        editor()->undo();
+        editor()->undo();
     }
 
     // Usability test 8: export with the recommended settings ≤ 2 actions.

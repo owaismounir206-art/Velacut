@@ -873,19 +873,30 @@ public:
     {
         TextClipData data;
         data.text = string(object, u"text"_s, path);
-        const QJsonObject style = this->object(object, u"style"_s, path, false);
-        const QString s = join(path, u"style"_s);
+        data.style = textStyle(this->object(object, u"style"_s, path, false), join(path, u"style"_s));
+        data.stylePreset = assetRef(object.value(u"stylePreset"_s), join(path, u"stylePreset"_s), false);
+        const QJsonValue width = object.value(u"box"_s).toObject().value(u"width"_s);
+        if (width.isDouble() && width.toDouble() > 0.0) {
+            data.boxWidth = std::min(width.toDouble(), 4.0);
+        }
+        data.fields = unknownKeys(object, kClipCommonKeys, kTextClipKeys);
+        return data;
+    }
+
+    TextStyle textStyle(const QJsonObject &style, const QString &s)
+    {
+        TextStyle result;
         const QJsonObject font = this->object(style, u"font"_s, s, false);
         const QString f = join(s, u"font"_s);
-        data.style.fontFamily = string(font, u"family"_s, f, u"Inter"_s);
-        data.style.fontWeight = integer(font, u"weight"_s, f, 700, 100, 1000);
-        data.style.italic = boolean(font, u"italic"_s, f, false);
-        data.style.size = param(style.value(u"size"_s), join(s, u"size"_s), Param(0.06));
-        data.style.color = param(style.value(u"color"_s), join(s, u"color"_s), Param(Color{255, 255, 255, 255}));
+        result.fontFamily = string(font, u"family"_s, f, u"Inter"_s);
+        result.fontWeight = integer(font, u"weight"_s, f, 700, 100, 1000);
+        result.italic = boolean(font, u"italic"_s, f, false);
+        result.size = param(style.value(u"size"_s), join(s, u"size"_s), Param(0.06));
+        result.color = param(style.value(u"color"_s), join(s, u"color"_s), Param(Color{255, 255, 255, 255}));
         if (style.value(u"stroke"_s).isObject()) {
             const QJsonObject stroke = style.value(u"stroke"_s).toObject();
             const QString k = join(s, u"stroke"_s);
-            data.style.stroke = TextStroke{param(stroke.value(u"color"_s), join(k, u"color"_s), Param(Color{0, 0, 0, 255})),
+            result.stroke = TextStroke{param(stroke.value(u"color"_s), join(k, u"color"_s), Param(Color{0, 0, 0, 255})),
                                            number(stroke, u"width"_s, k, 0.08, 0.0, 1.0)};
         }
         if (style.value(u"shadow"_s).isObject()) {
@@ -898,7 +909,7 @@ public:
                 value.offset = Vec2{offset[0].toDouble(), offset[1].toDouble()};
             }
             value.blur = number(shadow, u"blur"_s, k, 0.03, 0.0, 1.0);
-            data.style.shadow = value;
+            result.shadow = value;
         }
         if (style.value(u"background"_s).isObject()) {
             const QJsonObject box = style.value(u"background"_s).toObject();
@@ -907,20 +918,14 @@ public:
             value.color = colorValue(box.value(u"color"_s), join(k, u"color"_s), value.color);
             value.padding = number(box, u"padding"_s, k, 0.25, 0.0, 4.0);
             value.radius = number(box, u"radius"_s, k, 0.2, 0.0, 4.0);
-            data.style.background = value;
+            result.background = value;
         }
-        data.style.letterSpacing = param(style.value(u"letterSpacing"_s), join(s, u"letterSpacing"_s), Param(0.0));
-        data.style.lineHeight = number(style, u"lineHeight"_s, s, 1.2, 0.5, 4.0);
-        data.style.align = enumeration(style, u"align"_s, s, kTextAligns, TextAlign::Center);
-        data.style.underline = boolean(style, u"underline"_s, s, false);
-        data.style.extras = unknownKeys(style, kTextStyleKeys);
-        data.stylePreset = assetRef(object.value(u"stylePreset"_s), join(path, u"stylePreset"_s), false);
-        const QJsonValue width = object.value(u"box"_s).toObject().value(u"width"_s);
-        if (width.isDouble() && width.toDouble() > 0.0) {
-            data.boxWidth = std::min(width.toDouble(), 4.0);
-        }
-        data.fields = unknownKeys(object, kClipCommonKeys, kTextClipKeys);
-        return data;
+        result.letterSpacing = param(style.value(u"letterSpacing"_s), join(s, u"letterSpacing"_s), Param(0.0));
+        result.lineHeight = number(style, u"lineHeight"_s, s, 1.2, 0.5, 4.0);
+        result.align = enumeration(style, u"align"_s, s, kTextAligns, TextAlign::Center);
+        result.underline = boolean(style, u"underline"_s, s, false);
+        result.extras = unknownKeys(style, kTextStyleKeys);
+        return result;
     }
 
     Clip clip(const QJsonObject &object, const QString &path)
@@ -1257,6 +1262,17 @@ QJsonObject toJson(const ProjectData &project)
         {u"mainSequenceId"_s, idValue(project.mainSequenceId)}};
     mergeInto(object, project.extras);
     return object;
+}
+
+QJsonObject textStyleToJson(const TextStyle &style)
+{
+    return textStyleJson(style);
+}
+
+TextStyle textStyleFromJson(const QJsonObject &json)
+{
+    Reader reader;
+    return reader.textStyle(json, u"style"_s);
 }
 
 QJsonObject mediaToJson(const Media &media)

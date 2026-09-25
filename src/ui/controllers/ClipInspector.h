@@ -1,0 +1,128 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+#pragma once
+
+#include "core/commands/EditCommand.h"
+#include "core/project/Clip.h"
+
+#include <QObject>
+#include <QStringList>
+#include <QVariantList>
+#include <QVariantMap>
+#include <QtQml/qqmlregistration.h>
+
+#include <optional>
+
+namespace vedit::ui {
+
+class EditorController;
+
+// The properties of the selected clip for the panel on the right (SPEC §4, 0bis rules 5 and 8): values by key, so a
+// control binds to `values["opacity"]` and writes with set("opacity", v). A slider drag is one undo step (set() calls
+// merge until endGesture()). Changes apply to every selected clip that has the property; the values shown are those
+// of the focused clip (the last one clicked).
+//
+// Keys, by section:
+//   video       x, y (canvas fractions from the centre), scale (1 = fitted), rotation (degrees), opacity (0…1),
+//               flipH, flipV, fit (0 = whole picture, 1 = fill the canvas)
+//   background  background.type (0 = colour, 1 = blurred clip), background.color, background.blur (0…1)
+//   audio       volume (dB), fadeIn, fadeOut (seconds)
+//   speed       speed (0.1…100), reversed, preservePitch
+//   filter      filter (asset id, "" = none), filter.intensity (0…1)
+//   adjust      adjust.<name> (the parameters of "vedit.adjust.basic", see adjustParams)
+//   text        text.content, text.font, text.size (fraction of the canvas height), text.color, text.bold,
+//               text.italic, text.underline, text.align (0 left, 1 centre, 2 right), text.stroke, text.strokeColor,
+//               text.strokeWidth, text.shadow, text.background, text.backgroundColor, text.letterSpacing,
+//               text.lineHeight, text.preset (asset id)
+class ClipInspector : public QObject
+{
+    Q_OBJECT
+    QML_NAMED_ELEMENT(Inspector)
+    QML_UNCREATABLE("Provided by Editor.inspector")
+
+    Q_PROPERTY(bool active READ active NOTIFY changed FINAL)
+    Q_PROPERTY(QString clipId READ clipId NOTIFY changed FINAL)
+    Q_PROPERTY(int kind READ kind NOTIFY changed FINAL)
+    Q_PROPERTY(int selectedCount READ selectedCount NOTIFY changed FINAL)
+    Q_PROPERTY(QStringList sections READ sections NOTIFY changed FINAL)
+    Q_PROPERTY(QStringList modifiedSections READ modifiedSections NOTIFY changed FINAL)
+    Q_PROPERTY(QVariantMap values READ values NOTIFY changed FINAL)
+    Q_PROPERTY(double durationSeconds READ durationSeconds NOTIFY changed FINAL)
+    Q_PROPERTY(QVariantList adjustParams READ adjustParams CONSTANT FINAL)
+    Q_PROPERTY(bool canPaste READ canPaste NOTIFY clipboardChanged FINAL)
+    // Colours offered for texts and backgrounds (content colours, not the theme's).
+    Q_PROPERTY(QVariantList swatches READ swatches CONSTANT FINAL)
+
+public:
+    enum Kind
+    {
+        None,
+        Video,
+        Image,
+        Audio,
+        Text,
+        Other,
+    };
+    Q_ENUM(Kind)
+
+    explicit ClipInspector(EditorController &editor);
+
+    bool active() const;
+    QString clipId() const;
+    int kind() const;
+    int selectedCount() const;
+    QStringList sections() const;
+    QStringList modifiedSections() const;
+    QVariantMap values() const;
+    double durationSeconds() const;
+    // {name, label, min, max, default, advanced} for every adjustment, in the order of the manifest.
+    QVariantList adjustParams() const;
+    bool canPaste() const { return m_clipboard.has_value(); }
+    QVariantList swatches() const;
+
+    Q_INVOKABLE bool set(const QString &key, const QVariant &value);
+    // The end of a gesture (slider released): the next set() is a new undo step.
+    Q_INVOKABLE void endGesture();
+    // Back to the defaults of a section ("Ripristina", SPEC 0bis rule 8).
+    Q_INVOKABLE bool reset(const QString &section);
+    // The section of the focused clip copied to every clip of the same kind ("Applica a tutte", rule 5). For the
+    // background: it becomes the default of the video, and every clip of the main track uses it.
+    Q_INVOKABLE bool applyToAll(const QString &section);
+
+    // Filters and text styles of the libraries: hover = preview in the player only, click = apply, click on the one
+    // applied = remove (SPEC 0bis rule 5).
+    Q_INVOKABLE void previewFilter(const QString &filterId);
+    Q_INVOKABLE bool toggleFilter(const QString &filterId);
+    Q_INVOKABLE void previewTextStyle(const QString &styleId);
+    Q_INVOKABLE bool applyTextStyle(const QString &styleId);
+    Q_INVOKABLE void clearPreview();
+
+    // Copy/paste attributes: look, placement, background, volume and text style (not the speed: it changes the length).
+    Q_INVOKABLE void copyAttributes();
+    Q_INVOKABLE bool pasteAttributes();
+
+    // "Migliora automaticamente": light and colour (adjustments) and volume, computed from the clip (rule 9).
+    Q_INVOKABLE bool autoEnhance();
+
+    // The style of a new text ("text/outline": readable on any picture, SPEC 0bis rule 6).
+    static TextStyle defaultTextStyle();
+
+signals:
+    void changed();
+    void clipboardChanged();
+
+private:
+    const Clip *focus() const;
+    // The selected clips that have `section`.
+    std::vector<ClipId> targets(const QString &section) const;
+    bool supports(const Clip &clip, const QString &section) const;
+    bool update(const std::vector<ClipId> &clips, const std::function<void(Clip &)> &change, const QString &text,
+                const QString &mergeTarget);
+    MergeKey gestureKey(const QString &target);
+    QString sectionOf(const QString &key) const;
+
+    EditorController &m_editor;
+    quint64 m_gesture = 1;
+    std::optional<Clip> m_clipboard;
+};
+
+} // namespace vedit::ui

@@ -32,6 +32,9 @@ struct ProjectLoadResult
 namespace projectjson {
 
 QJsonObject toJson(const ProjectData &project);
+// A text style (FILE_FORMAT §5.5), e.g. of a style preset: missing or invalid values get their defaults.
+QJsonObject textStyleToJson(const TextStyle &style);
+TextStyle textStyleFromJson(const QJsonObject &json);
 // One media item (the probe process sends them to the editor in this form).
 QJsonObject mediaToJson(const Media &media);
 std::optional<Media> mediaFromJson(const QJsonObject &json, QString *error = nullptr);

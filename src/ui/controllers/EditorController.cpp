@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "EditorController.h"
 
+#include "ClipInspector.h"
 #include "common/Paths.h"
 #include "core/edit/ProjectFormat.h"
 #include "core/edit/TimelineEditor.h"
+#include "core/serialization/ProjectJson.h"
 #include "document/Document.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/analysis/MediaImporter.h"
 #include "engine/mlt/MltRuntime.h"
 #include "engine/playback/TimelinePlayer.h"
 #include "engine/render/RenderJob.h"
+#include "fx/Library.h"
 #include "ui/models/AudioLibraryModel.h"
 #include "ui/models/MediaPoolModel.h"
 #include "ui/models/TimelineModel.h"
@@ -96,6 +99,7 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     connect(&stack, &QUndoStack::undoTextChanged, this, &EditorController::undoChanged);
     connect(&stack, &QUndoStack::redoTextChanged, this, &EditorController::undoChanged);
     connect(m_player.get(), &engine::TimelinePlayer::positionChanged, this, &EditorController::splitAvailableChanged);
+    m_inspector = new ClipInspector(*this);
 }
 
 EditorController::~EditorController()
@@ -265,6 +269,33 @@ int EditorController::playhead() const
     return m_player->position();
 }
 
+std::vector<ClipId> EditorController::selectedClips() const
+{
+    std::vector<ClipId> ids(m_selection.begin(), m_selection.end());
+    // The focused clip first; the rest in a stable order.
+    std::sort(ids.begin(), ids.end(), [this](const ClipId &a, const ClipId &b) {
+        if ((a == m_focus) != (b == m_focus)) {
+            return a == m_focus;
+        }
+        return a.toString() < b.toString();
+    });
+    return ids;
+}
+
+std::optional<ClipId> EditorController::focusClip() const
+{
+    return m_selection.contains(m_focus) ? std::optional<ClipId>(m_focus) : std::nullopt;
+}
+
+bool EditorController::push(EditResult result, MergeKey mergeKey)
+{
+    if (!result.ok()) {
+        emit message(result.error, false);
+        return false;
+    }
+    return m_document->apply(std::move(result), std::move(mergeKey));
+}
+
 bool EditorController::apply(EditResult result, bool selectResult)
 {
     if (!result.ok()) {
@@ -299,6 +330,7 @@ void EditorController::onProjectChanged(const ChangeSet &changes)
         setSelection(remaining);
     }
     emit splitAvailableChanged();
+    emit modelChanged();
 }
 
 void EditorController::setSelection(QSet<ClipId> selection)
@@ -307,6 +339,10 @@ void EditorController::setSelection(QSet<ClipId> selection)
         return;
     }
     m_selection = std::move(selection);
+    if (!m_selection.contains(m_focus)) {
+        const std::vector<ClipId> ids = selectedClips(); // sorted: the same focus for the same selection
+        m_focus = ids.empty() ? ClipId{} : ids.front();
+    }
     m_timeline->setSelection(m_selection);
     emit selectionChanged();
     emit splitAvailableChanged();
@@ -467,6 +503,20 @@ bool EditorController::addFromLibrary(AudioLibraryModel *library, int row)
     return true;
 }
 
+bool EditorController::addText(const QString &styleId)
+{
+    TextClipData text;
+    text.text = tr("Your text");
+    text.style = ClipInspector::defaultTextStyle();
+    if (const fx::TextStylePreset *preset = styleId.isEmpty() ? nullptr : fx::Library::core().textStyle(styleId)) {
+        text.style = projectjson::textStyleFromJson(preset->style);
+        text.stylePreset = AssetRef{QString::fromLatin1(fx::Library::kCorePack), preset->id, preset->version};
+    }
+    const Rational rate = data().settings.frameRate;
+    return apply(TimelineEditor(data(), data().mainSequenceId)
+                     .insertText(RationalTime(playhead(), rate), std::move(text), RationalTime(0, rate))); // default length
+}
+
 // ---- Timeline -----------------------------------------------------------------------------------------------------
 
 bool EditorController::moveClip(const QString &clipId, int frame, int trackRow)
@@ -625,6 +675,12 @@ void EditorController::select(const QString &clipId, bool additive)
         selection.remove(*id);
     } else {
         selection.insert(*id);
+        if (m_focus != *id) {
+            m_focus = *id;
+            if (selection == m_selection) {
+                emit selectionChanged(); // same clips, another focus
+            }
+        }
     }
     setSelection(std::move(selection));
 }

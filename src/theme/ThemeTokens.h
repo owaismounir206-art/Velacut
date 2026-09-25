@@ -123,6 +123,19 @@ class ThemeEditor : public QObject
     Q_PROPERTY(qreal splitterSize MEMBER m_splitterSize CONSTANT FINAL)
     Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight CONSTANT FINAL)
     Q_PROPERTY(qreal dialogWidth MEMBER m_dialogWidth CONSTANT FINAL)
+    // Properties panel (right) and asset libraries (left)
+    Q_PROPERTY(qreal propertiesWidth MEMBER m_propertiesWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal tabIndicator MEMBER m_tabIndicator CONSTANT FINAL)
+    Q_PROPERTY(qreal swatchSize MEMBER m_swatchSize CONSTANT FINAL)
+    Q_PROPERTY(qreal valueWidth MEMBER m_valueWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal textAreaHeight MEMBER m_textAreaHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal assetTileWidth MEMBER m_assetTileWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal assetTileHeight MEMBER m_assetTileHeight CONSTANT FINAL)
+    // Canvas handles on the preview and transition marks on the timeline
+    Q_PROPERTY(qreal handleSize MEMBER m_handleSize CONSTANT FINAL)
+    Q_PROPERTY(qreal rotateHandleDistance MEMBER m_rotateHandleDistance CONSTANT FINAL)
+    Q_PROPERTY(qreal transitionMark MEMBER m_transitionMark CONSTANT FINAL)
+    Q_PROPERTY(qreal meterWidth MEMBER m_meterWidth CONSTANT FINAL)
     // Home screen
     Q_PROPERTY(qreal draftCardWidth MEMBER m_draftCardWidth CONSTANT FINAL)
     Q_PROPERTY(qreal draftThumbnailHeight MEMBER m_draftThumbnailHeight CONSTANT FINAL)
@@ -165,6 +178,17 @@ private:
     qreal m_splitterSize = 8;
     qreal m_toolbarHeight = 48;
     qreal m_dialogWidth = 560;
+    qreal m_propertiesWidth = 312;
+    qreal m_tabIndicator = 3;
+    qreal m_swatchSize = 24;
+    qreal m_valueWidth = 56;
+    qreal m_textAreaHeight = 88;
+    qreal m_assetTileWidth = 96;
+    qreal m_assetTileHeight = 72;
+    qreal m_handleSize = 12;
+    qreal m_rotateHandleDistance = 28;
+    qreal m_transitionMark = 22;
+    qreal m_meterWidth = 6;
     qreal m_draftCardWidth = 232;
     qreal m_draftThumbnailHeight = 130;
     qreal m_heroHeight = 176;

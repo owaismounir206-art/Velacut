@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "core/commands/EditCommand.h"
 #include "core/project/ChangeSet.h"
 #include "core/project/Id.h"
 #include "engine/playback/TimelinePlayer.h"
@@ -34,6 +35,8 @@ class MediaImporter;
 
 namespace vedit::ui {
 
+class ClipInspector;
+
 // The open project in the editor: every user action becomes one command on the undo stack (docs/ARCHITECTURE.md §9).
 // Times are frames at the project frame rate; timeline rows are those of TimelineModel (-1 = a new track above the
 // top one, rowCountTotal = a new audio track below the last one).
@@ -55,6 +58,7 @@ class EditorController : public QObject
     Q_PROPERTY(vedit::ui::MediaPoolModel *media READ media CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::TimelineModel *timeline READ timeline CONSTANT FINAL)
     Q_PROPERTY(vedit::engine::RenderJob *exportJob READ exportJob CONSTANT FINAL)
+    Q_PROPERTY(vedit::ui::ClipInspector *inspector READ inspector CONSTANT FINAL)
     Q_PROPERTY(QStringList selection READ selection NOTIFY selectionChanged FINAL)
     Q_PROPERTY(bool importing READ importing NOTIFY importingChanged FINAL)
     Q_PROPERTY(bool splitAvailable READ canSplit NOTIFY splitAvailableChanged FINAL)
@@ -94,7 +98,13 @@ public:
     MediaPoolModel *media() const { return m_media.get(); }
     TimelineModel *timeline() const { return m_timeline.get(); }
     engine::RenderJob *exportJob() const { return m_exportJob.get(); }
+    ClipInspector *inspector() const { return m_inspector; }
     QStringList selection() const;
+    std::vector<ClipId> selectedClips() const;
+    // The clip whose properties are shown: the last one clicked among the selected ones.
+    std::optional<ClipId> focusClip() const;
+    // Pushes a command (a failed operation becomes a message for the user). Same non-empty key = one undo step.
+    bool push(EditResult result, MergeKey mergeKey = {});
     bool importing() const;
     int canvasPreset() const;
     QString formatText() const;
@@ -131,6 +141,9 @@ public:
     // Start of a range of `duration` frames whose start or end snaps (for dragging clips).
     Q_INVOKABLE int snapRange(int start, int duration, const QStringList &excludedClips, int threshold) const;
 
+    // A text at the playhead with the default style, or a style of the library, selected for editing.
+    Q_INVOKABLE bool addText(const QString &styleId = {});
+
     // Format (SPEC 0bis rule 1: changeable with one click)
     Q_INVOKABLE void setCanvasPreset(int preset);
 
@@ -154,6 +167,8 @@ signals:
     void importingChanged();
     void splitAvailableChanged();
     void formatChanged();
+    // The project changed (any command, undo or redo).
+    void modelChanged();
     // For the snackbar: `undoable` shows the "Undo" action.
     void message(const QString &text, bool undoable);
     void exportFinished(const QString &path);
@@ -176,6 +191,8 @@ private:
     std::unique_ptr<engine::MediaImporter> m_importer;
     std::unique_ptr<engine::RenderJob> m_exportJob;
     QSet<ClipId> m_selection;
+    ClipId m_focus;
+    ClipInspector *m_inspector = nullptr; // child
     quint64 m_importBatch = 0;
     // Files dropped on the timeline, inserted as they are imported.
     struct PendingInsert
