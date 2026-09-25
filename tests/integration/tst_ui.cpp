@@ -76,6 +76,24 @@ class TestUi : public QObject
     {
         return item->mapToScene(QPointF(item->width() / 2, item->height() / 2) + offset).toPoint();
     }
+    // Scrolls the nearest scrollable parent so that `item` is fully visible (what a user does with the wheel).
+    void ensureVisible(QQuickItem *item)
+    {
+        for (QQuickItem *parent = item->parentItem(); parent; parent = parent->parentItem()) {
+            if (!QByteArray(parent->metaObject()->className()).contains("Flickable")) {
+                continue;
+            }
+            const QRectF box = item->mapRectToItem(parent, QRectF(0, 0, item->width(), item->height()));
+            const double contentY = parent->property("contentY").toDouble();
+            if (box.bottom() > parent->height()) {
+                parent->setProperty("contentY", contentY + box.bottom() - parent->height());
+            } else if (box.top() < 0) {
+                parent->setProperty("contentY", contentY + box.top());
+            }
+            QTest::qWait(50);
+            return;
+        }
+    }
     void click(QQuickItem *item, QPointF offset = {})
     {
         QVERIFY2(item, "item to click not found");
@@ -89,6 +107,9 @@ class TestUi : public QObject
     }
     void drag(QPoint from, QPoint to)
     {
+        // The pointer gets there first, as a hand does (hover ends elsewhere: tooltips close).
+        QTest::mouseMove(m_window, from);
+        QTest::qWait(20);
         QTest::mousePress(m_window, Qt::LeftButton, {}, from);
         const int steps = 12;
         for (int i = 1; i <= steps; ++i) {
@@ -264,9 +285,7 @@ private slots:
         shot(u"10-properties-video"_s);
 
         // Opacity from 100 % to about half, with a drag of the slider: one undo step.
-        QQuickItem *row = byName(u"property_opacity"_s);
-        QVERIFY(row);
-        QQuickItem *slider = findItem(row, [](QQuickItem *item) { return QByteArray(item->metaObject()->className()).contains("Slider"); });
+        QQuickItem *slider = byName(u"slider_opacity"_s);
         QVERIFY(slider);
         const int steps = editor()->document().undoStack().index();
         const QPoint end = slider->mapToScene(QPointF(slider->width() - 12, slider->height() / 2)).toPoint();
@@ -572,6 +591,51 @@ private slots:
         shot(u"24-markers"_s);
         editor()->undo();
         QTRY_VERIFY(!byName(tick));
+    }
+
+    // The Phase 3 criterion, first half (SPEC §8): a title animated with keyframes and easing, through the interface.
+    void phaseThreeCriterionTitle()
+    {
+        editor()->clearSelection();
+        editor()->player()->seek(0);
+        QTRY_COMPARE(editor()->player()->position(), 0);
+        QTRY_VERIFY(byName(u"addTextButton"_s));
+        QTest::qWait(50);
+        const int steps = editor()->document().undoStack().index();
+        click(byName(u"addTextButton"_s));
+        QTRY_COMPARE(editor()->inspector()->kind(), int(ui::ClipInspector::Text));
+        const ClipId title = *ClipId::fromString(editor()->inspector()->clipId());
+        click(byText(u"Position"_s));
+        QTRY_VERIFY(byName(u"keyframe_opacity"_s));
+        // A keyframe at the start…
+        click(byName(u"keyframe_opacity"_s));
+        QTRY_VERIFY(editor()->data().findClip(title)->opacity.isAnimated());
+        // …one second later, a lower opacity: a second keyframe by itself.
+        editor()->player()->seek(30);
+        QTRY_COMPARE(editor()->inspector()->values().value(u"kf.opacity"_s).toInt(), 1);
+        QQuickItem *slider = byName(u"slider_opacity"_s);
+        QVERIFY(slider);
+        ensureVisible(slider);
+        // The diamond's tooltip (under it, over the slider) takes presses until it has faded: a hand is slower than that.
+        QTest::mouseMove(m_window, slider->mapToScene(QPointF(slider->width() - 12, slider->height() / 2)).toPoint());
+        QTRY_VERIFY(!findItem(m_window->contentItem(), [](QQuickItem *item) { return item->objectName() == u"ToolTip"_s; }));
+        drag(slider->mapToScene(QPointF(slider->width() - 12, slider->height() / 2)).toPoint(),
+             slider->mapToScene(QPointF(slider->width() * 0.2, slider->height() / 2)).toPoint());
+        QTRY_COMPARE(editor()->data().findClip(title)->opacity.keyframes().size(), size_t(2));
+        // Easing: back on the first keyframe, "Smooth".
+        ensureVisible(byName(u"previousKeyframe"_s));
+        click(byName(u"previousKeyframe"_s));
+        QTRY_COMPARE(editor()->player()->position(), 0);
+        QTRY_VERIFY(byName(u"easing_easeInOut"_s));
+        ensureVisible(byName(u"easing_easeInOut"_s));
+        click(byName(u"easing_easeInOut"_s));
+        QTRY_COMPARE(editor()->data().findClip(title)->opacity.keyframes().front().easing.name(), u"easeInOut"_s);
+        QCOMPARE(editor()->data().findClip(title)->opacity.keyframes().front().interpolation, Interpolation::Bezier);
+        QTRY_VERIFY(byName(u"clipKeyframe_30"_s));
+        shot(u"25-title-keyframes"_s);
+        while (editor()->document().undoStack().index() > steps) {
+            editor()->undo();
+        }
     }
 
     // Usability test 8: export with the recommended settings ≤ 2 actions.

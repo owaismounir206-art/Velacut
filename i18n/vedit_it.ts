@@ -911,6 +911,29 @@
     </message>
 </context>
 <context>
+    <name>KeyframeButton</name>
+    <message>
+        <location filename="../src/ui/qml/KeyframeButton.qml" line="+23"/>
+        <source>Remove keyframe</source>
+        <translation>Rimuovi keyframe</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Add keyframe</source>
+        <translation>Aggiungi keyframe</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Remove the keyframe at the playhead</source>
+        <translation>Rimuovi il keyframe al playhead</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Add a keyframe at the playhead</source>
+        <translation>Aggiungi un keyframe al playhead</translation>
+    </message>
+</context>
+<context>
     <name>LevelMeter</name>
     <message>
         <location filename="../src/ui/qml/LevelMeter.qml" line="+19"/>
@@ -1080,24 +1103,24 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+457"/>
+        <location line="+512"/>
         <location line="+6"/>
         <source>Speed</source>
         <translation>Velocità</translation>
     </message>
     <message>
-        <location line="-461"/>
+        <location line="-516"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+627"/>
+        <location line="+682"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
     <message>
-        <location line="-595"/>
+        <location line="-650"/>
         <source>Select a clip on the timeline to change it here.</source>
         <translation>Seleziona una clip sulla timeline per modificarla qui.</translation>
     </message>
@@ -1176,18 +1199,18 @@
     </message>
     <message>
         <location line="+15"/>
-        <location line="+111"/>
+        <location line="+163"/>
         <source>Size</source>
         <translation>Dimensione</translation>
     </message>
     <message>
-        <location line="-105"/>
-        <location line="+180"/>
+        <location line="-157"/>
+        <location line="+235"/>
         <source>Colour</source>
         <translation>Colore</translation>
     </message>
     <message>
-        <location line="-176"/>
+        <location line="-231"/>
         <source>Text colour</source>
         <translation>Colore del testo</translation>
     </message>
@@ -1210,23 +1233,23 @@
     </message>
     <message>
         <location line="+6"/>
-        <location line="+131"/>
+        <location line="+186"/>
         <source>Background</source>
         <translation>Sfondo</translation>
     </message>
     <message>
-        <location line="-128"/>
+        <location line="-183"/>
         <source>Text background</source>
         <translation>Sfondo del testo</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+140"/>
+        <location line="+195"/>
         <source>Background colour</source>
         <translation>Colore dello sfondo</translation>
     </message>
     <message>
-        <location line="-130"/>
+        <location line="-185"/>
         <source>Outline thickness</source>
         <translation>Spessore del contorno</translation>
     </message>
@@ -1245,8 +1268,56 @@
         <source>Position and size</source>
         <translation>Posizione e dimensione</translation>
     </message>
+    <message numerus="yes">
+        <location line="+12"/>
+        <source>%n keyframe(s)</source>
+        <translation>
+            <numerusform>%n keyframe</numerusform>
+            <numerusform>%n keyframe</numerusform>
+        </translation>
+    </message>
     <message>
         <location line="+5"/>
+        <source>Previous keyframe</source>
+        <translation>Keyframe precedente</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Next keyframe</source>
+        <translation>Keyframe successivo</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Movement to the next keyframe</source>
+        <translation>Movimento fino al keyframe successivo</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Steady</source>
+        <translation>Costante</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Speed up</source>
+        <translation>Accelera</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Slow down</source>
+        <translation>Rallenta</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Smooth</source>
+        <translation>Morbido</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Jump</source>
+        <translation>Salto</translation>
+    </message>
+    <message>
+        <location line="+16"/>
         <source>Whole picture</source>
         <translation>Immagine intera</translation>
     </message>
@@ -1256,7 +1327,7 @@
         <translation>Riempi</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+19"/>
         <source>Horizontal position</source>
         <translation>Posizione orizzontale</translation>
     </message>
@@ -1266,12 +1337,12 @@
         <translation>Posizione verticale</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>Rotation</source>
         <translation>Rotazione</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Opacity</source>
         <translation>Opacità</translation>
     </message>
@@ -1318,20 +1389,20 @@
         <translation>Dissolvenza in entrata</translation>
     </message>
     <message>
-        <location line="-327"/>
-        <location line="+330"/>
+        <location line="-382"/>
+        <location line="+385"/>
         <location line="+8"/>
         <location line="+137"/>
         <source>%1 s</source>
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-580"/>
+        <location line="-635"/>
         <source>Transition</source>
         <translation>Transizione</translation>
     </message>
     <message>
-        <location line="+440"/>
+        <location line="+495"/>
         <source>Fade out</source>
         <translation>Dissolvenza in uscita</translation>
     </message>
@@ -1492,7 +1563,7 @@
         <translation>Clip %1</translation>
     </message>
     <message>
-        <location line="+117"/>
+        <location line="+137"/>
         <source>Copy attributes</source>
         <translation>Copia attributi</translation>
     </message>
@@ -2454,12 +2525,27 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message>
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+530"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+321"/>
+        <source>Remove keyframe</source>
+        <translation>Rimuovi keyframe</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Add keyframe</source>
+        <translation>Aggiungi keyframe</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>Change keyframe easing</source>
+        <translation>Cambia l&apos;andamento del keyframe</translation>
+    </message>
+    <message>
+        <location line="+378"/>
         <source>Change transition duration</source>
         <translation>Cambia durata della transizione</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+37"/>
         <source>Move clip</source>
         <translation>Sposta clip</translation>
     </message>
@@ -2469,17 +2555,17 @@
         <translation>Ridimensiona clip</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+5"/>
         <source>Rotate clip</source>
         <translation>Ruota clip</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Change opacity</source>
         <translation>Cambia opacità</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+4"/>
         <source>Mirror clip</source>
         <translation>Specchia clip</translation>
     </message>

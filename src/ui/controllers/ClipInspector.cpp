@@ -3,6 +3,7 @@
 
 #include "EditorController.h"
 #include "core/edit/TimelineEditor.h"
+#include "core/project/ClipTime.h"
 #include "core/serialization/ProjectJson.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/playback/TimelinePlayer.h"
@@ -105,6 +106,62 @@ AssetRef coreAsset(const QString &id, int version)
     return AssetRef{QString::fromLatin1(fx::Library::kCorePack), id, version};
 }
 
+// The parameters that have keyframes in the interface (the renderer animates them: vedit.transform).
+const QStringList kKeyframeKeys{u"position"_s, u"scale"_s, u"rotation"_s, u"opacity"_s};
+
+Param *keyframeParam(Clip &clip, const QString &key)
+{
+    if (key == u"position"_s || key == u"x"_s || key == u"y"_s) {
+        return &clip.transform.position;
+    }
+    if (key == u"scale"_s) {
+        return &clip.transform.scale;
+    }
+    if (key == u"rotation"_s) {
+        return &clip.transform.rotation;
+    }
+    if (key == u"opacity"_s) {
+        return &clip.opacity;
+    }
+    return nullptr;
+}
+
+const Param *keyframeParam(const Clip &clip, const QString &key)
+{
+    return keyframeParam(const_cast<Clip &>(clip), key);
+}
+
+// Writes `value` at `time`: replaces the keyframe there, or inserts one (keeping the order).
+void setKeyframeValue(Param &param, const RationalTime &time, const ParamValue &value)
+{
+    std::vector<Keyframe> keyframes = param.keyframes();
+    const auto it = std::find_if(keyframes.begin(), keyframes.end(), [&time](const Keyframe &k) { return k.time == time; });
+    if (it != keyframes.end()) {
+        it->value = value;
+    } else {
+        Keyframe keyframe;
+        keyframe.time = time;
+        keyframe.value = value;
+        keyframes.insert(std::upper_bound(keyframes.begin(), keyframes.end(), time,
+                                          [](const RationalTime &t, const Keyframe &k) { return t < k.time; }),
+                         keyframe);
+    }
+    param.setKeyframes(std::move(keyframes));
+}
+
+QString easingName(const Keyframe &keyframe)
+{
+    switch (keyframe.interpolation) {
+    case Interpolation::Linear:
+        return u"linear"_s;
+    case Interpolation::Hold:
+        return u"hold"_s;
+    case Interpolation::Bezier:
+        break;
+    }
+    return keyframe.easing.name();
+}
+
 // "in", "out" or "loop": the kind of a preset animation.
 QString animationKind(const QString &animationId)
 {
@@ -155,6 +212,19 @@ ClipInspector::ClipInspector(EditorController &editor)
 {
     connect(&editor, &EditorController::selectionChanged, this, &ClipInspector::changed);
     connect(&editor, &EditorController::modelChanged, this, &ClipInspector::changed);
+    // The values at the playhead (keyframes) and whether the playhead is on the clip: while paused (moving the
+    // playhead, stepping, skimming), and once playback stops. Not at every frame of playback: the whole panel would be
+    // recomputed 30 times a second for nothing.
+    connect(editor.player(), &engine::TimelinePlayer::positionChanged, this, [this] {
+        if (!m_editor.player()->playing() && playheadMatters()) {
+            emit changed();
+        }
+    });
+    connect(editor.player(), &engine::TimelinePlayer::stateChanged, this, [this] {
+        if (!m_editor.player()->playing() && focus()) {
+            emit changed();
+        }
+    });
 }
 
 TextStyle ClipInspector::defaultTextStyle()
@@ -193,6 +263,135 @@ const vedit::Transition *ClipInspector::focusTransition(const Track **track) con
         }
     }
     return nullptr;
+}
+
+bool ClipInspector::playheadMatters()
+{
+    const Clip *clip = focus();
+    if (!clip) {
+        m_playheadOnClip = false;
+        return false;
+    }
+    const bool on = playheadKeyTime(*clip).has_value();
+    const bool crossed = on != m_playheadOnClip;
+    m_playheadOnClip = on;
+    const bool animated = std::any_of(kKeyframeKeys.begin(), kKeyframeKeys.end(),
+                                      [clip](const QString &key) { return keyframeParam(*clip, key)->isAnimated(); });
+    return crossed || animated;
+}
+
+std::optional<RationalTime> ClipInspector::playheadKeyTime(const Clip &clip) const
+{
+    const Rational rate = m_editor.data().settings.frameRate;
+    const RationalTime at(m_editor.player()->position(), rate);
+    if (at < clip.start || !(at < clip.end())) {
+        return std::nullopt;
+    }
+    return keyframeTime(clip, at - clip.start);
+}
+
+QVariantList ClipInspector::keyframes() const
+{
+    const Clip *clip = focus();
+    QVariantList frames;
+    if (!clip) {
+        return frames;
+    }
+    const Rational rate = m_editor.data().settings.frameRate;
+    QList<int> list;
+    for (const QString &key : kKeyframeKeys) {
+        for (const Keyframe &keyframe : keyframeParam(*clip, key)->keyframes()) {
+            const int frame = static_cast<int>(offsetOfKeyframeTime(*clip, keyframe.time).rescaled(rate, Rounding::NearestEven).value());
+            if (!list.contains(frame)) {
+                list << frame;
+            }
+        }
+    }
+    std::sort(list.begin(), list.end());
+    for (const int frame : list) {
+        frames << frame;
+    }
+    return frames;
+}
+
+bool ClipInspector::toggleKeyframe(const QString &key)
+{
+    const Clip *clip = focus();
+    const std::optional<RationalTime> time = clip ? playheadKeyTime(*clip) : std::nullopt;
+    if (!time || !kKeyframeKeys.contains(key)) {
+        return false;
+    }
+    const Param &current = *keyframeParam(*clip, key);
+    const bool here = std::any_of(current.keyframes().begin(), current.keyframes().end(),
+                                  [&time](const Keyframe &k) { return k.time == *time; });
+    endGesture();
+    return update({clip->id}, [&](Clip &c) {
+        Param &param = *keyframeParam(c, key);
+        const ParamValue value = param.valueAt(*time);
+        if (!here) {
+            setKeyframeValue(param, *time, value);
+            return;
+        }
+        std::vector<Keyframe> keyframes = param.keyframes();
+        std::erase_if(keyframes, [&time](const Keyframe &k) { return k.time == *time; });
+        if (keyframes.empty()) {
+            param.setKeyframes({});
+            param.setStaticValue(value); // the last one leaves its value
+        } else {
+            param.setKeyframes(std::move(keyframes));
+        }
+    }, here ? tr("Remove keyframe") : tr("Add keyframe"), {});
+}
+
+bool ClipInspector::setKeyframeEasing(const QString &easing)
+{
+    const Clip *clip = focus();
+    const std::optional<RationalTime> time = clip ? playheadKeyTime(*clip) : std::nullopt;
+    const std::optional<Easing> preset = Easing::fromName(easing);
+    if (!time || (!preset && easing != u"hold"_s)) {
+        return false;
+    }
+    endGesture();
+    return update({clip->id}, [&](Clip &c) {
+        for (const QString &key : kKeyframeKeys) {
+            Param &param = *keyframeParam(c, key);
+            std::vector<Keyframe> keyframes = param.keyframes();
+            for (Keyframe &keyframe : keyframes) {
+                if (keyframe.time == *time) {
+                    keyframe.interpolation = easing == u"hold"_s     ? Interpolation::Hold
+                                             : easing == u"linear"_s ? Interpolation::Linear
+                                                                      : Interpolation::Bezier;
+                    if (preset) {
+                        keyframe.easing = *preset;
+                    }
+                }
+            }
+            param.setKeyframes(std::move(keyframes));
+        }
+    }, tr("Change keyframe easing"), {});
+}
+
+void ClipInspector::jumpKeyframe(int direction)
+{
+    const Clip *clip = focus();
+    if (!clip) {
+        return;
+    }
+    const Rational rate = m_editor.data().settings.frameRate;
+    const int start = static_cast<int>(clip->start.rescaled(rate, Rounding::NearestEven).value());
+    const int position = m_editor.player()->position();
+    std::optional<int> target;
+    for (const QVariant &frame : keyframes()) {
+        const int at = start + frame.toInt();
+        if (direction > 0 && at > position && (!target || at < *target)) {
+            target = at;
+        } else if (direction < 0 && at < position && (!target || at > *target)) {
+            target = at;
+        }
+    }
+    if (target) {
+        m_editor.player()->seek(*target);
+    }
 }
 
 bool ClipInspector::active() const
@@ -394,12 +593,32 @@ QVariantMap ClipInspector::values() const
     if (!clip) {
         return map;
     }
-    const Vec2 position = vectorOf(clip->transform.position, {0, 0});
+    // Animated parameters show their value at the playhead (at the clip's start when the playhead is elsewhere).
+    const std::optional<RationalTime> keyTime = playheadKeyTime(*clip);
+    const RationalTime at = keyTime ? *keyTime : keyframeTime(*clip, RationalTime(0, clip->duration.rate()));
+    const auto valueOf = [&at](const Param &param) { return param.isAnimated() ? Param(param.valueAt(at)) : param; };
+    const Vec2 position = vectorOf(valueOf(clip->transform.position), {0, 0});
     map[u"x"_s] = position.x;
     map[u"y"_s] = position.y;
-    map[u"scale"_s] = vectorOf(clip->transform.scale, {1, 1}).x;
-    map[u"rotation"_s] = numberOf(clip->transform.rotation, 0.0);
-    map[u"opacity"_s] = numberOf(clip->opacity, 1.0);
+    map[u"scale"_s] = vectorOf(valueOf(clip->transform.scale), {1, 1}).x;
+    map[u"rotation"_s] = numberOf(valueOf(clip->transform.rotation), 0.0);
+    map[u"opacity"_s] = numberOf(valueOf(clip->opacity), 1.0);
+    map[u"kf.available"_s] = keyTime.has_value();
+    QString easing;
+    for (const QString &key : kKeyframeKeys) {
+        const Param &param = *keyframeParam(*clip, key);
+        int state = param.isAnimated() ? 1 : 0;
+        for (const Keyframe &keyframe : param.keyframes()) {
+            if (keyTime && keyframe.time == *keyTime) {
+                state = 2;
+                if (easing.isEmpty()) {
+                    easing = easingName(keyframe);
+                }
+            }
+        }
+        map[u"kf."_s + key] = state;
+    }
+    map[u"kf.easing"_s] = easing;
     map[u"flipH"_s] = clip->transform.flipH;
     map[u"flipV"_s] = clip->transform.flipV;
     map[u"fit"_s] = clip->transform.fit == FitMode::Cover ? 1 : 0;
@@ -542,28 +761,46 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
     const double number = value.toDouble();
     const bool flag = value.toBool();
 
-    // Transform and opacity
+    // Transform and opacity: a static value, or, once animated, a keyframe at the playhead (auto keyframe; nothing on a
+    // clip the playhead is not on).
+    const RationalTime playhead(m_editor.player()->position(), m_editor.data().settings.frameRate);
+    const auto write = [&playhead](Clip &c, Param &param, const std::function<ParamValue(const ParamValue &)> &change) {
+        if (!param.isAnimated()) {
+            param = Param(change(param.staticValue()));
+            return;
+        }
+        if (playhead < c.start || !(playhead < c.end())) {
+            return;
+        }
+        const RationalTime time = keyframeTime(c, playhead - c.start);
+        setKeyframeValue(param, time, change(param.valueAt(time)));
+    };
     if (key == u"x"_s || key == u"y"_s) {
         return update(clips, [&](Clip &c) {
-            Vec2 position = vectorOf(c.transform.position, {0, 0});
-            (key == u"x"_s ? position.x : position.y) = std::clamp(number, -4.0, 4.0);
-            c.transform.position = Param(position);
+            write(c, c.transform.position, [&](const ParamValue &current) {
+                const Vec2 *v = std::get_if<Vec2>(&current);
+                Vec2 position = v ? *v : Vec2{0, 0};
+                (key == u"x"_s ? position.x : position.y) = std::clamp(number, -4.0, 4.0);
+                return ParamValue(position);
+            });
         }, tr("Move clip"), mergeTarget);
     }
     if (key == u"scale"_s) {
         return update(clips, [&](Clip &c) {
-            const double s = std::clamp(number, 0.01, 20.0);
-            c.transform.scale = Param(Vec2{s, s});
+            const double scale = std::clamp(number, 0.01, 20.0);
+            write(c, c.transform.scale, [scale](const ParamValue &) { return ParamValue(Vec2{scale, scale}); });
             c.transform.uniformScale = true;
         }, tr("Resize clip"), mergeTarget);
     }
     if (key == u"rotation"_s) {
-        return update(clips, [&](Clip &c) { c.transform.rotation = Param(std::fmod(number, 360.0)); }, tr("Rotate clip"),
-                      mergeTarget);
+        return update(clips, [&](Clip &c) {
+            write(c, c.transform.rotation, [&](const ParamValue &) { return ParamValue(std::fmod(number, 360.0)); });
+        }, tr("Rotate clip"), mergeTarget);
     }
     if (key == u"opacity"_s) {
-        return update(clips, [&](Clip &c) { c.opacity = Param(std::clamp(number, 0.0, 1.0)); }, tr("Change opacity"),
-                      mergeTarget);
+        return update(clips, [&](Clip &c) {
+            write(c, c.opacity, [&](const ParamValue &) { return ParamValue(std::clamp(number, 0.0, 1.0)); });
+        }, tr("Change opacity"), mergeTarget);
     }
     if (key == u"flipH"_s || key == u"flipV"_s) {
         return update(clips, [&](Clip &c) { (key == u"flipH"_s ? c.transform.flipH : c.transform.flipV) = flag; },

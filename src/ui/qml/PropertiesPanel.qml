@@ -321,6 +321,57 @@ Rectangle {
                         section: "video"
                         title: qsTr("Position and size")
 
+                        // Keyframes: from one to the next, and how the movement goes from the one at the playhead.
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            visible: panel.inspector.keyframes.length > 0
+                            spacing: Theme.space.xs
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Label {
+                                    Layout.fillWidth: true
+                                    role: "bodyMedium"
+                                    text: qsTr("%n keyframe(s)", "", panel.inspector.keyframes.length)
+                                }
+                                IconButton {
+                                    objectName: "previousKeyframe"
+                                    iconName: "chevron_left"
+                                    label: qsTr("Previous keyframe")
+                                    onClicked: panel.inspector.jumpKeyframe(-1)
+                                }
+                                IconButton {
+                                    objectName: "nextKeyframe"
+                                    iconName: "chevron_right"
+                                    label: qsTr("Next keyframe")
+                                    onClicked: panel.inspector.jumpKeyframe(1)
+                                }
+                            }
+                            Label {
+                                visible: (panel.values["kf.easing"] ?? "") !== ""
+                                role: "bodySmall"
+                                color: Theme.color.onSurfaceVariant
+                                text: qsTr("Movement to the next keyframe")
+                            }
+                            Flow {
+                                Layout.fillWidth: true
+                                visible: (panel.values["kf.easing"] ?? "") !== ""
+                                spacing: Theme.space.xs
+                                Repeater {
+                                    model: [{ id: "linear", text: qsTr("Steady") }, { id: "easeIn", text: qsTr("Speed up") },
+                                            { id: "easeOut", text: qsTr("Slow down") }, { id: "easeInOut", text: qsTr("Smooth") },
+                                            { id: "hold", text: qsTr("Jump") }]
+                                    delegate: Chip {
+                                        required property var modelData
+                                        objectName: "easing_" + modelData.id
+                                        text: modelData.text
+                                        checkable: false
+                                        checked: (panel.values["kf.easing"] ?? "") === modelData.id
+                                        onClicked: panel.inspector.setKeyframeEasing(modelData.id)
+                                    }
+                                }
+                            }
+                        }
+
                         SegmentedButton {
                             Layout.fillWidth: true
                             visible: panel.inspector.kind === Inspector.Video || panel.inspector.kind === Inspector.Image
@@ -331,6 +382,7 @@ Rectangle {
                         PropertySlider {
                             inspector: panel.inspector
                             key: "scale"
+                            keyframeKey: "scale"
                             label: qsTr("Size")
                             from: 0.1
                             to: 5
@@ -341,6 +393,7 @@ Rectangle {
                         PropertySlider {
                             inspector: panel.inspector
                             key: "x"
+                            keyframeKey: "position"
                             label: qsTr("Horizontal position")
                             from: -1
                             to: 1
@@ -357,6 +410,7 @@ Rectangle {
                         PropertySlider {
                             inspector: panel.inspector
                             key: "rotation"
+                            keyframeKey: "rotation"
                             label: qsTr("Rotation")
                             from: -180
                             to: 180
@@ -366,6 +420,7 @@ Rectangle {
                         PropertySlider {
                             inspector: panel.inspector
                             key: "opacity"
+                            keyframeKey: "opacity"
                             label: qsTr("Opacity")
                             neutral: 1
                             format: v => Math.round(v * 100) + " %"

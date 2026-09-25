@@ -570,6 +570,77 @@ private slots:
         QVERIFY(editor.close());
     }
 
+    // Keyframes (SPEC §5.6, the Phase 3 criterion): a diamond at the playhead, an animated parameter gets keyframes
+    // when changed, easing, jumping from one to the next, removing the last leaves its value.
+    void keyframes()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-keyframes"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        ClipInspector &inspector = *editor.inspector();
+        editor.importAndInsertPaths({m_files.landscape, m_files.photo}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(2), 20000);
+        const ClipId clip = mainTrack(editor).clips.front().id;
+        editor.select(clip.toString(), false);
+        const auto value = [&inspector](const char *key) { return inspector.values().value(QString::fromLatin1(key)); };
+        const auto seek = [&editor](int frame) {
+            editor.player()->seek(frame);
+            QTRY_COMPARE(editor.player()->position(), frame);
+        };
+
+        seek(0);
+        QVERIFY(value("kf.available").toBool());
+        QCOMPARE(value("kf.opacity").toInt(), 0);
+        QVERIFY(inspector.toggleKeyframe(u"opacity"_s));
+        QCOMPARE(value("kf.opacity").toInt(), 2);
+        seek(30);
+        QCOMPARE(value("kf.opacity").toInt(), 1);
+        // Changing an animated value adds a keyframe where the playhead is.
+        QVERIFY(inspector.set(u"opacity"_s, 0.2));
+        inspector.endGesture();
+        QCOMPARE(value("kf.opacity").toInt(), 2);
+        QCOMPARE(inspector.keyframes(), (QVariantList{0, 30}));
+        seek(15);
+        QVERIFY(std::abs(value("opacity").toDouble() - 0.6) < 0.01); // linear half way
+        // Easing of the movement from the keyframe at 0: "hold" keeps the value until the next one.
+        seek(0);
+        QVERIFY(inspector.setKeyframeEasing(u"hold"_s));
+        QCOMPARE(value("kf.easing").toString(), u"hold"_s);
+        seek(15);
+        QCOMPARE(value("opacity").toDouble(), 1.0);
+        seek(0);
+        QVERIFY(inspector.setKeyframeEasing(u"easeInOut"_s));
+        QCOMPARE(value("kf.easing").toString(), u"easeInOut"_s);
+        // Jumping between keyframes.
+        inspector.jumpKeyframe(1);
+        QTRY_COMPARE(editor.player()->position(), 30);
+        inspector.jumpKeyframe(-1);
+        QTRY_COMPARE(editor.player()->position(), 0);
+        // Outside the clip (on the photo) there is no playhead keyframe.
+        seek(150);
+        QVERIFY(!value("kf.available").toBool());
+        QVERIFY(!inspector.toggleKeyframe(u"opacity"_s));
+        // Removing the keyframes: the last one leaves its value.
+        seek(30);
+        QVERIFY(inspector.toggleKeyframe(u"opacity"_s));
+        seek(0);
+        QVERIFY(inspector.toggleKeyframe(u"opacity"_s));
+        QVERIFY(!editor.data().findClip(clip)->opacity.isAnimated());
+        QCOMPARE(std::get<double>(editor.data().findClip(clip)->opacity.staticValue()), 1.0);
+        QVERIFY(inspector.keyframes().isEmpty());
+        // Position: x and y share one diamond.
+        QVERIFY(inspector.toggleKeyframe(u"position"_s));
+        seek(60);
+        QVERIFY(inspector.set(u"x"_s, 0.25));
+        inspector.endGesture();
+        seek(30);
+        QVERIFY(std::abs(value("x").toDouble() - 0.125) < 0.01);
+        QCOMPARE(value("y").toDouble(), 0.0);
+        QVERIFY(editor.close());
+    }
+
     void snappingAndFormat()
     {
         document::DraftStore store(m_dir.filePath(u"drafts2"_s));

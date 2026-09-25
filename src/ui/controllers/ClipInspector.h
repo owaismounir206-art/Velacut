@@ -29,6 +29,10 @@ class EditorController;
 //   speed       speed (0.1…100), reversed, preservePitch
 //   filter      filter (asset id, "" = none), filter.intensity (0…1)
 //   adjust      adjust.<name> (the parameters of "vedit.adjust.basic", see adjustParams)
+//   keyframes   kf.position, kf.scale, kf.rotation, kf.opacity: 0 = not animated, 1 = animated, 2 = a keyframe at the
+//               playhead; kf.available (the playhead is on the clip); kf.easing (of the keyframes at the playhead:
+//               "linear", "hold" or an easing preset name). An animated parameter changed with set() gets a keyframe
+//               at the playhead (the values shown are those at the playhead).
 //   animation   animation.in / .out / .loop (asset id, "" = none), animation.<kind>.name, animation.<kind>.duration
 //               (seconds)
 //   transition  transition.type (asset id), transition.name, transition.duration, transition.maxDuration (seconds)
@@ -56,6 +60,8 @@ class ClipInspector : public QObject
     // Where the focused clip is on the canvas, for the handles on the preview: {x, y (centre), width, height,
     // rotation} in canvas pixels, and {start, end} in frames; empty for sounds and transitions.
     Q_PROPERTY(QVariantMap canvasBox READ canvasBox NOTIFY changed FINAL)
+    // Frames (from the clip's start) of the keyframes of the focused clip, for the diamonds on the timeline.
+    Q_PROPERTY(QVariantList keyframes READ keyframes NOTIFY changed FINAL)
     // Colours offered for texts and backgrounds (content colours, not the theme's).
     Q_PROPERTY(QVariantList swatches READ swatches CONSTANT FINAL)
 
@@ -87,8 +93,15 @@ public:
     bool canPaste() const { return m_clipboard.has_value(); }
     QVariantList swatches() const;
     QVariantMap canvasBox() const;
+    QVariantList keyframes() const;
 
     Q_INVOKABLE bool set(const QString &key, const QVariant &value);
+    // Keyframes (SPEC §5.6) of "position", "scale", "rotation" or "opacity" at the playhead: added (with the value shown)
+    // or removed; the last one removed leaves that value. Easing of the movement from the keyframes at the playhead to
+    // the next ones: "linear", "hold" or a preset name ("easeInOut"…). Jumping: -1 previous, +1 next keyframe.
+    Q_INVOKABLE bool toggleKeyframe(const QString &key);
+    Q_INVOKABLE bool setKeyframeEasing(const QString &easing);
+    Q_INVOKABLE void jumpKeyframe(int direction);
     // The end of a gesture (slider released): the next set() is a new undo step.
     Q_INVOKABLE void endGesture();
     // Back to the defaults of a section ("Ripristina", SPEC 0bis rule 8).
@@ -135,6 +148,10 @@ signals:
 
 private:
     const Clip *focus() const;
+    // The keyframe time of the playhead on `clip` (none when the playhead is not on it).
+    std::optional<RationalTime> playheadKeyTime(const Clip &clip) const;
+    // Whether a move of the playhead changes what the inspector shows (keyframed values, kf.available).
+    bool playheadMatters();
     // The clip a library item applies to: the focused one, else the one under the playhead (not selected).
     const Clip *libraryClip() const;
     const vedit::Transition *focusTransition(const Track **track = nullptr) const;
@@ -152,6 +169,7 @@ private:
     EditorController &m_editor;
     quint64 m_gesture = 1;
     std::optional<Clip> m_clipboard;
+    bool m_playheadOnClip = false;
 };
 
 } // namespace vedit::ui

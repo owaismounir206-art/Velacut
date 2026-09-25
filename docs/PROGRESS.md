@@ -8,8 +8,8 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
 ### Criterio di completamento della Fase 3 (SPEC §8)
 | Requisito | Esito | Verifica |
 |---|---|---|
-| Animo un titolo con keyframe ed easing | In corso | Keyframe, curve ed easing nel modello e player |
-| Compongo un green screen con maschera | ✅ | `vedit.chroma_key` + `vedit.mask` verificati in `tst_projection::greenScreenCompositionWithMaskInProjection` |
+| Animo un titolo con keyframe ed easing | ✅ | `tst_ui::phaseThreeCriterionTitle`: testo, due keyframe di opacità, andamento "Morbido", dall'interfaccia |
+| Compongo un green screen con maschera | In corso | Engine pronto (`tst_projection::greenScreenCompositionWithMaskInProjection`); manca l'interfaccia (P3.6d) |
 | Compila senza warning, test verdi | ✅ | 25/25 in `build` (RelWithDebInfo e Debug con sanitizers) |
 
 ### Fase 3: fatto (un commit per incremento)
@@ -65,10 +65,17 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
    video); rombi sul righello e tacche sulle clip; clic porta il playhead lì, tasto destro rimuove
    (`tst_ui::markers`).
 
+8. **Keyframe nell'interfaccia (`P3.6c`)**: diamante accanto a posizione, dimensione, rotazione e opacità (vuoto =
+   non animato, colorato = animato, pieno = keyframe al playhead; clic aggiunge o toglie); cambiare un parametro
+   animato crea il keyframe al playhead; andamento verso il keyframe successivo (Costante, Accelera, Rallenta,
+   Morbido, Salto); salto al keyframe precedente/successivo; diamanti sulla clip selezionata nella timeline. Solo i
+   parametri che il renderer anima davvero hanno il diamante (volume, dimensione del testo e regolazioni no).
+   Criterio, prima metà: **"Animo un titolo con keyframe ed easing" ✅** (`tst_ui::phaseThreeCriterionTitle`, con
+   mouse e tastiera; `tst_editor::keyframes`). Il pannello non si ricalcola a ogni fotogramma della riproduzione
+   (solo in pausa, se la clip è animata o il playhead entra/esce dalla clip): prima i test di avvio in ASan col
+   rendering software mostravano 4 fotogrammi in 25 s.
+
 ### Prossimi passi (Fase 3 — Keyframe e composizione)
-- P3.6c: keyframe nell'interfaccia: diamanti accanto ai parametri animabili (aggiungi/rimuovi al playhead, salto tra
-  keyframe), diamanti sulla clip selezionata, scelta dell'easing; verifica del criterio ("Animo un titolo con keyframe
-  ed easing").
 - P3.6d: selettore colore del chroma key, maschere sul canvas, modalità di fusione nel pannello, clip composta e
   livello di regolazione dal menu della clip.
 
@@ -195,6 +202,8 @@ Gli smoke test verificano fotogrammi **decodificati e mostrati** dall'anteprima 
 - `tst_theme` impiega ~90 s nella build Debug con sanitizer (140 schemi generati); ~1 s in RelWithDebInfo.
 
 ## Bug noti / avvisi
+- Se vedit viene chiuso a forza durante un export, i file del job (`~/.cache/vedit/render/<id>.json/.vproj`) restano
+  nella cache: da ripulire all'avvio (piccoli, ma si accumulano).
 - Avviso Qt "Failed to register with host portal … App info not found for 'vedit'": manca il file `.desktop`
   installato; sparirà con il packaging (Fase 8). Innocuo.
 - Moduli MLT opzionali non installati sul sistema (movit, rtaudio, sox): MLT lo scrive nel log all'avvio. Innocuo

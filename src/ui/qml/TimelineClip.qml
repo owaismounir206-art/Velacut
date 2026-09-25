@@ -93,6 +93,26 @@ Item {
                 text: clip.name
             }
         }
+        // Keyframes of the selected clip: diamonds at the bottom; a click moves the playhead there.
+        Repeater {
+            model: clip.selected && clip.view.editor.inspector.clipId === clip.clipId ? clip.view.editor.inspector.keyframes : []
+            delegate: Icon {
+                id: diamond
+                required property int modelData
+                objectName: "clipKeyframe_" + modelData
+                x: modelData * clip.view.zoom - width / 2
+                y: parent.height - height
+                name: "diamond"
+                filled: true
+                size: Theme.editor.handleSize
+                color: Theme.color.primary
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: clip.view.player.seek(clip.start + diamond.modelData)
+                }
+            }
+        }
         // Markers of the clip: a tick at the top; a click moves the playhead there.
         Repeater {
             model: clip.markers

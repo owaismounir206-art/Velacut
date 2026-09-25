@@ -22,11 +22,19 @@
             <numerusform>%n clips selected: changes apply to all of them.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <location line="+242"/>
+        <source>%n keyframe(s)</source>
+        <translation>
+            <numerusform>%n keyframe</numerusform>
+            <numerusform>%n keyframes</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+775"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+990"/>
         <location line="+316"/>
         <source>Transition on %n cut(s)</source>
         <translation>

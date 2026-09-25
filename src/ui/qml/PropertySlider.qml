@@ -20,6 +20,8 @@ ColumnLayout {
     property real neutral: 0
     // Equal steps multiply the value (speed): the slider works on the logarithm.
     property bool logarithmic: false
+    // The keyframe diamond of the parameter ("position", "scale", "rotation", "opacity"), "" = none.
+    property string keyframeKey: ""
     // The value as shown to the user.
     property var format: function (v) { return (Math.round(v * 100) / 100).toLocaleString(Qt.locale()) }
 
@@ -54,9 +56,15 @@ ColumnLayout {
             font.features: { "tnum": 1 }
             color: Theme.color.onSurfaceVariant
         }
+        KeyframeButton {
+            visible: root.keyframeKey !== ""
+            inspector: root.inspector
+            key: root.keyframeKey
+        }
     }
     Slider {
         id: slider
+        objectName: "slider_" + root.key
         Layout.fillWidth: true
         from: root.toSlider(root.from)
         to: root.toSlider(root.to)
