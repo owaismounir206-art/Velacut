@@ -83,6 +83,14 @@
     </message>
 </context>
 <context>
+    <name>CanvasHandles</name>
+    <message>
+        <location filename="../src/ui/qml/CanvasHandles.qml" line="+214"/>
+        <source>Text — Esc to finish</source>
+        <translation>Testo — Esc per terminare</translation>
+    </message>
+</context>
+<context>
     <name>ColorSwatches</name>
     <message>
         <location filename="../src/ui/qml/ColorSwatches.qml" line="+46"/>
@@ -297,46 +305,6 @@
     </message>
     <message>
         <location line="+9"/>
-        <source>Format: %1</source>
-        <translation>Formato: %1</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Change the format of the video</source>
-        <translation>Cambia il formato del video</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>16:9 — YouTube</source>
-        <translation>16:9 — YouTube</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>9:16 — TikTok, Reels, Shorts</source>
-        <translation>9:16 — TikTok, Reels, Shorts</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>1:1 — Square</source>
-        <translation>1:1 — Quadrato</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>4:5 — Instagram post</source>
-        <translation>4:5 — Post Instagram</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>3:4 — Portrait</source>
-        <translation>3:4 — Verticale</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>21:9 — Cinema</source>
-        <translation>21:9 — Cinema</translation>
-    </message>
-    <message>
-        <location line="+18"/>
         <source>Exporting %1%</source>
         <translation>Esportazione %1%</translation>
     </message>
@@ -484,6 +452,49 @@
         <location line="+12"/>
         <source>Try again</source>
         <translation>Riprova</translation>
+    </message>
+</context>
+<context>
+    <name>FormatButton</name>
+    <message>
+        <location filename="../src/ui/qml/FormatButton.qml" line="+16"/>
+        <source>Format: %1</source>
+        <translation>Formato: %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Change the format of the video</source>
+        <translation>Cambia il formato del video</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>16:9 — YouTube</source>
+        <translation>16:9 — YouTube</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>9:16 — TikTok, Reels, Shorts</source>
+        <translation>9:16 — TikTok, Reels, Shorts</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>1:1 — Square</source>
+        <translation>1:1 — Quadrato</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>4:5 — Instagram post</source>
+        <translation>4:5 — Post Instagram</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>3:4 — Portrait</source>
+        <translation>3:4 — Verticale</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>21:9 — Cinema</source>
+        <translation>21:9 — Cinema</translation>
     </message>
 </context>
 <context>
@@ -1010,7 +1021,7 @@
 <context>
     <name>PreviewPanel</name>
     <message>
-        <location filename="../src/ui/qml/PreviewPanel.qml" line="+41"/>
+        <location filename="../src/ui/qml/PreviewPanel.qml" line="+45"/>
         <source>Add a video or a photo to the timeline: the preview appears here.</source>
         <translation>Aggiungi un video o una foto alla timeline: l&apos;anteprima compare qui.</translation>
     </message>
@@ -1050,7 +1061,7 @@
         <translation>Fine</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+16"/>
         <source>%1× · %2</source>
         <translation>%1× · %2</translation>
     </message>
@@ -1922,7 +1933,7 @@
 <context>
     <name>vedit::engine::TimelinePlayer</name>
     <message>
-        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+95"/>
+        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+112"/>
         <source>No audio output is available (SDL2).</source>
         <translation>Nessuna uscita audio disponibile (SDL2).</translation>
     </message>
@@ -2007,7 +2018,7 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message>
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+465"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+486"/>
         <source>Change transition duration</source>
         <translation>Cambia durata della transizione</translation>
     </message>

@@ -51,6 +51,9 @@ class ClipInspector : public QObject
     Q_PROPERTY(double durationSeconds READ durationSeconds NOTIFY changed FINAL)
     Q_PROPERTY(QVariantList adjustParams READ adjustParams CONSTANT FINAL)
     Q_PROPERTY(bool canPaste READ canPaste NOTIFY clipboardChanged FINAL)
+    // Where the focused clip is on the canvas, for the handles on the preview: {x, y (centre), width, height,
+    // rotation} in canvas pixels, and {start, end} in frames; empty for sounds and transitions.
+    Q_PROPERTY(QVariantMap canvasBox READ canvasBox NOTIFY changed FINAL)
     // Colours offered for texts and backgrounds (content colours, not the theme's).
     Q_PROPERTY(QVariantList swatches READ swatches CONSTANT FINAL)
 
@@ -81,6 +84,7 @@ public:
     QVariantList adjustParams() const;
     bool canPaste() const { return m_clipboard.has_value(); }
     QVariantList swatches() const;
+    QVariantMap canvasBox() const;
 
     Q_INVOKABLE bool set(const QString &key, const QVariant &value);
     // The end of a gesture (slider released): the next set() is a new undo step.

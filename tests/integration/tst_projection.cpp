@@ -5,6 +5,7 @@
 #include "TestMedia.h"
 
 #include "engine/mlt/MltRuntime.h"
+#include "engine/timeline/ClipPlacement.h"
 #include "engine/timeline/MediaProducerCache.h"
 #include "engine/timeline/TimelineProjection.h"
 
@@ -364,6 +365,55 @@ private slots:
         QCOMPARE(pixel(after, 5, 5), pixel(before, 5, 5)); // outside the text: the video
         // Outside the text clip's time: just the video.
         QCOMPARE(rgbHash(renderFresh1(session.data(), 90)), rgbHash(renderFresh1(Session(baseProjectWithClip()).data(), 90)));
+    }
+
+    // The box the preview's handles draw (ClipPlacement) is where vedit.transform renders the clip.
+    void canvasBoxMatchesTheRender()
+    {
+        const auto litBounds = [](const QImage &image) {
+            QRect bounds;
+            for (int y = 0; y < image.height(); ++y) {
+                for (int x = 0; x < image.width(); ++x) {
+                    if (qGray(image.pixel(x, y)) > 128) {
+                        bounds |= QRect(x, y, 1, 1);
+                    }
+                }
+            }
+            return bounds;
+        };
+        for (const double rotation : {0.0, 90.0}) {
+            Session session(baseProject());
+            TextClipData text;
+            text.text = u"TITLE"_s;
+            text.style.size = Param(0.12);
+            text.style.background = TextBackground{Color{255, 255, 255, 255}, 0.25, 0.0};
+            QVERIFY(session.apply(session.editor().insertText(frames(0), text, frames(60))));
+            const ClipId id = session.data().mainSequence()->visualTracks.back().clips.front().id;
+            QVERIFY(session.apply(session.editor().updateClips({id}, [rotation](Clip &clip) {
+                clip.transform.position = Param(Vec2{0.1, -0.1});
+                clip.transform.scale = Param(Vec2{0.8, 0.8});
+                clip.transform.rotation = Param(rotation);
+            }, u"place"_s)));
+            const QImage frame = renderFresh1(session.data(), 10);
+            const CanvasBox box = canvasBox(*session.data().findClip(id), nullptr, frame.size());
+            const QRect lit = litBounds(frame);
+            const QSizeF expected = rotation == 0 ? box.size : box.size.transposed();
+            QVERIFY2(std::abs(lit.center().x() - box.centre.x()) <= 2 && std::abs(lit.center().y() - box.centre.y()) <= 2,
+                     qPrintable(u"%1,%2 vs %3,%4"_s.arg(lit.center().x()).arg(lit.center().y()).arg(box.centre.x()).arg(box.centre.y())));
+            QVERIFY2(std::abs(lit.width() - expected.width()) <= 3 && std::abs(lit.height() - expected.height()) <= 3,
+                     qPrintable(u"%1x%2 vs %3x%4"_s.arg(lit.width()).arg(lit.height()).arg(expected.width()).arg(expected.height())));
+        }
+        // A vertical video on a 16:9 canvas: as high as the canvas, centred.
+        Clip clip;
+        MediaClipData media;
+        media.mediaId = m_vertical.id;
+        clip.payload = media;
+        const CanvasBox box = canvasBox(clip, &m_vertical, QSize(320, 180));
+        QCOMPARE(box.centre, QPointF(160, 90));
+        QCOMPARE(box.size.height(), 180.0);
+        QVERIFY(std::abs(box.size.width() - 180.0 * 9 / 16) < 1);
+        clip.transform.fit = FitMode::Cover;
+        QCOMPARE(canvasBox(clip, &m_vertical, QSize(320, 180)).size.width(), 320.0);
     }
 
     void dissolveBetweenClipsFreezesMissingFrames()

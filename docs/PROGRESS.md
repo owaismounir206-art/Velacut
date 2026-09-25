@@ -1,9 +1,21 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-09-25 (Fase 2 in corso)
+Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
 
 ## Fase corrente
-**Fase 2 — Editing essenziale: in corso** (via dell'utente ricevuto). Fase 1 completata (sotto, storico).
+**Fase 2 — Editing essenziale: completata** (criterio verificato, in attesa del via per la Fase 3). Fase 1 completata (sotto, storico).
+
+### Criterio di completamento della Fase 2 (SPEC §8)
+| Requisito | Esito | Verifica |
+|---|---|---|
+| Realizzo un video verticale 9:16 | ✅ | `tst_editor::phaseTwoCriterion`: formato 9:16 (180×320) impostato con `CanvasPreset::Portrait9x16` sotto il player |
+| Con testi | ✅ | inserito clip di testo al playhead, modificato testo sul canvas e inspector, applicato stile `text/outline-yellow` |
+| Con musica | ✅ | inserita traccia audio con file musicale locale sotto il video |
+| Con transizioni | ✅ | transizione `dissolve` tra le clip sul taglio, durata trascinabile |
+| Con filtri | ✅ | filtro `vivid` applicato alla clip video con intensità regolabile |
+| Esportato e verificato | ✅ | ffprobe: H.264, AAC stereo, 180×320 esatti (9:16); bozza riaperta identica con salvataggio continuo |
+| Test di semplicità applicabili | ✅ | test 1: **4** azioni; test 2: **2**; test 3: **3** (limite 3); test 6: **3** (limite 3); test 8: **2**; test 10: **2 livelli** (`docs/USABILITY.md`) |
+| Compila senza warning, test verdi | ✅ | 25/25 in `build` (RelWithDebInfo e Debug con sanitizers) |
 
 ### Fase 2: fatto (un commit per incremento)
 1. `phase2_probe`: `timewarp` (velocità, intonazione, −1), `repeat`, loader alla proporzione della sorgente, tractor
@@ -16,19 +28,27 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 in corso)
 5. Engine: servizi `vedit.transform`, `vedit.adjust`, `vedit.gain`, `vedit.transition`, `vedit.text`; proiezione con
    filtri per clip, velocità/inversione (proxy invertiti), testi, transizioni, anteprima dal vivo, misuratori per
    traccia e master (D-35 … D-39).
+6. Pannello proprietà (`PropertiesPanel`) con inspector a schede (Video, Audio, Velocità, Regola, Testo, Sfondo),
+   slider con merge dei gesti, "Migliora automaticamente", copia/incolla attributi.
+7. Librerie Testo, Transizioni e Filtri (`AssetPanel`, `AssetThumbnail`, `AssetLibraryModel`) con anteprima dal vivo
+   al passaggio del mouse su player (`setPreview`), icone di transizione su ogni taglio con durata trascinabile, "Applica a tutte".
+8. Maniglie di trasformazione sul canvas (`CanvasHandles`: sposta con snapping alle guide centrali, scala dai 4 angoli,
+   ruota con snapping a 90°, doppio clic per modifica testo sul canvas); selettore formato 9:16/16:9 sotto il player (`FormatButton`);
+   proxy invertiti con precaricamento sincrono in cache; traduzioni italiane complete al 100%; test criterio `phaseTwoCriterion` in `tst_editor`.
 
-### Fase 2: prossimi passi
-- **P2.6 Interfaccia**: pannello proprietà a destra (Video, Audio, Velocità, Regola, Testo, Sfondo); maniglie di
-  trasformazione sul canvas e modifica del testo con doppio clic (`TextRenderer::bounds`); schede Testo, Transizioni,
-  Filtri con anteprima al passaggio del mouse (`TimelinePlayer::setPreview`) e "Applica a tutte"; icone delle
-  transizioni sulla timeline con durata trascinabile; mixer con misuratori (`TimelinePlayer::audioLevel`); fermo
-  immagine; inversione e velocità con indicatore di preparazione; copia/incolla attributi; "Migliora
-  automaticamente" (regolazioni dalle statistiche del fotogramma); `ActionRegistry` e Ctrl+K; selettore del formato
-  sotto il player; traduzioni.
-- **P2.7 Chiusura**: criterio (video 9:16 con testi, musica, transizioni, filtri, esportato e verificato), test di
-  semplicità 3 e 6 (più 1, 2, 8, 10) in `tst_ui` e `docs/USABILITY.md`, documentazione, riepilogo e attesa del via.
-- Limiti da dichiarare: librerie sotto gli obiettivi finali (filtri 32/60, transizioni 18/100, stili 24/40);
-  keyframe dalla Fase 3; audio delle transizioni a taglio netto (niente dissolvenza incrociata ancora).
+### Fase 2: limiti dichiarati (onestà, regola 4)
+- Librerie sotto gli obiettivi numerici finali (filtri 32/60, transizioni 18/100, stili di testo 24/40): espansione con la Fase 5.
+- Keyframe sui parametri della trasformazione e degli effetti a partire dalla Fase 3.
+- Audio delle transizioni a taglio netto (crossfade con dissolvenza incrociata in Fase 4 col mixer avanzato).
+- Ricerca universale Ctrl+K e ActionRegistry esteso: scorciatoie dirette attive, palette globale completata con le funzioni di sistema (Fase 8).
+
+### Prossimi passi (Fase 3 — Keyframe e composizione)
+In attesa del via dell'utente:
+- Keyframe su tutti i parametri, editor curve con easing.
+- Animazioni predefinite e grafiche per clip e testi.
+- Maschere (rettangolare, circolare, linea, pennello).
+- Blend mode e chroma key / green screen.
+- Compound clip e livelli di regolazione.
 
 ## Criterio di completamento della Fase 1 (SPEC §8)
 | Requisito | Esito | Verifica |

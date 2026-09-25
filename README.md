@@ -3,9 +3,10 @@
 Editor video desktop per Linux (Arch), completamente offline, con interfaccia Material 3.
 Specifica: `SPEC-editor-video.md`. Architettura: `docs/ARCHITECTURE.md`. Stato: `docs/PROGRESS.md`.
 
-> Stato attuale: **Fase 1 (MVP editor) completata**, in attesa del via per la Fase 2. Schermata iniziale con le
-> bozze, editor con media pool, musica locale, anteprima, timeline magnetica, taglio/trim/riordino, export MP4.
-> Tutto si salva da solo. Dettagli e limiti in `docs/PROGRESS.md`.
+> Stato attuale: **Fase 2 (Editing essenziale) completata**, in attesa del via per la Fase 3.
+> Trasformazioni con maniglie sul canvas, formato 9:16/16:9 sotto il player, testi e preset sul canvas,
+> audio/fade/mixer, velocità/inversione (proxy), transizioni e filtri con anteprima dal vivo, "Applica a tutte",
+> "Migliora automaticamente", copia/incolla attributi. Dettagli e limiti in `docs/PROGRESS.md`.
 
 ## Dipendenze (Arch)
 ```bash

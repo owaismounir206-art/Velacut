@@ -44,6 +44,8 @@ qt_add_qml_module(vedit_ui
         qml/PropertySlider.qml
         qml/ColorSwatches.qml
         qml/AssetPanel.qml
+        qml/CanvasHandles.qml
+        qml/FormatButton.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"
     PREFIX "/vedit/shaders"

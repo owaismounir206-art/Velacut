@@ -1,4 +1,4 @@
-// Editor top bar: back to the drafts, the project name (click to rename), "Saved", undo/redo, format and Export.
+// Editor top bar: back to the drafts, the project name (click to rename), "Saved", undo/redo and Export (the format is under the player).
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
@@ -90,37 +90,6 @@ Rectangle {
             label: bar.editor.redoText !== "" ? qsTr("Redo: %1").arg(bar.editor.redoText) : qsTr("Redo")
             shortcutText: qsTr("Ctrl+Shift+Z")
             onClicked: bar.editor.redo()
-        }
-
-        // Format of the canvas: one click (SPEC 0bis rule 1).
-        Button {
-            variant: "outlined"
-            iconName: "aspect_ratio"
-            text: bar.editor.formatText
-            Accessible.name: qsTr("Format: %1").arg(bar.editor.formatText)
-            ToolTip.visible: hovered
-            ToolTip.text: qsTr("Change the format of the video")
-            onClicked: formatMenu.popup()
-            Menu {
-                id: formatMenu
-                Repeater {
-                    // Values of CanvasPreset (core/project/Sequence.h).
-                    model: [{ text: qsTr("16:9 — YouTube"), preset: 0, icon: "crop_16_9" },
-                            { text: qsTr("9:16 — TikTok, Reels, Shorts"), preset: 1, icon: "crop_portrait" },
-                            { text: qsTr("1:1 — Square"), preset: 2, icon: "crop_square" },
-                            { text: qsTr("4:5 — Instagram post"), preset: 3, icon: "crop_portrait" },
-                            { text: qsTr("3:4 — Portrait"), preset: 5, icon: "crop_3_2" },
-                            { text: qsTr("21:9 — Cinema"), preset: 4, icon: "panorama" }]
-                    delegate: MenuItem {
-                        required property var modelData
-                        iconName: modelData.icon
-                        text: modelData.text
-                        checkable: true
-                        checked: bar.editor.canvasPreset === modelData.preset
-                        onTriggered: bar.editor.setCanvasPreset(modelData.preset)
-                    }
-                }
-            }
         }
 
         // Export: visible while it runs, a click opens the details.

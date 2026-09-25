@@ -26,7 +26,7 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+696"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+717"/>
         <location line="+316"/>
         <source>Transition on %n cut(s)</source>
         <translation>

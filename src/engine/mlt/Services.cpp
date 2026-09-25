@@ -3,6 +3,7 @@
 
 #include "engine/playback/AudioMeters.h"
 #include "engine/text/TextRenderer.h"
+#include "engine/timeline/ClipPlacement.h"
 #include "fx/Audio.h"
 #include "fx/Composite.h"
 #include "fx/Transform.h"
@@ -10,6 +11,7 @@
 #include <QCryptographicHash>
 #include <QDataStream>
 #include <QIODevice>
+#include <QMutex>
 #include <QtGlobal>
 
 #include <mlt++/Mlt.h>
@@ -110,32 +112,6 @@ void *createComposite(mlt_profile, mlt_service_type, const char *, const void *)
 
 // ---- vedit.transform ------------------------------------------------------------------------------------------
 
-// Size of the source at scale 1 on a canvas, per fit mode.
-void fittedSize(const TransformSettings &s, int canvasWidth, int canvasHeight, double &width, double &height)
-{
-    const double sourceAspect = s.sourceWidth / std::max(1.0, s.sourceHeight);
-    const double canvasAspect = double(canvasWidth) / canvasHeight;
-    switch (s.fit) {
-    case FitMode::Contain:
-    case FitMode::Cover: {
-        const bool wider = sourceAspect > canvasAspect;
-        const bool byWidth = s.fit == FitMode::Contain ? wider : !wider;
-        width = byWidth ? canvasWidth : canvasHeight * sourceAspect;
-        height = byWidth ? canvasWidth / sourceAspect : canvasHeight;
-        return;
-    }
-    case FitMode::Stretch:
-        width = canvasWidth;
-        height = canvasHeight;
-        return;
-    case FitMode::None:
-        // Pixels 1:1 relative to a 1080p canvas.
-        width = s.sourceWidth * canvasHeight / 1080.0;
-        height = s.sourceHeight * canvasHeight / 1080.0;
-        return;
-    }
-}
-
 void fillBackground(const TransformSettings &s, uint8_t *canvas, int w, int h, const uint8_t *source, int sw, int sh)
 {
     const CanvasBackground &background = *s.background;
@@ -179,8 +155,9 @@ int transformGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format
         *format = mlt_image_rgba;
         return mlt_frame_get_image(frame, image, format, width, height, 0);
     }
-    double fitW = 0, fitH = 0;
-    fittedSize(*s, w, h, fitW, fitH);
+    const QSizeF fitted = fittedSize(QSizeF(s->sourceWidth, s->sourceHeight), s->fit, QSize(w, h));
+    const double fitW = fitted.width();
+    const double fitH = fitted.height();
     const double shownW = fitW * std::abs(s->scaleX);
     const double shownH = fitH * std::abs(s->scaleY);
     // The source is requested at about the size it is shown: no work on pixels nobody sees.
@@ -378,10 +355,13 @@ mlt_frame transitionProcess(mlt_transition transition, mlt_frame aFrame, mlt_fra
 // ---- vedit.text -----------------------------------------------------------------------------------------------
 
 // The layer is drawn once, by makeTextProducer() on the calling thread (the projection's): fonts are never used in
-// MLT's threads. Besides the cost, Qt's per-thread FreeType data leaks when such a thread exits.
+// MLT's threads. Besides the cost, Qt's per-thread FreeType data leaks when such a thread exits. Another size (a
+// scaled text: vedit.transform asks for the size it shows; a reduced preview) is a smooth scaling of that layer.
 struct TextState
 {
     QImage layer; // at the profile size
+    QMutex mutex;
+    QImage scaled; // the last other size asked for
 };
 
 int textGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
@@ -391,7 +371,15 @@ int textGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int
     int w = *width;
     int h = *height;
     profileSize(MLT_PRODUCER_SERVICE(producer), w, h);
-    const QImage layer = state ? state->layer : QImage();
+    QImage layer = state ? state->layer : QImage();
+    if (!layer.isNull() && layer.size() != QSize(w, h)) {
+        QMutexLocker lock(&state->mutex);
+        if (state->scaled.size() != QSize(w, h)) {
+            state->scaled = state->layer.scaled(w, h, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                                .convertToFormat(QImage::Format_RGBA8888);
+        }
+        layer = state->scaled;
+    }
     const int size = w * h * 4;
     auto *buffer = static_cast<uint8_t *>(mlt_pool_alloc(size));
     if (layer.size() != QSize(w, h)) {

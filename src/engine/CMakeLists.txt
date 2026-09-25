@@ -22,6 +22,7 @@ add_library(vedit_engine STATIC
     text/TextRenderer.h text/TextRenderer.cpp
     render/Renderer.h render/Renderer.cpp
     render/RenderJob.h render/RenderJob.cpp
+    timeline/ClipPlacement.h timeline/ClipPlacement.cpp
     timeline/MediaProducerCache.h timeline/MediaProducerCache.cpp
     timeline/TimelineProjection.h timeline/TimelineProjection.cpp
 )

@@ -31,6 +31,23 @@ TimelinePlayer::TimelinePlayer(QObject *parent)
     connect(m_reverse.get(), &ReverseProxyQueue::ready, this, [this](const MediaId &mediaId) {
         if (m_cache) {
             m_cache->forget(mediaId); // the next producer reads the backwards copy
+            if (m_project) {
+                if (const Media *media = m_project->data().findMedia(mediaId)) {
+                    if (const Sequence *seq = m_project->data().findSequence(m_sequenceId)) {
+                        for (const auto *tracks : {&seq->visualTracks, &seq->audioTracks}) {
+                            for (const Track &track : *tracks) {
+                                for (const Clip &clip : track.clips) {
+                                    if (const MediaClipData *data = clip.media();
+                                        data && data->mediaId == mediaId && data->reversed) {
+                                        const double speed = media->kind == MediaKind::Image ? 1.0 : data->speed;
+                                        m_cache->open(*media, -speed, data->preservePitch);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             onMediaReady(mediaId);
         }
     });

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "TimelineProjection.h"
 
+#include "engine/timeline/ClipPlacement.h"
 #include "engine/timeline/MediaProducerCache.h"
 #include "fx/Library.h"
 
@@ -85,21 +86,6 @@ bool clipIsAnimated(const Clip &clip)
 }
 
 // Displayed size of a media item (rotation and pixel aspect applied).
-void displaySize(const Media &media, double &width, double &height)
-{
-    width = 1920;
-    height = 1080;
-    if (!media.info.video || media.info.video->width <= 0 || media.info.video->height <= 0) {
-        return;
-    }
-    const VideoStreamInfo &video = *media.info.video;
-    width = video.width * video.sampleAspectRatio.toDouble();
-    height = video.height;
-    if (video.rotation == 90 || video.rotation == 270) {
-        std::swap(width, height);
-    }
-}
-
 fx::Easing easingOf(const QString &name)
 {
     if (name == u"linear"_s) {
@@ -396,7 +382,9 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
         }
         TransformSettings transform;
         if (media) {
-            displaySize(*media, transform.sourceWidth, transform.sourceHeight);
+            const QSizeF source = displaySize(*media);
+            transform.sourceWidth = source.width();
+            transform.sourceHeight = source.height();
             transform.fit = clip.transform.fit;
         } else {
             // Text and colour clips are canvas-sized layers.

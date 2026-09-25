@@ -6,6 +6,7 @@
 #include "core/serialization/ProjectJson.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/playback/TimelinePlayer.h"
+#include "engine/timeline/ClipPlacement.h"
 #include "fx/Enhance.h"
 #include "fx/Library.h"
 
@@ -308,6 +309,26 @@ QVariantList ClipInspector::adjustParams() const
     return list;
 }
 
+QVariantMap ClipInspector::canvasBox() const
+{
+    const Clip *clip = focus();
+    if (!clip || (!supports(*clip, u"video"_s) && !supports(*clip, u"text"_s))) {
+        return {};
+    }
+    const MediaClipData *media = clip->media();
+    const QSize canvas = m_editor.canvasSize();
+    const engine::CanvasBox box =
+        engine::canvasBox(*clip, media ? m_editor.data().findMedia(media->mediaId) : nullptr, canvas);
+    const Rational rate = m_editor.data().settings.frameRate;
+    return {{u"x"_s, box.centre.x()},
+            {u"y"_s, box.centre.y()},
+            {u"width"_s, box.size.width()},
+            {u"height"_s, box.size.height()},
+            {u"rotation"_s, box.rotation},
+            {u"start"_s, static_cast<int>(clip->start.rescaled(rate, Rounding::NearestEven).value())},
+            {u"end"_s, static_cast<int>(clip->end().rescaled(rate, Rounding::NearestEven).value())}};
+}
+
 QVariantList ClipInspector::swatches() const
 {
     QVariantList list;
@@ -470,7 +491,7 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
         return false;
     }
     const std::vector<ClipId> clips = targets(sectionOf(key));
-    QString mergeTarget = key;
+    QString mergeTarget = (key == u"x"_s || key == u"y"_s) ? u"position"_s : key;
     for (const ClipId &id : clips) {
         mergeTarget += u':' + id.toString();
     }

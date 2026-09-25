@@ -29,6 +29,10 @@ Rectangle {
                 sink: panel.player.sink
                 backgroundColor: panel.color
             }
+            CanvasHandles {
+                anchors.fill: parent
+                editor: panel.editor
+            }
             // Before the first clip: say what to do, in the place where the result will appear.
             Label {
                 anchors.centerIn: parent
@@ -80,7 +84,13 @@ Rectangle {
                     onClicked: panel.player.seek(panel.editor.timeline.duration)
                 }
             }
+            // Format of the canvas under the player (SPEC §4), one click away (SPEC 0bis rule 1).
+            FormatButton {
+                anchors { right: durationLabel.left; rightMargin: Theme.space.sm; verticalCenter: parent.verticalCenter }
+                editor: panel.editor
+            }
             Label {
+                id: durationLabel
                 anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                 role: "labelLarge"
                 font.features: { "tnum": 1 }

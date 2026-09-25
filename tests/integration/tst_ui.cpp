@@ -393,6 +393,67 @@ private slots:
         click(byText(u"Media"_s));
     }
 
+    // Handles on the preview: move, resize, rotate; a text edited in place; the format under the player.
+    void canvasHandles()
+    {
+        const ClipId first = mainTrack().clips.front().id;
+        editor()->player()->pause();
+        editor()->player()->seek(10);
+        QTRY_COMPARE(editor()->player()->position(), 10);
+        click(byName(u"clip-"_s + first.toString()));
+        QTRY_VERIFY(byName(u"canvasBox"_s));
+        const auto value = [&](const char *key) { return editor()->inspector()->values().value(QString::fromLatin1(key)).toDouble(); };
+        const int steps = editor()->document().undoStack().index();
+
+        QQuickItem *move = byName(u"canvasMove"_s);
+        drag(centre(move), centre(move) + QPoint(60, 0));
+        QTRY_VERIFY(value("x") > 0.05);
+        QCOMPARE(editor()->document().undoStack().index(), steps + 1);
+        // Back near the centre: it snaps onto the centre line.
+        drag(centre(move), centre(move) - QPoint(58, 0));
+        QTRY_COMPARE(value("x"), 0.0);
+
+        QQuickItem *corner = byName(u"canvasCorner3"_s);
+        QVERIFY(corner);
+        drag(centre(corner), centre(corner) + QPoint(30, 20));
+        QTRY_VERIFY(value("scale") > 1.05);
+        QQuickItem *rotate = byName(u"canvasRotate"_s);
+        QVERIFY(rotate);
+        const QPoint boxCentre = centre(byName(u"canvasBox"_s));
+        drag(centre(rotate), boxCentre + QPoint(200, -40));
+        QTRY_VERIFY(std::abs(value("rotation")) > 20);
+        shot(u"17-canvas-handles"_s);
+        while (editor()->document().undoStack().index() > steps) {
+            editor()->undo();
+        }
+
+        // A text: double click on it, type, Escape.
+        editor()->clearSelection();
+        click(byName(u"addTextButton"_s));
+        QTRY_COMPARE(editor()->inspector()->kind(), int(ui::ClipInspector::Text));
+        QTRY_VERIFY(byName(u"canvasMove"_s));
+        QTest::mouseDClick(m_window, Qt::LeftButton, {}, centre(byName(u"canvasMove"_s)));
+        QTRY_VERIFY(byName(u"canvasTextEditor"_s));
+        for (const char c : {'H', 'i'}) {
+            QTest::keyClick(m_window, c);
+        }
+        QTRY_COMPARE(editor()->inspector()->values().value(u"text.content"_s).toString(), u"Hi"_s);
+        shot(u"18-canvas-text-editing"_s);
+        QTest::keyClick(m_window, Qt::Key_Escape);
+        QTRY_VERIFY(!byName(u"canvasTextEditor"_s));
+        editor()->undo();
+        editor()->undo();
+
+        // The format, under the player: 9:16 in two clicks.
+        click(byName(u"formatButton"_s));
+        QTRY_VERIFY(byName(u"format_1"_s));
+        click(byName(u"format_1"_s));
+        QTRY_COMPARE(editor()->canvasPreset(), 1);
+        shot(u"19-format-9x16"_s);
+        editor()->undo();
+        QTRY_COMPARE(editor()->canvasPreset(), 0);
+    }
+
     // Usability test 8: export with the recommended settings ≤ 2 actions.
     void usability8Export()
     {

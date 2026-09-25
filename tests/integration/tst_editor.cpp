@@ -357,6 +357,77 @@ private slots:
         QVERIFY(editor.close());
     }
 
+    // The Phase 2 criterion (SPEC §8): a vertical 9:16 video with texts, music, transitions and filters,
+    // exported and verified.
+    void phaseTwoCriterion()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-phase2"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        auto editor = std::make_unique<EditorController>(store.createDraft(&error), analysis,
+                                                         QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor->player()->setVolume(0.0);
+        ClipInspector &inspector = *editor->inspector();
+
+        // 1. Clips: import vertical video and a photo, and audio underneath.
+        editor->importAndInsertPaths({m_files.vertical, m_files.photo}, 0, editor->timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(*editor).clips.size(), size_t(2), 20000);
+        editor->player()->seek(0);
+        editor->importAndInsertPaths({m_files.music}, 0, 1);
+        QTRY_COMPARE_WITH_TIMEOUT(editor->data().mainSequence()->audioTracks.size(), size_t(1), 20000);
+
+        // 2. Format: vertical 9:16.
+        editor->setCanvasPreset(int(CanvasPreset::Portrait9x16));
+        QCOMPARE(editor->canvasSize(), QSize(180, 320));
+        QCOMPARE(editor->formatText(), u"9:16"_s);
+
+        // 3. Text: add a title at the beginning, style it.
+        editor->player()->seek(0);
+        editor->clearSelection();
+        QVERIFY(editor->addText());
+        QCOMPARE(inspector.kind(), int(ClipInspector::Text));
+        QVERIFY(inspector.set(u"text.content"_s, u"Shorts Title"_s));
+        QVERIFY(inspector.applyTextStyle(u"text/outline-yellow"_s));
+        inspector.endGesture();
+
+        // 4. Transitions: dissolve between the two clips.
+        editor->clearSelection();
+        editor->player()->seek(120);
+        QVERIFY(inspector.toggleTransition(u"transitions/dissolve"_s));
+        QCOMPARE(mainTrack(*editor).transitions.size(), size_t(1));
+
+        // 5. Filters: vivid filter on the video clip.
+        editor->select(mainTrack(*editor).clips[0].id.toString(), false);
+        QVERIFY(inspector.toggleFilter(u"filters/vivid"_s));
+        inspector.endGesture();
+
+        // 6. Export and verify output: 9:16 (180x320), H.264, AAC.
+        const QVariantMap defaults = editor->exportDefaults();
+        const QString folder = m_dir.filePath(u"videos-phase2"_s);
+        QDir().mkpath(folder);
+        QSignalSpy exported(editor.get(), &EditorController::exportFinished);
+        const int res = defaults.value(u"resolution"_s).toInt();
+        QVERIFY(editor->startExport(defaults.value(u"fileName"_s).toString(), folder, res, u"30"_s, 1));
+        QVERIFY(exported.wait(60000));
+        const QString output = exported.first().first().toString();
+        const QJsonObject probe = ffprobe(output);
+        QCOMPARE(streamOfType(probe, u"video"_s).value(u"width"_s).toInt(), 180);
+        QCOMPARE(streamOfType(probe, u"video"_s).value(u"height"_s).toInt(), 320);
+        QCOMPARE(streamOfType(probe, u"audio"_s).value(u"codec_name"_s).toString(), u"aac"_s);
+
+        // 7. Continuous save: close and reopen identical without explicit save.
+        QTRY_COMPARE_WITH_TIMEOUT(editor->saveState(), int(EditorController::Saved), 5000);
+        const ProjectId id = editor->data().id;
+        ProjectData before = editor->data();
+        QVERIFY(editor->close());
+        editor.reset();
+        auto reopened = std::make_unique<EditorController>(store.openDraft(id, &error), analysis,
+                                                           QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        ProjectData after = reopened->data();
+        before.modifiedAt = after.modifiedAt = {};
+        QVERIFY2(before == after, qPrintable(firstDifference(before, after)));
+    }
+
     void snappingAndFormat()
     {
         document::DraftStore store(m_dir.filePath(u"drafts2"_s));

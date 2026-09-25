@@ -47,3 +47,15 @@ Note:
   zoom, annulla/ripeti, nome del progetto, Esporta, trascinamenti e trim nella timeline;
   livello 2: formato del canvas (menu del pulsante formato), musica (rail "Audio" → "+"), opzioni di export (finestra),
   rinomina/duplica/elimina di una bozza (menu della card).
+
+### Fase 2 — Editing essenziale
+Misurati da `tests/integration/tst_ui.cpp` con l'interfaccia guidata reale.
+
+| # | Scenario | Limite | Risultato | Percorso |
+|---|---|---|---|---|
+| 3 | Applicare un filtro a tutte le clip | 3 | ✅ **3** | rail "Filtri" → clic sul filtro per la clip corrente → "Applica a tutte" |
+| 6 | Transizione tra tutte le clip | 3 | ✅ **3** | rail "Transizioni" → clic sulla transizione per il taglio più vicino → "Applica a tutte" |
+| 1 | Dall'avvio al primo taglio | 4 | ✅ **4** | invariato (confermato in `tst_ui`) |
+| 2 | Musica dalla libreria locale | 2 | ✅ **2** | invariato (confermato in `tst_ui`) |
+| 8 | Esportare con le impostazioni consigliate | 2 | ✅ **2** | invariato (confermato in `tst_ui`) |
+| 10 | Nessuna funzione principale oltre 2 livelli | 2 | ✅ | livello 1: formato sotto il player (1 clic), maniglie canvas, toolbar timeline; livello 2: schede proprietà, librerie (rail) |

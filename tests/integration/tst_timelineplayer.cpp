@@ -273,9 +273,15 @@ private slots:
         QVERIFY(QFileInfo::exists(reverseProxyPath(*session.data().findMedia(m_landscape.id))));
         // The preview now reads the copy: the first frame is (a slightly compressed) last frame of the original.
         player.seek(1);
+        QVERIFY(waitForShown(player, 1));
         player.seek(0);
         QVERIFY(waitForShown(player, 0));
-        const QImage first = player.sink()->latest();
+        QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
+        QImage first;
+        QTRY_VERIFY_WITH_TIMEOUT([&] {
+            first = player.sink()->latest();
+            return !isBlack(first) && meanDifference(first, lastForward) < 8.0;
+        }(), 5000);
         QVERIFY2(meanDifference(first, lastForward) < 8.0, qPrintable(QString::number(meanDifference(first, lastForward))));
     }
 
