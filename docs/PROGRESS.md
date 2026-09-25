@@ -1,9 +1,34 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-09-25 (fine Fase 1)
+Ultimo aggiornamento: 2026-09-25 (Fase 2 in corso)
 
 ## Fase corrente
-**Fase 1 — MVP editor: completata, in attesa del via dell'utente per la Fase 2.**
+**Fase 2 — Editing essenziale: in corso** (via dell'utente ricevuto). Fase 1 completata (sotto, storico).
+
+### Fase 2: fatto (un commit per incremento)
+1. `phase2_probe`: `timewarp` (velocità, intonazione, −1), `repeat`, loader alla proporzione della sorgente, tractor
+   annidato (esiti in ARCHITECTURE §21).
+2. `src/fx`: kernel CPU di riferimento (trasformazione affine, ridimensionamento, regolazioni colore + LUT 33³,
+   vignettatura, grana, nitidezza, sfocatura, 18 transizioni, guadagno/pan audio); `tst_kernels`.
+3. Core: clip di testo, sfondi del canvas, volume di traccia, operazioni di `TimelineEditor` (testo, velocità, fermo
+   immagine, transizioni e "applica a tutte", sfondo predefinito); formato del file aggiornato.
+4. Libreria `vedit.core` (32 filtri, 18 transizioni, 24 stili di testo, regolazioni) e `docs/EFFECT_FORMAT.md`.
+5. Engine: servizi `vedit.transform`, `vedit.adjust`, `vedit.gain`, `vedit.transition`, `vedit.text`; proiezione con
+   filtri per clip, velocità/inversione (proxy invertiti), testi, transizioni, anteprima dal vivo, misuratori per
+   traccia e master (D-35 … D-39).
+
+### Fase 2: prossimi passi
+- **P2.6 Interfaccia**: pannello proprietà a destra (Video, Audio, Velocità, Regola, Testo, Sfondo); maniglie di
+  trasformazione sul canvas e modifica del testo con doppio clic (`TextRenderer::bounds`); schede Testo, Transizioni,
+  Filtri con anteprima al passaggio del mouse (`TimelinePlayer::setPreview`) e "Applica a tutte"; icone delle
+  transizioni sulla timeline con durata trascinabile; mixer con misuratori (`TimelinePlayer::audioLevel`); fermo
+  immagine; inversione e velocità con indicatore di preparazione; copia/incolla attributi; "Migliora
+  automaticamente" (regolazioni dalle statistiche del fotogramma); `ActionRegistry` e Ctrl+K; selettore del formato
+  sotto il player; traduzioni.
+- **P2.7 Chiusura**: criterio (video 9:16 con testi, musica, transizioni, filtri, esportato e verificato), test di
+  semplicità 3 e 6 (più 1, 2, 8, 10) in `tst_ui` e `docs/USABILITY.md`, documentazione, riepilogo e attesa del via.
+- Limiti da dichiarare: librerie sotto gli obiettivi finali (filtri 32/60, transizioni 18/100, stili 24/40);
+  keyframe dalla Fase 3; audio delle transizioni a taglio netto (niente dissolvenza incrociata ancora).
 
 ## Criterio di completamento della Fase 1 (SPEC §8)
 | Requisito | Esito | Verifica |
@@ -57,7 +82,7 @@ Ultimo aggiornamento: 2026-09-25 (fine Fase 1)
 - La classe `engine::Player` (riproduzione di un file, Fase 0) non è più usata dall'app: resta, testata, per
   l'anteprima dei media del pool in una fase successiva.
 
-## Prossimi passi (Fase 2 — Editing essenziale), dopo il via
+## Piano iniziale della Fase 2 (storico)
 Dalla SPEC §8: trasformazioni con maniglie sul canvas, sfondo del canvas, selettore del formato (già presente in forma
 base), testo base e preset con modifica sul canvas, audio base (volume, dissolvenze, mixer), velocità costante,
 freeze/inversione, transizioni base, filtri e regolazioni con anteprima dal vivo e "Applica a tutte", copia/incolla
@@ -135,6 +160,6 @@ sorgenti di MLT consultati per le verifiche (D-24, §20). Si possono cancellare:
 `third_party/` e `src/assets/`.
 
 ## Decisioni
-Registro in `docs/ARCHITECTURE.md` §15 (D-01 … D-34), esiti delle verifiche in §18 (Fase 0) e §20 (Fase 1).
+Registro in `docs/ARCHITECTURE.md` §15 (D-01 … D-39), esiti delle verifiche in §18 (Fase 0), §20 (Fase 1) e §21 (Fase 2).
 `tools/run-test.sh <build-dir> <test> [funzione]` esegue un singolo test con lo stesso ambiente di CTest (utile per
 ripetere un test instabile: `for i in $(seq 20); do tools/run-test.sh build tst_timelineplayer || break; done`).
