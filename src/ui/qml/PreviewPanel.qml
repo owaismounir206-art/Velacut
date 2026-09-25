@@ -42,43 +42,46 @@ Rectangle {
             }
         }
 
-        RowLayout {
+        // Position on the left, buttons in the centre, duration on the right, at any width.
+        Item {
             Layout.fillWidth: true
-            spacing: Theme.space.sm
+            implicitHeight: buttons.implicitHeight
 
             Label {
-                Layout.preferredWidth: Theme.editor.libraryWidth / 2
+                anchors { left: parent.left; verticalCenter: parent.verticalCenter }
                 role: "labelLarge"
                 font.features: { "tnum": 1 }
                 text: panel.player.timecode(panel.player.skimming ? panel.player.shownPosition : panel.player.position)
                 color: panel.player.skimming ? Theme.color.onSurfaceVariant : Theme.color.onSurface
                 Accessible.name: qsTr("Position")
             }
-            Item { Layout.fillWidth: true }
-            IconButton {
-                iconName: "skip_previous"
-                label: qsTr("Go to start")
-                shortcutText: "Home"
-                onClicked: panel.player.seek(0)
+            Row {
+                id: buttons
+                anchors.centerIn: parent
+                spacing: Theme.space.sm
+                IconButton {
+                    iconName: "skip_previous"
+                    label: qsTr("Go to start")
+                    shortcutText: "Home"
+                    onClicked: panel.player.seek(0)
+                }
+                IconButton {
+                    variant: "filled"
+                    iconName: panel.player.playing ? "pause" : "play_arrow"
+                    label: panel.player.playing ? qsTr("Pause") : qsTr("Play")
+                    shortcutText: qsTr("Space · J K L")
+                    enabled: panel.editor.timeline.duration > 0
+                    onClicked: panel.player.togglePlay()
+                }
+                IconButton {
+                    iconName: "skip_next"
+                    label: qsTr("Go to end")
+                    shortcutText: qsTr("End")
+                    onClicked: panel.player.seek(panel.editor.timeline.duration)
+                }
             }
-            IconButton {
-                variant: "filled"
-                iconName: panel.player.playing ? "pause" : "play_arrow"
-                label: panel.player.playing ? qsTr("Pause") : qsTr("Play")
-                shortcutText: qsTr("Space · J K L")
-                enabled: panel.editor.timeline.duration > 0
-                onClicked: panel.player.togglePlay()
-            }
-            IconButton {
-                iconName: "skip_next"
-                label: qsTr("Go to end")
-                shortcutText: qsTr("End")
-                onClicked: panel.player.seek(panel.editor.timeline.duration)
-            }
-            Item { Layout.fillWidth: true }
             Label {
-                Layout.preferredWidth: Theme.editor.libraryWidth / 2
-                horizontalAlignment: Text.AlignRight
+                anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                 role: "labelLarge"
                 font.features: { "tnum": 1 }
                 color: Theme.color.onSurfaceVariant

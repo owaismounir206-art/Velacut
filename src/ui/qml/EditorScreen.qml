@@ -77,7 +77,8 @@ Item {
                     onActivated: (index) => { if (index === 1) App.audioLibrary.load() }
                 }
                 StackLayout {
-                    Layout.preferredWidth: Theme.editor.libraryWidth
+                    // Narrower on small windows (tiling window managers give what they have).
+                    Layout.preferredWidth: Math.min(Theme.editor.libraryWidth, root.width / 3)
                     Layout.fillWidth: false // layouts fill by default: the preview takes the rest
                     Layout.fillHeight: true
                     currentIndex: rail.currentIndex
@@ -92,6 +93,7 @@ Item {
                 Divider { vertical: true; Layout.fillHeight: true }
                 PreviewPanel {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     Layout.fillHeight: true
                     editor: root.editor
                 }
