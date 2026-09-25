@@ -19,6 +19,7 @@ add_library(vedit_core STATIC
     commands/EditCommand.h commands/EditCommand.cpp
     edit/SequenceDiff.h edit/SequenceDiff.cpp
     edit/TimelineEditor.h edit/TimelineEditor.cpp
+    edit/ProjectFormat.h edit/ProjectFormat.cpp
     serialization/Migrations.h serialization/Migrations.cpp
     serialization/ProjectJson.h serialization/ProjectJson.cpp
     serialization/ProjectFile.h serialization/ProjectFile.cpp

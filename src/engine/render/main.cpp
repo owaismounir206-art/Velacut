@@ -8,7 +8,13 @@
 //   {"event":"progress","frame":N,"total":T}   {"event":"warning","message":"…"}
 //   {"event":"done","output":"…"}   {"event":"error","code":"…","detail":"…"}   {"event":"cancelled"}
 // Exit code 0 = done, 1 = error, 2 = cancelled. SIGTERM/SIGINT cancel cleanly (no partial file is left).
+//
+//   vedit-render --probe file…
+// Reads the metadata of media files for the import (D-07: a file that crashes the demuxer is rejected instead of
+// crashing the editor). For each file: {"event":"probing","path":"…"} then {"event":"media","path":"…","media":{…}}
+// or {"event":"media-error","path":"…","code":"…","detail":"…"}.
 #include "core/serialization/ProjectFile.h"
+#include "engine/analysis/MediaProbe.h"
 #include "engine/mlt/MltRuntime.h"
 #include "engine/render/Renderer.h"
 
@@ -94,6 +100,23 @@ int run(const QString &jobPath)
     return fail(result.error, result.detail);
 }
 
+int probe(const QStringList &paths)
+{
+    for (const QString &path : paths) {
+        emitEvent({{u"event"_s, u"probing"_s}, {u"path"_s, path}});
+        const ProbeResult result = probeMedia(path);
+        if (result.media) {
+            emitEvent({{u"event"_s, u"media"_s}, {u"path"_s, path}, {u"media"_s, projectjson::mediaToJson(*result.media)}});
+        } else {
+            emitEvent({{u"event"_s, u"media-error"_s},
+                       {u"path"_s, path},
+                       {u"code"_s, probeErrorCode(result.error)},
+                       {u"detail"_s, result.detail}});
+        }
+    }
+    return 0;
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
@@ -106,8 +129,14 @@ int main(int argc, char *argv[])
     parser.setApplicationDescription(u"Exports a vedit project (used by vedit)."_s);
     parser.addHelpOption();
     const QCommandLineOption jobOption(u"job"_s, u"Export job (JSON)."_s, u"file"_s);
+    const QCommandLineOption probeOption(u"probe"_s, u"Read the metadata of the media files given as arguments."_s);
     parser.addOption(jobOption);
+    parser.addOption(probeOption);
+    parser.addPositionalArgument(u"files"_s, u"Media files (with --probe)."_s);
     parser.process(app);
+    if (parser.isSet(probeOption)) {
+        return probe(parser.positionalArguments());
+    }
     if (!parser.isSet(jobOption)) {
         parser.showHelp(1);
     }

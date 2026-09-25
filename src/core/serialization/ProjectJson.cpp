@@ -1097,6 +1097,24 @@ QJsonObject toJson(const ProjectData &project)
     return object;
 }
 
+QJsonObject mediaToJson(const Media &media)
+{
+    return mediaJson(media);
+}
+
+std::optional<Media> mediaFromJson(const QJsonObject &json, QString *error)
+{
+    Reader reader;
+    Media media = reader.media(json, u"media"_s);
+    if (reader.failed()) {
+        if (error) {
+            *error = reader.error;
+        }
+        return std::nullopt;
+    }
+    return media;
+}
+
 QByteArray toBytes(const ProjectData &project)
 {
     return QJsonDocument(toJson(project)).toJson(QJsonDocument::Indented);

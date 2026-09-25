@@ -6,3 +6,6 @@ vedit_add_test(tst_export SOURCES tst_export.cpp TestMedia.h LIBRARIES vedit_eng
 target_compile_definitions(tst_export PRIVATE VEDIT_RENDER_EXECUTABLE="$<TARGET_FILE:vedit-render>")
 add_dependencies(tst_export vedit-render)
 vedit_add_test(tst_document SOURCES tst_document.cpp LIBRARIES vedit_document)
+vedit_add_test(tst_import SOURCES tst_import.cpp TestMedia.h LIBRARIES vedit_engine)
+target_compile_definitions(tst_import PRIVATE VEDIT_RENDER_EXECUTABLE="$<TARGET_FILE:vedit-render>")
+add_dependencies(tst_import vedit-render)

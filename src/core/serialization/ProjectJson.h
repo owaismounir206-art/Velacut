@@ -32,6 +32,9 @@ struct ProjectLoadResult
 namespace projectjson {
 
 QJsonObject toJson(const ProjectData &project);
+// One media item (the probe process sends them to the editor in this form).
+QJsonObject mediaToJson(const Media &media);
+std::optional<Media> mediaFromJson(const QJsonObject &json, QString *error = nullptr);
 QByteArray toBytes(const ProjectData &project);
 
 // Reads any supported format version (older versions are migrated first). Never throws: every problem

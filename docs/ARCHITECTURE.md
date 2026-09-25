@@ -537,6 +537,9 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | D-29 | Eliminare una bozza la sposta nel cestino di sistema | Recuperabile dal file manager: nessuna finestra di conferma necessaria (regola 10) |
 | D-30 | `vedit-render` non chiude la factory MLT all'uscita | `Factory::close()` scarica moduli, FFmpeg e x264 mentre le loro cache globali sono allocate: LeakSanitizer le segnala come perdite di "<unknown module>" (verificato: nessuna senza lo scaricamento). Il processo termina subito dopo |
 | D-31 | Cronologia delle versioni (snapshot in `history/`) rimandata alla Fase 8 | È nella riga della Fase 8 della tabella di SPEC §8; in Fase 1 bastano salvataggio atomico, lock e recupero |
+| D-32 | Probe dei media in `vedit-render --probe` (processo), miniature e waveform in thread del processo principale | Un file che manda in crash il demuxer viene scartato come "danneggiato" prima che MLT lo apra nell'editor; miniature e waveform decodificano solo file già passati dal probe |
+| D-33 | Miniature e waveform con FFmpeg diretto (non MLT) | Seek al keyframe + decodifica fino al punto e scalatura con swscale: molto più rapido di un producer MLT per ogni fotogramma; rotazione e aspetto dei pixel applicati a mano (test contro i fotogrammi decodificati) |
+| D-34 | Canvas e fps dalla prima clip nello stesso comando dell'inserimento (`insertMediaAdoptingFormat`) | Un solo passo di annulla riporta tutto com'era; fps agganciato allo standard più vicino (29,99 → 30; 120 → 60), canvas al massimo 4K |
 
 ---
 
