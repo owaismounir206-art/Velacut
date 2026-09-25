@@ -94,5 +94,5 @@ si può cancellare, i file necessari sono già copiati in `third_party/` e `src/
 
 ## Decisioni
 Registro in `docs/ARCHITECTURE.md` §15 (D-01 … D-26) ed esiti delle verifiche in §18.
-`build/run-test.sh <build-dir> <test> [funzione]` esegue un singolo test con lo stesso ambiente di CTest (utile per
-ripetere un test instabile: `for i in $(seq 20); do build/run-test.sh build tst_timelineplayer || break; done`).
+`tools/run-test.sh <build-dir> <test> [funzione]` esegue un singolo test con lo stesso ambiente di CTest (utile per
+ripetere un test instabile: `for i in $(seq 20); do tools/run-test.sh build tst_timelineplayer || break; done`).
