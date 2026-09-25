@@ -255,6 +255,33 @@ private slots:
         m_theme->setSessionOverrides(theme::ThemeManager::Mode::Dark, std::nullopt);
     }
 
+    void draftActionsOnTheHomeScreen()
+    {
+        QTRY_VERIFY(!editor());
+        const int drafts = m_app->drafts()->count();
+        QVERIFY(drafts >= 1);
+        // The card's menu appears when pointing at it (cards are recreated when the list changes: found again).
+        const auto card = [this] {
+            return findItem(m_window->contentItem(), [](QQuickItem *item) {
+                return QByteArray(item->metaObject()->className()).startsWith("DraftCard");
+            });
+        };
+        QVERIFY(card());
+        QTest::mouseMove(m_window, centre(card()));
+        QTRY_VERIFY(byName(u"draftMenuButton"_s));
+        click(byName(u"draftMenuButton"_s));
+        QTRY_VERIFY(byText(u"Duplicate"_s));
+        click(byText(u"Duplicate"_s));
+        QTRY_COMPARE(m_app->drafts()->count(), drafts + 1);
+        QTest::mouseMove(m_window, QPoint(0, 0));
+        QTest::mouseMove(m_window, centre(card()));
+        QTRY_VERIFY(byName(u"draftMenuButton"_s));
+        click(byName(u"draftMenuButton"_s));
+        QTRY_VERIFY(byText(u"Move to trash"_s));
+        click(byText(u"Move to trash"_s));
+        QTRY_COMPARE(m_app->drafts()->count(), drafts);
+    }
+
     void noQmlWarnings()
     {
         QVERIFY2(m_warnings.isEmpty(), qPrintable(m_warnings.join(u'\n')));

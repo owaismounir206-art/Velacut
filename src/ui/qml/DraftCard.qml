@@ -69,6 +69,7 @@ Card {
                 }
             }
             IconButton {
+                objectName: "draftMenuButton"
                 anchors { right: parent.right; top: parent.top; margins: Theme.space.xs }
                 visible: card.hovered || menu.opened
                 variant: "tonal"
