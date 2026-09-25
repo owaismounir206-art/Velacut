@@ -252,6 +252,67 @@ private slots:
         QVERIFY(bounds.height() > 60 && bounds.height() < 120);
     }
 
+    void transformAnimatesWithKeyframes()
+    {
+        auto profile = profile320();
+        Mlt::Producer video(*profile, m_files.landscape.toUtf8().constData());
+        std::unique_ptr<Mlt::Producer> cut(video.cut(0, 29));
+
+        TransformSettings animated;
+        animated.sourceWidth = 320;
+        animated.sourceHeight = 180;
+        animated.frameRate = Rational(30, 1);
+        animated.sourceIn = RationalTime(0, 30);
+
+        Keyframe k0{RationalTime(0, 30), Vec2{-0.25, 0.0}, Interpolation::Linear};
+        Keyframe k1{RationalTime(30, 30), Vec2{0.25, 0.0}, Interpolation::Linear};
+        animated.positionParam.setKeyframes({k0, k1});
+
+        auto filter = makeTransformFilter(*profile, animated);
+        cut->attach(*filter);
+
+        // Frame 0: shifted left by 0.25 (left occupied, right 80 columns empty)
+        const QImage img0 = frameImage(*cut, 0);
+        QCOMPARE(img0.size(), QSize(320, 180));
+        QCOMPARE(alphaAt(img0, 300, 90), 0);
+        QCOMPARE(alphaAt(img0, 50, 90), 255);
+
+        // Frame 29: shifted right by ~0.25 (right occupied, left 80 columns empty)
+        const QImage img29 = frameImage(*cut, 29);
+        QCOMPARE(alphaAt(img29, 20, 90), 0);
+        QCOMPARE(alphaAt(img29, 250, 90), 255);
+    }
+
+    void chromaKeyRemovesGreen()
+    {
+        auto profile = profile320();
+        Mlt::Producer green(*profile, "color:#ff00ff00");
+        std::unique_ptr<Mlt::Producer> cut(green.cut(0, 9));
+
+        ChromaKeySettings ck;
+        ck.keyColor = Color{0, 255, 0, 255};
+        ck.similarity = 0.4;
+        ck.smoothness = 0.1;
+        ck.spill = 0.5;
+
+        auto filter = makeChromaKeyFilter(*profile, ck);
+        cut->attach(*filter);
+
+        const QImage img = frameImage(*cut, 0);
+        QCOMPARE(img.size(), QSize(320, 180));
+        // Green color keyed out
+        QCOMPARE(alphaAt(img, 160, 90), 0);
+
+        // Red color remains opaque
+        Mlt::Producer red(*profile, "color:#ffff0000");
+        std::unique_ptr<Mlt::Producer> redCut(red.cut(0, 9));
+        auto redFilter = makeChromaKeyFilter(*profile, ck);
+        redCut->attach(*redFilter);
+        const QImage redImg = frameImage(*redCut, 0);
+        QCOMPARE(alphaAt(redImg, 160, 90), 255);
+        QVERIFY(qRed(redImg.pixel(160, 90)) > 200);
+    }
+
     void cleanupTestCase() { MltRuntime::shutdown(); }
 };
 

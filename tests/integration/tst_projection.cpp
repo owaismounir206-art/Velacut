@@ -526,6 +526,70 @@ private slots:
         QCOMPARE(level(session.data()), 0);
     }
 
+    void chromaKeyRemovesGreenInProjection()
+    {
+        ProjectData data = baseProject();
+        Clip redClip;
+        redClip.id = ClipId::create();
+        redClip.start = frames(0);
+        redClip.duration = frames(30);
+        redClip.payload = ColorClipData{Param(Color{255, 0, 0, 255})};
+        data.sequences.front().visualTracks.front().clips.push_back(redClip);
+
+        Track overlayTrack;
+        overlayTrack.id = TrackId::create();
+        overlayTrack.kind = TrackKind::Video;
+        Clip greenClip;
+        greenClip.id = ClipId::create();
+        greenClip.start = frames(0);
+        greenClip.duration = frames(30);
+        greenClip.payload = ColorClipData{Param(Color{0, 255, 0, 255})};
+
+        Effect ck;
+        ck.type = u"vedit.chroma_key"_s;
+        ck.params[u"keyColor"_s] = Param(Color{0, 255, 0, 255});
+        ck.params[u"similarity"_s] = Param(0.4);
+        ck.params[u"smoothness"_s] = Param(0.1);
+        greenClip.effects.push_back(ck);
+        overlayTrack.clips.push_back(greenClip);
+        data.sequences.front().visualTracks.push_back(overlayTrack);
+
+        const QImage keyed = renderFresh1(data, 10);
+        const QRgb p = pixel(keyed, 160, 90);
+        QVERIFY(qRed(p) > 200);
+        QVERIFY(qGreen(p) < 50);
+
+        data.sequences.front().visualTracks[1].clips.front().effects.clear();
+        const QImage opaqueGreen = renderFresh1(data, 10);
+        const QRgb pGreen = pixel(opaqueGreen, 160, 90);
+        QVERIFY(qGreen(pGreen) > 200);
+        QVERIFY(qRed(pGreen) < 50);
+    }
+
+    void animatedTransformInProjection()
+    {
+        ProjectData data = baseProject();
+        Clip clip;
+        clip.id = ClipId::create();
+        clip.start = frames(0);
+        clip.duration = frames(30);
+        clip.payload = ColorClipData{Param(Color{255, 255, 255, 255})};
+
+        Keyframe k0{frames(0), Vec2{-0.25, 0.0}, Interpolation::Linear};
+        Keyframe k1{frames(30), Vec2{0.25, 0.0}, Interpolation::Linear};
+        clip.transform.position.setKeyframes({k0, k1});
+
+        data.sequences.front().visualTracks.front().clips.push_back(clip);
+
+        const QImage frame0 = renderFresh1(data, 0);
+        QCOMPARE(pixel(frame0, 50, 90), 0x00ffffffu);
+        QCOMPARE(pixel(frame0, 300, 90), 0x00000000u);
+
+        const QImage frame29 = renderFresh1(data, 29);
+        QCOMPARE(pixel(frame29, 270, 90), 0x00ffffffu);
+        QCOMPARE(pixel(frame29, 20, 90), 0x00000000u);
+    }
+
     void cleanupTestCase() { MltRuntime::shutdown(); }
 };
 

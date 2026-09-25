@@ -5,6 +5,7 @@
 #include "engine/text/TextRenderer.h"
 #include "engine/timeline/ClipPlacement.h"
 #include "fx/Audio.h"
+#include "fx/ChromaKey.h"
 #include "fx/Composite.h"
 #include "fx/Transform.h"
 
@@ -86,9 +87,14 @@ int compositeGetImage(mlt_frame aFrame, uint8_t **image, mlt_image_format *forma
     }
     const mlt_properties properties = MLT_TRANSITION_PROPERTIES(transition);
     const int opacity = mlt_properties_exists(properties, "opacity_255") ? mlt_properties_get_int(properties, "opacity_255") : 255;
+    const mlt_properties bProperties = mlt_frame_properties(bFrame);
+    const int modeInt = mlt_properties_exists(bProperties, "vedit.blend_mode")
+                            ? mlt_properties_get_int(bProperties, "vedit.blend_mode")
+                            : (mlt_properties_exists(properties, "blend_mode") ? mlt_properties_get_int(properties, "blend_mode") : 0);
     const fx::ImageView destination{*image, *width, *height, *width * 4};
     const fx::ConstImageView source{bImage, bWidth, bHeight, bWidth * 4};
-    runSliced(*height, [&](int begin, int end) { fx::compositeOver(destination, source, opacity, begin, end); });
+    const auto mode = static_cast<fx::BlendMode>(modeInt);
+    runSliced(*height, [&](int begin, int end) { fx::compositeBlend(destination, source, mode, opacity, begin, end); });
     return 0;
 }
 
@@ -147,6 +153,7 @@ void fillBackground(const TransformSettings &s, uint8_t *canvas, int w, int h, c
 int transformGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
 {
     auto filter = static_cast<mlt_filter>(mlt_frame_pop_service(frame));
+    const int framePosition = mlt_frame_pop_service_int(frame);
     const TransformSettings *s = settingsOf<TransformSettings>(MLT_FILTER_PROPERTIES(filter));
     int w = *width;
     int h = *height;
@@ -155,11 +162,71 @@ int transformGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format
         *format = mlt_image_rgba;
         return mlt_frame_get_image(frame, image, format, width, height, 0);
     }
+
+    mlt_properties frameProps = mlt_frame_properties(frame);
+    mlt_properties_set_int(frameProps, "vedit.blend_mode", static_cast<int>(s->blendMode));
+
+    double posX = s->x;
+    double posY = s->y;
+    double scX = s->scaleX;
+    double scY = s->scaleY;
+    double rot = s->rotation;
+    double op = s->opacity;
+    double cL = s->cropLeft;
+    double cT = s->cropTop;
+    double cR = s->cropRight;
+    double cB = s->cropBottom;
+
+    const bool isAnimated = s->positionParam.isAnimated() || s->scaleParam.isAnimated() ||
+                            s->rotationParam.isAnimated() || s->opacityParam.isAnimated() ||
+                            s->cropLeftParam.isAnimated() || s->cropTopParam.isAnimated() ||
+                            s->cropRightParam.isAnimated() || s->cropBottomParam.isAnimated();
+
+    if (isAnimated) {
+        const Rational rate = (s->frameRate.num() > 0 && s->frameRate.den() > 0) ? s->frameRate : Rational(30, 1);
+        const int localFrame = framePosition - s->firstFrame;
+        const RationalTime inAtRate = s->sourceIn.rescaled(rate, Rounding::NearestEven);
+        const RationalTime contentTime = inAtRate + RationalTime(localFrame, rate);
+
+        if (s->positionParam.isAnimated()) {
+            const ParamValue v = s->positionParam.valueAt(contentTime);
+            if (const auto *p = std::get_if<Vec2>(&v)) {
+                posX = p->x;
+                posY = p->y;
+            }
+        }
+        if (s->scaleParam.isAnimated()) {
+            const ParamValue v = s->scaleParam.valueAt(contentTime);
+            if (const auto *p = std::get_if<Vec2>(&v)) {
+                scX = p->x;
+                scY = p->y;
+            }
+        }
+        if (s->rotationParam.isAnimated()) {
+            rot = s->rotationParam.numberAt(contentTime, s->rotation);
+        }
+        if (s->opacityParam.isAnimated()) {
+            op = s->opacityParam.numberAt(contentTime, s->opacity);
+        }
+        if (s->cropLeftParam.isAnimated()) {
+            cL = s->cropLeftParam.numberAt(contentTime, s->cropLeft);
+        }
+        if (s->cropTopParam.isAnimated()) {
+            cT = s->cropTopParam.numberAt(contentTime, s->cropTop);
+        }
+        if (s->cropRightParam.isAnimated()) {
+            cR = s->cropRightParam.numberAt(contentTime, s->cropRight);
+        }
+        if (s->cropBottomParam.isAnimated()) {
+            cB = s->cropBottomParam.numberAt(contentTime, s->cropBottom);
+        }
+    }
+
     const QSizeF fitted = fittedSize(QSizeF(s->sourceWidth, s->sourceHeight), s->fit, QSize(w, h));
     const double fitW = fitted.width();
     const double fitH = fitted.height();
-    const double shownW = fitW * std::abs(s->scaleX);
-    const double shownH = fitH * std::abs(s->scaleY);
+    const double shownW = fitW * std::abs(scX);
+    const double shownH = fitH * std::abs(scY);
     // The source is requested at about the size it is shown: no work on pixels nobody sees.
     const double limit = 2.0 * std::max(w, h);
     int sw = std::clamp(static_cast<int>(std::lround(shownW)), 1, static_cast<int>(limit));
@@ -180,13 +247,13 @@ int transformGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format
     // Source pixels → canvas pixels: centre, scale to the shown size (with flips), rotate, move.
     const double kx = shownW / sw * (s->flipH ? -1 : 1);
     const double ky = shownH / sh * (s->flipV ? -1 : 1);
-    const fx::Affine forward = fx::Affine::translation(w / 2.0 + s->x * w, h / 2.0 + s->y * h) * fx::Affine::rotation(s->rotation) *
+    const fx::Affine forward = fx::Affine::translation(w / 2.0 + posX * w, h / 2.0 + posY * h) * fx::Affine::rotation(rot) *
                                fx::Affine::scaling(kx, ky) * fx::Affine::translation(-sw / 2.0, -sh / 2.0);
     const fx::Affine toSource = forward.inverted();
-    const fx::SourceWindow window{s->cropLeft * sw, s->cropTop * sh, (1.0 - s->cropRight) * sw, (1.0 - s->cropBottom) * sh};
+    const fx::SourceWindow window{cL * sw, cT * sh, (1.0 - cR) * sw, (1.0 - cB) * sh};
     const fx::ImageView target{canvas, w, h, w * 4};
     const fx::ConstImageView src{source, sw, sh, sw * 4};
-    runSliced(h, [&](int begin, int end) { fx::drawAffine(target, src, toSource, window, s->opacity, begin, end); });
+    runSliced(h, [&](int begin, int end) { fx::drawAffine(target, src, toSource, window, op, begin, end); });
     mlt_frame_set_image(frame, canvas, size, mlt_pool_release);
     *image = canvas;
     *width = w;
@@ -197,6 +264,7 @@ int transformGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format
 
 mlt_frame transformProcess(mlt_filter filter, mlt_frame frame)
 {
+    mlt_frame_push_service_int(frame, static_cast<int>(mlt_frame_get_position(frame)));
     mlt_frame_push_service(frame, filter);
     mlt_frame_push_get_image(frame, transformGetImage);
     return frame;
@@ -247,6 +315,39 @@ mlt_frame adjustProcess(mlt_filter filter, mlt_frame frame)
     mlt_frame_push_service_int(frame, static_cast<int>(mlt_frame_get_position(frame)));
     mlt_frame_push_service(frame, filter);
     mlt_frame_push_get_image(frame, adjustGetImage);
+    return frame;
+}
+
+// ---- vedit.chroma_key -----------------------------------------------------------------------------------------
+
+int chromaKeyGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
+{
+    auto filter = static_cast<mlt_filter>(mlt_frame_pop_service(frame));
+    *format = mlt_image_rgba;
+    const int error = mlt_frame_get_image(frame, image, format, width, height, 1);
+    const auto *s = settingsOf<ChromaKeySettings>(MLT_FILTER_PROPERTIES(filter));
+    if (error || !s || *format != mlt_image_rgba || !*image) {
+        return error;
+    }
+    fx::ChromaKeySettings fxSettings;
+    fxSettings.keyR = s->keyColor.r;
+    fxSettings.keyG = s->keyColor.g;
+    fxSettings.keyB = s->keyColor.b;
+    fxSettings.similarity = s->similarity;
+    fxSettings.smoothness = s->smoothness;
+    fxSettings.spill = s->spill;
+
+    const fx::ImageView view{*image, *width, *height, *width * 4};
+    runSliced(*height, [&](int begin, int end) {
+        fx::applyChromaKey(view, fxSettings, begin, end);
+    });
+    return 0;
+}
+
+mlt_frame chromaKeyProcess(mlt_filter filter, mlt_frame frame)
+{
+    mlt_frame_push_service(frame, filter);
+    mlt_frame_push_get_image(frame, chromaKeyGetImage);
     return frame;
 }
 
@@ -459,6 +560,7 @@ void registerServices(Mlt::Repository *repository)
     repository->register_service(mlt_service_transition_type, "vedit.composite", createComposite);
     repository->register_service(mlt_service_filter_type, "vedit.transform", createFilter<transformProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.adjust", createFilter<adjustProcess>);
+    repository->register_service(mlt_service_filter_type, "vedit.chroma_key", createFilter<chromaKeyProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.gain", createFilter<gainProcess>);
     repository->register_service(mlt_service_transition_type, "vedit.transition", createTransitionService);
     repository->register_service(mlt_service_producer_type, "vedit.text", createText);
@@ -469,7 +571,10 @@ void registerServices(Mlt::Repository *repository)
 bool TransformSettings::isIdentityLayer() const
 {
     return fit == FitMode::Stretch && x == 0 && y == 0 && scaleX == 1 && scaleY == 1 && rotation == 0 && !flipH && !flipV &&
-           cropLeft == 0 && cropTop == 0 && cropRight == 0 && cropBottom == 0 && opacity == 1 && !background;
+           cropLeft == 0 && cropTop == 0 && cropRight == 0 && cropBottom == 0 && opacity == 1 && !background &&
+           blendMode == fx::BlendMode::Normal && !positionParam.isAnimated() && !scaleParam.isAnimated() &&
+           !rotationParam.isAnimated() && !opacityParam.isAnimated() && !cropLeftParam.isAnimated() &&
+           !cropTopParam.isAnimated() && !cropRightParam.isAnimated() && !cropBottomParam.isAnimated();
 }
 
 QByteArray TransformSettings::key() const
@@ -477,10 +582,33 @@ QByteArray TransformSettings::key() const
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream << sourceWidth << sourceHeight << int(fit) << x << y << scaleX << scaleY << rotation << flipH << flipV << cropLeft
-           << cropTop << cropRight << cropBottom << opacity << background.has_value();
+           << cropTop << cropRight << cropBottom << opacity << background.has_value() << int(blendMode)
+           << positionParam.isAnimated() << scaleParam.isAnimated() << rotationParam.isAnimated() << opacityParam.isAnimated()
+           << cropLeftParam.isAnimated() << cropTopParam.isAnimated() << cropRightParam.isAnimated() << cropBottomParam.isAnimated()
+           << firstFrame;
+    if (positionParam.isAnimated()) {
+        stream << quint32(positionParam.keyframes().size());
+    }
+    if (scaleParam.isAnimated()) {
+        stream << quint32(scaleParam.keyframes().size());
+    }
+    if (rotationParam.isAnimated()) {
+        stream << quint32(rotationParam.keyframes().size());
+    }
+    if (opacityParam.isAnimated()) {
+        stream << quint32(opacityParam.keyframes().size());
+    }
     if (background) {
         stream << int(background->type) << background->color.toString() << background->amount;
     }
+    return bytes;
+}
+
+QByteArray ChromaKeySettings::key() const
+{
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream << keyColor.r << keyColor.g << keyColor.b << similarity << smoothness << spill;
     return bytes;
 }
 
@@ -516,7 +644,11 @@ QByteArray GainSettings::key() const
 std::unique_ptr<Mlt::Filter> makeTransformFilter(Mlt::Profile &profile, const TransformSettings &settings)
 {
     auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.transform");
-    attachSettings(*filter, settings);
+    TransformSettings copy = settings;
+    if (copy.frameRate.num() <= 0 || copy.frameRate.den() <= 0) {
+        copy.frameRate = Rational(profile.fps(), 1);
+    }
+    attachSettings(*filter, copy);
     return filter;
 }
 
@@ -525,6 +657,13 @@ std::unique_ptr<Mlt::Filter> makeAdjustFilter(Mlt::Profile &profile, const Adjus
     auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.adjust");
     auto *state = new AdjustState{settings, fx::ColorLut(settings.look)};
     filter->set(kSettings, state, 0, [](void *p) { delete static_cast<AdjustState *>(p); });
+    return filter;
+}
+
+std::unique_ptr<Mlt::Filter> makeChromaKeyFilter(Mlt::Profile &profile, const ChromaKeySettings &settings)
+{
+    auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.chroma_key");
+    attachSettings(*filter, settings);
     return filter;
 }
 

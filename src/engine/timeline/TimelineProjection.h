@@ -105,6 +105,7 @@ private:
     // How a clip is rendered: the filters of its cuts.
     struct ClipRender
     {
+        std::optional<ChromaKeySettings> chromaKey;
         std::vector<AdjustSettings> adjusts;
         std::optional<TransformSettings> transform;
         std::optional<GainSettings> gain;

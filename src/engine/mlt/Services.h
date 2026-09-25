@@ -3,6 +3,7 @@
 
 #include "core/project/Clip.h"
 #include "fx/Color.h"
+#include "fx/Composite.h"
 #include "fx/Transition.h"
 
 #include <QByteArray>
@@ -25,6 +26,7 @@ namespace vedit::engine {
 //  - filter "vedit.transform": the clip placed on the canvas (fit, position, scale, rotation, flip, crop, opacity)
 //    over its canvas background (main track: colour or the clip itself blurred);
 //  - filter "vedit.adjust": colour look (filters, adjustments) + vignette, grain, sharpness;
+//  - filter "vedit.chroma_key": green/blue screen removal with UV color distance, feather and spill suppression;
 //  - filter "vedit.gain": volume, fades, pan, level meters (clips, tracks, master);
 //  - transition "vedit.transition": the transitions of the library between two clips;
 //  - producer "vedit.text": a text clip as a canvas-sized layer.
@@ -46,10 +48,36 @@ struct TransformSettings
     bool flipH = false, flipV = false;
     double cropLeft = 0, cropTop = 0, cropRight = 0, cropBottom = 0; // fractions of the source
     double opacity = 1;
+    fx::BlendMode blendMode = fx::BlendMode::Normal;
+
+    // Animation / keyframe parameters evaluated dynamically per frame
+    Param positionParam{Vec2{0, 0}};
+    Param scaleParam{Vec2{1, 1}};
+    Param rotationParam{0.0};
+    Param opacityParam{1.0};
+    Param cropLeftParam{0.0};
+    Param cropTopParam{0.0};
+    Param cropRightParam{0.0};
+    Param cropBottomParam{0.0};
+    RationalTime sourceIn{0, 30};
+    Rational frameRate{30, 1};
+    int firstFrame = 0;
+
     // Canvas background behind the clip (main track only).
     std::optional<CanvasBackground> background;
 
     bool isIdentityLayer() const; // nothing to do for a canvas-sized layer
+    QByteArray key() const;
+};
+
+struct ChromaKeySettings
+{
+    Color keyColor{0, 255, 0, 255};
+    double similarity = 0.4;
+    double smoothness = 0.1;
+    double spill = 0.5;
+
+    bool isIdentity() const { return similarity <= 0.0; }
     QByteArray key() const;
 };
 
@@ -88,6 +116,7 @@ struct TransitionSettings
 
 std::unique_ptr<Mlt::Filter> makeTransformFilter(Mlt::Profile &profile, const TransformSettings &settings);
 std::unique_ptr<Mlt::Filter> makeAdjustFilter(Mlt::Profile &profile, const AdjustSettings &settings);
+std::unique_ptr<Mlt::Filter> makeChromaKeyFilter(Mlt::Profile &profile, const ChromaKeySettings &settings);
 std::unique_ptr<Mlt::Filter> makeGainFilter(Mlt::Profile &profile, const GainSettings &settings);
 std::unique_ptr<Mlt::Transition> makeTransition(Mlt::Profile &profile, const TransitionSettings &settings);
 std::unique_ptr<Mlt::Producer> makeTextProducer(Mlt::Profile &profile, const TextClipData &text);

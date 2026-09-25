@@ -65,26 +65,6 @@ Vec2 vectorOf(const Param &param, Vec2 fallback)
     return std::holds_alternative<Vec2>(value) ? std::get<Vec2>(value) : fallback;
 }
 
-bool clipIsAnimated(const Clip &clip)
-{
-    const Transform &t = clip.transform;
-    if (t.position.isAnimated() || t.scale.isAnimated() || t.rotation.isAnimated() || clip.opacity.isAnimated() ||
-        t.crop.left.isAnimated() || t.crop.top.isAnimated() || t.crop.right.isAnimated() || t.crop.bottom.isAnimated()) {
-        return true;
-    }
-    for (const Effect &effect : clip.effects) {
-        if (effect.intensity.isAnimated()) {
-            return true;
-        }
-        for (const auto &[name, param] : effect.params) {
-            if (param.isAnimated()) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 // Displayed size of a media item (rotation and pixel aspect applied).
 fx::Easing easingOf(const QString &name)
 {
@@ -374,6 +354,23 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
                 adjust.vignette = look.value(u"vignette"_s).toDouble();
                 adjust.grain = look.value(u"grain"_s).toDouble();
                 adjust.sharpness = look.value(u"sharpness"_s).toDouble();
+            } else if (effect.type == u"vedit.chroma_key"_s) {
+                ChromaKeySettings ck;
+                for (const auto &[name, param] : effect.params) {
+                    if (name == u"keyColor"_s) {
+                        if (const auto *c = std::get_if<Color>(&param.staticValue())) {
+                            ck.keyColor = *c;
+                        }
+                    } else if (name == u"similarity"_s) {
+                        ck.similarity = numberOf(param, 0.4);
+                    } else if (name == u"smoothness"_s) {
+                        ck.smoothness = numberOf(param, 0.1);
+                    } else if (name == u"spill"_s) {
+                        ck.spill = numberOf(param, 0.5);
+                    }
+                }
+                render->chromaKey = ck;
+                continue;
             } else {
                 m_warnings << u"clip %1: effect %2 is rendered from a later phase"_s.arg(clip.id.toString(), effect.type);
                 continue;
@@ -406,6 +403,20 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
         transform.cropRight = std::clamp(numberOf(clip.transform.crop.right, 0.0), 0.0, 1.0);
         transform.cropBottom = std::clamp(numberOf(clip.transform.crop.bottom, 0.0), 0.0, 1.0);
         transform.opacity = std::clamp(numberOf(clip.opacity, 1.0), 0.0, 1.0);
+        transform.blendMode = static_cast<vedit::fx::BlendMode>(clip.blendMode);
+
+        transform.positionParam = clip.transform.position;
+        transform.scaleParam = clip.transform.scale;
+        transform.rotationParam = clip.transform.rotation;
+        transform.opacityParam = clip.opacity;
+        transform.cropLeftParam = clip.transform.crop.left;
+        transform.cropTopParam = clip.transform.crop.top;
+        transform.cropRightParam = clip.transform.crop.right;
+        transform.cropBottomParam = clip.transform.crop.bottom;
+        transform.firstFrame = in;
+        transform.sourceIn = clip.media() ? clip.media()->sourceIn : RationalTime(0, m_profile.fps());
+        transform.frameRate = Rational(m_profile.fps(), 1);
+
         if (mainTrack) {
             const Sequence *sequence = sequenceOf(project, m_sequenceId);
             std::optional<CanvasBackground> background = clip.background;
@@ -439,11 +450,9 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
             render->gain = gain;
         }
     }
-    if (clipIsAnimated(clip)) {
-        m_warnings << u"clip %1: keyframe animations are rendered from Phase 3"_s.arg(clip.id.toString());
-    }
     QByteArray key;
     QDataStream stream(&key, QIODevice::WriteOnly);
+    stream << render->chromaKey.has_value() << (render->chromaKey ? render->chromaKey->key() : QByteArray());
     for (const AdjustSettings &adjust : render->adjusts) {
         stream << adjust.key();
     }
@@ -737,6 +746,10 @@ std::vector<TimelineProjection::Entry> TimelineProjection::transitionEntries(Tra
 
 void TimelineProjection::attachFilters(Mlt::Producer &cut, const ClipRender &render, bool withAudio)
 {
+    if (render.chromaKey) {
+        auto filter = makeChromaKeyFilter(m_profile, *render.chromaKey);
+        cut.attach(*filter);
+    }
     for (const AdjustSettings &adjust : render.adjusts) {
         auto filter = makeAdjustFilter(m_profile, adjust);
         cut.attach(*filter);

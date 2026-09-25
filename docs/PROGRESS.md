@@ -20,8 +20,13 @@ Ultimo aggiornamento: 2026-09-25 (Fase 2 completata)
    - Kernel CPU di riferimento e servizio per Chroma Key (`ChromaKey.cpp` / `vedit.chroma_key`): spazio colore UV, soglia/somiglianza, morbidezza bordo e soppressione spill verde/blu.
    - Test unitari in `tst_kernels` (blend modes e chroma key) e `tst_serialization` al 100% verdi.
 
+2. **Engine Keyframes & Pipeline (`P3.2`)**:
+   - Valutazione runtime dei keyframe per trasformazioni, opacità e ritaglio in `Services.cpp` (`transformGetImage`) con calcolo sicuro di `contentTime` nello spazio temporale del contenuto/sorgente (decisione architetturale D-05).
+   - Propagazione `BlendMode` su ogni frame con straight alpha compositing in `vedit.composite` attraverso `fx::compositeBlend`.
+   - Integrazione del servizio `vedit.chroma_key` prima di trasformazione e filtri, consentendo la rimozione dello sfondo verde/blu in spazio coordinate nativo prima della trasformazione geometrica e compositing multi-traccia.
+   - Test di integrazione al 100% in `tst_services` (`transformAnimatesWithKeyframes`, `chromaKeyRemovesGreen`) e `tst_projection` (`chromaKeyRemovesGreenInProjection`, `animatedTransformInProjection`).
+
 ### Prossimi passi (Fase 3 — Keyframe e composizione)
-- P3.2: Valutazione runtime dei keyframe per trasformazioni, opacità e parametri di effetto in `Services.cpp` e `TimelineProjection.cpp`; integrazione `BlendMode` e `ChromaKey` nella pipeline di proiezione MLT.
 - P3.3: Valutazione e rasterizzazione maschere (rettangolare con roundness, circolare, lineare, specchio, cuore, stella, path) con feather e invert in `src/fx` e `vedit.mask`.
 - P3.4: Compound clip e tracce di regolazione (`adjustment`) in `TimelineEditor` e `TimelineProjection`.
 - P3.5: Animazioni predefinite e marker (sequence e clip) in timeline.
