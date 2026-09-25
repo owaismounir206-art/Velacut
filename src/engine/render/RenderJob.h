@@ -7,6 +7,8 @@
 #include <QElapsedTimer>
 #include <QObject>
 #include <QProcess>
+
+#include <chrono>
 #include <QStringList>
 
 namespace vedit::engine {
@@ -41,6 +43,9 @@ public:
     QString outputPath() const { return m_settings.outputPath; }
 
     static QString errorMessage(RenderError error);
+    // Removes the job files (frozen project and job) left in the cache by exports that were killed with vedit. The
+    // renderer reads them only when it starts, so files older than `olderThan` are never in use. Returns how many.
+    static int removeStaleJobFiles(std::chrono::seconds olderThan = std::chrono::minutes(10));
 
 signals:
     void runningChanged();

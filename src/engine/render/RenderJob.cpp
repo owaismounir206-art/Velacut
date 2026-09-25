@@ -5,6 +5,7 @@
 #include "core/serialization/ProjectFile.h"
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -43,6 +44,22 @@ RenderJob::~RenderJob()
         QFile::remove(m_frozenProject);
         QFile::remove(m_jobFile);
     }
+}
+
+int RenderJob::removeStaleJobFiles(std::chrono::seconds olderThan)
+{
+    const QDir directory(paths::cacheDir() + u"/render"_s);
+    const QDateTime limit = QDateTime::currentDateTimeUtc().addSecs(-olderThan.count());
+    int removed = 0;
+    for (const QFileInfo &file : directory.entryInfoList({u"*.json"_s, u"*.vproj"_s}, QDir::Files)) {
+        if (file.lastModified().toUTC() < limit && QFile::remove(file.absoluteFilePath())) {
+            ++removed;
+        }
+    }
+    if (removed > 0) {
+        qCInfo(lcRenderJob) << "removed" << removed << "files of interrupted exports";
+    }
+    return removed;
 }
 
 QString RenderJob::errorMessage(RenderError error)

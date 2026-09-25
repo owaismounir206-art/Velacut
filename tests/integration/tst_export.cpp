@@ -287,6 +287,28 @@ private slots:
         QCOMPARE(failed.last().at(0).toString(), RenderJob::errorMessage(RenderError::NothingToExport));
     }
 
+    // Job files of an export killed with vedit are removed at the next start; recent ones are left alone.
+    void staleJobFilesAreRemoved()
+    {
+        const QString directory = paths::cacheDir() + u"/render"_s;
+        QDir().mkpath(directory);
+        const auto make = [&directory](const QString &name, QDateTime modified) {
+            QFile file(directory + u"/"_s + name);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("{}");
+            file.close();
+            QVERIFY(file.open(QIODevice::ReadWrite));
+            QVERIFY(file.setFileTime(modified, QFileDevice::FileModificationTime));
+        };
+        make(u"old.json"_s, QDateTime::currentDateTime().addSecs(-3600));
+        make(u"old.vproj"_s, QDateTime::currentDateTime().addSecs(-3600));
+        make(u"new.json"_s, QDateTime::currentDateTime());
+        QCOMPARE(engine::RenderJob::removeStaleJobFiles(), 2);
+        QVERIFY(!QFile::exists(directory + u"/old.json"_s));
+        QVERIFY(QFile::exists(directory + u"/new.json"_s));
+        QVERIFY(QFile::remove(directory + u"/new.json"_s));
+    }
+
     void settingsRoundTripAndEstimates()
     {
         ExportSettings settings;

@@ -5,6 +5,7 @@
 #include "document/Document.h"
 #include "document/DraftStore.h"
 #include "engine/analysis/MediaAnalysis.h"
+#include "engine/render/RenderJob.h"
 #include "ui/controllers/EditorController.h"
 #include "ui/models/AudioLibraryModel.h"
 #include "ui/models/DraftsModel.h"
@@ -42,6 +43,8 @@ AppController::AppController(gpu::GraphicsDecision decision, gpu::GpuCapabilitie
     , m_drafts(std::make_unique<DraftsModel>(*m_store))
     , m_audioLibrary(std::make_unique<AudioLibraryModel>(AudioLibraryModel::defaultFolder(), m_helper))
 {
+    // Exports killed together with vedit leave their job files in the cache.
+    engine::RenderJob::removeStaleJobFiles();
 }
 
 AppController::~AppController()
