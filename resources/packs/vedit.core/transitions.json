@@ -15,10 +15,59 @@
             }
         },
         {
+            "id": "zoom",
+            "name": {
+                "en": "Zoom & Spin",
+                "it": "Zoom e rotazione"
+            }
+        },
+        {
             "id": "wipe",
             "name": {
-                "en": "Wipes & shapes",
-                "it": "Tendine e forme"
+                "en": "Wipes & Bands",
+                "it": "Tendine e bande"
+            }
+        },
+        {
+            "id": "shapes",
+            "name": {
+                "en": "Shapes & Iris",
+                "it": "Forme e iris"
+            }
+        },
+        {
+            "id": "blur",
+            "name": {
+                "en": "Blur & Camera",
+                "it": "Sfocatura e camera"
+            }
+        },
+        {
+            "id": "glitch",
+            "name": {
+                "en": "Glitch & Digital",
+                "it": "Glitch e digitale"
+            }
+        },
+        {
+            "id": "light",
+            "name": {
+                "en": "Light & Color",
+                "it": "Luce e colore"
+            }
+        },
+        {
+            "id": "distort",
+            "name": {
+                "en": "Distortions",
+                "it": "Distorsioni"
+            }
+        },
+        {
+            "id": "3d",
+            "name": {
+                "en": "3D & Flips",
+                "it": "3D e rotazioni"
             }
         }
     ],
@@ -66,6 +115,111 @@
             "defaultDuration": 0.4,
             "params": {
                 "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/dip-to-color",
+            "version": 1,
+            "category": "base",
+            "name": {
+                "en": "Dip to color",
+                "it": "Dissolvenza a colore"
+            },
+            "kernel": "dipToColor",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/fade-grayscale",
+            "version": 1,
+            "category": "base",
+            "name": {
+                "en": "Fade grayscale",
+                "it": "Dissolvenza in bianco e nero"
+            },
+            "kernel": "fadeGrayscale",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/exposure-flash",
+            "version": 1,
+            "category": "base",
+            "name": {
+                "en": "Exposure flash",
+                "it": "Flash sovraesposto"
+            },
+            "kernel": "exposureFlash",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/luma-fade",
+            "version": 1,
+            "category": "base",
+            "name": {
+                "en": "Luma fade",
+                "it": "Dissolvenza per luminanza"
+            },
+            "kernel": "lumaFade",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/additive",
+            "version": 1,
+            "category": "base",
+            "name": {
+                "en": "Additive blend",
+                "it": "Dissolvenza additiva"
+            },
+            "kernel": "additive",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/subtract",
+            "version": 1,
+            "category": "base",
+            "name": {
+                "en": "Subtractive blend",
+                "it": "Dissolvenza sottrattiva"
+            },
+            "kernel": "subtract",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/multiply",
+            "version": 1,
+            "category": "base",
+            "name": {
+                "en": "Multiply blend",
+                "it": "Dissolvenza moltiplica"
+            },
+            "kernel": "multiply",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
             }
         },
         {
@@ -130,12 +284,72 @@
         },
         {
             "kind": "transition",
+            "id": "transitions/slide-top-left",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Slide top-left",
+                "it": "Scorri in alto a sinistra"
+            },
+            "kernel": "slideTopLeft",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/slide-top-right",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Slide top-right",
+                "it": "Scorri in alto a destra"
+            },
+            "kernel": "slideTopRight",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/slide-bottom-left",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Slide bottom-left",
+                "it": "Scorri in basso a sinistra"
+            },
+            "kernel": "slideBottomLeft",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/slide-bottom-right",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Slide bottom-right",
+                "it": "Scorri in basso a destra"
+            },
+            "kernel": "slideBottomRight",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
             "id": "transitions/push-left",
             "version": 1,
             "category": "motion",
             "name": {
                 "en": "Push left",
-                "it": "Spingi a sinistra"
+                "it": "Spinta a sinistra"
             },
             "kernel": "pushLeft",
             "defaultDuration": 0.5,
@@ -150,7 +364,7 @@
             "category": "motion",
             "name": {
                 "en": "Push right",
-                "it": "Spingi a destra"
+                "it": "Spinta a destra"
             },
             "kernel": "pushRight",
             "defaultDuration": 0.5,
@@ -165,7 +379,7 @@
             "category": "motion",
             "name": {
                 "en": "Push up",
-                "it": "Spingi in alto"
+                "it": "Spinta in alto"
             },
             "kernel": "pushUp",
             "defaultDuration": 0.5,
@@ -180,7 +394,7 @@
             "category": "motion",
             "name": {
                 "en": "Push down",
-                "it": "Spingi in basso"
+                "it": "Spinta in basso"
             },
             "kernel": "pushDown",
             "defaultDuration": 0.5,
@@ -190,14 +404,239 @@
         },
         {
             "kind": "transition",
-            "id": "transitions/zoom-in",
+            "id": "transitions/push-top-left",
             "version": 1,
             "category": "motion",
+            "name": {
+                "en": "Push top-left",
+                "it": "Spinta in alto a sinistra"
+            },
+            "kernel": "pushTopLeft",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/push-top-right",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Push top-right",
+                "it": "Spinta in alto a destra"
+            },
+            "kernel": "pushTopRight",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/push-bottom-left",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Push bottom-left",
+                "it": "Spinta in basso a sinistra"
+            },
+            "kernel": "pushBottomLeft",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/push-bottom-right",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Push bottom-right",
+                "it": "Spinta in basso a destra"
+            },
+            "kernel": "pushBottomRight",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/zoom-in",
+            "version": 1,
+            "category": "zoom",
             "name": {
                 "en": "Zoom in",
                 "it": "Zoom avanti"
             },
             "kernel": "zoomIn",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/zoom-out",
+            "version": 1,
+            "category": "zoom",
+            "name": {
+                "en": "Zoom out",
+                "it": "Zoom indietro"
+            },
+            "kernel": "zoomOut",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/cross-zoom",
+            "version": 1,
+            "category": "zoom",
+            "name": {
+                "en": "Cross zoom",
+                "it": "Zoom incrociato"
+            },
+            "kernel": "crossZoom",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/warp-zoom",
+            "version": 1,
+            "category": "zoom",
+            "name": {
+                "en": "Warp zoom",
+                "it": "Zoom distorto"
+            },
+            "kernel": "warpZoom",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/spin-zoom-in",
+            "version": 1,
+            "category": "zoom",
+            "name": {
+                "en": "Spin zoom in",
+                "it": "Rotazione con zoom avanti"
+            },
+            "kernel": "spinZoomIn",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/spin-zoom-out",
+            "version": 1,
+            "category": "zoom",
+            "name": {
+                "en": "Spin zoom out",
+                "it": "Rotazione con zoom indietro"
+            },
+            "kernel": "spinZoomOut",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/spin-cw",
+            "version": 1,
+            "category": "zoom",
+            "name": {
+                "en": "Spin clockwise",
+                "it": "Rotazione oraria"
+            },
+            "kernel": "spinCw",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/spin-ccw",
+            "version": 1,
+            "category": "zoom",
+            "name": {
+                "en": "Spin counter-clockwise",
+                "it": "Rotazione antioraria"
+            },
+            "kernel": "spinCcw",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/rotate-scale-cw",
+            "version": 1,
+            "category": "zoom",
+            "name": {
+                "en": "Rotate and scale",
+                "it": "Ruota e ingrandisci"
+            },
+            "kernel": "rotateScaleCw",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/rotate-scale-ccw",
+            "version": 1,
+            "category": "zoom",
+            "name": {
+                "en": "Rotate and scale CCW",
+                "it": "Ruota e ingrandisci antiorario"
+            },
+            "kernel": "rotateScaleCcw",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/dolly-zoom-in",
+            "version": 1,
+            "category": "zoom",
+            "name": {
+                "en": "Dolly zoom in",
+                "it": "Dolly zoom avanti"
+            },
+            "kernel": "dollyZoomIn",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/dolly-zoom-out",
+            "version": 1,
+            "category": "zoom",
+            "name": {
+                "en": "Dolly zoom out",
+                "it": "Dolly zoom indietro"
+            },
+            "kernel": "dollyZoomOut",
             "defaultDuration": 0.6,
             "params": {
                 "easing": "easeInOut"
@@ -265,15 +704,255 @@
         },
         {
             "kind": "transition",
-            "id": "transitions/iris",
+            "id": "transitions/wipe-top-left",
             "version": 1,
             "category": "wipe",
             "name": {
-                "en": "Circle",
-                "it": "Cerchio"
+                "en": "Wipe top-left",
+                "it": "Tendina diagonale a sinistra"
+            },
+            "kernel": "wipeTopLeft",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/wipe-top-right",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Wipe top-right",
+                "it": "Tendina diagonale a destra"
+            },
+            "kernel": "wipeTopRight",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/wipe-bottom-left",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Wipe bottom-left",
+                "it": "Tendina diagonale in basso"
+            },
+            "kernel": "wipeBottomLeft",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/wipe-bottom-right",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Wipe bottom-right",
+                "it": "Tendina diagonale opposta"
+            },
+            "kernel": "wipeBottomRight",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/split-horizontal",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Split horizontal",
+                "it": "Divisione orizzontale"
+            },
+            "kernel": "splitHorizontal",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/split-vertical",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Split vertical",
+                "it": "Divisione verticale"
+            },
+            "kernel": "splitVertical",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/barn-door-horizontal",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Barn doors horizontal",
+                "it": "Porte da granaio orizzontali"
+            },
+            "kernel": "barnDoorHorizontal",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/barn-door-vertical",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Barn doors vertical",
+                "it": "Porte da granaio verticali"
+            },
+            "kernel": "barnDoorVertical",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/blinds-horizontal",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Blinds horizontal",
+                "it": "Veneziana orizzontale"
+            },
+            "kernel": "blindsHorizontal",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/blinds-vertical",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Blinds vertical",
+                "it": "Veneziana verticale"
+            },
+            "kernel": "blindsVertical",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/checkerboard",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Checkerboard",
+                "it": "Scacchiera"
+            },
+            "kernel": "checkerboard",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/mosaic-wipe",
+            "version": 1,
+            "category": "wipe",
+            "name": {
+                "en": "Mosaic wipe",
+                "it": "Tendina a mosaico"
+            },
+            "kernel": "mosaicWipe",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/iris",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Iris circle",
+                "it": "Iris circolare"
             },
             "kernel": "iris",
-            "defaultDuration": 0.7,
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/iris-diamond",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Iris diamond",
+                "it": "Iris a rombo"
+            },
+            "kernel": "irisDiamond",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/iris-star",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Iris star",
+                "it": "Iris a stella"
+            },
+            "kernel": "irisStar",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/iris-heart",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Iris heart",
+                "it": "Iris a cuore"
+            },
+            "kernel": "irisHeart",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/iris-triangle",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Iris triangle",
+                "it": "Iris triangolare"
+            },
+            "kernel": "irisTriangle",
+            "defaultDuration": 0.5,
             "params": {
                 "easing": "easeInOut"
             }
@@ -282,13 +961,823 @@
             "kind": "transition",
             "id": "transitions/clock",
             "version": 1,
-            "category": "wipe",
+            "category": "shapes",
             "name": {
-                "en": "Clock",
+                "en": "Clock sweep",
                 "it": "Orologio"
             },
             "kernel": "clock",
-            "defaultDuration": 0.8,
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/clock-counter",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Clock counter",
+                "it": "Orologio antiorario"
+            },
+            "kernel": "clockCounter",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/clock-dual",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Clock dual sweep",
+                "it": "Doppio orologio"
+            },
+            "kernel": "clockDual",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/hexagon-grid",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Hexagon grid",
+                "it": "Griglia esagonale"
+            },
+            "kernel": "hexagonGrid",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/polygon-open",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Polygon open",
+                "it": "Poligono aperto"
+            },
+            "kernel": "polygonOpen",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/diagonal-slice-left",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Diagonal slice left",
+                "it": "Taglio diagonale sinistro"
+            },
+            "kernel": "diagonalSliceLeft",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/diagonal-slice-right",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Diagonal slice right",
+                "it": "Taglio diagonale destro"
+            },
+            "kernel": "diagonalSliceRight",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/blur-dissolve",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Blur dissolve",
+                "it": "Dissolvenza sfocata"
+            },
+            "kernel": "blurDissolve",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/directional-blur-left",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Blur left",
+                "it": "Sfocatura a sinistra"
+            },
+            "kernel": "directionalBlurLeft",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/directional-blur-right",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Blur right",
+                "it": "Sfocatura a destra"
+            },
+            "kernel": "directionalBlurRight",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/radial-blur",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Radial blur",
+                "it": "Sfocatura radiale"
+            },
+            "kernel": "radialBlur",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/tilt-shift",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Tilt-shift transition",
+                "it": "Transizione tilt-shift"
+            },
+            "kernel": "tiltShift",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/whip-pan-left",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Whip pan left",
+                "it": "Panoramica a frusta a sinistra"
+            },
+            "kernel": "whipPanLeft",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/whip-pan-right",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Whip pan right",
+                "it": "Panoramica a frusta a destra"
+            },
+            "kernel": "whipPanRight",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/whip-pan-up",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Whip pan up",
+                "it": "Panoramica a frusta in alto"
+            },
+            "kernel": "whipPanUp",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/whip-pan-down",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Whip pan down",
+                "it": "Panoramica a frusta in basso"
+            },
+            "kernel": "whipPanDown",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/camera-shutter",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Camera shutter",
+                "it": "Otturatore fotografico"
+            },
+            "kernel": "cameraShutter",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/glitch-rgb",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "RGB glitch",
+                "it": "Glitch RGB"
+            },
+            "kernel": "glitchRgb",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/pixelate",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Pixelate",
+                "it": "Pixelatura"
+            },
+            "kernel": "pixelate",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/scanline-tear",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Scanline tear",
+                "it": "Strappo a linee CRT"
+            },
+            "kernel": "scanlineTear",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/vhs-distortion",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "VHS distortion",
+                "it": "Distorsione VHS"
+            },
+            "kernel": "vhsDistortion",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/block-dissolve",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Block dissolve",
+                "it": "Dissolvenza a blocchi"
+            },
+            "kernel": "blockDissolve",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/digital-noise",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Digital noise",
+                "it": "Rumore digitale"
+            },
+            "kernel": "digitalNoise",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/jitter",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Frame jitter",
+                "it": "Scossa video"
+            },
+            "kernel": "jitter",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/data-corruption",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Data corruption",
+                "it": "Corruzione dati"
+            },
+            "kernel": "dataCorruption",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/screen-tear",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Screen tear",
+                "it": "Strappo schermo"
+            },
+            "kernel": "screenTear",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/luma-glitch",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Luma glitch",
+                "it": "Glitch di luminanza"
+            },
+            "kernel": "lumaGlitch",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/light-leak-warm",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Warm light leak",
+                "it": "Infiltrazione di luce calda"
+            },
+            "kernel": "lightLeakWarm",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/light-leak-cool",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Cool light leak",
+                "it": "Infiltrazione di luce fredda"
+            },
+            "kernel": "lightLeakCool",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/lens-glow",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Lens glow",
+                "it": "Bagliore lente"
+            },
+            "kernel": "lensGlow",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/film-burn",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Film burn",
+                "it": "Bruciatura pellicola"
+            },
+            "kernel": "filmBurn",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/rainbow-flash",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Rainbow flash",
+                "it": "Flash arcobaleno"
+            },
+            "kernel": "rainbowFlash",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/color-invert",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Color invert flash",
+                "it": "Flash colori invertiti"
+            },
+            "kernel": "colorInvert",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/solarize",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Solarize",
+                "it": "Solarizzazione"
+            },
+            "kernel": "solarize",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/neon-flash",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Neon flash",
+                "it": "Flash neon"
+            },
+            "kernel": "neonFlash",
+            "defaultDuration": 0.4,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/strobe",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Strobe",
+                "it": "Stroboscopio"
+            },
+            "kernel": "strobe",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/luma-glow",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Luma glow",
+                "it": "Bagliore di luminanza"
+            },
+            "kernel": "lumaGlow",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/wave-horizontal",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Wave horizontal",
+                "it": "Onda orizzontale"
+            },
+            "kernel": "waveHorizontal",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/wave-vertical",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Wave vertical",
+                "it": "Onda verticale"
+            },
+            "kernel": "waveVertical",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/ripple-water",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Water ripple",
+                "it": "Increspatura d'acqua"
+            },
+            "kernel": "rippleWater",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/vortex",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Vortex twirl",
+                "it": "Vortice a spirale"
+            },
+            "kernel": "vortex",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/shockwave",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Shockwave",
+                "it": "Onda d'urto"
+            },
+            "kernel": "shockwave",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/pinch",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Pinch",
+                "it": "Pizzico al centro"
+            },
+            "kernel": "pinch",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/pinch-twist",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Pinch & twist",
+                "it": "Pizzico con torsione"
+            },
+            "kernel": "pinchTwist",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/sphere-lens",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Sphere lens",
+                "it": "Lente sferica"
+            },
+            "kernel": "sphereLens",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/swirl",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Swirl",
+                "it": "Mulinello"
+            },
+            "kernel": "swirl",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/kaleidoscope",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Kaleidoscope",
+                "it": "Caleidoscopio"
+            },
+            "kernel": "kaleidoscope",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/cube-left",
+            "version": 1,
+            "category": "3d",
+            "name": {
+                "en": "Cube left",
+                "it": "Cubo a sinistra"
+            },
+            "kernel": "cubeLeft",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/cube-right",
+            "version": 1,
+            "category": "3d",
+            "name": {
+                "en": "Cube right",
+                "it": "Cubo a destra"
+            },
+            "kernel": "cubeRight",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/cube-up",
+            "version": 1,
+            "category": "3d",
+            "name": {
+                "en": "Cube up",
+                "it": "Cubo in alto"
+            },
+            "kernel": "cubeUp",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/cube-down",
+            "version": 1,
+            "category": "3d",
+            "name": {
+                "en": "Cube down",
+                "it": "Cubo in basso"
+            },
+            "kernel": "cubeDown",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/flip-horizontal",
+            "version": 1,
+            "category": "3d",
+            "name": {
+                "en": "Flip horizontal",
+                "it": "Capovolgi orizzontalmente"
+            },
+            "kernel": "flipHorizontal",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/flip-vertical",
+            "version": 1,
+            "category": "3d",
+            "name": {
+                "en": "Flip vertical",
+                "it": "Capovolgi verticalmente"
+            },
+            "kernel": "flipVertical",
+            "defaultDuration": 0.5,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/door-swing-open",
+            "version": 1,
+            "category": "3d",
+            "name": {
+                "en": "Door swing open",
+                "it": "Porta girevole"
+            },
+            "kernel": "doorSwingOpen",
+            "defaultDuration": 0.6,
+            "params": {
+                "easing": "easeInOut"
+            }
+        },
+        {
+            "kind": "transition",
+            "id": "transitions/fold-over",
+            "version": 1,
+            "category": "3d",
+            "name": {
+                "en": "Fold over",
+                "it": "Piegatura ad angolo"
+            },
+            "kernel": "foldOver",
+            "defaultDuration": 0.6,
             "params": {
                 "easing": "easeInOut"
             }

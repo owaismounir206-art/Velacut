@@ -284,7 +284,7 @@ private slots:
         QCOMPARE(library.rowCount(), 1);
         library.setSearch({});
         library.setKind(AssetLibraryModel::Transitions);
-        QVERIFY(library.rowCount() >= 18);
+        QVERIFY(library.rowCount() >= 100);
         QVERIFY(!library.categories().isEmpty());
         library.setKind(AssetLibraryModel::TextStyles);
         QVERIFY(library.rowCount() >= 24);

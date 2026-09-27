@@ -150,14 +150,30 @@ Ultimo aggiornamento: 2026-09-27 (Fase 4 completata)
      7) Salvataggio continuo e verifica di roundtrip bit-for-bit del progetto salvato e riaperto.
    - Build a zero avvisi con `-Wall -Wextra -Wpedantic -Werror`, 100% test passati (25/25 CTest).
 
+## Fase 5 — Libreria creativa (in corso)
+1. **Libreria completa di 100+ transizioni (`P5.1`)**:
+   - Espansa la suite di transizioni da 18 a 114 transizioni uniche distribuite su 10 categorie:
+     - *Base (10)*: dissolve, dip-to-black, dip-to-white, dip-to-color, fade-grayscale, exposure-flash, luma-fade, additive, subtract, multiply;
+     - *Movimento (16)*: slide (4 direzioni + 4 diagonali) e push (4 direzioni + 4 diagonali);
+     - *Zoom & Spin (12)*: zoom-in, zoom-out, cross-zoom, warp-zoom, spin-zoom in/out, spin orario/antiorario, ruota e scala, dolly zoom in/out;
+     - *Tendine & Bande (16)*: wipe (4 direzioni + 4 diagonali), divisioni orizzontali/verticali, porte da granaio, veneziane, scacchiera, mosaico;
+     - *Forme & Iris (12)*: iris cerchio, rombo, stella a 5 punte, cuore, triangolo, orologio (orario, antiorario, doppio), griglia esagonale, poligono, tagli diagonali;
+     - *Sfocatura & Camera (10)*: blur dissolve, sfocature direzionali, sfocatura radiale, tilt-shift, whip pan (4 direzioni), otturatore;
+     - *Glitch & Digitale (10)*: glitch RGB cromatico, pixelatura, strappo CRT, distorsione VHS, blocco dissolve, rumore digitale, scossa/jitter, corruzione dati, screen tear, glitch di luminanza;
+     - *Luce & Colore (10)*: infiltrazioni di luce calda/fredda, bagliore lente, bruciatura pellicola, flash arcobaleno, colori invertiti, solarizzazione, flash neon, stroboscopio, bagliore di luminanza;
+     - *Distorsioni (10)*: onde sinusoidali orizzontali/verticali, increspatura d'acqua, vortice, onda d'urto, pizzico, pizzico con torsione, lente sferica, mulinello, caleidoscopio;
+     - *3D & Rotazioni (8)*: cubo 3D (4 direzioni con ombreggiatura prospettica), capovolgimento orizzontale/verticale, porta girevole, piegatura ad angolo.
+   - `src/fx/Transition.h` e `src/fx/Transition.cpp`: modello ed esecuzione con garanzia di identità a t=0 (coincide con clip A) e a t=1 (coincide con clip B).
+   - `resources/packs/vedit.core/transitions.json`: catalogo completo con nomi bilingue (italiano e inglese) e durate consigliate.
+   - Test unitari in `tst_kernels::everyTransitionStartsOnAAndEndsOnB` e `coreLibraryLoads` (114/114 verificate), test di integrazione in `tst_editor::librariesAndTransitions` (>= 100 verificate), 100% test CTest (25/25) verdi.
+
 ### Prossimi passi (Fase 5 — Libreria creativa)
-Dalla SPEC §8 e §5.11bis:
-1. P5.1: Catalogo completo di 100+ transizioni GLSL/CPU categorizzate con miniature animate;
-2. P5.2: Animazioni di testo avanzate (in/out/loop, con effetto macchina da scrivere/carattere per carattere);
-3. P5.3: Gestione sticker e overlay grafici (trasparenze, SVG/PNG vettoriali e animati);
-4. P5.4: Clip segnaposto (placeholder) per modelli e storyboard;
-5. P5.5: Brand Kit (palette colori, caratteri del brand, loghi e stili riutilizzabili);
-6. P5.6: Test di integrazione del criterio della Fase 5: "Applico uno stile del brand kit, uso 3 transizioni diverse e un testo animato carattere per carattere".
+1. P5.2: Animazioni di testo avanzate (carattere per carattere / macchina da scrivere, parola, riga), template di titoli, speech bubbles e terzi inferiori;
+2. P5.3: Curve di velocità (Speed Ramping con nodi o Bézier) e motion blur;
+3. P5.4: Sticker vettoriali (SVG) e animati (GIF/WebP), visualizzatori audio sul ritmo;
+4. P5.5: Clip segnaposto (placeholder), sostituzione rapida media, modelli di progetto e generatore slideshow da foto;
+5. P5.6: Brand Kit (palette, font, loghi) e generatore copertina;
+6. P5.7: Criterio di chiusura Fase 5 e test di integrazione ("Uso un template, sostituisco i media e ottengo un video completo; ogni transizione supera il test di rendering CPU/GPU; applico uno stile del brand kit, uso 3 transizioni diverse e un testo animato carattere per carattere").
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata

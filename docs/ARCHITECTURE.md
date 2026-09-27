@@ -681,3 +681,58 @@ Scelte:
 Incrementi: P4.1 kernel colore e `.cube` → P4.2 proiezione colore e deflicker → P4.3 interfaccia colore e scope →
 P4.4 audio (keyframe del volume, effetti, rumore, loudness, ducking, "Migliora voce") → P4.5 registrazioni → P4.6
 sincronizzazione e multicamera → P4.7 chiusura (criterio: LUT e curve, mix a −14 LUFS, intervista a due camere).
+
+---
+
+## 23. Piano della Fase 5 (Libreria creativa)
+La Fase 5 estende l'editor con la libreria completa di transizioni, animazioni tipografiche avanzate, sticker e sovrapposizioni grafiche, speed ramping con curve di velocità, template di progetto con segnaposto (placeholder), slideshow automatiche e Brand Kit.
+
+### Scelte architetturali:
+1. **Libreria di oltre 100 transizioni (`src/fx/Transition.h` e `src/fx/Transition.cpp`)**:
+   - Catalogo dichiarativo esteso a 100+ transizioni organizzate in categorie:
+     - *Base / Dissolvenze*: dissolve, crossfade, dip-to-black, dip-to-white, dip-to-color, fade-grayscale, exposure-flash, luma-fade...
+     - *Movimento / Slide*: slide-left, slide-right, slide-up, slide-down, push-left, push-right, push-up, push-down, cover, uncover, pan...
+     - *Wipe / Tendine*: wipe-left, wipe-right, wipe-up, wipe-down, wipe-radial, wipe-clock, wipe-diamond, wipe-iris, split-horizontal, split-vertical, barn-door, checkerboard, blinds...
+     - *Zoom / Scala*: zoom-in, zoom-out, cross-zoom, spin-zoom, zoom-rotate-cw, zoom-rotate-ccw, warp-zoom...
+     - *Sfocature*: blur-dissolve, directional-blur, radial-blur, tilt-shift, defocus, spin-blur, whip-blur...
+     - *Luce / Flash*: flash-white, light-leak-warm, light-leak-cool, lens-flare, glitch-glow, strobe, neon-flash...
+     - *Glitch / Digitale*: pixelate, rgb-split, vhs-distortion, digital-glitch, scanline-tear, block-dissolve, jitter, noise-fade...
+     - *Distorsioni*: wave, ripple, page-curl, kaleidoscope, vortex, stretch, sphere, pinch, pinch-twist...
+     - *Geometriche / M3*: circle-open, star-wipe, heart-wipe, diagonal-slice, hex-grid, polygon-mosaic...
+     - *3D / Rotazioni*: flip-horizontal, flip-vertical, cube-rotate, door-swing, fold-over, card-flip...
+   - Rendering deterministico CPU a parità di pixel con interfaccia `TransitionKernel` e fallback universale. Shader GLSL compatibili ES 2.0 / 2.1 per accelerazione quando disponibile.
+   - Parametri configurabili: `softness` (morbidezza bordo), `color` (per dip-to-color), `reverse` (inversione direzione), ed easing della progressiva di transizione.
+
+2. **Animazioni di testo avanzate e template di testo**:
+   - Estensione di `TextClipData` con supporto `TextAnimation`:
+     - Ambito: carattere (`Character`), parola (`Word`), riga (`Line`), intero blocco (`All`).
+     - Stili di animazione: Macchina da scrivere (`typewriter`), rimbalzo (`bounce`), comparsa graduale (`fade_in`), scorrimento verso l'alto (`slide_up`), scala elastica (`pop_in`), oscillazione (`wave`).
+   - Calcolo del layout e generazione frame in `makeTextProducer` / `vedit.text` con interpolazione temporale basata su `contentTime`.
+   - Modelli di titoli pronti: titoli cinematici, terzi inferiori (lower thirds) per interviste, nuvolette/fumetti di dialogo (speech bubbles) con codice vettoriale e callout integrato.
+
+3. **Curve di velocità (Speed Ramping) e Motion Blur**:
+   - Estensione del modello di velocità con curve personalizzate: nodi `(t_in, speed)` o Bézier cubiche per interpolare l'avanzamento temporale della sorgente (`ClipTime`).
+   - Preset di speed ramping popolari: Montage, Bullet Time, Flash In, Hero Moment.
+   - Motion blur sintetico direzionale calcolato in base alla velocità istantanea di trasformazione o transizione.
+
+4. **Sticker e sovrapposizioni grafiche**:
+   - `MediaKind::Image` e `MediaKind::Vector` (SVG renderizzato a risoluzione nativa del canvas via `QSvgRenderer`).
+   - Supporto sticker animati (APNG, WebP animati, GIF) e visualizzatori audio (barre di frequenza e onde sonore reattive al ritmo musicale).
+
+5. **Template di progetto e segnaposto (`PlaceholderClipData`)**:
+   - Segnaposto esplicito `PlaceholderClipData` in `Clip::payload`: specifica tipo atteso (Video, Foto, Audio, Testo), durata nominale, etichetta guidata (es. "Clip protagonista", "Logo finale") e aspect ratio.
+   - Funzione di sostituzione rapida (`TimelineEditor::replacePlaceholder`): accetta un nuovo file o media ID e sostituisce il segnaposto ereditando automaticamente posizione, trim, velocità, transizioni collegate, filtri e animazioni.
+
+6. **Kit del marchio (Brand Kit) e Copertina del video**:
+   - Struttura `BrandKit`: palette di colori aziendali/personali, font per titoli e corpo, loghi e watermark vettoriali/raster.
+   - Integrazione nei selettori colore dell'interfaccia: i campioni del Brand Kit appaiono in cima alla palette.
+   - Editor e generatore copertina: esportazione del fotogramma chiave a risoluzione piena con sovraimpressione di titoli o elementi grafici.
+
+### Incrementi di lavoro:
+- **P5.1**: Catalogo completo di 100+ transizioni e motore `src/fx/Transition` (CPU + rendering GLSL).
+- **P5.2**: Animazioni testo carattere per carattere, template di titoli, speech bubbles e terzi inferiori.
+- **P5.3**: Curve di velocità (Speed Ramping) e motion blur.
+- **P5.4**: Sticker vettoriali/animati, sovrapposizioni grafiche e visualizzatori audio sul ritmo.
+- **P5.5**: Template con clip segnaposto (placeholder), azione "Sostituisci media" e generatore slideshow da foto.
+- **P5.6**: Brand Kit (palette, font, loghi) e generatore copertina.
+- **P5.7**: Test di integrazione del criterio di completamento della Fase 5 e chiusura fase.

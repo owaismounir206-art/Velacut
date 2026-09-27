@@ -3,32 +3,148 @@
 
 #include "fx/Image.h"
 
+#include <array>
 #include <optional>
 #include <string_view>
 
 namespace vedit::fx {
 
-// Base transitions (SPEC §5.11bis "Base", "Movimento", "Wipe e forme"): the CPU reference of every transition.
+// Comprehensive transition library (SPEC §5.11bis, Phase 5: 100+ transitions across 10 categories).
 enum class TransitionKind
 {
+    // 1. Base (10)
     Dissolve,
     DipToBlack,
     DipToWhite,
-    SlideLeft, // B enters from the right, moving left, over A
+    DipToColor,
+    FadeGrayscale,
+    ExposureFlash,
+    LumaFade,
+    Additive,
+    Subtract,
+    Multiply,
+
+    // 2. Motion (16)
+    SlideLeft,
     SlideRight,
     SlideUp,
     SlideDown,
-    PushLeft, // A leaves to the left pushed by B
+    SlideTopLeft,
+    SlideTopRight,
+    SlideBottomLeft,
+    SlideBottomRight,
+    PushLeft,
     PushRight,
     PushUp,
     PushDown,
-    WipeLeft, // the edge moves leftwards revealing B
+    PushTopLeft,
+    PushTopRight,
+    PushBottomLeft,
+    PushBottomRight,
+
+    // 3. Zoom & Spin (12)
+    ZoomIn,
+    ZoomOut,
+    CrossZoom,
+    WarpZoom,
+    SpinZoomIn,
+    SpinZoomOut,
+    SpinCw,
+    SpinCcw,
+    RotateScaleCw,
+    RotateScaleCcw,
+    DollyZoomIn,
+    DollyZoomOut,
+
+    // 4. Wipes & Bands (16)
+    WipeLeft,
     WipeRight,
     WipeUp,
     WipeDown,
-    Iris,  // a circle opening from the centre
-    Clock, // a hand sweeping clockwise from 12
-    ZoomIn, // A zooms towards the viewer while fading into B
+    WipeTopLeft,
+    WipeTopRight,
+    WipeBottomLeft,
+    WipeBottomRight,
+    SplitHorizontal,
+    SplitVertical,
+    BarnDoorHorizontal,
+    BarnDoorVertical,
+    BlindsHorizontal,
+    BlindsVertical,
+    Checkerboard,
+    MosaicWipe,
+
+    // 5. Shapes & Geometry (12)
+    Iris,
+    IrisDiamond,
+    IrisStar,
+    IrisHeart,
+    IrisTriangle,
+    Clock,
+    ClockCounter,
+    ClockDual,
+    HexagonGrid,
+    PolygonOpen,
+    DiagonalSliceLeft,
+    DiagonalSliceRight,
+
+    // 6. Blurs & Camera (10)
+    BlurDissolve,
+    DirectionalBlurLeft,
+    DirectionalBlurRight,
+    RadialBlur,
+    TiltShift,
+    WhipPanLeft,
+    WhipPanRight,
+    WhipPanUp,
+    WhipPanDown,
+    CameraShutter,
+
+    // 7. Glitch & Digital (10)
+    GlitchRgb,
+    Pixelate,
+    ScanlineTear,
+    VhsDistortion,
+    BlockDissolve,
+    DigitalNoise,
+    Jitter,
+    DataCorruption,
+    ScreenTear,
+    LumaGlitch,
+
+    // 8. Lights & Leaks (10)
+    LightLeakWarm,
+    LightLeakCool,
+    LensGlow,
+    FilmBurn,
+    RainbowFlash,
+    ColorInvert,
+    Solarize,
+    NeonFlash,
+    Strobe,
+    LumaGlow,
+
+    // 9. Distortions (10)
+    WaveHorizontal,
+    WaveVertical,
+    RippleWater,
+    Vortex,
+    Shockwave,
+    Pinch,
+    PinchTwist,
+    SphereLens,
+    Swirl,
+    Kaleidoscope,
+
+    // 10. 3D Transitions (8)
+    CubeLeft,
+    CubeRight,
+    CubeUp,
+    CubeDown,
+    FlipHorizontal,
+    FlipVertical,
+    DoorSwingOpen,
+    FoldOver,
 };
 
 std::optional<TransitionKind> transitionKindFromName(std::string_view name);
@@ -37,6 +153,7 @@ std::string_view transitionKindName(TransitionKind kind);
 struct TransitionParams
 {
     double softness = 0.02; // width of the soft edge (wipes, iris, clock), fraction of the image
+    std::array<float, 4> color{0.0f, 0.0f, 0.0f, 1.0f}; // color for dipToColor
 };
 
 // Easing of the progress (SPEC §5.6 presets used by transitions).

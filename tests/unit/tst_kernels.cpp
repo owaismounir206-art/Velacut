@@ -436,7 +436,7 @@ private slots:
                 b.set(x, y, {std::uint8_t(255 - x * 7), std::uint8_t(x * 3 + y), 90, 255});
             }
         }
-        for (int k = int(TransitionKind::Dissolve); k <= int(TransitionKind::ZoomIn); ++k) {
+        for (int k = int(TransitionKind::Dissolve); k <= int(TransitionKind::FoldOver); ++k) {
             const auto kind = static_cast<TransitionKind>(k);
             const QByteArray name(transitionKindName(kind).data(), qsizetype(transitionKindName(kind).size()));
             QCOMPARE(transitionKindFromName(transitionKindName(kind)), kind);
@@ -488,7 +488,7 @@ private slots:
         QVERIFY2(library.errors().isEmpty(), qPrintable(library.errors().join(u'\n')));
         QCOMPARE(library.packId(), QStringLiteral("vedit.core"));
         QVERIFY(library.filters().size() >= 30);
-        QVERIFY(library.transitions().size() >= 18);
+        QVERIFY(library.transitions().size() >= 100);
         QVERIFY(library.textStyles().size() >= 24);
         // Preset animations: at least 30 entry, 30 exit and 30 loop animations (SPEC §5.6).
         for (const char *category : {"in", "out", "loop"}) {
@@ -512,7 +512,7 @@ private slots:
         check(library.transitions(), library.transitionCategories());
         check(library.textStyles(), library.textStyleCategories());
         // Every kernel is used by a transition; every filter changes something.
-        for (int k = int(TransitionKind::Dissolve); k <= int(TransitionKind::ZoomIn); ++k) {
+        for (int k = int(TransitionKind::Dissolve); k <= int(TransitionKind::FoldOver); ++k) {
             QVERIFY(std::any_of(library.transitions().begin(), library.transitions().end(),
                                 [k](const TransitionPreset &t) { return int(t.kernel) == k; }));
         }
