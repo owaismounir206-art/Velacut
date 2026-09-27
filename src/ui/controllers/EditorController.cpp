@@ -1140,7 +1140,8 @@ QString EditorController::exportEstimate(int shortSide, const QString &frameRate
 }
 
 bool EditorController::startExport(const QString &fileName, const QString &folder, int shortSide,
-                                   const QString &frameRate, int quality)
+                                   const QString &frameRate, int quality, bool normalizeLoudness,
+                                   double targetLufs)
 {
     const std::optional<Rational> rate = Rational::fromString(frameRate);
     if (!rate || m_exportJob->running()) {
@@ -1163,6 +1164,8 @@ bool EditorController::startExport(const QString &fileName, const QString &folde
     settings.size = engine::scaledToShortSide(canvasSize(), shortSide);
     settings.frameRate = *rate;
     settings.quality = static_cast<engine::ExportQuality>(std::clamp(quality, 0, 2));
+    settings.normalizeLoudness = normalizeLoudness;
+    settings.targetLufs = targetLufs;
     QJsonObject state = m_document->uiState();
     state.insert(u"export"_s, QJsonObject{{u"folder"_s, folder}, {u"quality"_s, quality}});
     m_document->setUiState(state);

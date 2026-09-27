@@ -577,6 +577,9 @@ int ClipInspector::kind() const
     if (clip->adjustment()) {
         return Adjustment;
     }
+    if (clip->compound()) {
+        return Video;
+    }
     if (const MediaClipData *media = clip->media()) {
         const Media *source = m_editor.data().findMedia(media->mediaId);
         if (!source || source->kind == MediaKind::Audio || media->streams == Streams::AudioOnly) {
@@ -593,7 +596,7 @@ bool ClipInspector::supports(const Clip &clip, const QString &section) const
     const Media *source = media ? m_editor.data().findMedia(media->mediaId) : nullptr;
     const bool audioOnly = media && (!source || source->kind == MediaKind::Audio || media->streams == Streams::AudioOnly);
     const bool image = source && source->kind == MediaKind::Image;
-    const bool visualMedia = media && !audioOnly;
+    const bool visualMedia = (media && !audioOnly) || clip.compound() != nullptr;
     // An adjustment layer has no picture of its own: only the looks it gives to what is under it.
     const bool adjustmentLayer = clip.adjustment() != nullptr;
     if (adjustmentLayer) {

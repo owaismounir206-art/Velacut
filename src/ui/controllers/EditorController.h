@@ -206,7 +206,7 @@ public:
     Q_INVOKABLE QVariantMap exportDefaults() const;
     Q_INVOKABLE QString exportEstimate(int shortSide, const QString &frameRate, int quality) const;
     Q_INVOKABLE bool startExport(const QString &fileName, const QString &folder, int shortSide, const QString &frameRate,
-                                 int quality);
+                                 int quality, bool normalizeLoudness = false, double targetLufs = -14.0);
     Q_INVOKABLE QString folderPath(const QUrl &url) const;
 
     // Saves at once (the window lost focus); saving is otherwise automatic.

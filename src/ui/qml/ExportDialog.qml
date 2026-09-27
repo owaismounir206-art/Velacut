@@ -117,6 +117,12 @@ Dialog {
                 wrapMode: Text.WordWrap
                 text: dialog.defaults.resolutions ? dialog.editor.exportEstimate(dialog.shortSide, dialog.rate, quality.currentIndex) : ""
             }
+            CheckBox {
+                id: normalizeAudio
+                objectName: "normalizeAudioCheck"
+                text: qsTr("Normalize loudness to −14 LUFS (EBU R128)")
+                checked: false
+            }
             RowLayout {
                 Layout.fillWidth: true
                 Label {
@@ -139,7 +145,7 @@ Dialog {
                     text: qsTr("Export")
                     onClicked: {
                         if (dialog.editor.startExport(nameField.text, dialog.folder, dialog.shortSide, dialog.rate,
-                                                      quality.currentIndex))
+                                                      quality.currentIndex, normalizeAudio.checked, -14.0))
                             dialog.stage = "running"
                         else
                             dialog.close()

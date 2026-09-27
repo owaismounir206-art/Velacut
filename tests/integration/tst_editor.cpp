@@ -7,6 +7,7 @@
 #include "core/serialization/ProjectJson.h"
 #include "document/Document.h"
 #include "document/DraftStore.h"
+#include "engine/analysis/Decoding.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/mlt/MltRuntime.h"
 #include "ui/controllers/ActionRegistry.h"
@@ -18,6 +19,7 @@
 #include <QElapsedTimer>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QTextStream>
 
 using namespace vedit;
 using namespace vedit::ui;
@@ -923,6 +925,153 @@ private slots:
         QVERIFY2(worstEdit < 50, qPrintable(QString::number(worstEdit)));
         QVERIFY2(serialization < 30, qPrintable(QString::number(serialization)));
 #endif
+    }
+
+    // The Phase 4 criterion (SPEC §8):
+    // "Correggo colore con LUT e curve, il mix audio rispetta −14 LUFS, e monto un'intervista a due camere sincronizzate dall'audio."
+    void phaseFourCriterion()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-phase4"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        auto editor = std::make_unique<EditorController>(store.createDraft(&error), analysis,
+                                                         QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor->player()->setVolume(0.0);
+        ClipInspector &inspector = *editor->inspector();
+
+        // 1. Prepare two camera clips for the interview: Camera 1 and Camera 2
+        const QString cam1 = m_files.landscape;
+        const QString cam2 = m_dir.filePath(u"media/cam2.mp4"_s);
+        QFile::remove(cam2);
+        QVERIFY(QFile::copy(cam1, cam2));
+
+        // Import both cameras onto the timeline
+        editor->importAndInsertPaths({cam1, cam2}, 0, editor->timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(*editor).clips.size(), size_t(2), 20000);
+        const QString cam1ClipId = mainTrack(*editor).clips[0].id.toString();
+        const QString cam2ClipId = mainTrack(*editor).clips[1].id.toString();
+
+        // 2. Select both camera clips and create a multicam clip synchronized by audio waveform
+        editor->select(cam1ClipId, false);
+        editor->select(cam2ClipId, true);
+        QCOMPARE(editor->selectedClips().size(), size_t(2));
+        QVERIFY(editor->createMulticamFromSelection(u"Interview Multicam"_s));
+
+        // Verify multicam compound clip created with master audio and 2 angles
+        QTRY_COMPARE(mainTrack(*editor).clips.size(), size_t(1));
+        const Clip &multicamClip = mainTrack(*editor).clips.front();
+        QVERIFY(multicamClip.compound() != nullptr);
+        QCOMPARE(multicamClip.compound()->activeAngle, 0);
+
+        const Sequence *nested = editor->data().findSequence(multicamClip.compound()->sequenceId);
+        QVERIFY(nested != nullptr);
+        QCOMPARE(nested->visualTracks.size(), size_t(2));
+        QCOMPARE(nested->audioTracks.size(), size_t(1));
+
+        // 3. Multicam editing: switch angles and cut at playhead
+        // Frame 60: cut and switch to Angle 2 (index 1)
+        editor->player()->seek(60);
+        QVERIFY(editor->switchMulticamAngle(1));
+        QCOMPARE(mainTrack(*editor).clips.size(), size_t(2));
+
+        const Clip &part1 = mainTrack(*editor).clips[0];
+        const Clip &part2 = mainTrack(*editor).clips[1];
+        QVERIFY(part1.compound() != nullptr && part2.compound() != nullptr);
+        QCOMPARE(part1.compound()->activeAngle, 0);
+        QCOMPARE(part1.duration.value(), 60);
+        QCOMPARE(part2.compound()->activeAngle, 1);
+        QCOMPARE(part2.start.value(), 60);
+        QCOMPARE(part2.compound()->sourceIn.value(), 60);
+
+        // Angle shortcut keys (1..9)
+        editor->select(part2.id.toString(), false);
+        editor->multicamAngleKey(1); // switch back to angle 1 (index 0)
+        QCOMPARE(mainTrack(*editor).clips[1].compound()->activeAngle, 0);
+        editor->multicamAngleKey(2); // switch to angle 2 (index 1)
+        QCOMPARE(mainTrack(*editor).clips[1].compound()->activeAngle, 1);
+
+        // 4. Color grading with .cube LUT and RGB curves
+        // Create a custom .cube LUT file
+        const QString lutPath = m_dir.filePath(u"interview_grade.cube"_s);
+        {
+            QFile lutFile(lutPath);
+            QVERIFY(lutFile.open(QIODevice::WriteOnly | QIODevice::Text));
+            QTextStream out(&lutFile);
+            out << "TITLE \"Interview Grade\"\n"
+                << "LUT_3D_SIZE 2\n"
+                << "0.0 0.0 0.0\n"
+                << "1.0 0.0 0.0\n"
+                << "0.0 1.0 0.0\n"
+                << "1.0 1.0 0.0\n"
+                << "0.0 0.0 1.0\n"
+                << "1.0 0.0 1.0\n"
+                << "0.0 1.0 1.0\n"
+                << "1.0 1.0 1.0\n";
+        }
+        QVERIFY(QFile::exists(lutPath));
+
+        // Select the first angle clip and apply LUT
+        editor->select(part1.id.toString(), false);
+        QVERIFY(inspector.active());
+        QVERIFY(inspector.set(u"lut.path"_s, lutPath));
+        QVERIFY(inspector.set(u"lut.intensity"_s, 0.85));
+        inspector.endGesture();
+        QCOMPARE(inspector.values().value(u"lut.path"_s).toString(), lutPath);
+        QCOMPARE(inspector.values().value(u"lut.intensity"_s).toDouble(), 0.85);
+
+        // Apply RGB curves and color wheels/balance
+        const QVariantList curvePoints{
+            QVariantList{0.0, 0.0},
+            QVariantList{0.4, 0.5},
+            QVariantList{1.0, 1.0}
+        };
+        QVERIFY(inspector.set(u"grade.curve.master"_s, curvePoints));
+        QVERIFY(inspector.set(u"grade.balance.r"_s, 1.1));
+        QVERIFY(inspector.set(u"grade.midtones.level"_s, 0.2));
+        QVERIFY(inspector.set(u"grade.hsl.red.saturation"_s, 0.3));
+        QVERIFY(inspector.set(u"adjust.temperature"_s, 10.0));
+        inspector.endGesture();
+
+        const QVariantList retrievedPoints = inspector.values().value(u"grade.curve.master"_s).toList();
+        QCOMPARE(retrievedPoints.size(), 3);
+        QCOMPARE(inspector.values().value(u"grade.balance.r"_s).toDouble(), 1.1);
+        QCOMPARE(inspector.values().value(u"grade.midtones.level"_s).toDouble(), 0.2);
+        QCOMPARE(inspector.values().value(u"grade.hsl.red.saturation"_s).toDouble(), 0.3);
+        QCOMPARE(inspector.values().value(u"adjust.temperature"_s).toDouble(), 10.0);
+
+        // 5. Export with audio mix normalized to -14 LUFS (EBU R128)
+        const QVariantMap defaults = editor->exportDefaults();
+        const QString folder = m_dir.filePath(u"videos-phase4"_s);
+        QDir().mkpath(folder);
+        QSignalSpy exported(editor.get(), &EditorController::exportFinished);
+        const int res = defaults.value(u"resolution"_s).toInt();
+        QVERIFY(editor->startExport(u"interview_multicam"_s, folder, res, u"30"_s, 1, true, -14.0));
+        QVERIFY(exported.wait(60000));
+        const QString output = exported.first().first().toString();
+        QVERIFY(QFile::exists(output));
+
+        // 6. Verify export specifications and -14 LUFS loudness
+        const QJsonObject probe = ffprobe(output);
+        QCOMPARE(streamOfType(probe, u"video"_s).value(u"codec_name"_s).toString(), u"h264"_s);
+        QCOMPARE(streamOfType(probe, u"audio"_s).value(u"codec_name"_s).toString(), u"aac"_s);
+
+        const auto loudness = engine::extractLoudness(output);
+        QVERIFY(loudness.has_value());
+        QVERIFY2(std::abs(loudness->integratedLufs - (-14.0)) <= 0.6,
+                 qPrintable(QStringLiteral("Loudness was %1 LUFS, expected -14.0 +/- 0.6")
+                                .arg(loudness->integratedLufs)));
+
+        // 7. Continuous save: close and reopen identical without manual save
+        QTRY_COMPARE_WITH_TIMEOUT(editor->saveState(), int(EditorController::Saved), 5000);
+        const ProjectId id = editor->data().id;
+        ProjectData before = editor->data();
+        QVERIFY(editor->close());
+        editor.reset();
+        auto reopened = std::make_unique<EditorController>(store.openDraft(id, &error), analysis,
+                                                           QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        ProjectData after = reopened->data();
+        before.modifiedAt = after.modifiedAt = {};
+        QVERIFY2(before == after, qPrintable(firstDifference(before, after)));
     }
 
     void cleanupTestCase() {}

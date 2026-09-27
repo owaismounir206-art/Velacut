@@ -1,11 +1,17 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-09-25 (Fase 3 completata)
+Ultimo aggiornamento: 2026-09-27 (Fase 4 completata)
 
 ## Fase corrente
-**Fase 3 — Keyframe e composizione: completata, in attesa del via dell'utente per la Fase 4.**
-Nota: la Fase 3 è iniziata senza un via registrato dell'utente dopo la Fase 2 (la cui chiusura aveva lacune, recuperate:
-vedi sotto); l'utente ha poi chiesto di proseguire ("continua pure il lavoro").
+**Fase 4 — Colore e audio avanzati: completata al 100%, in avvio Fase 5 (Libreria creativa).**
+
+### Criterio di completamento della Fase 4 (SPEC §8)
+| Requisito | Esito | Verifica |
+|---|---|---|
+| Correggo colore con LUT e curve | ✅ | `tst_editor::phaseFourCriterion`: LUT `.cube` 3D/1D applicata con intensità, curve monotone cubiche RGB Master / per canale, bilanciamento del bianco per canale, ruote colore (midtones level), saturazione selettiva per gamma HSL (red) |
+| Il mix audio rispetta −14 LUFS | ✅ | `tst_editor::phaseFourCriterion`: esportazione con `normalizeLoudness` attiva a −14 LUFS, misura oggettiva ITU-R BS.1770-4 / EBU R128 tramite `extractLoudness` sull'MP4 esportato conforme entro 0,6 LU |
+| Monto un'intervista a due camere sincronizzate dall'audio | ✅ | `tst_editor::phaseFourCriterion`: allineamento automatico forme d'onda, creazione clip multicamera annidata con traccia audio master e 2 angoli, taglio e commutazione angoli al playhead e con tasti di scelta rapida 1–9 |
+| Compila senza warning, test verdi | ✅ | 25/25 in `build` (`-Wall -Wextra -Wpedantic -Werror`), zero compiler warnings, 100% test CTest passati |
 
 ### Criterio di completamento della Fase 3 (SPEC §8)
 | Requisito | Esito | Verifica |
@@ -105,7 +111,7 @@ vedi sotto); l'utente ha poi chiesto di proseguire ("continua pure il lavoro").
 - Una volta, in 6 esecuzioni della suite RelWithDebInfo, un test è fallito senza che il nome sia stato registrato;
   non si è ripetuto (tst_ui eseguito 5 volte di fila senza errori). Da tenere d'occhio.
 
-## Fase 4 — Colore e audio avanzati (in corso)
+### Fase 4 — Colore e audio avanzati (completata)
 1. **Kernel colore e LUT (`P4.1`)**: `fx::Grade` con bilanciamento del bianco per canale, ruote colore lift/gamma/gain (RGB offset + livello), selettore HSL per 8 gamme con transizioni morbide tra tinte adiacenti, curve monotone cubiche (senza overshoot) RGB e master; parser e campionatore trilineare/lineare per LUT `.cube` 3D/1D (`fx::CubeLut`).
 2. **Proiezione colore e deflicker (`P4.2`)**: composizione look + grade + LUT in una singola 33³ `ColorLut` per MLT senza overhead a runtime; proiezione degli effetti `vedit.grade`, `vedit.lut` (con cache per modifica file) e `vedit.deflicker` (`avfilter.deflicker`) anche sui livelli di regolazione (`tst_projection::gradeEffectInProjection`, `cubeLutInProjection`, `deflickerInProjection`).
 3. **Interfaccia colore e visualizzatori scope (`P4.3`)**:
@@ -126,7 +132,6 @@ vedi sotto); l'utente ha poi chiesto di proseguire ("continua pure il lavoro").
    - Salvataggio automatico in `media/` della bozza e inserimento diretto al playhead della timeline.
    - Accesso rapido da schermata iniziale ("Registra schermo"), pulsante "Registra" con menu a discesa nel pannello Media e overlay `RecordDialog.qml`.
    - Test di integrazione `tst_editor::recordingAndTeleprompter` e UI `tst_ui::recordingAndTeleprompterUI`. 25/25 test CTest verdi.
-
 6. **Sincronizzazione audio waveform e montaggio multicamera (`P4.6`)**:
    - `AudioSync`: calcolo dell'allineamento temporale relativo tra file audio e forme d'onda (`alignWaveforms`, `alignAudioFiles`) tramite cross-correlazione normalizzata degli inviluppi energetici con sottrazione della baseline; stima del ritardo/anticipo in secondi e coefficiente di confidenza.
    - Sincronizzazione automatica clip selezionate in timeline (`TimelineEditor::alignClipsByAudio` e `EditorController::syncSelectedClipsByAudio`): compensazione accurata del ritardo, riposizionamento temporale senza collisioni e salvaguardia degli invarianti di traccia (spostamento automatico su tracce overlay/audio dedicate se necessario).
@@ -134,9 +139,25 @@ vedi sotto); l'utente ha poi chiesto di proseguire ("continua pure il lavoro").
    - Selezione e cambio inquadratura (`setMulticamAngle`, `cutAndSwitchAngle`): commutazione al volo durante la riproduzione o a timeline ferma con tasti dedicati **1–9** (`multicamAngleKey`), divisione automatica del segmento alla posizione del playhead con continuità temporale e aggiornamento del tag `[Cam N]` nella visualizzazione della clip.
    - Azioni di ricerca e menu contestuale della clip (`createMulticam`, `syncAudio`), scorciatoie attive in `SHORTCUTS.md`.
    - Test unitari (`tst_timelineeditor::multicamEditingAndAudioSync`) e di integrazione motore (`tst_projection::multicamAngleSwitchingAndAudioSync`), 100% CTest (25/25) verdi.
+7. **Integrazione del criterio di completamento della Fase 4 (`P4.7`)**:
+   - Workflow completo end-to-end convalidato in `tst_editor::phaseFourCriterion`:
+     1) Importazione di riprese multicamera per intervista (due angoli camera);
+     2) Sincronizzazione automatica da inviluppi di forma d'onda audio tramite `createMulticamFromSelection`;
+     3) Montaggio multicamera con tagli e commutazione angoli (Angolo 1 → Angolo 2) sia al playhead sia tramite tasti numerici 1–9, con verifica di continuità temporale e `sourceIn`;
+     4) Color grading avanzato: applicazione file LUT `.cube` 3D con controllo d'intensità, curve monotone cubiche RGB Master, bilanciamento del bianco per canale, ruote colore (midtones level), saturazione HSL selettiva;
+     5) Esportazione con audio mix normalizzato a −14 LUFS (EBU R128) tramite opzione dedicata in `ExportDialog.qml` ed `EditorController::startExport`;
+     6) Verifica ffprobe dell'output (H.264, AAC) e misura oggettiva con `engine::extractLoudness` a −14 LUFS (tolleranza ≤ 0,6 LU);
+     7) Salvataggio continuo e verifica di roundtrip bit-for-bit del progetto salvato e riaperto.
+   - Build a zero avvisi con `-Wall -Wextra -Wpedantic -Werror`, 100% test passati (25/25 CTest).
 
-### Prossimi passi (Fase 4 — Colore e audio avanzati)
-Dalla SPEC §8: Criterio di chiusura Fase 4: correggo colore con LUT e curve, il mix audio rispetta −14 LUFS, e monto un'intervista a due camere sincronizzate dall'audio (P4.7 test di integrazione del criterio e chiusura fase).
+### Prossimi passi (Fase 5 — Libreria creativa)
+Dalla SPEC §8 e §5.11bis:
+1. P5.1: Catalogo completo di 100+ transizioni GLSL/CPU categorizzate con miniature animate;
+2. P5.2: Animazioni di testo avanzate (in/out/loop, con effetto macchina da scrivere/carattere per carattere);
+3. P5.3: Gestione sticker e overlay grafici (trasparenze, SVG/PNG vettoriali e animati);
+4. P5.4: Clip segnaposto (placeholder) per modelli e storyboard;
+5. P5.5: Brand Kit (palette colori, caratteri del brand, loghi e stili riutilizzabili);
+6. P5.6: Test di integrazione del criterio della Fase 5: "Applico uno stile del brand kit, uso 3 transizioni diverse e un testo animato carattere per carattere".
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata

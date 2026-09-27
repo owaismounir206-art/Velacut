@@ -41,18 +41,23 @@ AudioSyncResult alignWaveforms(const Waveform &ref, const Waveform &target, doub
     }
 
     const double minA = *std::min_element(A.begin(), A.end());
+    const double maxA = *std::max_element(A.begin(), A.end());
     const double minB = *std::min_element(B.begin(), B.end());
+    const double maxB = *std::max_element(B.begin(), B.end());
+
+    const double baseA = (maxA - minA > 1e-3) ? minA : 0.0;
+    const double baseB = (maxB - minB > 1e-3) ? minB : 0.0;
 
     std::vector<double> normA(N);
     std::vector<double> normB(M);
     double energyA = 0.0;
     double energyB = 0.0;
     for (int i = 0; i < N; ++i) {
-        normA[i] = std::max(0.0, A[i] - minA);
+        normA[i] = std::max(0.0, A[i] - baseA);
         energyA += normA[i] * normA[i];
     }
     for (int j = 0; j < M; ++j) {
-        normB[j] = std::max(0.0, B[j] - minB);
+        normB[j] = std::max(0.0, B[j] - baseB);
         energyB += normB[j] * normB[j];
     }
 
