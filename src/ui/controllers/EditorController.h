@@ -9,6 +9,7 @@
 #include "ui/models/AudioLibraryModel.h"
 #include "ui/models/MediaPoolModel.h"
 #include "ui/models/TimelineModel.h"
+#include "RecordController.h"
 
 #include <QObject>
 #include <QSet>
@@ -61,6 +62,7 @@ class EditorController : public QObject
     Q_PROPERTY(vedit::engine::RenderJob *exportJob READ exportJob CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::ClipInspector *inspector READ inspector CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::ActionRegistry *actions READ actions CONSTANT FINAL)
+    Q_PROPERTY(vedit::ui::RecordController *recorder READ recorder CONSTANT FINAL)
     Q_PROPERTY(QStringList selection READ selection NOTIFY selectionChanged FINAL)
     // A transition selected on the timeline, or the cut (its first clip) chosen for a new one; "" = none.
     Q_PROPERTY(QString selectedTransition READ selectedTransition NOTIFY selectionChanged FINAL)
@@ -105,6 +107,8 @@ public:
     engine::RenderJob *exportJob() const { return m_exportJob.get(); }
     ClipInspector *inspector() const { return m_inspector; }
     ActionRegistry *actions() const { return m_actions; }
+    RecordController *recorder() const;
+    Q_INVOKABLE void startRecord(int mode = 0);
     QStringList selection() const;
     std::vector<ClipId> selectedClips() const;
     // The clip whose properties are shown: the last one clicked among the selected ones.
@@ -241,6 +245,7 @@ private:
     std::unique_ptr<TimelineModel> m_timeline;
     std::unique_ptr<engine::MediaImporter> m_importer;
     std::unique_ptr<engine::RenderJob> m_exportJob;
+    std::unique_ptr<RecordController> m_recorder;
     QSet<ClipId> m_selection;
     ClipId m_focus;
     TransitionId m_transition;

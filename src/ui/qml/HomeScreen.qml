@@ -98,6 +98,20 @@ Item {
 
             RowLayout {
                 Layout.fillWidth: true
+                spacing: Theme.space.md
+
+                Button {
+                    objectName: "recordScreenQuickButton"
+                    Layout.fillWidth: true
+                    variant: "tonal"
+                    iconName: "screen_record"
+                    text: qsTr("Record screen")
+                    onClicked: App.recordScreen()
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
                 Label {
                     Layout.fillWidth: true
                     role: "titleLarge"

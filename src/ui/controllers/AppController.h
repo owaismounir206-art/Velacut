@@ -66,6 +66,7 @@ public:
 
     // "New project": opens the editor at once, no questions (SPEC 0bis rule 1).
     Q_INVOKABLE bool newProject();
+    Q_INVOKABLE bool recordScreen();
     Q_INVOKABLE bool openDraft(const QString &draftId);
     // Back to the home screen (everything is already saved; this writes the last changes).
     Q_INVOKABLE void closeEditor();

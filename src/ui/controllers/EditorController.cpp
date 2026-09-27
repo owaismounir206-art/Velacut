@@ -3,6 +3,7 @@
 
 #include "ActionRegistry.h"
 #include "ClipInspector.h"
+#include "RecordController.h"
 #include "common/Paths.h"
 #include "core/edit/ProjectFormat.h"
 #include "core/edit/TimelineEditor.h"
@@ -108,6 +109,7 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     connect(m_player.get(), &engine::TimelinePlayer::positionChanged, this, &EditorController::splitAvailableChanged);
     m_inspector = new ClipInspector(*this);
     m_actions = new ActionRegistry(*this);
+    m_recorder = std::make_unique<RecordController>(*this);
 }
 
 EditorController::~EditorController()
@@ -1414,6 +1416,18 @@ bool EditorController::insertAdjustment(int durationFrames)
     const RationalTime position(playhead(), rate);
     const RationalTime duration(durationFrames > 0 ? durationFrames : 90, rate);
     return apply(TimelineEditor(data(), data().mainSequenceId).insertAdjustment(position, duration)); // selected
+}
+
+RecordController *EditorController::recorder() const
+{
+    return m_recorder.get();
+}
+
+void EditorController::startRecord(int mode)
+{
+    if (m_recorder) {
+        m_recorder->open(mode);
+    }
 }
 
 } // namespace vedit::ui

@@ -53,6 +53,40 @@ Rectangle {
                 ToolTip.text: qsTr("Import videos, photos and music (Ctrl+I)")
                 onClicked: panel.importFiles()
             }
+            Button {
+                id: recordButton
+                objectName: "recordButton"
+                variant: "tonal"
+                iconName: "fiber_manual_record"
+                text: qsTr("Record")
+                ToolTip.visible: hovered
+                ToolTip.text: qsTr("Record voiceover, screen or webcam")
+                onClicked: recordMenu.open()
+
+                Menu {
+                    id: recordMenu
+                    MenuItem {
+                        text: qsTr("Voiceover")
+                        icon.name: "mic"
+                        onTriggered: panel.editor.startRecord(0)
+                    }
+                    MenuItem {
+                        text: qsTr("Screen")
+                        icon.name: "screen_record"
+                        onTriggered: panel.editor.startRecord(1)
+                    }
+                    MenuItem {
+                        text: qsTr("Webcam")
+                        icon.name: "videocam"
+                        onTriggered: panel.editor.startRecord(2)
+                    }
+                    MenuItem {
+                        text: qsTr("Screen & Webcam")
+                        icon.name: "picture_in_picture"
+                        onTriggered: panel.editor.startRecord(3)
+                    }
+                }
+            }
         }
 
         GridView {

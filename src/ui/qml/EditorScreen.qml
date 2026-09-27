@@ -177,4 +177,9 @@ Item {
         anchors.centerIn: parent
         width: Math.min(root.width - 2 * Theme.space.xl, Theme.editor.dialogWidth)
     }
+
+    RecordDialog {
+        id: recordDialog
+        editor: root.editor
+    }
 }

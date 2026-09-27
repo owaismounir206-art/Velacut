@@ -13,6 +13,7 @@
 #include "ui/controllers/AppController.h"
 #include "ui/controllers/ClipInspector.h"
 #include "ui/controllers/EditorController.h"
+#include "ui/controllers/RecordController.h"
 #include "ui/models/TimelineModel.h"
 
 #include <QPainter>
@@ -854,6 +855,30 @@ private slots:
             QVERIFY(e.type != u"vedit.grade"_s);
             QVERIFY(e.type != u"vedit.deflicker"_s);
         }
+    }
+
+    void recordingAndTeleprompterUI()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        ui::RecordController *recorder = editor()->recorder();
+        QVERIFY(recorder);
+        recorder->setTestMode(true);
+
+        // 1. Open recording overlay from editor
+        editor()->startRecord(0);
+        QTRY_VERIFY(recorder->isActive());
+        QCOMPARE(recorder->mode(), static_cast<int>(ui::RecordController::VoiceOver));
+
+        // 2. Teleprompter
+        recorder->setTeleprompterVisible(true);
+        recorder->setTeleprompterText(u"Test teleprompter script"_s);
+        QVERIFY(recorder->teleprompterVisible());
+
+        // 3. Close
+        recorder->close();
+        QTRY_VERIFY(!recorder->isActive());
     }
 
     void noQmlWarnings()

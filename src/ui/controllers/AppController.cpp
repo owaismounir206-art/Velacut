@@ -2,6 +2,7 @@
 #include "AppController.h"
 
 #include "ActionRegistry.h"
+#include "RecordController.h"
 #include "document/Document.h"
 #include "document/DraftStore.h"
 #include "engine/analysis/MediaAnalysis.h"
@@ -107,6 +108,17 @@ bool AppController::newProject()
     m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper);
     m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
     emit editorChanged();
+    return true;
+}
+
+bool AppController::recordScreen()
+{
+    if (!newProject()) {
+        return false;
+    }
+    if (m_editor && m_editor->recorder()) {
+        m_editor->recorder()->open(1); // Screen mode
+    }
     return true;
 }
 

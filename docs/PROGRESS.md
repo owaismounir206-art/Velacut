@@ -119,9 +119,16 @@ vedi sotto); l'utente ha poi chiesto di proseguire ("continua pure il lavoro").
    - Auto-ducking: rilevamento audio sovrapposto su altre tracce e generazione automatica di keyframe di attenuazione con attacco (0.2s) e rilascio (0.4s).
    - Filtri ed effetti vocali: riduzione rumore `rnnoise` con intensità regolabile (0–100%), equalizzatore parametrico a 3 bande (bassi 100Hz, medi 1kHz, alti 10kHz), compressore dinamico con soglia e rapporto configurabili, effetti vocali ("Migliora voce", voce profonda, chipmunk, robot, radio, megafono, eco).
    - Controlli completi nel pannello proprietà (scheda Audio), test unitari (`tst_fx::loudnessSilence`, `loudnessSineTone`) e di integrazione (`tst_editor::audioProcessingAndLoudness`), 100% CTest (25/25) verdi.
+5. **Registrazione voce, teleprompter, webcam e schermo (`P4.5`)**:
+   - `RecordController`: gestione delle modalità Voce fuori campo (PCM stereo 48kHz WAV), Schermo (x11grab/PipeWire MP4), Webcam (V4L2 MP4) e Schermo+Webcam con riquadro PiP in angolo.
+   - Conto alla rovescia animato 3-2-1 e monitor di livello audio in tempo reale.
+   - Teleprompter integrato con testo scorrevole, velocità regolabile (10–300 px/s), pausa/riavvolgi e specchiatura orizzontale (flip per prompter beam-splitter).
+   - Salvataggio automatico in `media/` della bozza e inserimento diretto al playhead della timeline.
+   - Accesso rapido da schermata iniziale ("Registra schermo"), pulsante "Registra" con menu a discesa nel pannello Media e overlay `RecordDialog.qml`.
+   - Test di integrazione `tst_editor::recordingAndTeleprompter` e UI `tst_ui::recordingAndTeleprompterUI`. 25/25 test CTest verdi.
 
 ### Prossimi passi (Fase 4 — Colore e audio avanzati)
-Dalla SPEC §8: registrazione voce con teleprompter, registrazione schermo + webcam (PipeWire/portale), sincronizzazione audio esterno, multicamera. Criterio: correggo colore con LUT e curve, il mix audio rispetta −14 LUFS, e monto un'intervista a due camere sincronizzate dall'audio.
+Dalla SPEC §8: sincronizzazione audio tracce esterne (cross-correlazione waveform), editing multicamera (tasti 1-9). Criterio: correggo colore con LUT e curve, il mix audio rispetta −14 LUFS, e monto un'intervista a due camere sincronizzate dall'audio.
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata

@@ -25,6 +25,7 @@ qt_add_qml_module(vedit_ui
         controllers/EditorController.h controllers/EditorController.cpp
         controllers/ClipInspector.h controllers/ClipInspector.cpp
         controllers/ActionRegistry.h controllers/ActionRegistry.cpp
+        controllers/RecordController.h controllers/RecordController.cpp
     QML_FILES
         qml/Main.qml
         qml/Gallery.qml
@@ -55,6 +56,8 @@ qt_add_qml_module(vedit_ui
         qml/ColorWheel.qml
         qml/ColorCurvesEditor.qml
         qml/ScopePanel.qml
+        qml/Teleprompter.qml
+        qml/RecordDialog.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"
     PREFIX "/vedit/shaders"

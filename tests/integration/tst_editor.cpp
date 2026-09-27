@@ -818,6 +818,61 @@ private slots:
         QCOMPARE(inspector.values().value(u"audio.voiceEffect"_s).toString(), u"none"_s);
     }
 
+    void recordingAndTeleprompter()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-record"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        RecordController *recorder = editor.recorder();
+        QVERIFY(recorder);
+        recorder->setTestMode(true);
+
+        // 1. Open in voiceover mode
+        recorder->open(RecordController::VoiceOver);
+        QVERIFY(recorder->isActive());
+        QCOMPARE(recorder->mode(), int(RecordController::VoiceOver));
+
+        // 2. Teleprompter setup
+        recorder->setTeleprompterVisible(true);
+        recorder->setTeleprompterText(u"Benvenuti a questa dimostrazione di vedit."_s);
+        recorder->setTeleprompterSpeed(120.0);
+        recorder->setTeleprompterMirrored(true);
+        QCOMPARE(recorder->teleprompterText(), u"Benvenuti a questa dimostrazione di vedit."_s);
+        QCOMPARE(recorder->teleprompterSpeed(), 120.0);
+        QCOMPARE(recorder->teleprompterMirrored(), true);
+
+        // 3. Start recording and verify countdown
+        recorder->startCountdown();
+        QCOMPARE(recorder->status(), int(RecordController::CountingDown));
+        QCOMPARE(recorder->countdown(), 3);
+
+        // Advance to recording
+        recorder->startRecording();
+        QCOMPARE(recorder->status(), int(RecordController::Recording));
+        QVERIFY(recorder->isRecording());
+        QVERIFY(!recorder->isPaused());
+
+        // Pause and resume
+        recorder->pauseRecording();
+        QVERIFY(recorder->isPaused());
+        recorder->resumeRecording();
+        QVERIFY(!recorder->isPaused());
+
+        // Stop and save
+        recorder->stopRecording();
+        QCOMPARE(recorder->status(), int(RecordController::Idle));
+        QVERIFY(!recorder->isActive());
+        QVERIFY(!recorder->lastSavedPath().isEmpty());
+        QVERIFY(QFile::exists(recorder->lastSavedPath()));
+
+        // Check that the clip was inserted on the audio track
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.data().mainSequence()->audioTracks.empty(), 10000);
+        const auto &audioTrack = editor.data().mainSequence()->audioTracks.front();
+        QTRY_VERIFY_WITH_TIMEOUT(!audioTrack.clips.empty(), 10000);
+    }
+
     // SPEC §6: 500+ clips stay responsive. One edit = command + projection patch + timeline model diff; the continuous
     // save serializes the project on the UI thread (ARCHITECTURE §10: < 30 ms with 500 clips).
     void largeProjectStaysResponsive()
