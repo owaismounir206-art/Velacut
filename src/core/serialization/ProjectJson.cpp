@@ -123,7 +123,7 @@ const QSet<QString> kTextStyleKeys{u"font"_s,          u"size"_s,       u"color"
 const QSet<QString> kMediaClipKeys{u"mediaId"_s,       u"streams"_s,  u"sourceIn"_s, u"speed"_s,
                                    u"preservePitch"_s, u"reversed"_s, u"audio"_s};
 const QSet<QString> kColorClipKeys{u"color"_s};
-const QSet<QString> kCompoundClipKeys{u"sequenceId"_s, u"sourceIn"_s};
+const QSet<QString> kCompoundClipKeys{u"sequenceId"_s, u"sourceIn"_s, u"activeAngle"_s};
 
 QJsonObject unknownKeys(const QJsonObject &object, const QSet<QString> &known,
                         const QSet<QString> &alsoKnown = {})
@@ -429,6 +429,9 @@ QJsonObject clipJson(const Clip &clip)
             } else if constexpr (std::is_same_v<T, CompoundClipData>) {
                 object.insert(u"sequenceId"_s, idValue(data.sequenceId));
                 object.insert(u"sourceIn"_s, timeValue(data.sourceIn));
+                if (data.activeAngle != 0) {
+                    object.insert(u"activeAngle"_s, data.activeAngle);
+                }
             } else if constexpr (std::is_same_v<T, TextClipData>) {
                 object.insert(u"text"_s, data.text);
                 object.insert(u"style"_s, textStyleJson(data.style));
@@ -1133,11 +1136,14 @@ public:
         case ClipKind::Text:
             clip.payload = text(object, path);
             break;
-        case ClipKind::Compound:
+        case ClipKind::Compound: {
+            const int angle = object.value(u"activeAngle"_s).toInt(0);
             clip.payload = CompoundClipData{id<SequenceTag>(object, u"sequenceId"_s, path, true),
-                                            requiredTime(object, u"sourceIn"_s, path)};
+                                            requiredTime(object, u"sourceIn"_s, path),
+                                            angle};
             clip.extras = unknownKeys(object, kClipCommonKeys, kCompoundClipKeys);
             break;
+        }
         case ClipKind::Adjustment:
             clip.payload = AdjustmentClipData{clip.effects};
             clip.extras = unknownKeys(object, kClipCommonKeys);

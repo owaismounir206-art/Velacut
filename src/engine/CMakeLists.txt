@@ -5,6 +5,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(MLTPP REQUIRED IMPORTED_TARGET mlt++-7>=7.20)
 pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET libavformat libavcodec libavutil libswscale libswresample)
 add_library(vedit_engine STATIC
+    analysis/AudioSync.h analysis/AudioSync.cpp
     analysis/Decoding.h analysis/Decoding.cpp
     analysis/Fingerprint.h analysis/Fingerprint.cpp
     analysis/MediaAnalysis.h analysis/MediaAnalysis.cpp

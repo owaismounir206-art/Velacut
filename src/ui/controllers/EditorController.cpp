@@ -11,6 +11,7 @@
 #include "core/effects/Easing.h"
 #include "core/serialization/ProjectJson.h"
 #include "document/Document.h"
+#include "engine/analysis/AudioSync.h"
 #include "engine/analysis/Decoding.h"
 #include "engine/analysis/Fingerprint.h"
 #include "engine/analysis/MediaAnalysis.h"
@@ -1416,6 +1417,119 @@ bool EditorController::insertAdjustment(int durationFrames)
     const RationalTime position(playhead(), rate);
     const RationalTime duration(durationFrames > 0 ? durationFrames : 90, rate);
     return apply(TimelineEditor(data(), data().mainSequenceId).insertAdjustment(position, duration)); // selected
+}
+
+bool EditorController::syncSelectedClipsByAudio()
+{
+    const auto selected = selectedClips();
+    if (selected.size() < 2) {
+        emit message(tr("Select at least 2 clips to synchronize by audio."), false);
+        return false;
+    }
+    const ClipId refId = selected.front();
+    std::vector<ClipId> targets(selected.begin() + 1, selected.end());
+
+    auto calcOffset = [this](const Clip &ref, const Clip &target) -> std::optional<double> {
+        const MediaClipData *refMedia = ref.media();
+        const MediaClipData *tgtMedia = target.media();
+        if (!refMedia || !tgtMedia) {
+            return std::nullopt;
+        }
+        const Media *m1 = data().findMedia(refMedia->mediaId);
+        const Media *m2 = data().findMedia(tgtMedia->mediaId);
+        if (!m1 || !m2) {
+            return std::nullopt;
+        }
+        const auto res = engine::alignAudioFiles(m1->path, m2->path);
+        if (res.matched) {
+            return res.offsetSeconds;
+        }
+        return std::nullopt;
+    };
+
+    return apply(TimelineEditor(data(), data().mainSequenceId).alignClipsByAudio(refId, targets, calcOffset));
+}
+
+bool EditorController::createMulticamFromSelection(const QString &name)
+{
+    const auto selected = selectedClips();
+    if (selected.size() < 2) {
+        emit message(tr("Select at least 2 clips to create a multicam clip."), false);
+        return false;
+    }
+
+    auto calcOffset = [this](const Clip &ref, const Clip &target) -> std::optional<double> {
+        const MediaClipData *refMedia = ref.media();
+        const MediaClipData *tgtMedia = target.media();
+        if (!refMedia || !tgtMedia) {
+            return std::nullopt;
+        }
+        const Media *m1 = data().findMedia(refMedia->mediaId);
+        const Media *m2 = data().findMedia(tgtMedia->mediaId);
+        if (!m1 || !m2) {
+            return std::nullopt;
+        }
+        const auto res = engine::alignAudioFiles(m1->path, m2->path);
+        if (res.matched) {
+            return res.offsetSeconds;
+        }
+        return std::nullopt;
+    };
+
+    return apply(TimelineEditor(data(), data().mainSequenceId).createMulticamClip(selected, name, calcOffset));
+}
+
+bool EditorController::switchMulticamAngle(int angle)
+{
+    if (angle < 0) {
+        return false;
+    }
+    std::optional<ClipId> targetClip = focusClip();
+    if (targetClip) {
+        const Clip *c = data().findClip(*targetClip);
+        if (!c || !c->compound()) {
+            targetClip.reset();
+        }
+    }
+    const Rational rate = data().settings.frameRate;
+    const RationalTime pos(playhead(), rate);
+    if (!targetClip) {
+        const Sequence *seq = data().findSequence(data().mainSequenceId);
+        if (seq) {
+            for (const Track &t : seq->visualTracks) {
+                for (const Clip &c : t.clips) {
+                    if (c.compound() && pos >= c.start && pos < c.end()) {
+                        targetClip = c.id;
+                        break;
+                    }
+                }
+                if (targetClip) {
+                    break;
+                }
+            }
+        }
+    }
+    if (!targetClip) {
+        return false;
+    }
+
+    TimelineEditor editor(data(), data().mainSequenceId);
+    if (m_player && m_player->playing()) {
+        return apply(editor.cutAndSwitchAngle(*targetClip, angle, pos));
+    } else {
+        const Clip *c = data().findClip(*targetClip);
+        if (c && pos > c->start && pos < c->end()) {
+            return apply(editor.cutAndSwitchAngle(*targetClip, angle, pos));
+        }
+        return apply(editor.setMulticamAngle(*targetClip, angle));
+    }
+}
+
+void EditorController::multicamAngleKey(int number1To9)
+{
+    if (number1To9 >= 1 && number1To9 <= 9) {
+        switchMulticamAngle(number1To9 - 1);
+    }
 }
 
 RecordController *EditorController::recorder() const

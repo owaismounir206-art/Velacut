@@ -193,6 +193,12 @@ public:
     Q_INVOKABLE bool expandCompoundClip(const QString &clipId = {});
     Q_INVOKABLE bool insertAdjustment(int durationFrames = 90);
 
+    // Multicam and audio sync (Phase 4)
+    Q_INVOKABLE bool syncSelectedClipsByAudio();
+    Q_INVOKABLE bool createMulticamFromSelection(const QString &name = {});
+    Q_INVOKABLE bool switchMulticamAngle(int angle);
+    Q_INVOKABLE void multicamAngleKey(int number1To9);
+
     // Format (SPEC 0bis rule 1: changeable with one click)
     Q_INVOKABLE void setCanvasPreset(int preset);
 

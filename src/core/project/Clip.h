@@ -295,6 +295,7 @@ struct CompoundClipData
 {
     SequenceId sequenceId;
     RationalTime sourceIn;
+    int activeAngle = 0; // Multicam angle index (0-indexed track index)
 
     friend bool operator==(const CompoundClipData &, const CompoundClipData &) = default;
 };

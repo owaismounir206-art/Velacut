@@ -127,8 +127,16 @@ vedi sotto); l'utente ha poi chiesto di proseguire ("continua pure il lavoro").
    - Accesso rapido da schermata iniziale ("Registra schermo"), pulsante "Registra" con menu a discesa nel pannello Media e overlay `RecordDialog.qml`.
    - Test di integrazione `tst_editor::recordingAndTeleprompter` e UI `tst_ui::recordingAndTeleprompterUI`. 25/25 test CTest verdi.
 
+6. **Sincronizzazione audio waveform e montaggio multicamera (`P4.6`)**:
+   - `AudioSync`: calcolo dell'allineamento temporale relativo tra file audio e forme d'onda (`alignWaveforms`, `alignAudioFiles`) tramite cross-correlazione normalizzata degli inviluppi energetici con sottrazione della baseline; stima del ritardo/anticipo in secondi e coefficiente di confidenza.
+   - Sincronizzazione automatica clip selezionate in timeline (`TimelineEditor::alignClipsByAudio` e `EditorController::syncSelectedClipsByAudio`): compensazione accurata del ritardo, riposizionamento temporale senza collisioni e salvaguardia degli invarianti di traccia (spostamento automatico su tracce overlay/audio dedicate se necessario).
+   - Sequenze multicamera: `CompoundClipData` esteso con campo serializzato `activeAngle` (0-indicizzato, con backward-compatibility e documentazione in `FILE_FORMAT.md`). Creazione di clip multicam (`createMulticamClip`) con sincronizzazione automatica degli angoli, tracce video parallele per ciascun angolo e traccia audio master continua.
+   - Selezione e cambio inquadratura (`setMulticamAngle`, `cutAndSwitchAngle`): commutazione al volo durante la riproduzione o a timeline ferma con tasti dedicati **1–9** (`multicamAngleKey`), divisione automatica del segmento alla posizione del playhead con continuità temporale e aggiornamento del tag `[Cam N]` nella visualizzazione della clip.
+   - Azioni di ricerca e menu contestuale della clip (`createMulticam`, `syncAudio`), scorciatoie attive in `SHORTCUTS.md`.
+   - Test unitari (`tst_timelineeditor::multicamEditingAndAudioSync`) e di integrazione motore (`tst_projection::multicamAngleSwitchingAndAudioSync`), 100% CTest (25/25) verdi.
+
 ### Prossimi passi (Fase 4 — Colore e audio avanzati)
-Dalla SPEC §8: sincronizzazione audio tracce esterne (cross-correlazione waveform), editing multicamera (tasti 1-9). Criterio: correggo colore con LUT e curve, il mix audio rispetta −14 LUFS, e monto un'intervista a due camere sincronizzate dall'audio.
+Dalla SPEC §8: Criterio di chiusura Fase 4: correggo colore con LUT e curve, il mix audio rispetta −14 LUFS, e monto un'intervista a due camere sincronizzate dall'audio (P4.7 test di integrazione del criterio e chiusura fase).
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata

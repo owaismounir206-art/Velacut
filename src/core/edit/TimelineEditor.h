@@ -111,6 +111,15 @@ public:
     EditResult updateClipMarker(const ClipId &clipId, const Marker &marker);
     EditResult setClipAnimations(const ClipId &clipId, const ClipAnimations &animations);
 
+    // ---- Phase 4 ----
+    using AudioOffsetFn = std::function<std::optional<double>(const Clip &ref, const Clip &target)>;
+    EditResult alignClipsByAudio(const ClipId &refClipId, const std::vector<ClipId> &targetClipIds,
+                                 const AudioOffsetFn &calcOffset);
+    EditResult createMulticamClip(const std::vector<ClipId> &clipIds, const QString &name = QString(),
+                                  const AudioOffsetFn &calcOffset = nullptr);
+    EditResult setMulticamAngle(const ClipId &clipId, int angle);
+    EditResult cutAndSwitchAngle(const ClipId &clipId, int angle, const RationalTime &time);
+
     // Duration of a new text and of a freeze frame (SPEC 0bis rule 6).
     static constexpr int kDefaultTextSeconds = 3;
 

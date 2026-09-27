@@ -545,6 +545,8 @@ EditResult TimelineEditor::splitClip(const ClipId &clipId, const RationalTime &r
         if (MediaClipData *firstMedia = first.media()) {
             firstMedia->audio.fadeOut.reset();
         }
+    } else if (CompoundClipData *compound = second.compound()) {
+        compound->sourceIn += offset;
     } else {
         shiftClipLocalTime(second, offset);
     }
@@ -1410,6 +1412,305 @@ EditResult TimelineEditor::updateClipMarker(const ClipId &clipId, const Marker &
 EditResult TimelineEditor::setClipAnimations(const ClipId &clipId, const ClipAnimations &animations)
 {
     return updateClips({clipId}, [&](Clip &c) { c.animations = animations; }, tr("Animation"));
+}
+
+EditResult TimelineEditor::alignClipsByAudio(const ClipId &refClipId, const std::vector<ClipId> &targetClipIds,
+                                             const AudioOffsetFn &calcOffset)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    if (!calcOffset) {
+        return fail(tr("No alignment algorithm provided."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, refClipId);
+    if (!ref) {
+        return fail(tr("Reference clip not found."));
+    }
+    const Clip refClip = ref->clip();
+
+    struct TargetMove {
+        ClipId id;
+        RationalTime newStart;
+    };
+    std::vector<TargetMove> moves;
+    RationalTime minStart = refClip.start;
+
+    for (const ClipId &tgtId : targetClipIds) {
+        if (tgtId == refClipId) {
+            continue;
+        }
+        const auto tgtRef = findClip(modified, tgtId);
+        if (!tgtRef) {
+            continue;
+        }
+        const Clip &tgtClip = tgtRef->clip();
+        const auto offsetSecOpt = calcOffset(refClip, tgtClip);
+        if (!offsetSecOpt) {
+            continue;
+        }
+        const double offsetSec = *offsetSecOpt;
+        const RationalTime offsetTime(static_cast<std::int64_t>(std::round(offsetSec * m_rate.toDouble())), m_rate);
+
+        const RationalTime refSourceIn = refClip.media() ? refClip.media()->sourceIn : RationalTime(0, m_rate);
+        const RationalTime tgtSourceIn = tgtClip.media() ? tgtClip.media()->sourceIn : RationalTime(0, m_rate);
+        const RationalTime alignedStart = refClip.start + (tgtSourceIn - refSourceIn) - offsetTime;
+        if (alignedStart < minStart) {
+            minStart = alignedStart;
+        }
+        moves.push_back({tgtClip.id, alignedStart});
+    }
+
+    if (moves.empty()) {
+        return fail(tr("No clips could be aligned."));
+    }
+
+    RationalTime globalShift(0, m_rate);
+    if (minStart.value() < 0) {
+        globalShift = -minStart;
+        auto curRef = findClip(modified, refClipId);
+        if (curRef) {
+            curRef->clip().start += globalShift;
+        }
+    }
+
+    const TrackId refTrackId = ref->track->id;
+
+    for (const auto &m : moves) {
+        auto curTgt = findClip(modified, m.id);
+        if (curTgt) {
+            curTgt->clip().start = m.newStart + globalShift;
+            if (curTgt->track->id == refTrackId || !hasRoom(*curTgt->track, curTgt->clip().range(), m.id)) {
+                Clip moved = curTgt->clip();
+                auto &trackClips = curTgt->track->clips;
+                trackClips.erase(trackClips.begin() + static_cast<std::ptrdiff_t>(curTgt->index));
+                if (curTgt->track->kind == TrackKind::Audio) {
+                    Track &dest = audioTrackFor(modified, moved.range());
+                    insertSorted(dest, std::move(moved));
+                } else {
+                    Track &dest = overlayTrackFor(modified, curTgt->track->kind, moved.range());
+                    insertSorted(dest, std::move(moved));
+                }
+            }
+        }
+    }
+
+    auto mainTrackRef = findTrack(modified, refTrackId);
+    if (mainTrackRef && isMagneticMain(modified, *mainTrackRef->track)) {
+        pack(*mainTrackRef->track, m_rate);
+    }
+
+    return finish(std::move(modified), tr("Align clips by audio"), refClipId);
+}
+
+EditResult TimelineEditor::createMulticamClip(const std::vector<ClipId> &clipIds, const QString &name,
+                                              const AudioOffsetFn &calcOffset)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    if (clipIds.size() < 2) {
+        return fail(tr("Select at least 2 clips for multicam."));
+    }
+
+    Sequence tempSeq = *m_sequence;
+    std::vector<Clip> clips;
+    TrackId primaryTrackId;
+    for (const ClipId &id : clipIds) {
+        const auto ref = findClip(tempSeq, id);
+        if (ref) {
+            clips.push_back(ref->clip());
+            if (primaryTrackId.isNull()) {
+                primaryTrackId = ref->track->id;
+            }
+        }
+    }
+    if (clips.size() < 2) {
+        return fail(tr("Clips not found for multicam."));
+    }
+
+    const Clip &refClip = clips.front();
+    std::vector<RationalTime> relStarts(clips.size(), RationalTime(0, m_rate));
+    RationalTime minRel(0, m_rate);
+
+    for (size_t i = 1; i < clips.size(); ++i) {
+        RationalTime rel(0, m_rate);
+        bool aligned = false;
+        if (calcOffset) {
+            const auto optSec = calcOffset(refClip, clips[i]);
+            if (optSec) {
+                const RationalTime offsetTime(static_cast<std::int64_t>(std::round(*optSec * m_rate.toDouble())), m_rate);
+                const RationalTime refSourceIn = refClip.media() ? refClip.media()->sourceIn : RationalTime(0, m_rate);
+                const RationalTime tgtSourceIn = clips[i].media() ? clips[i].media()->sourceIn : RationalTime(0, m_rate);
+                rel = (tgtSourceIn - refSourceIn) - offsetTime;
+                aligned = true;
+            }
+        }
+        if (!aligned) {
+            rel = clips[i].start - refClip.start;
+        }
+        relStarts[i] = rel;
+        if (rel < minRel) {
+            minRel = rel;
+        }
+    }
+
+    Sequence nestedSeq;
+    nestedSeq.id = SequenceId::create();
+    nestedSeq.name = name.isEmpty() ? tr("Multicam Clip") : name;
+    nestedSeq.canvas = m_sequence->canvas;
+    nestedSeq.defaultBackground = m_sequence->defaultBackground;
+
+    RationalTime maxNestedEnd(0, m_rate);
+    for (size_t i = 0; i < clips.size(); ++i) {
+        Track t = makeTrack(TrackKind::Video);
+        t.name = tr("Angle %1").arg(i + 1);
+        Clip c = clips[i];
+        c.start = relStarts[i] - minRel;
+        const RationalTime clipEnd = c.start + c.duration;
+        if (clipEnd > maxNestedEnd) {
+            maxNestedEnd = clipEnd;
+        }
+        insertSorted(t, std::move(c));
+        nestedSeq.visualTracks.push_back(std::move(t));
+    }
+
+    // Master audio track from Angle 1
+    if (refClip.media()) {
+        Track audioTrack = makeTrack(TrackKind::Audio);
+        audioTrack.name = tr("Audio (Angle 1)");
+        Clip audioClip = refClip;
+        audioClip.id = ClipId::create();
+        audioClip.media()->streams = Streams::AudioOnly;
+        audioClip.start = relStarts[0] - minRel;
+        insertSorted(audioTrack, std::move(audioClip));
+        nestedSeq.audioTracks.push_back(std::move(audioTrack));
+    }
+
+    Sequence modified = *m_sequence;
+    for (const ClipId &id : clipIds) {
+        const auto ref = findClip(modified, id);
+        if (ref) {
+            auto &trackClips = ref->track->clips;
+            trackClips.erase(std::remove_if(trackClips.begin(), trackClips.end(),
+                                            [&](const Clip &c) { return c.id == id; }),
+                             trackClips.end());
+        }
+    }
+
+    Clip compoundClip;
+    compoundClip.id = ClipId::create();
+    compoundClip.name = nestedSeq.name;
+    compoundClip.start = refClip.start;
+    compoundClip.duration = maxNestedEnd;
+    compoundClip.payload = CompoundClipData{nestedSeq.id, RationalTime(0, m_rate), 0};
+
+    auto targetTrackRef = findTrack(modified, primaryTrackId);
+    if (!targetTrackRef || !clipAllowedOnTrack(compoundClip, targetTrackRef->track->kind)) {
+        targetTrackRef = findTrack(modified, modified.visualTracks.front().id);
+    }
+    insertSorted(*targetTrackRef->track, compoundClip);
+    if (modified.magneticMain && !modified.visualTracks.empty()) {
+        pack(modified.visualTracks.front(), m_rate);
+    }
+
+    EditResult result;
+    result.script.push_back(edits::insertSequence(static_cast<int>(m_project.sequences.size()), std::move(nestedSeq)));
+    EditScript seqEdits = diffSequence(*m_sequence, modified);
+    for (auto &e : seqEdits) {
+        result.script.push_back(std::move(e));
+    }
+    result.text = tr("Create multicam clip");
+    result.primaryClip = compoundClip.id;
+    return result;
+}
+
+EditResult TimelineEditor::setMulticamAngle(const ClipId &clipId, int angle)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    if (angle < 0) {
+        return fail(tr("Invalid angle."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("Clip not found."));
+    }
+    CompoundClipData *compound = ref->clip().compound();
+    if (!compound) {
+        return fail(tr("Clip is not a multicam or compound clip."));
+    }
+    compound->activeAngle = angle;
+    return finish(std::move(modified), tr("Set camera angle"), clipId);
+}
+
+EditResult TimelineEditor::cutAndSwitchAngle(const ClipId &clipId, int angle, const RationalTime &requestedTime)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    if (angle < 0) {
+        return fail(tr("Invalid angle."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("Clip not found."));
+    }
+    Track &track = *ref->track;
+    if (track.locked) {
+        return fail(tr("The track is locked."));
+    }
+    const RationalTime time = requestedTime.rescaled(m_rate, Rounding::NearestEven);
+    Clip &first = ref->clip();
+    if (time > first.start && time < first.end()) {
+        const RationalTime offset = time - first.start;
+        Clip second = first;
+        second.id = ClipId::create();
+        second.start = time;
+        second.duration = first.duration - offset;
+        for (Effect &effect : second.effects) {
+            effect.id = EffectId::create();
+        }
+        for (Marker &marker : second.markers) {
+            marker.id = MarkerId::create();
+        }
+        if (MediaClipData *media = second.media()) {
+            media->sourceIn += RationalTime(sourceFrames(offset.value(), media->speed), m_rate);
+            media->audio.fadeIn.reset();
+            if (MediaClipData *firstMedia = first.media()) {
+                firstMedia->audio.fadeOut.reset();
+            }
+        } else if (CompoundClipData *compound = second.compound()) {
+            compound->sourceIn += offset;
+            compound->activeAngle = angle;
+        } else {
+            shiftClipLocalTime(second, offset);
+        }
+        first.duration = offset;
+        for (Transition &transition : track.transitions) {
+            if (transition.from == first.id) {
+                transition.from = second.id;
+            }
+        }
+        const ClipId secondId = second.id;
+        track.clips.insert(track.clips.begin() + static_cast<std::ptrdiff_t>(ref->index) + 1, std::move(second));
+        clampTransitions(track);
+        if (isMagneticMain(modified, track)) {
+            pack(track, m_rate);
+        }
+        return finish(std::move(modified), tr("Cut and switch camera angle"), secondId);
+    }
+
+    CompoundClipData *compound = first.compound();
+    if (!compound) {
+        return fail(tr("Clip is not a multicam or compound clip."));
+    }
+    compound->activeAngle = angle;
+    return finish(std::move(modified), tr("Set camera angle"), clipId);
 }
 
 } // namespace vedit

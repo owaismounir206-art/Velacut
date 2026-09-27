@@ -178,7 +178,9 @@ Item {
         // Grouping (Phase 3): shown when it applies.
         Repeater {
             model: [{ id: "createCompound", icon: "stacks", text: qsTr("Group into a compound clip") },
-                    { id: "expandCompound", icon: "stacks", text: qsTr("Ungroup the compound clip") }]
+                    { id: "expandCompound", icon: "stacks", text: qsTr("Ungroup the compound clip") },
+                    { id: "createMulticam", icon: "video_settings", text: qsTr("Create multicam clip") },
+                    { id: "syncAudio", icon: "sync", text: qsTr("Synchronize audio") }]
             delegate: MenuItem {
                 required property var modelData
                 objectName: modelData.id + "Item"

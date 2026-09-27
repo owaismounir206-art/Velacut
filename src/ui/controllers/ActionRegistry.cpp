@@ -130,6 +130,12 @@ ActionRegistry::ActionRegistry(EditorController &editor)
              return clip && std::holds_alternative<CompoundClipData>(clip->payload);
          },
          [this] { return m_editor.expandCompoundClip(); }});
+    add({u"createMulticam"_s, tr("Create multicam clip"), u"video_settings"_s, {}, 0,
+         [this] { return m_editor.selectedClips().size() >= 2; },
+         [this] { return m_editor.createMulticamFromSelection(); }});
+    add({u"syncAudio"_s, tr("Synchronize audio"), u"sync"_s, {}, 0,
+         [this] { return m_editor.selectedClips().size() >= 2; },
+         [this] { return m_editor.syncSelectedClipsByAudio(); }});
     add({u"addAdjustment"_s, tr("Add an adjustment layer"), u"tune"_s, {}, 0, always,
          [this] { return m_editor.insertAdjustment(); }});
     add({u"undo"_s, tr("Undo"), u"undo"_s, tr("Ctrl+Z"), 0, [this] { return m_editor.canUndo(); }, [this] {

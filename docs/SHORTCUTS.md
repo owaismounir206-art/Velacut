@@ -29,6 +29,7 @@ I tasti singoli (lettere, frecce, Spazio) non agiscono mentre si scrive in un ca
 | Ctrl+K | Ricerca universale: comandi, filtri, transizioni, testi, animazioni, musica, media (frecce e Invio) |
 | Ctrl+Alt+C / Ctrl+Alt+V | Copia / incolla gli attributi della clip (aspetto, posizione, sfondo, volume, stile del testo) |
 | M | Aggiunge un marker al playhead (sulla clip selezionata, altrimenti sul video) |
+| 1–9 | Cambio inquadratura in tempo reale o su clip multicamera selezionata |
 
 ### Mouse nell'anteprima
 | Gesto | Azione |
@@ -56,4 +57,3 @@ I tasti singoli (lettere, frecce, Spazio) non agiscono mentre si scrive in un ca
 | Tasto | Azione | Fase |
 |---|---|---|
 | Q / W | Taglia a sinistra / a destra del playhead | 2 |
-| 1–9 | Cambio inquadratura in multicamera | 4 |

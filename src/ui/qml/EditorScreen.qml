@@ -54,6 +54,17 @@ Item {
     Shortcut { sequence: "Ctrl+Alt+V"; enabled: !root.typing; onActivated: root.editor.actions.trigger("pasteAttributes") }
     Shortcut { sequence: "M"; enabled: !root.typing; onActivated: root.editor.addMarker() }
 
+    // Multicam camera switching (keys 1-9, SPEC §5.10 & §8)
+    Shortcut { sequence: "1"; enabled: !root.typing; onActivated: root.editor.multicamAngleKey(1) }
+    Shortcut { sequence: "2"; enabled: !root.typing; onActivated: root.editor.multicamAngleKey(2) }
+    Shortcut { sequence: "3"; enabled: !root.typing; onActivated: root.editor.multicamAngleKey(3) }
+    Shortcut { sequence: "4"; enabled: !root.typing; onActivated: root.editor.multicamAngleKey(4) }
+    Shortcut { sequence: "5"; enabled: !root.typing; onActivated: root.editor.multicamAngleKey(5) }
+    Shortcut { sequence: "6"; enabled: !root.typing; onActivated: root.editor.multicamAngleKey(6) }
+    Shortcut { sequence: "7"; enabled: !root.typing; onActivated: root.editor.multicamAngleKey(7) }
+    Shortcut { sequence: "8"; enabled: !root.typing; onActivated: root.editor.multicamAngleKey(8) }
+    Shortcut { sequence: "9"; enabled: !root.typing; onActivated: root.editor.multicamAngleKey(9) }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0

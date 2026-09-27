@@ -343,7 +343,8 @@ La traccia `captions` aggiunge `captionStyle` (stesso schema di `style` + `prese
 
 **`adjustment`** (tracce `adjustment`): `{ "effects": [ Effect, … ] }`, livello di regolazione (§5.6).
 
-**`compound`**: `{ "sequenceId": "…", "sourceIn": RationalTime }`; la sequenza annidata è in `sequences[]`.
+**`compound`**: `{ "sequenceId": "…", "sourceIn": RationalTime, "activeAngle"?: int }`; la sequenza annidata è in `sequences[]`.
+Per sequenze multicamera con più tracce video/angoli, `activeAngle` (0-indicizzato, default 0) indica la traccia video attiva / angolatura mostrata.
 Non sono ammessi cicli (A contiene B che contiene A): il file verrebbe rifiutato come corrotto.
 
 ### 5.6 Effetti (`effects[]`)

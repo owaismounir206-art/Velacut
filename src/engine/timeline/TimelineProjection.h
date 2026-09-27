@@ -76,7 +76,7 @@ public:
     ~TimelineProjection();
 
     // Full rebuild.
-    void build(const ProjectData &project, const SequenceId &sequenceId);
+    void build(const ProjectData &project, const SequenceId &sequenceId, int activeAngle = -1);
     // True if `changes` alter the structure of the graph (sequence, track list, project settings): update() would
     // replace the whole tractor, so a running consumer must be stopped first.
     bool needsRebuild(const ProjectData &project, const ChangeSet &changes) const;
@@ -175,7 +175,7 @@ private:
         TrackId id;
         SlotKind kind;
     };
-    static std::vector<StructureSlot> structureOf(const Sequence &sequence);
+    static std::vector<StructureSlot> structureOf(const Sequence &sequence, int activeAngle = -1);
 
     void fillSlot(TrackSlot &slot, const Track &track, const ProjectData &project, bool anySolo);
     std::vector<Entry> clipEntries(TrackSlot &slot, const Track &track, const ProjectData &project);
@@ -193,7 +193,7 @@ private:
     void patch(TrackSlot &slot, std::vector<Entry> desired);
     std::shared_ptr<Mlt::Producer> colorProducer(const Color &color);
     std::shared_ptr<Mlt::Producer> textProducer(const TextClipData &text);
-    std::shared_ptr<Mlt::Producer> compoundProducer(const ProjectData &project, const SequenceId &sequenceId);
+    std::shared_ptr<Mlt::Producer> compoundProducer(const ProjectData &project, const SequenceId &sequenceId, int activeAngle = 0);
     void retireEntries(Mlt::Playlist &playlist);
     void updateBackground();
     std::shared_ptr<Mlt::Producer> producerFor(const Media &media, double speed, bool preservePitch);
@@ -217,7 +217,7 @@ private:
     std::vector<std::unique_ptr<Mlt::Filter>> m_adjustmentFilters;
     QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_colors; // colour producers, shared by cuts
     QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_texts;  // text producers, by content
-    QHash<SequenceId, std::shared_ptr<TimelineProjection>> m_compounds;
+    QHash<QPair<SequenceId, int>, std::shared_ptr<TimelineProjection>> m_compounds;
     std::map<QString, std::pair<QDateTime, std::shared_ptr<const fx::CubeLut>>> m_cubeLuts;
     Preview m_preview;
     int m_duration = 1;

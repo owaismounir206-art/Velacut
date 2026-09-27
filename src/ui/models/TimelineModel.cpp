@@ -155,6 +155,9 @@ void TimelineModel::rebuild()
                     }
                 } else if (const TextClipData *text = clip.text(); text && clip.name.isEmpty()) {
                     entry.name = text->text.section(u'\n', 0, 0); // what the text says
+                } else if (const CompoundClipData *compound = clip.compound()) {
+                    const QString base = clip.name.isEmpty() ? tr("Multicam") : clip.name;
+                    entry.name = QStringLiteral("%1 [Cam %2]").arg(base).arg(compound->activeAngle + 1);
                 } else {
                     entry.name = clip.name;
                 }

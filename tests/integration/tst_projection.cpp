@@ -7,6 +7,7 @@
 #include "engine/mlt/MltRuntime.h"
 #include "engine/timeline/ClipPlacement.h"
 #include "engine/timeline/MediaProducerCache.h"
+#include "engine/analysis/AudioSync.h"
 #include "engine/timeline/TimelineProjection.h"
 
 #include <QCryptographicHash>
@@ -763,6 +764,90 @@ private slots:
         const QImage img = renderFresh1(data, 5);
         const QRgb p = pixel(img, 160, 90);
         QVERIFY(qRed(p) > 200 && qGreen(p) < 50 && qBlue(p) < 50);
+    }
+
+    void multicamAngleSwitchingAndAudioSync()
+    {
+        // 1. Test waveform alignment with synthetic waveforms
+        Waveform wf1;
+        wf1.bucketsPerSecond = 100;
+        // 5 seconds of signal with a prominent pulse at 2.0s (bucket 200)
+        wf1.peaks.resize(500 * 2);
+        for (int i = 0; i < 500; ++i) {
+            int8_t val = (i >= 200 && i <= 210) ? 100 : 10;
+            wf1.peaks[2 * i] = -val;
+            wf1.peaks[2 * i + 1] = val;
+        }
+
+        Waveform wf2;
+        wf2.bucketsPerSecond = 100;
+        // Same signal delayed by 1.0s (pulse at 3.0s, bucket 300)
+        wf2.peaks.resize(500 * 2);
+        for (int i = 0; i < 500; ++i) {
+            int8_t val = (i >= 300 && i <= 310) ? 100 : 10;
+            wf2.peaks[2 * i] = -val;
+            wf2.peaks[2 * i + 1] = val;
+        }
+
+        AudioSyncResult syncRes = alignWaveforms(wf1, wf2);
+        QVERIFY(syncRes.matched);
+        QVERIFY(syncRes.confidence > 0.8);
+        QCOMPARE(std::round(syncRes.offsetSeconds * 100.0) / 100.0, 1.0);
+
+        // 2. Multicam projection angle switching
+        ProjectData data = baseProject();
+        Sequence nested;
+        nested.id = SequenceId::create();
+        nested.name = u"NestedMulticam"_s;
+        nested.canvas = data.settings.defaultCanvas;
+
+        // Angle 0: Red clip
+        Track track0;
+        track0.id = TrackId::create();
+        track0.kind = TrackKind::Video;
+        Clip redClip;
+        redClip.id = ClipId::create();
+        redClip.start = frames(0);
+        redClip.duration = frames(30);
+        redClip.payload = ColorClipData{Param(Color{255, 0, 0, 255})};
+        track0.clips.push_back(redClip);
+        nested.visualTracks.push_back(track0);
+
+        // Angle 1: Blue clip
+        Track track1;
+        track1.id = TrackId::create();
+        track1.kind = TrackKind::Video;
+        Clip blueClip;
+        blueClip.id = ClipId::create();
+        blueClip.start = frames(0);
+        blueClip.duration = frames(30);
+        blueClip.payload = ColorClipData{Param(Color{0, 0, 255, 255})};
+        track1.clips.push_back(blueClip);
+        nested.visualTracks.push_back(track1);
+
+        data.sequences.push_back(nested);
+
+        // Compound clip on main sequence with activeAngle = 0
+        Clip compClip;
+        compClip.id = ClipId::create();
+        compClip.start = frames(0);
+        compClip.duration = frames(30);
+        compClip.payload = CompoundClipData{nested.id, frames(0), 0};
+        data.sequences.front().visualTracks.front().clips.push_back(compClip);
+
+        // Render frame 5: angle 0 is active -> pixel is Red!
+        QImage img0 = renderFresh1(data, 5);
+        QRgb p0 = pixel(img0, 160, 90);
+        QVERIFY(qRed(p0) > 200 && qGreen(p0) < 50 && qBlue(p0) < 50);
+
+        // Switch to angle 1 (Blue)
+        compClip.payload = CompoundClipData{nested.id, frames(0), 1};
+        data.sequences.front().visualTracks.front().clips.front() = compClip;
+
+        // Render frame 5: angle 1 is active -> pixel is Blue!
+        QImage img1 = renderFresh1(data, 5);
+        QRgb p1 = pixel(img1, 160, 90);
+        QVERIFY(qRed(p1) < 50 && qGreen(p1) < 50 && qBlue(p1) > 200);
     }
 
     void adjustmentLayerRendersInProjection()

@@ -191,12 +191,19 @@ const Clip &TimelineProjection::previewed(const Clip &clip) const
     return m_preview.clip && m_preview.clip->id == clip.id ? *m_preview.clip : clip;
 }
 
-std::vector<TimelineProjection::StructureSlot> TimelineProjection::structureOf(const Sequence &sequence)
+std::vector<TimelineProjection::StructureSlot> TimelineProjection::structureOf(const Sequence &sequence, int activeAngle)
 {
     std::vector<StructureSlot> layout;
-    for (const Track &track : sequence.visualTracks) {
+    if (activeAngle >= 0 && !sequence.visualTracks.empty()) {
+        const int idx = std::clamp(activeAngle, 0, static_cast<int>(sequence.visualTracks.size()) - 1);
+        const Track &track = sequence.visualTracks[static_cast<size_t>(idx)];
         layout.push_back({track.id, SlotKind::Clips});
         layout.push_back({track.id, SlotKind::Transitions});
+    } else {
+        for (const Track &track : sequence.visualTracks) {
+            layout.push_back({track.id, SlotKind::Clips});
+            layout.push_back({track.id, SlotKind::Transitions});
+        }
     }
     for (const Track &track : sequence.audioTracks) {
         layout.push_back({track.id, SlotKind::Clips});
@@ -204,7 +211,7 @@ std::vector<TimelineProjection::StructureSlot> TimelineProjection::structureOf(c
     return layout;
 }
 
-void TimelineProjection::build(const ProjectData &project, const SequenceId &sequenceId)
+void TimelineProjection::build(const ProjectData &project, const SequenceId &sequenceId, int activeAngle)
 {
     m_sequenceId = sequenceId;
     m_transitions.clear();
@@ -236,7 +243,7 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
         anySolo = anySolo || track.solo;
     }
     int index = 1;
-    for (const StructureSlot &structure : structureOf(*sequence)) {
+    for (const StructureSlot &structure : structureOf(*sequence, activeAngle)) {
         const Track *track = project.findTrack(structure.id);
         TrackSlot slot;
         slot.id = structure.id;
@@ -385,7 +392,7 @@ std::shared_ptr<const fx::CubeLut> TimelineProjection::cubeLut(const QString &pa
     return shared;
 }
 
-std::shared_ptr<Mlt::Producer> TimelineProjection::compoundProducer(const ProjectData &project, const SequenceId &sequenceId)
+std::shared_ptr<Mlt::Producer> TimelineProjection::compoundProducer(const ProjectData &project, const SequenceId &sequenceId, int activeAngle)
 {
     if (sequenceId == m_sequenceId) {
         m_warnings << u"recursive compound clip detected: %1"_s.arg(sequenceId.toString());
@@ -396,7 +403,8 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::compoundProducer(const Projec
         m_warnings << u"compound clip sequence not found: %1"_s.arg(sequenceId.toString());
         return nullptr;
     }
-    auto it = m_compounds.find(sequenceId);
+    const auto key = qMakePair(sequenceId, activeAngle);
+    auto it = m_compounds.find(key);
     if (it != m_compounds.end() && it.value()) {
         Mlt::Tractor *tractor = it.value()->tractor();
         if (tractor) {
@@ -404,8 +412,8 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::compoundProducer(const Projec
         }
     }
     auto nested = std::make_shared<TimelineProjection>(m_profile, m_cache, m_loading);
-    nested->build(project, sequenceId);
-    m_compounds.insert(sequenceId, nested);
+    nested->build(project, sequenceId, activeAngle);
+    m_compounds.insert(key, nested);
     Mlt::Tractor *tractor = nested->tractor();
     if (!tractor) {
         return nullptr;
@@ -748,7 +756,7 @@ std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &
         return placed;
     }
     if (const CompoundClipData *compound = clip.compound()) {
-        placed.producer = compoundProducer(project, compound->sequenceId);
+        placed.producer = compoundProducer(project, compound->sequenceId, compound->activeAngle);
         if (!placed.producer) {
             return placed;
         }
@@ -1201,7 +1209,7 @@ bool TimelineProjection::needsRebuild(const ProjectData &project, const ChangeSe
         return true;
     }
     for (auto it = m_compounds.keyBegin(); it != m_compounds.keyEnd(); ++it) {
-        if (changes.sequences.contains(*it)) {
+        if (changes.sequences.contains(it->first)) {
             return true;
         }
     }

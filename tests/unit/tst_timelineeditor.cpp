@@ -688,6 +688,66 @@ private slots:
         session.stack.undo();
         QVERIFY(session.data().findClip(a)->animations.isEmpty());
     }
+
+    void multicamEditingAndAudioSync()
+    {
+        ClipId a, b;
+        auto owner = threeClips(&a, &b);
+        Session &session = *owner;
+
+        // 1. Align clips by audio
+        auto calcOffset = [](const Clip &, const Clip &) -> std::optional<double> {
+            return 2.0; // 2 seconds offset
+        };
+        const RationalTime oldBStart = session.data().findClip(b)->start;
+        QVERIFY(session.apply(session.editor().alignClipsByAudio(a, {b}, calcOffset)));
+        const RationalTime newBStart = session.data().findClip(b)->start;
+        QVERIFY(newBStart != oldBStart);
+        session.stack.undo();
+        QCOMPARE(session.data().findClip(b)->start, oldBStart);
+
+        // 2. Create multicam clip
+        EditResult multiRes = session.editor().createMulticamClip({a, b}, u"Multicam"_s);
+        QVERIFY(multiRes.ok());
+        const ClipId compId = multiRes.primaryClip;
+        QVERIFY(session.apply(std::move(multiRes)));
+        const Clip *compClip = session.data().findClip(compId);
+        QVERIFY(compClip != nullptr);
+        QVERIFY(compClip->compound() != nullptr);
+        QCOMPARE(compClip->compound()->activeAngle, 0);
+
+        const Sequence *nested = session.data().findSequence(compClip->compound()->sequenceId);
+        QVERIFY(nested != nullptr);
+        QCOMPARE(nested->visualTracks.size(), size_t(2));
+        QCOMPARE(nested->audioTracks.size(), size_t(1));
+
+        // 3. Switch multicam angle
+        QVERIFY(session.apply(session.editor().setMulticamAngle(compId, 1)));
+        QCOMPARE(session.data().findClip(compId)->compound()->activeAngle, 1);
+        session.stack.undo();
+        QCOMPARE(session.data().findClip(compId)->compound()->activeAngle, 0);
+
+        // 4. Cut and switch angle at playhead (e.g. at frame 60)
+        const RationalTime origDuration = compClip->duration;
+        EditResult cutRes = session.editor().cutAndSwitchAngle(compId, 1, frames(60));
+        QVERIFY(cutRes.ok());
+        const ClipId secondId = cutRes.primaryClip;
+        QVERIFY(session.apply(std::move(cutRes)));
+
+        const Clip *firstPart = session.data().findClip(compId);
+        const Clip *secondPart = session.data().findClip(secondId);
+        QVERIFY(firstPart != nullptr && secondPart != nullptr);
+        QCOMPARE(firstPart->duration, frames(60));
+        QCOMPARE(firstPart->compound()->activeAngle, 0);
+        QCOMPARE(secondPart->start, frames(60));
+        QCOMPARE(secondPart->compound()->sourceIn, frames(60));
+        QCOMPARE(secondPart->compound()->activeAngle, 1);
+
+        // Undo cuts and restores original single clip
+        session.stack.undo();
+        QVERIFY(session.data().findClip(secondId) == nullptr);
+        QCOMPARE(session.data().findClip(compId)->duration, origDuration);
+    }
 };
 
 QTEST_GUILESS_MAIN(TestTimelineEditor)
