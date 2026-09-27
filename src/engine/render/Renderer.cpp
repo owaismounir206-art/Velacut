@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "Renderer.h"
 
+#include "engine/analysis/Decoding.h"
 #include "engine/mlt/MltRuntime.h"
 #include "engine/timeline/MediaProducerCache.h"
 #include "engine/timeline/TimelineProjection.h"
+#include "fx/Loudness.h"
 
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QLoggingCategory>
+#include <QProcess>
 #include <QUuid>
 
 #include <mlt++/Mlt.h>
@@ -150,6 +153,27 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
                             .arg(size)
                             .arg(mltError.isEmpty() ? QString() : u": "_s + mltError);
         return result;
+    }
+    if (settings.normalizeLoudness) {
+        const auto stats = extractLoudness(partial);
+        if (stats && std::isfinite(stats->integratedLufs) && stats->integratedLufs > -70.0) {
+            const double gainDb = fx::gainAdjustmentForTargetLufs(stats->integratedLufs, settings.targetLufs);
+            if (std::abs(gainDb) >= 0.1) {
+                const QString adjustedPartial = partial + u".lufs.mp4"_s;
+                QStringList args;
+                args << u"-y"_s << u"-i"_s << partial << u"-c:v"_s << u"copy"_s
+                     << u"-af"_s << QString::asprintf("volume=%.2fdB", gainDb)
+                     << u"-c:a"_s << u"aac"_s << u"-b:a"_s << u"192k"_s << adjustedPartial;
+                QProcess process;
+                process.start(u"ffmpeg"_s, args);
+                if (process.waitForFinished(60000) && process.exitCode() == 0) {
+                    QFile::remove(partial);
+                    QFile::rename(adjustedPartial, partial);
+                } else {
+                    QFile::remove(adjustedPartial);
+                }
+            }
+        }
     }
     std::error_code error;
     std::filesystem::rename(QFile::encodeName(partial).toStdString(), QFile::encodeName(output.absoluteFilePath()).toStdString(),

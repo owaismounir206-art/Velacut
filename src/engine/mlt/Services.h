@@ -119,15 +119,43 @@ struct AdjustSettings
 struct GainSettings
 {
     double gainDb = 0;
+    Param gainDbParam{0.0};
     bool muted = false;
     double pan = 0;
     int fadeInFrames = 0;
     int fadeOutFrames = 0;
     int length = 0; // frames of the clip (for the fade out); 0 = no fades
     int firstFrame = 0; // position of the clip's first frame as the filter sees it (the in point of the cut)
+    RationalTime sourceIn;
+    double speed = 1.0;
+    bool reversed = false;
+    Rational frameRate;
     QByteArray meterKey; // where the level is reported (empty: not metered)
 
-    bool isNeutral() const { return gainDb == 0 && !muted && pan == 0 && fadeInFrames == 0 && fadeOutFrames == 0; }
+    bool isNeutral() const
+    {
+        return gainDb == 0 && !gainDbParam.isAnimated() && !muted && pan == 0 && fadeInFrames == 0 && fadeOutFrames == 0;
+    }
+    QByteArray key() const;
+};
+
+struct AudioEffectsSettings
+{
+    bool denoise = false;
+    double denoiseAmount = 1.0;
+    QString voiceEffect; // "none", "enhance", "deep", "chipmunk", "robot", "radio", "megaphone", "echo"
+    double eqLow = 0.0;
+    double eqMid = 0.0;
+    double eqHigh = 0.0;
+    bool compressor = false;
+    double compressorThreshold = -18.0;
+    double compressorRatio = 3.0;
+
+    bool hasEffects() const
+    {
+        return denoise || (!voiceEffect.isEmpty() && voiceEffect != QStringLiteral("none")) ||
+               eqLow != 0.0 || eqMid != 0.0 || eqHigh != 0.0 || compressor;
+    }
     QByteArray key() const;
 };
 

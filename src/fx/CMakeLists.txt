@@ -10,6 +10,7 @@ add_library(vedit_fx STATIC
     Enhance.h Enhance.cpp
     Grade.h Grade.cpp
     Library.h Library.cpp
+    Loudness.h Loudness.cpp
     Mask.h Mask.cpp
     Transform.h Transform.cpp
     Transition.h Transition.cpp

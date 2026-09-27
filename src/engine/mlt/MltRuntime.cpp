@@ -8,6 +8,7 @@
 #include <mlt++/Mlt.h>
 
 #include <atomic>
+#include <clocale>
 #include <future>
 #include <mutex>
 
@@ -47,6 +48,7 @@ void MltRuntime::initializeAsync()
 {
     std::call_once(s_started, [] {
         s_repository = std::async(std::launch::async, [] {
+                           std::setlocale(LC_NUMERIC, "C");
                            mlt_log_set_callback(logFromMlt);
                            Mlt::Repository *repository = Mlt::Factory::init();
                            registerServices(repository);

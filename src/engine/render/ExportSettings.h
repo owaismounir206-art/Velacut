@@ -27,6 +27,8 @@ struct ExportSettings
     QSize size;
     Rational frameRate;
     ExportQuality quality = ExportQuality::Recommended;
+    bool normalizeLoudness = false;
+    double targetLufs = -14.0;
 
     QJsonObject toJson() const;
     static std::optional<ExportSettings> fromJson(const QJsonObject &json);

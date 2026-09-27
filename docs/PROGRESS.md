@@ -112,12 +112,16 @@ vedi sotto); l'utente ha poi chiesto di proseguire ("continua pure il lavoro").
    - Controlli completi nel pannello proprietà (scheda Regola): "Bilanciamento automatico" e "Abbina colore" al fotogramma del playhead, selettore file LUT `.cube` 3D/1D con cursore intensità, deflicker (toggle, modalità e dimensione finestra), ruote colore interattive lift/gamma/gain con disco cromatico 2D e cursore livello, regolatore HSL a 8 gamme colore con chip cromatici (tinta, saturazione, luminosità), editor grafico di curve monotone cubiche (Master RGB, Rosso, Verde, Blu) con aggiunta/trascinamento/rimozione punti.
    - Video Scopes dal vivo (`ScopeView` in QQuickPaintedItem e overlay `ScopePanel` nell'anteprima): Istogramma (RGB e luminanza), Waveform (linee IRE 0, 7.5, 50, 100 con intensità di segnale) e Vettorscopio (reticolo 75%, bersagli colore R/Mg/B/Cy/G/Yl, asse skin-tone "I").
    - Test di integrazione `tst_ui::colorGradingAndScopes`: verifica apertura/chiusura scope, modifica parametri `grade` e `deflicker`, verifica effetti e reset. 25/25 test CTest verdi.
+4. **Audio avanzato, loudness e ducking (`P4.4`)**:
+   - Misura del loudness secondo standard ITU-R BS.1770-4 / EBU R128 (`fx::Loudness` con filtri biquad K-weighting high-shelf + RLB highpass, gating assoluto a −70 LKFS e relativo a −10 LU, finestre momentary/short-term e true peak).
+   - Normalizzazione automatica loudness su clip e su mix in fase di esportazione (`ExportSettings::normalizeLoudness`, target predefinito −14 LUFS).
+   - Keyframe sul volume con diamante e curva di andamento (`Param` animato nel servizio `GainSettings` di MLT e controller `ClipInspector`).
+   - Auto-ducking: rilevamento audio sovrapposto su altre tracce e generazione automatica di keyframe di attenuazione con attacco (0.2s) e rilascio (0.4s).
+   - Filtri ed effetti vocali: riduzione rumore `rnnoise` con intensità regolabile (0–100%), equalizzatore parametrico a 3 bande (bassi 100Hz, medi 1kHz, alti 10kHz), compressore dinamico con soglia e rapporto configurabili, effetti vocali ("Migliora voce", voce profonda, chipmunk, robot, radio, megafono, eco).
+   - Controlli completi nel pannello proprietà (scheda Audio), test unitari (`tst_fx::loudnessSilence`, `loudnessSineTone`) e di integrazione (`tst_editor::audioProcessingAndLoudness`), 100% CTest (25/25) verdi.
 
 ### Prossimi passi (Fase 4 — Colore e audio avanzati)
-Dalla SPEC §8: HSL, curve, ruote colore, LUT, scope, abbina colore, deflicker; EQ/compressore/effetti voce, "Migliora
-voce", loudness, ducking, registrazione voce con teleprompter, registrazione schermo + webcam, sincronizzazione audio
-esterno, multicamera. Criterio: correggo colore con LUT e curve, il mix audio rispetta −14 LUFS, e monto
-un'intervista a due camere sincronizzate dall'audio.
+Dalla SPEC §8: registrazione voce con teleprompter, registrazione schermo + webcam (PipeWire/portale), sincronizzazione audio esterno, multicamera. Criterio: correggo colore con LUT e curve, il mix audio rispetta −14 LUFS, e monto un'intervista a due camere sincronizzate dall'audio.
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata

@@ -419,6 +419,7 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
 {
     Q_UNUSED(track);
     auto render = std::make_shared<ClipRender>();
+    std::optional<AudioEffectsSettings> audioEffects;
     const bool visual = !(media && media->kind == MediaKind::Audio) &&
                         !(clip.media() && clip.media()->streams == Streams::AudioOnly);
     if (visual) {
@@ -523,6 +524,52 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
                 }
                 render->deflicker = ds;
                 continue;
+            } else if (effect.type == u"vedit.denoise"_s) {
+                if (!audioEffects) {
+                    audioEffects = AudioEffectsSettings{};
+                }
+                audioEffects->denoise = true;
+                if (const auto it = effect.params.find(u"amount"_s); it != effect.params.end()) {
+                    audioEffects->denoiseAmount = std::clamp(numberOf(it->second, 1.0), 0.0, 1.0);
+                }
+                continue;
+            } else if (effect.type == u"vedit.voice_effect"_s) {
+                if (!audioEffects) {
+                    audioEffects = AudioEffectsSettings{};
+                }
+                if (const auto it = effect.params.find(u"preset"_s); it != effect.params.end()) {
+                    const ParamValue &v = it->second.staticValue();
+                    if (const auto *s = std::get_if<QString>(&v)) {
+                        audioEffects->voiceEffect = *s;
+                    }
+                }
+                continue;
+            } else if (effect.type == u"vedit.eq"_s) {
+                if (!audioEffects) {
+                    audioEffects = AudioEffectsSettings{};
+                }
+                if (const auto it = effect.params.find(u"low"_s); it != effect.params.end()) {
+                    audioEffects->eqLow = numberOf(it->second, 0.0);
+                }
+                if (const auto it = effect.params.find(u"mid"_s); it != effect.params.end()) {
+                    audioEffects->eqMid = numberOf(it->second, 0.0);
+                }
+                if (const auto it = effect.params.find(u"high"_s); it != effect.params.end()) {
+                    audioEffects->eqHigh = numberOf(it->second, 0.0);
+                }
+                continue;
+            } else if (effect.type == u"vedit.compressor"_s) {
+                if (!audioEffects) {
+                    audioEffects = AudioEffectsSettings{};
+                }
+                audioEffects->compressor = true;
+                if (const auto it = effect.params.find(u"threshold"_s); it != effect.params.end()) {
+                    audioEffects->compressorThreshold = numberOf(it->second, -18.0);
+                }
+                if (const auto it = effect.params.find(u"ratio"_s); it != effect.params.end()) {
+                    audioEffects->compressorRatio = std::clamp(numberOf(it->second, 3.0), 1.0, 20.0);
+                }
+                continue;
             } else {
                 m_warnings << u"clip %1: effect %2 is rendered from a later phase"_s.arg(clip.id.toString(), effect.type);
                 continue;
@@ -607,14 +654,22 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
         const MediaClipData *data = clip.media();
         GainSettings gain;
         gain.gainDb = numberOf(data->audio.gainDb, 0.0);
+        gain.gainDbParam = data->audio.gainDb;
         gain.muted = data->audio.muted || data->streams == Streams::VideoOnly;
         gain.pan = std::clamp(numberOf(data->audio.pan, 0.0), -1.0, 1.0);
         gain.fadeInFrames = data->audio.fadeIn ? static_cast<int>(toFrames(*data->audio.fadeIn)) : 0;
         gain.fadeOutFrames = data->audio.fadeOut ? static_cast<int>(toFrames(*data->audio.fadeOut)) : 0;
         gain.length = static_cast<int>(length);
         gain.firstFrame = in;
+        gain.sourceIn = data->sourceIn;
+        gain.speed = data->curve ? 1.0 : data->speed;
+        gain.reversed = data->reversed;
+        gain.frameRate = m_rate;
         if (!gain.isNeutral()) {
             render->gain = gain;
+        }
+        if (audioEffects && audioEffects->hasEffects()) {
+            render->audioEffects = audioEffects;
         }
     }
     QByteArray key;
@@ -627,6 +682,7 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
     stream << render->deflicker.has_value() << (render->deflicker ? render->deflicker->key() : QByteArray());
     stream << render->transform.has_value() << (render->transform ? render->transform->key() : QByteArray());
     stream << render->gain.has_value() << (render->gain ? render->gain->key() : QByteArray());
+    stream << render->audioEffects.has_value() << (render->audioEffects ? render->audioEffects->key() : QByteArray());
     render->key = key;
     return render;
 }
@@ -948,6 +1004,98 @@ void TimelineProjection::attachFilters(Mlt::Producer &cut, const ClipRender &ren
     if (render.transform) {
         auto filter = makeTransformFilter(m_profile, *render.transform);
         cut.attach(*filter);
+    }
+    if (withAudio && render.audioEffects) {
+        if (render.audioEffects->denoise) {
+            auto filter = std::make_unique<Mlt::Filter>(m_profile, "rnnoise");
+            filter->set("mix", render.audioEffects->denoiseAmount);
+            cut.attach(*filter);
+        }
+        const QString &ve = render.audioEffects->voiceEffect;
+        if (ve == u"deep"_s) {
+            auto filter = std::make_unique<Mlt::Filter>(m_profile, "rbpitch");
+            filter->set("pitchscale", 0.75);
+            cut.attach(*filter);
+        } else if (ve == u"chipmunk"_s) {
+            auto filter = std::make_unique<Mlt::Filter>(m_profile, "rbpitch");
+            filter->set("pitchscale", 1.4);
+            cut.attach(*filter);
+        } else if (ve == u"robot"_s) {
+            auto pFilter = std::make_unique<Mlt::Filter>(m_profile, "rbpitch");
+            pFilter->set("pitchscale", 0.9);
+            cut.attach(*pFilter);
+            auto eFilter = std::make_unique<Mlt::Filter>(m_profile, "avfilter.aecho");
+            eFilter->set("av.in_gain", "0.8");
+            eFilter->set("av.out_gain", "0.88");
+            eFilter->set("av.delays", "15");
+            eFilter->set("av.decays", "0.5");
+            cut.attach(*eFilter);
+        } else if (ve == u"radio"_s) {
+            auto hp = std::make_unique<Mlt::Filter>(m_profile, "avfilter.highpass");
+            hp->set("av.f", 350.0);
+            cut.attach(*hp);
+            auto lp = std::make_unique<Mlt::Filter>(m_profile, "avfilter.lowpass");
+            lp->set("av.f", 3200.0);
+            cut.attach(*lp);
+        } else if (ve == u"megaphone"_s) {
+            auto bp = std::make_unique<Mlt::Filter>(m_profile, "avfilter.bandpass");
+            bp->set("av.f", 1200.0);
+            bp->set("av.w", 1.5);
+            cut.attach(*bp);
+            auto comp = std::make_unique<Mlt::Filter>(m_profile, "avfilter.acompressor");
+            comp->set("av.threshold", "0.25");
+            comp->set("av.ratio", "4");
+            cut.attach(*comp);
+        } else if (ve == u"echo"_s) {
+            auto echo = std::make_unique<Mlt::Filter>(m_profile, "avfilter.aecho");
+            echo->set("av.in_gain", "0.8");
+            echo->set("av.out_gain", "0.8");
+            echo->set("av.delays", "250");
+            echo->set("av.decays", "0.4");
+            cut.attach(*echo);
+        } else if (ve == u"enhance"_s) {
+            if (!render.audioEffects->denoise) {
+                auto dn = std::make_unique<Mlt::Filter>(m_profile, "rnnoise");
+                dn->set("mix", 0.9);
+                cut.attach(*dn);
+            }
+            auto hp = std::make_unique<Mlt::Filter>(m_profile, "avfilter.highpass");
+            hp->set("av.f", 80.0);
+            cut.attach(*hp);
+            auto eq = std::make_unique<Mlt::Filter>(m_profile, "avfilter.equalizer");
+            eq->set("av.f", 2500.0);
+            eq->set("av.w", 1.0);
+            eq->set("av.g", 3.0);
+            cut.attach(*eq);
+            auto comp = std::make_unique<Mlt::Filter>(m_profile, "avfilter.acompressor");
+            comp->set("av.threshold", "0.125");
+            comp->set("av.ratio", "3");
+            cut.attach(*comp);
+        }
+        if (render.audioEffects->eqLow != 0.0) {
+            auto bass = std::make_unique<Mlt::Filter>(m_profile, "avfilter.bass");
+            bass->set("av.g", render.audioEffects->eqLow);
+            cut.attach(*bass);
+        }
+        if (render.audioEffects->eqMid != 0.0) {
+            auto mid = std::make_unique<Mlt::Filter>(m_profile, "avfilter.equalizer");
+            mid->set("av.f", 1000.0);
+            mid->set("av.w", 1.0);
+            mid->set("av.g", render.audioEffects->eqMid);
+            cut.attach(*mid);
+        }
+        if (render.audioEffects->eqHigh != 0.0) {
+            auto treble = std::make_unique<Mlt::Filter>(m_profile, "avfilter.treble");
+            treble->set("av.g", render.audioEffects->eqHigh);
+            cut.attach(*treble);
+        }
+        if (render.audioEffects->compressor) {
+            auto comp = std::make_unique<Mlt::Filter>(m_profile, "avfilter.acompressor");
+            comp->set("av.ratio", render.audioEffects->compressorRatio);
+            const double linThresh = std::pow(10.0, render.audioEffects->compressorThreshold / 20.0);
+            comp->set("av.threshold", linThresh);
+            cut.attach(*comp);
+        }
     }
     if (withAudio && render.gain) {
         auto filter = makeGainFilter(m_profile, *render.gain);

@@ -551,6 +551,7 @@ Rectangle {
                         PropertySlider {
                             inspector: panel.inspector
                             key: "volume"
+                            keyframeKey: "volume"
                             label: qsTr("Volume")
                             from: -60
                             to: 20
@@ -573,14 +574,166 @@ Rectangle {
                             stepSize: 0.1
                             format: v => qsTr("%1 s").arg(v.toLocaleString(Qt.locale(), "f", 1))
                         }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Theme.space.sm
+                            Button {
+                                objectName: "normalizeLoudnessButton"
+                                Layout.fillWidth: true
+                                variant: "tonal"
+                                iconName: "graphic_eq"
+                                text: qsTr("Normalize (-14 LUFS)")
+                                onClicked: panel.inspector.normalizeLoudness(-14.0)
+                            }
+                            Button {
+                                objectName: "autoDuckingButton"
+                                Layout.fillWidth: true
+                                variant: "tonal"
+                                iconName: "volume_down"
+                                text: qsTr("Auto ducking")
+                                onClicked: panel.inspector.autoDuck(-12.0)
+                            }
+                        }
                     }
-                    Button {
-                        Layout.fillWidth: true
-                        visible: panel.inspector.kind === Inspector.Audio
-                        variant: "tonal"
-                        iconName: "auto_fix_high"
-                        text: qsTr("Auto enhance")
-                        onClicked: panel.inspector.autoEnhance()
+
+                    PropertySection {
+                        inspector: panel.inspector
+                        section: "audio"
+                        title: qsTr("Voice & Noise")
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label { Layout.fillWidth: true; text: qsTr("Noise reduction"); role: "bodyMedium" }
+                            Switch {
+                                objectName: "denoiseSwitch"
+                                checked: panel.values["audio.denoise"] ?? false
+                                Accessible.name: qsTr("Noise reduction")
+                                onToggled: panel.inspector.set("audio.denoise", checked)
+                            }
+                        }
+                        PropertySlider {
+                            visible: panel.values["audio.denoise"] ?? false
+                            inspector: panel.inspector
+                            key: "audio.denoiseAmount"
+                            label: qsTr("Noise reduction amount")
+                            from: 0
+                            to: 1
+                            neutral: 0.5
+                            stepSize: 0.01
+                            format: v => Math.round(v * 100) + "%"
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label { Layout.fillWidth: true; text: qsTr("Voice effect"); role: "bodyMedium" }
+                            ComboBox {
+                                objectName: "voiceEffectCombo"
+                                model: [
+                                    { text: qsTr("None"), value: "none" },
+                                    { text: qsTr("Enhance voice"), value: "enhance" },
+                                    { text: qsTr("Deep voice"), value: "deep" },
+                                    { text: qsTr("Chipmunk"), value: "chipmunk" },
+                                    { text: qsTr("Robot"), value: "robot" },
+                                    { text: qsTr("Radio"), value: "radio" },
+                                    { text: qsTr("Megaphone"), value: "megaphone" },
+                                    { text: qsTr("Echo"), value: "echo" }
+                                ]
+                                textRole: "text"
+                                valueRole: "value"
+                                currentIndex: {
+                                    const eff = panel.values["audio.voiceEffect"] ?? "none"
+                                    for (let i = 0; i < count; ++i) {
+                                        if (model[i].value === eff) return i
+                                    }
+                                    return 0
+                                }
+                                Accessible.name: qsTr("Voice effect")
+                                onActivated: (index) => panel.inspector.set("audio.voiceEffect", model[index].value)
+                            }
+                        }
+
+                        Button {
+                            objectName: "enhanceVoiceButton"
+                            Layout.fillWidth: true
+                            variant: "filled"
+                            iconName: "auto_fix_high"
+                            text: qsTr("Enhance voice")
+                            onClicked: {
+                                panel.inspector.set("audio.voiceEffect", "enhance")
+                                panel.inspector.set("audio.denoise", true)
+                            }
+                        }
+                    }
+
+                    PropertySection {
+                        inspector: panel.inspector
+                        section: "audio"
+                        title: qsTr("Equalizer & Dynamics")
+
+                        PropertySlider {
+                            inspector: panel.inspector
+                            key: "audio.eq.low"
+                            label: qsTr("Bass (100 Hz)")
+                            from: -12
+                            to: 12
+                            neutral: 0
+                            stepSize: 0.5
+                            format: v => (v > 0 ? "+" : "") + v.toLocaleString(Qt.locale(), "f", 1) + " dB"
+                        }
+                        PropertySlider {
+                            inspector: panel.inspector
+                            key: "audio.eq.mid"
+                            label: qsTr("Mids (1 kHz)")
+                            from: -12
+                            to: 12
+                            neutral: 0
+                            stepSize: 0.5
+                            format: v => (v > 0 ? "+" : "") + v.toLocaleString(Qt.locale(), "f", 1) + " dB"
+                        }
+                        PropertySlider {
+                            inspector: panel.inspector
+                            key: "audio.eq.high"
+                            label: qsTr("Treble (10 kHz)")
+                            from: -12
+                            to: 12
+                            neutral: 0
+                            stepSize: 0.5
+                            format: v => (v > 0 ? "+" : "") + v.toLocaleString(Qt.locale(), "f", 1) + " dB"
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label { Layout.fillWidth: true; text: qsTr("Compressor"); role: "bodyMedium" }
+                            Switch {
+                                objectName: "compressorSwitch"
+                                checked: panel.values["audio.compressor.enabled"] ?? false
+                                Accessible.name: qsTr("Compressor")
+                                onToggled: panel.inspector.set("audio.compressor.enabled", checked)
+                            }
+                        }
+                        PropertySlider {
+                            visible: panel.values["audio.compressor.enabled"] ?? false
+                            inspector: panel.inspector
+                            key: "audio.compressor.threshold"
+                            label: qsTr("Threshold")
+                            from: -40
+                            to: 0
+                            neutral: -18
+                            stepSize: 0.5
+                            format: v => v.toLocaleString(Qt.locale(), "f", 1) + " dB"
+                        }
+                        PropertySlider {
+                            visible: panel.values["audio.compressor.enabled"] ?? false
+                            inspector: panel.inspector
+                            key: "audio.compressor.ratio"
+                            label: qsTr("Ratio")
+                            from: 1
+                            to: 20
+                            neutral: 4
+                            stepSize: 0.5
+                            format: v => v.toLocaleString(Qt.locale(), "f", 1) + ":1"
+                        }
                     }
                 }
 

@@ -46,7 +46,9 @@ QJsonObject ExportSettings::toJson() const
                        {u"width"_s, size.width()},
                        {u"height"_s, size.height()},
                        {u"frameRate"_s, frameRate.toString()},
-                       {u"quality"_s, quality}};
+                       {u"quality"_s, quality},
+                       {u"normalizeLoudness"_s, normalizeLoudness},
+                       {u"targetLufs"_s, targetLufs}};
 }
 
 std::optional<ExportSettings> ExportSettings::fromJson(const QJsonObject &json)
@@ -65,6 +67,12 @@ std::optional<ExportSettings> ExportSettings::fromJson(const QJsonObject &json)
         if (quality == QLatin1StringView(name)) {
             settings.quality = value;
         }
+    }
+    if (json.contains(u"normalizeLoudness"_s)) {
+        settings.normalizeLoudness = json.value(u"normalizeLoudness"_s).toBool();
+    }
+    if (json.contains(u"targetLufs"_s)) {
+        settings.targetLufs = json.value(u"targetLufs"_s).toDouble(-14.0);
     }
     return settings;
 }

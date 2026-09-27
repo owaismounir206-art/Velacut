@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "fx/Loudness.h"
+
 #include <QByteArray>
 #include <QImage>
 #include <QString>
@@ -29,5 +31,9 @@ struct Waveform
 };
 std::optional<Waveform> extractWaveform(const QString &path, int bucketsPerSecond = 100,
                                         const std::atomic<bool> *cancel = nullptr);
+
+// Integrated and peak loudness measured via ITU-R BS.1770-4 / EBU R128.
+std::optional<fx::LoudnessResult> extractLoudness(const QString &path,
+                                                  const std::atomic<bool> *cancel = nullptr);
 
 } // namespace vedit::engine

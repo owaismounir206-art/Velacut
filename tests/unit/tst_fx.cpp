@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "fx/Composite.h"
+#include "fx/Loudness.h"
 
 #include <QTest>
 
 #include <array>
+#include <cmath>
+#include <vector>
 
 using namespace vedit::fx;
 
@@ -68,6 +71,33 @@ private slots:
         QCOMPARE(int(destination[0]), 0);   // row 0 untouched
         QCOMPARE(int(destination[16]), 255); // row 1 composited
         QCOMPARE(int(destination[12]), 0);   // padding of row 0 untouched
+    }
+
+    void loudnessSilence()
+    {
+        std::vector<float> silence(48000 * 2, 0.0f);
+        const auto res = measureLoudness(silence, 2, 48000);
+        QVERIFY(res.integratedLufs <= -70.0);
+        QCOMPARE(gainAdjustmentForTargetLufs(res.integratedLufs, -14.0), 0.0);
+    }
+
+    void loudnessSineTone()
+    {
+        const int sampleRate = 48000;
+        const int seconds = 2;
+        const int numFrames = sampleRate * seconds;
+        std::vector<float> samples(numFrames * 2);
+        const double amp = std::pow(10.0, -20.0 / 20.0);
+        for (int i = 0; i < numFrames; ++i) {
+            const float val = static_cast<float>(amp * std::sin(2.0 * M_PI * 1000.0 * i / sampleRate));
+            samples[2 * i] = val;
+            samples[2 * i + 1] = val;
+        }
+        const auto res = measureLoudness(samples, 2, sampleRate);
+        QVERIFY(res.integratedLufs > -30.0 && res.integratedLufs < -10.0);
+        QVERIFY(res.truePeakDb > -21.0 && res.truePeakDb < -19.0);
+        const double adj = gainAdjustmentForTargetLufs(res.integratedLufs, -14.0);
+        QVERIFY(std::abs((res.integratedLufs + adj) - (-14.0)) < 0.001);
     }
 };
 

@@ -305,6 +305,76 @@ std::optional<Waveform> extractWaveform(const QString &path, int bucketsPerSecon
     return waveform;
 }
 
+std::optional<fx::LoudnessResult> extractLoudness(const QString &path, const std::atomic<bool> *cancel)
+{
+    Input input = openInput(path);
+    if (!input) {
+        return std::nullopt;
+    }
+    const int streamIndex = av_find_best_stream(input.get(), AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    if (streamIndex < 0) {
+        return std::nullopt;
+    }
+    Codec codec = openDecoder(input->streams[streamIndex]);
+    if (!codec || codec->sample_rate <= 0) {
+        return std::nullopt;
+    }
+    SwrContext *rawResampler = nullptr;
+    AVChannelLayout stereo = AV_CHANNEL_LAYOUT_STEREO;
+    const int targetSampleRate = 48000;
+    if (swr_alloc_set_opts2(&rawResampler, &stereo, AV_SAMPLE_FMT_FLT, targetSampleRate, &codec->ch_layout,
+                            codec->sample_fmt, codec->sample_rate, 0, nullptr) < 0) {
+        return std::nullopt;
+    }
+    std::unique_ptr<SwrContext, SwrDeleter> resampler(rawResampler);
+    if (swr_init(resampler.get()) < 0) {
+        return std::nullopt;
+    }
+
+    std::vector<float> allSamples;
+    std::vector<float> chunk;
+    const auto consume = [&](const uint8_t *const *data, int samples) {
+        const int outCap = swr_get_out_samples(resampler.get(), samples);
+        if (outCap <= 0) {
+            return;
+        }
+        chunk.resize(static_cast<size_t>(outCap * 2));
+        uint8_t *out[1] = {reinterpret_cast<uint8_t *>(chunk.data())};
+        const int converted = swr_convert(resampler.get(), out, outCap, data, samples);
+        if (converted > 0) {
+            const size_t convertedFloats = static_cast<size_t>(converted * 2);
+            allSamples.insert(allSamples.end(), chunk.begin(), chunk.begin() + convertedFloats);
+        }
+    };
+
+    Packet packet(av_packet_alloc());
+    Frame frame(av_frame_alloc());
+    bool ended = false;
+    while (!ended && !cancelled(cancel)) {
+        if (av_read_frame(input.get(), packet.get()) < 0) {
+            avcodec_send_packet(codec.get(), nullptr);
+            ended = true;
+        } else {
+            if (packet->stream_index == streamIndex) {
+                avcodec_send_packet(codec.get(), packet.get());
+            }
+            av_packet_unref(packet.get());
+        }
+        while (avcodec_receive_frame(codec.get(), frame.get()) == 0) {
+            consume(frame->extended_data, frame->nb_samples);
+            av_frame_unref(frame.get());
+        }
+    }
+    if (cancelled(cancel)) {
+        return std::nullopt;
+    }
+    consume(nullptr, 0); // flush buffered samples
+    if (allSamples.empty()) {
+        return std::nullopt;
+    }
+    return fx::measureLoudness(allSamples.data(), 2, targetSampleRate, static_cast<std::int64_t>(allSamples.size() / 2));
+}
+
 QImage extractFrame(const QString &path, double seconds, int maxHeight)
 {
     Input input = openInput(path);

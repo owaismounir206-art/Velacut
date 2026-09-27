@@ -12,6 +12,7 @@
 #include "fx/Enhance.h"
 #include "fx/Grade.h"
 #include "fx/Library.h"
+#include "fx/Loudness.h"
 
 #include <QColor>
 #include <QFileInfo>
@@ -117,8 +118,8 @@ AssetRef coreAsset(const QString &id, int version)
     return AssetRef{QString::fromLatin1(fx::Library::kCorePack), id, version};
 }
 
-// The parameters that have keyframes in the interface (the renderer animates them: vedit.transform).
-const QStringList kKeyframeKeys{u"position"_s, u"scale"_s, u"rotation"_s, u"opacity"_s};
+// The parameters that have keyframes in the interface (the renderer animates them: vedit.transform, vedit.gain).
+const QStringList kKeyframeKeys{u"position"_s, u"scale"_s, u"rotation"_s, u"opacity"_s, u"volume"_s};
 
 Param *keyframeParam(Clip &clip, const QString &key)
 {
@@ -133,6 +134,9 @@ Param *keyframeParam(Clip &clip, const QString &key)
     }
     if (key == u"opacity"_s) {
         return &clip.opacity;
+    }
+    if (key == u"volume"_s && clip.media()) {
+        return &clip.media()->audio.gainDb;
     }
     return nullptr;
 }
@@ -286,8 +290,10 @@ bool ClipInspector::playheadMatters()
     const bool on = playheadKeyTime(*clip).has_value();
     const bool crossed = on != m_playheadOnClip;
     m_playheadOnClip = on;
-    const bool animated = std::any_of(kKeyframeKeys.begin(), kKeyframeKeys.end(),
-                                      [clip](const QString &key) { return keyframeParam(*clip, key)->isAnimated(); });
+    const bool animated = std::any_of(kKeyframeKeys.begin(), kKeyframeKeys.end(), [clip](const QString &key) {
+        const Param *p = keyframeParam(*clip, key);
+        return p && p->isAnimated();
+    });
     return crossed || animated;
 }
 
@@ -411,7 +417,11 @@ QVariantList ClipInspector::keyframes() const
     const Rational rate = m_editor.data().settings.frameRate;
     QList<int> list;
     for (const QString &key : kKeyframeKeys) {
-        for (const Keyframe &keyframe : keyframeParam(*clip, key)->keyframes()) {
+        const Param *param = keyframeParam(*clip, key);
+        if (!param) {
+            continue;
+        }
+        for (const Keyframe &keyframe : param->keyframes()) {
             const int frame = static_cast<int>(offsetOfKeyframeTime(*clip, keyframe.time).rescaled(rate, Rounding::NearestEven).value());
             if (!list.contains(frame)) {
                 list << frame;
@@ -429,27 +439,31 @@ bool ClipInspector::toggleKeyframe(const QString &key)
 {
     const Clip *clip = focus();
     const std::optional<RationalTime> time = clip ? playheadKeyTime(*clip) : std::nullopt;
-    if (!time || !kKeyframeKeys.contains(key)) {
+    const Param *p = clip ? keyframeParam(*clip, key) : nullptr;
+    if (!time || !kKeyframeKeys.contains(key) || !p) {
         return false;
     }
-    const Param &current = *keyframeParam(*clip, key);
+    const Param &current = *p;
     const bool here = std::any_of(current.keyframes().begin(), current.keyframes().end(),
                                   [&time](const Keyframe &k) { return k.time == *time; });
     endGesture();
     return update({clip->id}, [&](Clip &c) {
-        Param &param = *keyframeParam(c, key);
-        const ParamValue value = param.valueAt(*time);
-        if (!here) {
-            setKeyframeValue(param, *time, value);
+        Param *param = keyframeParam(c, key);
+        if (!param) {
             return;
         }
-        std::vector<Keyframe> keyframes = param.keyframes();
+        const ParamValue value = param->valueAt(*time);
+        if (!here) {
+            setKeyframeValue(*param, *time, value);
+            return;
+        }
+        std::vector<Keyframe> keyframes = param->keyframes();
         std::erase_if(keyframes, [&time](const Keyframe &k) { return k.time == *time; });
         if (keyframes.empty()) {
-            param.setKeyframes({});
-            param.setStaticValue(value); // the last one leaves its value
+            param->setKeyframes({});
+            param->setStaticValue(value); // the last one leaves its value
         } else {
-            param.setKeyframes(std::move(keyframes));
+            param->setKeyframes(std::move(keyframes));
         }
     }, here ? tr("Remove keyframe") : tr("Add keyframe"), {});
 }
@@ -465,8 +479,11 @@ bool ClipInspector::setKeyframeEasing(const QString &easing)
     endGesture();
     return update({clip->id}, [&](Clip &c) {
         for (const QString &key : kKeyframeKeys) {
-            Param &param = *keyframeParam(c, key);
-            std::vector<Keyframe> keyframes = param.keyframes();
+            Param *param = keyframeParam(c, key);
+            if (!param) {
+                continue;
+            }
+            std::vector<Keyframe> keyframes = param->keyframes();
             for (Keyframe &keyframe : keyframes) {
                 if (keyframe.time == *time) {
                     keyframe.interpolation = easing == u"hold"_s     ? Interpolation::Hold
@@ -477,7 +494,7 @@ bool ClipInspector::setKeyframeEasing(const QString &easing)
                     }
                 }
             }
-            param.setKeyframes(std::move(keyframes));
+            param->setKeyframes(std::move(keyframes));
         }
     }, tr("Change keyframe easing"), {});
 }
@@ -493,15 +510,18 @@ bool ClipInspector::setKeyframeCurve(double x1, double y1, double x2, double y2)
     }
     return update({clip->id}, [&](Clip &c) {
         for (const QString &key : kKeyframeKeys) {
-            Param &param = *keyframeParam(c, key);
-            std::vector<Keyframe> keyframes = param.keyframes();
+            Param *param = keyframeParam(c, key);
+            if (!param) {
+                continue;
+            }
+            std::vector<Keyframe> keyframes = param->keyframes();
             for (Keyframe &keyframe : keyframes) {
                 if (keyframe.time == *time) {
                     keyframe.interpolation = Interpolation::Bezier;
                     keyframe.easing = *curve;
                 }
             }
-            param.setKeyframes(std::move(keyframes));
+            param->setKeyframes(std::move(keyframes));
         }
     }, tr("Change keyframe curve"), u"keyframe-curve:"_s + clip->id.toString());
 }
@@ -761,9 +781,12 @@ QVariantMap ClipInspector::values() const
     QString easing;
     QVariantList curve{0.0, 0.0, 1.0, 1.0}; // the control points of the movement from the keyframe here
     for (const QString &key : kKeyframeKeys) {
-        const Param &param = *keyframeParam(*clip, key);
-        int state = param.isAnimated() ? 1 : 0;
-        for (const Keyframe &keyframe : param.keyframes()) {
+        const Param *param = keyframeParam(*clip, key);
+        if (!param) {
+            continue;
+        }
+        int state = param->isAnimated() ? 1 : 0;
+        for (const Keyframe &keyframe : param->keyframes()) {
             if (keyTime && keyframe.time == *keyTime) {
                 state = 2;
                 if (easing.isEmpty()) {
@@ -828,6 +851,29 @@ QVariantMap ClipInspector::values() const
         map[u"reversed"_s] = media->reversed;
         map[u"preservePitch"_s] = media->preservePitch;
     }
+    const Effect *denoise = findEffect(*clip, u"vedit.denoise"_s);
+    map[u"audio.denoise"_s] = denoise != nullptr && denoise->enabled;
+    map[u"audio.denoiseAmount"_s] = denoise && denoise->params.count(u"amount"_s) ? numberOf(denoise->params.at(u"amount"_s), 1.0) : 1.0;
+
+    const Effect *voiceFx = findEffect(*clip, u"vedit.voice_effect"_s);
+    QString vPreset = u"none"_s;
+    if (voiceFx && voiceFx->params.count(u"preset"_s)) {
+        if (const auto *s = std::get_if<QString>(&voiceFx->params.at(u"preset"_s).staticValue())) {
+            vPreset = *s;
+        }
+    }
+    map[u"audio.voiceEffect"_s] = vPreset;
+    map[u"audio.enhanceVoice"_s] = (vPreset == u"enhance"_s);
+
+    const Effect *eq = findEffect(*clip, u"vedit.eq"_s);
+    map[u"audio.eq.low"_s] = eq && eq->params.count(u"low"_s) ? numberOf(eq->params.at(u"low"_s), 0.0) : 0.0;
+    map[u"audio.eq.mid"_s] = eq && eq->params.count(u"mid"_s) ? numberOf(eq->params.at(u"mid"_s), 0.0) : 0.0;
+    map[u"audio.eq.high"_s] = eq && eq->params.count(u"high"_s) ? numberOf(eq->params.at(u"high"_s), 0.0) : 0.0;
+
+    const Effect *comp = findEffect(*clip, u"vedit.compressor"_s);
+    map[u"audio.compressor.enabled"_s] = comp != nullptr && comp->enabled;
+    map[u"audio.compressor.threshold"_s] = comp && comp->params.count(u"threshold"_s) ? numberOf(comp->params.at(u"threshold"_s), -18.0) : -18.0;
+    map[u"audio.compressor.ratio"_s] = comp && comp->params.count(u"ratio"_s) ? numberOf(comp->params.at(u"ratio"_s), 3.0) : 3.0;
     ClipAnimations animations = clip->animations;
     for (const QString &kind : {u"in"_s, u"out"_s, u"loop"_s}) {
         const std::optional<ClipAnimation> &animation = animationSlot(animations, kind);
@@ -956,7 +1002,7 @@ QString ClipInspector::sectionOf(const QString &key) const
     if (video.contains(key)) {
         return u"video"_s;
     }
-    if (audio.contains(key)) {
+    if (audio.contains(key) || key.startsWith(u"audio."_s)) {
         return u"audio"_s;
     }
     if (speed.contains(key)) {
@@ -1180,8 +1226,71 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
 
     // Audio
     if (key == u"volume"_s) {
-        return update(clips, [&](Clip &c) { c.media()->audio.gainDb = Param(std::clamp(number, -60.0, 20.0)); },
-                      tr("Change volume"), mergeTarget);
+        return update(clips, [&](Clip &c) {
+            if (c.media()) {
+                write(c, c.media()->audio.gainDb, [&](const ParamValue &) {
+                    return ParamValue(std::clamp(number, -60.0, 20.0));
+                });
+            }
+        }, tr("Change volume"), mergeTarget);
+    }
+    if (key == u"audio.denoise"_s) {
+        const bool on = value.toBool();
+        return update(clips, [on](Clip &c) {
+            if (on) {
+                ensureEffect(c, u"vedit.denoise"_s).params[u"amount"_s] = Param(1.0);
+            } else {
+                removeEffect(c, u"vedit.denoise"_s);
+            }
+        }, tr("Toggle noise reduction"), mergeTarget);
+    }
+    if (key == u"audio.denoiseAmount"_s) {
+        return update(clips, [&](Clip &c) {
+            ensureEffect(c, u"vedit.denoise"_s).params[u"amount"_s] = Param(std::clamp(number, 0.0, 1.0));
+        }, tr("Change noise reduction amount"), mergeTarget);
+    }
+    if (key == u"audio.voiceEffect"_s) {
+        const QString preset = value.toString();
+        return update(clips, [preset](Clip &c) {
+            if (preset.isEmpty() || preset == u"none"_s) {
+                removeEffect(c, u"vedit.voice_effect"_s);
+            } else {
+                ensureEffect(c, u"vedit.voice_effect"_s).params[u"preset"_s] = Param(preset);
+            }
+        }, tr("Change voice effect"), mergeTarget);
+    }
+    if (key == u"audio.enhanceVoice"_s) {
+        const bool on = value.toBool();
+        return update(clips, [on](Clip &c) {
+            if (on) {
+                ensureEffect(c, u"vedit.voice_effect"_s).params[u"preset"_s] = Param(u"enhance"_s);
+                ensureEffect(c, u"vedit.denoise"_s).params[u"amount"_s] = Param(0.9);
+            } else {
+                removeEffect(c, u"vedit.voice_effect"_s);
+            }
+        }, tr("Enhance voice"), mergeTarget);
+    }
+    if (key.startsWith(u"audio.eq."_s)) {
+        const QString band = key.mid(9);
+        return update(clips, [&](Clip &c) {
+            ensureEffect(c, u"vedit.eq"_s).params[band] = Param(std::clamp(number, -24.0, 24.0));
+        }, tr("Change equalizer"), mergeTarget);
+    }
+    if (key == u"audio.compressor.enabled"_s) {
+        const bool on = value.toBool();
+        return update(clips, [on](Clip &c) {
+            if (on) {
+                ensureEffect(c, u"vedit.compressor"_s);
+            } else {
+                removeEffect(c, u"vedit.compressor"_s);
+            }
+        }, tr("Toggle compressor"), mergeTarget);
+    }
+    if (key.startsWith(u"audio.compressor."_s)) {
+        const QString param = key.mid(17);
+        return update(clips, [&](Clip &c) {
+            ensureEffect(c, u"vedit.compressor"_s).params[param] = Param(number);
+        }, tr("Change compressor"), mergeTarget);
     }
     if (key == u"fadeIn"_s || key == u"fadeOut"_s) {
         const Rational rate = m_editor.data().settings.frameRate;
@@ -1368,7 +1477,15 @@ bool ClipInspector::reset(const QString &section)
     } else if (section == u"background"_s) {
         done = update(clips, [](Clip &c) { c.background.reset(); }, tr("Reset background"), {});
     } else if (section == u"audio"_s) {
-        done = update(clips, [](Clip &c) { c.media()->audio = ClipAudio{}; }, tr("Reset volume"), {});
+        done = update(clips, [](Clip &c) {
+            if (c.media()) {
+                c.media()->audio = ClipAudio{};
+            }
+            removeEffect(c, u"vedit.denoise"_s);
+            removeEffect(c, u"vedit.voice_effect"_s);
+            removeEffect(c, u"vedit.eq"_s);
+            removeEffect(c, u"vedit.compressor"_s);
+        }, tr("Reset volume and audio effects"), {});
     } else if (section == u"speed"_s) {
         // One undo step: the direction, then the speed (which moves the following clips).
         const QString target = u"reset-speed:"_s + clip->id.toString();
@@ -1488,8 +1605,16 @@ bool ClipInspector::applyToAll(const QString &section)
             };
             text = tr("Apply position and size to all");
         } else if (section == u"audio"_s) {
-            change = [&source](Clip &c) { c.media()->audio = source.media()->audio; };
-            text = tr("Apply volume to all");
+            change = [&source](Clip &c) {
+                if (c.media()) {
+                    c.media()->audio = source.media()->audio;
+                    copyEffect(source, c, u"vedit.denoise"_s);
+                    copyEffect(source, c, u"vedit.voice_effect"_s);
+                    copyEffect(source, c, u"vedit.eq"_s);
+                    copyEffect(source, c, u"vedit.compressor"_s);
+                }
+            };
+            text = tr("Apply audio to all");
         } else if (section == u"filter"_s) {
             change = [&source](Clip &c) { copyEffect(source, c, kFilterType); };
             text = tr("Apply filter to all");
@@ -1859,6 +1984,10 @@ bool ClipInspector::pasteAttributes()
         }
         if (c.media() && source.media()) {
             c.media()->audio = source.media()->audio;
+            copyEffect(source, c, u"vedit.denoise"_s);
+            copyEffect(source, c, u"vedit.voice_effect"_s);
+            copyEffect(source, c, u"vedit.eq"_s);
+            copyEffect(source, c, u"vedit.compressor"_s);
         }
         if (c.text() && source.text()) {
             c.text()->style = source.text()->style;
@@ -2098,6 +2227,148 @@ bool ClipInspector::matchColor(const QString &referenceClipId)
     endGesture();
     if (done) {
         emit m_editor.message(tr("Color matched to reference clip"), true);
+    }
+    return done;
+}
+
+bool ClipInspector::normalizeLoudness(double targetLufs)
+{
+    const Clip *clip = focus();
+    if (!clip || !clip->media()) {
+        emit m_editor.message(tr("Select an audio or video clip first."), false);
+        return false;
+    }
+    const Media *source = m_editor.data().findMedia(clip->media()->mediaId);
+    if (!source || !source->info.audio) {
+        emit m_editor.message(tr("The selected clip does not have audio."), false);
+        return false;
+    }
+    const auto loudnessOpt = engine::extractLoudness(source->path);
+    if (!loudnessOpt) {
+        emit m_editor.message(tr("Could not measure loudness of the audio."), false);
+        return false;
+    }
+    const double currentLufs = loudnessOpt->integratedLufs;
+    const double deltaDb = fx::gainAdjustmentForTargetLufs(currentLufs, targetLufs);
+    const double currentGainDb = numberOf(clip->media()->audio.gainDb, 0.0);
+    const double newGainDb = std::clamp(currentGainDb + deltaDb, -60.0, 20.0);
+    const bool done = set(u"volume"_s, newGainDb);
+    if (done) {
+        emit m_editor.message(tr("Loudness normalized to %1 LUFS (%2 dB)").arg(targetLufs, 0, 'f', 1).arg(deltaDb >= 0 ? QStringLiteral("+") + QString::number(deltaDb, 'f', 1) : QString::number(deltaDb, 'f', 1)), true);
+    }
+    return done;
+}
+
+bool ClipInspector::autoDuck(double duckingDb)
+{
+    const Clip *clip = focus();
+    if (!clip || !clip->media()) {
+        emit m_editor.message(tr("Select an audio clip to duck."), false);
+        return false;
+    }
+    const Sequence *seq = m_editor.data().mainSequence();
+    if (!seq) {
+        return false;
+    }
+    const TimeRange targetRange = clip->range();
+    if (targetRange.duration.value() <= 0) {
+        return false;
+    }
+
+    std::vector<TimeRange> busyIntervals;
+    const auto checkTrack = [&](const Track &track) {
+        for (const Clip &c : track.clips) {
+            if (c.id == clip->id || !c.media() || c.media()->audio.muted) {
+                continue;
+            }
+            const Media *src = m_editor.data().findMedia(c.media()->mediaId);
+            if (!src || !src->info.audio || c.media()->streams == Streams::VideoOnly) {
+                continue;
+            }
+            const TimeRange clipRange = c.range();
+            if (targetRange.intersects(clipRange)) {
+                const RationalTime oStart = std::max(targetRange.start, clipRange.start);
+                const RationalTime oEnd = std::min(targetRange.end(), clipRange.end());
+                if (oEnd > oStart) {
+                    busyIntervals.push_back(TimeRange(oStart, oEnd - oStart));
+                }
+            }
+        }
+    };
+    for (const Track &t : seq->visualTracks) {
+        checkTrack(t);
+    }
+    for (const Track &t : seq->audioTracks) {
+        checkTrack(t);
+    }
+
+    if (busyIntervals.empty()) {
+        emit m_editor.message(tr("No overlapping audio found to duck against."), false);
+        return false;
+    }
+
+    std::sort(busyIntervals.begin(), busyIntervals.end(), [](const TimeRange &a, const TimeRange &b) {
+        return a.start < b.start;
+    });
+
+    const Rational rate = m_editor.data().settings.frameRate;
+    const RationalTime gapThreshold(std::max<int64_t>(1, std::llround(0.5 * rate.toDouble())), rate);
+    std::vector<TimeRange> merged;
+    for (const TimeRange &r : busyIntervals) {
+        if (merged.empty()) {
+            merged.push_back(r);
+        } else if (r.start <= merged.back().end() + gapThreshold) {
+            merged.back().duration = std::max(merged.back().end(), r.end()) - merged.back().start;
+        } else {
+            merged.push_back(r);
+        }
+    }
+
+    const RationalTime attack(std::max<int64_t>(1, std::llround(0.2 * rate.toDouble())), rate);
+    const RationalTime release(std::max<int64_t>(1, std::llround(0.4 * rate.toDouble())), rate);
+    const double normalGain = 0.0;
+    const double duckGain = std::clamp(duckingDb, -60.0, 0.0);
+
+    std::vector<Keyframe> keyframes;
+    for (const TimeRange &m : merged) {
+        const RationalTime relStart = m.start - targetRange.start;
+        const RationalTime relEnd = m.end() - targetRange.start;
+
+        const RationalTime t0 = std::max(RationalTime(0, rate), relStart - attack);
+        const RationalTime t1 = relStart;
+        const RationalTime t2 = relEnd;
+        const RationalTime t3 = std::min(targetRange.duration, relEnd + release);
+
+        keyframes.push_back(Keyframe{t0, ParamValue(normalGain), Interpolation::Linear, {}});
+        keyframes.push_back(Keyframe{t1, ParamValue(duckGain), Interpolation::Linear, {}});
+        keyframes.push_back(Keyframe{t2, ParamValue(duckGain), Interpolation::Linear, {}});
+        keyframes.push_back(Keyframe{t3, ParamValue(normalGain), Interpolation::Linear, {}});
+    }
+
+    std::sort(keyframes.begin(), keyframes.end(), [](const Keyframe &a, const Keyframe &b) {
+        return a.time < b.time;
+    });
+    std::vector<Keyframe> uniqueKf;
+    for (const auto &kf : keyframes) {
+        if (uniqueKf.empty() || uniqueKf.back().time != kf.time) {
+            uniqueKf.push_back(kf);
+        }
+    }
+
+    Param param;
+    for (const auto &kf : uniqueKf) {
+        setKeyframeValue(param, kf.time, kf.value);
+    }
+
+    endGesture();
+    const bool done = update({clip->id}, [param](Clip &c) {
+        if (c.media()) {
+            c.media()->audio.gainDb = param;
+        }
+    }, tr("Auto-duck audio"), {});
+    endGesture();
+    if (done) {
+        emit m_editor.message(tr("Auto-ducking applied"), true);
     }
     return done;
 }

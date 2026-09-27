@@ -465,7 +465,15 @@ double envelope(const GainSettings &s, double position)
     if (s.muted) {
         return 0.0;
     }
-    double gain = fx::dbToGain(s.gainDb);
+    double db = s.gainDb;
+    if (s.gainDbParam.isAnimated()) {
+        const Rational rate = (s.frameRate.num() > 0 && s.frameRate.den() > 0) ? s.frameRate : Rational(30, 1);
+        const int localFrame = static_cast<int>(std::llround(position));
+        const RationalTime contentTime = keyframeTime(s.sourceIn, s.speed, s.reversed, RationalTime(s.length, rate),
+                                                      RationalTime(localFrame, rate));
+        db = s.gainDbParam.numberAt(contentTime, s.gainDb);
+    }
+    double gain = fx::dbToGain(db);
     if (s.fadeInFrames > 0 && position < s.fadeInFrames) {
         gain *= std::clamp(position / s.fadeInFrames, 0.0, 1.0);
     }
@@ -839,6 +847,19 @@ QByteArray GainSettings::key() const
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream << gainDb << muted << pan << fadeInFrames << fadeOutFrames << length << firstFrame << meterKey;
+    streamParam(stream, gainDbParam);
+    if (gainDbParam.isAnimated()) {
+        stream << qint64(sourceIn.value()) << qint64(sourceIn.rate().num()) << qint64(sourceIn.rate().den()) << speed << reversed;
+    }
+    return bytes;
+}
+
+QByteArray AudioEffectsSettings::key() const
+{
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream << denoise << denoiseAmount << voiceEffect << eqLow << eqMid << eqHigh << compressor
+           << compressorThreshold << compressorRatio;
     return bytes;
 }
 

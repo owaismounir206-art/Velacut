@@ -768,6 +768,56 @@ private slots:
         QCOMPARE(editor.timeline()->mainRow(), 1);
     }
 
+    void audioProcessingAndLoudness()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-audio"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        ClipInspector &inspector = *editor.inspector();
+        editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        const QString clipId = mainTrack(editor).clips[0].id.toString();
+
+        editor.select(clipId, false);
+        QVERIFY(inspector.active());
+
+        // 1. Volume keyframing
+        QCOMPARE(inspector.values().value(u"volume"_s).toDouble(), 0.0);
+        inspector.toggleKeyframe(u"volume"_s);
+        QCOMPARE(inspector.keyframes().size(), 1);
+
+        editor.player()->seek(15);
+        inspector.set(u"volume"_s, -6.0);
+        inspector.endGesture();
+        QCOMPARE(inspector.keyframes().size(), 2);
+
+        // 2. Audio effects: Denoise, Voice Effect, EQ, Compressor
+        inspector.set(u"audio.denoise"_s, true);
+        inspector.set(u"audio.denoiseAmount"_s, 0.8);
+        inspector.set(u"audio.voiceEffect"_s, u"robot"_s);
+        inspector.set(u"audio.eq.low"_s, 3.0);
+        inspector.set(u"audio.compressor.enabled"_s, true);
+        inspector.endGesture();
+
+        QCOMPARE(inspector.values().value(u"audio.denoise"_s).toBool(), true);
+        QCOMPARE(inspector.values().value(u"audio.denoiseAmount"_s).toDouble(), 0.8);
+        QCOMPARE(inspector.values().value(u"audio.voiceEffect"_s).toString(), u"robot"_s);
+        QCOMPARE(inspector.values().value(u"audio.eq.low"_s).toDouble(), 3.0);
+        QCOMPARE(inspector.values().value(u"audio.compressor.enabled"_s).toBool(), true);
+
+        // 3. Loudness normalization to -14 LUFS
+        inspector.normalizeLoudness(-14.0);
+        QVERIFY(inspector.values().contains(u"volume"_s));
+
+        // 4. Reset audio
+        inspector.reset(u"audio"_s);
+        QCOMPARE(inspector.values().value(u"volume"_s).toDouble(), 0.0);
+        QCOMPARE(inspector.values().value(u"audio.denoise"_s).toBool(), false);
+        QCOMPARE(inspector.values().value(u"audio.voiceEffect"_s).toString(), u"none"_s);
+    }
+
     // SPEC §6: 500+ clips stay responsive. One edit = command + projection patch + timeline model diff; the continuous
     // save serializes the project on the UI thread (ARCHITECTURE §10: < 30 ms with 500 clips).
     void largeProjectStaysResponsive()

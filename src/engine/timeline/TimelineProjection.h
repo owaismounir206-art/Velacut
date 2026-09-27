@@ -113,6 +113,7 @@ private:
         std::optional<DeflickerSettings> deflicker;
         std::optional<TransformSettings> transform;
         std::optional<GainSettings> gain;
+        std::optional<AudioEffectsSettings> audioEffects;
         QByteArray key;
     };
 

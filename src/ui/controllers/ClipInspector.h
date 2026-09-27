@@ -163,6 +163,10 @@ public:
     Q_INVOKABLE bool autoWhiteBalance();
     // "Abbina colore" (SPEC §5.10): matches color balance and brightness to a reference clip.
     Q_INVOKABLE bool matchColor(const QString &referenceClipId = QString());
+    // "Normalizzazione loudness" (SPEC §5.9): adjusts gain to target LUFS (default −14 LUFS).
+    Q_INVOKABLE bool normalizeLoudness(double targetLufs = -14.0);
+    // "Ducking automatico" (SPEC §5.9): ducks volume during overlapping speech/audio on other tracks.
+    Q_INVOKABLE bool autoDuck(double duckingDb = -12.0);
 
     // The style of a new text ("text/outline": readable on any picture, SPEC 0bis rule 6).
     static TextStyle defaultTextStyle();
