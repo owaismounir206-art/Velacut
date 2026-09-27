@@ -3,6 +3,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import Vedit.Components
 import Vedit.Theme
@@ -13,6 +14,22 @@ Rectangle {
 
     required property Editor editor
     readonly property Inspector inspector: editor.inspector
+
+    FileDialog {
+        id: lutDialog
+        title: qsTr("Choose 3D LUT (.cube)")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [qsTr("Cube LUT (*.cube)"), qsTr("All files (*)")]
+        onAccepted: {
+            if (selectedFile) {
+                let path = selectedFile.toString()
+                if (path.startsWith("file://")) {
+                    path = path.substring(7)
+                }
+                panel.inspector.set("lut.path", path)
+            }
+        }
+    }
     readonly property var values: inspector.values
     readonly property var sections: inspector.sections
 
@@ -845,27 +862,76 @@ Rectangle {
                     visible: panel.page === "adjust"
                     spacing: Theme.space.md
 
-                    Button {
-                        objectName: "autoEnhanceButton"
-                        visible: panel.inspector.kind !== Inspector.Adjustment // it reads the clip's own picture
+                    RowLayout {
                         Layout.fillWidth: true
-                        variant: "tonal"
-                        iconName: "auto_fix_high"
-                        text: qsTr("Auto enhance")
-                        ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Corrects light, colour and volume: you can change the result below")
-                        onClicked: panel.inspector.autoEnhance()
+                        visible: panel.inspector.kind !== Inspector.Adjustment
+                        spacing: Theme.space.sm
+
+                        Button {
+                            objectName: "autoEnhanceButton"
+                            Layout.fillWidth: true
+                            variant: "tonal"
+                            iconName: "auto_fix_high"
+                            text: qsTr("Auto enhance")
+                            ToolTip.visible: hovered
+                            ToolTip.text: qsTr("Corrects light, colour and volume: you can change the result below")
+                            onClicked: panel.inspector.autoEnhance()
+                        }
+                        IconButton {
+                            objectName: "autoWhiteBalanceButton"
+                            iconName: "wb_auto"
+                            label: qsTr("Auto white balance")
+                            onClicked: panel.inspector.autoWhiteBalance()
+                        }
+                        IconButton {
+                            objectName: "matchColorButton"
+                            iconName: "palette"
+                            label: qsTr("Match colour")
+                            onClicked: panel.inspector.matchColor()
+                        }
+                    }
+
+                    PropertySection {
+                        inspector: panel.inspector
+                        section: "deflicker"
+                        title: qsTr("Deflicker")
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Remove flicker (artificial lights & timelapse)")
+                                role: "bodyMedium"
+                                wrapMode: Text.WordWrap
+                            }
+                            Switch {
+                                objectName: "deflickerSwitch"
+                                checked: panel.values["deflicker.enabled"] ?? false
+                                onToggled: panel.inspector.set("deflicker.enabled", checked)
+                            }
+                        }
+                        PropertySlider {
+                            visible: panel.values["deflicker.enabled"] ?? false
+                            inspector: panel.inspector
+                            key: "deflicker.size"
+                            label: qsTr("Window size (frames)")
+                            from: 2
+                            to: 30
+                            stepSize: 1
+                            neutral: 5
+                            format: v => Math.round(v)
+                        }
                     }
 
                     PropertySection {
                         inspector: panel.inspector
                         section: "filter"
-                        title: (panel.values["filter"] ?? "") !== "" ? qsTr("Filter: %1").arg(panel.values["filter.name"]) : qsTr("Filter")
-                        applyToAll: (panel.values["filter"] ?? "") !== ""
+                        title: (panel.values["filter"] ?? "") !== "" ? qsTr("Filter: %1").arg(panel.values["filter.name"]) : qsTr("Filter and LUT")
+                        applyToAll: (panel.values["filter"] ?? "") !== "" || (panel.values["lut.path"] ?? "") !== ""
 
                         Label {
                             Layout.fillWidth: true
-                            visible: (panel.values["filter"] ?? "") === ""
+                            visible: (panel.values["filter"] ?? "") === "" && (panel.values["lut.path"] ?? "") === ""
                             wrapMode: Text.WordWrap
                             role: "bodySmall"
                             color: Theme.color.onSurfaceVariant
@@ -875,7 +941,41 @@ Rectangle {
                             visible: (panel.values["filter"] ?? "") !== ""
                             inspector: panel.inspector
                             key: "filter.intensity"
-                            label: qsTr("Intensity")
+                            label: qsTr("Filter intensity")
+                            neutral: 1
+                            format: v => Math.round(v * 100)
+                        }
+
+                        // LUT .cube
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label {
+                                Layout.fillWidth: true
+                                text: (panel.values["lut.path"] ?? "") !== ""
+                                      ? qsTr("LUT: %1").arg(panel.values["lut.name"])
+                                      : qsTr("3D LUT (.cube)")
+                                role: "bodyMedium"
+                                elide: Text.ElideRight
+                            }
+                            Button {
+                                objectName: "chooseLutButton"
+                                variant: (panel.values["lut.path"] ?? "") !== "" ? "tonal" : "outlined"
+                                text: (panel.values["lut.path"] ?? "") !== "" ? qsTr("Change…") : qsTr("Import…")
+                                iconName: "folder_open"
+                                onClicked: lutDialog.open()
+                            }
+                            IconButton {
+                                visible: (panel.values["lut.path"] ?? "") !== ""
+                                iconName: "close"
+                                label: qsTr("Remove LUT")
+                                onClicked: panel.inspector.set("lut.path", "")
+                            }
+                        }
+                        PropertySlider {
+                            visible: (panel.values["lut.path"] ?? "") !== ""
+                            inspector: panel.inspector
+                            key: "lut.intensity"
+                            label: qsTr("LUT intensity")
                             neutral: 1
                             format: v => Math.round(v * 100)
                         }
@@ -912,6 +1012,123 @@ Rectangle {
                                 neutral: modelData["default"]
                                 format: v => Math.round(v * 100)
                             }
+                        }
+                    }
+
+                    PropertySection {
+                        id: wheelsSection
+                        inspector: panel.inspector
+                        section: "grade"
+                        title: qsTr("Color wheels")
+
+                        property string activeWheel: "shadows"
+
+                        SegmentedButton {
+                            Layout.fillWidth: true
+                            model: [
+                                { text: qsTr("Shadows") },
+                                { text: qsTr("Midtones") },
+                                { text: qsTr("Highlights") }
+                            ]
+                            currentIndex: wheelsSection.activeWheel === "midtones" ? 1
+                                        : wheelsSection.activeWheel === "highlights" ? 2 : 0
+                            onActivated: (index) => {
+                                const w = ["shadows", "midtones", "highlights"]
+                                wheelsSection.activeWheel = w[index]
+                            }
+                        }
+
+                        ColorWheel {
+                            Layout.fillWidth: true
+                            inspector: panel.inspector
+                            zone: wheelsSection.activeWheel
+                            title: wheelsSection.activeWheel === "shadows" ? qsTr("Shadows (Lift)")
+                                 : wheelsSection.activeWheel === "midtones" ? qsTr("Midtones (Gamma)")
+                                 : qsTr("Highlights (Gain)")
+                        }
+                    }
+
+                    PropertySection {
+                        id: hslSection
+                        inspector: panel.inspector
+                        section: "grade"
+                        title: qsTr("HSL (8 ranges)")
+
+                        property string activeRange: "red"
+
+                        readonly property var ranges: [
+                            { name: "red", label: qsTr("Red"), color: "#ff4444" },
+                            { name: "orange", label: qsTr("Orange"), color: "#ff8833" },
+                            { name: "yellow", label: qsTr("Yellow"), color: "#ffee33" },
+                            { name: "green", label: qsTr("Green"), color: "#44cc44" },
+                            { name: "aqua", label: qsTr("Aqua"), color: "#33ddcc" },
+                            { name: "blue", label: qsTr("Blue"), color: "#3377ff" },
+                            { name: "purple", label: qsTr("Purple"), color: "#9944ee" },
+                            { name: "magenta", label: qsTr("Magenta"), color: "#ee3399" }
+                        ]
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Theme.space.xs
+                            Repeater {
+                                model: hslSection.ranges
+                                delegate: Rectangle {
+                                    id: chip
+                                    required property var modelData
+                                    width: 24
+                                    height: 24
+                                    radius: 12
+                                    color: modelData.color
+                                    border.color: hslSection.activeRange === modelData.name ? Theme.color.primary : "transparent"
+                                    border.width: 2.5
+                                    scale: hslSection.activeRange === modelData.name ? 1.15 : 1.0
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: hslSection.activeRange = chip.modelData.name
+                                    }
+                                }
+                            }
+                        }
+
+                        PropertySlider {
+                            inspector: panel.inspector
+                            key: "grade.hsl." + hslSection.activeRange + ".hue"
+                            label: qsTr("Hue")
+                            from: -1.0
+                            to: 1.0
+                            neutral: 0.0
+                            format: v => Math.round(v * 100)
+                        }
+                        PropertySlider {
+                            inspector: panel.inspector
+                            key: "grade.hsl." + hslSection.activeRange + ".saturation"
+                            label: qsTr("Saturation")
+                            from: -1.0
+                            to: 1.0
+                            neutral: 0.0
+                            format: v => Math.round(v * 100)
+                        }
+                        PropertySlider {
+                            inspector: panel.inspector
+                            key: "grade.hsl." + hslSection.activeRange + ".lightness"
+                            label: qsTr("Lightness")
+                            from: -1.0
+                            to: 1.0
+                            neutral: 0.0
+                            format: v => Math.round(v * 100)
+                        }
+                    }
+
+                    PropertySection {
+                        inspector: panel.inspector
+                        section: "grade"
+                        title: qsTr("Color curves")
+
+                        ColorCurvesEditor {
+                            Layout.fillWidth: true
+                            inspector: panel.inspector
                         }
                     }
                 }

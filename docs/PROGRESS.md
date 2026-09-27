@@ -108,6 +108,10 @@ vedi sotto); l'utente ha poi chiesto di proseguire ("continua pure il lavoro").
 ## Fase 4 — Colore e audio avanzati (in corso)
 1. **Kernel colore e LUT (`P4.1`)**: `fx::Grade` con bilanciamento del bianco per canale, ruote colore lift/gamma/gain (RGB offset + livello), selettore HSL per 8 gamme con transizioni morbide tra tinte adiacenti, curve monotone cubiche (senza overshoot) RGB e master; parser e campionatore trilineare/lineare per LUT `.cube` 3D/1D (`fx::CubeLut`).
 2. **Proiezione colore e deflicker (`P4.2`)**: composizione look + grade + LUT in una singola 33³ `ColorLut` per MLT senza overhead a runtime; proiezione degli effetti `vedit.grade`, `vedit.lut` (con cache per modifica file) e `vedit.deflicker` (`avfilter.deflicker`) anche sui livelli di regolazione (`tst_projection::gradeEffectInProjection`, `cubeLutInProjection`, `deflickerInProjection`).
+3. **Interfaccia colore e visualizzatori scope (`P4.3`)**:
+   - Controlli completi nel pannello proprietà (scheda Regola): "Bilanciamento automatico" e "Abbina colore" al fotogramma del playhead, selettore file LUT `.cube` 3D/1D con cursore intensità, deflicker (toggle, modalità e dimensione finestra), ruote colore interattive lift/gamma/gain con disco cromatico 2D e cursore livello, regolatore HSL a 8 gamme colore con chip cromatici (tinta, saturazione, luminosità), editor grafico di curve monotone cubiche (Master RGB, Rosso, Verde, Blu) con aggiunta/trascinamento/rimozione punti.
+   - Video Scopes dal vivo (`ScopeView` in QQuickPaintedItem e overlay `ScopePanel` nell'anteprima): Istogramma (RGB e luminanza), Waveform (linee IRE 0, 7.5, 50, 100 con intensità di segnale) e Vettorscopio (reticolo 75%, bersagli colore R/Mg/B/Cy/G/Yl, asse skin-tone "I").
+   - Test di integrazione `tst_ui::colorGradingAndScopes`: verifica apertura/chiusura scope, modifica parametri `grade` e `deflicker`, verifica effetti e reset. 25/25 test CTest verdi.
 
 ### Prossimi passi (Fase 4 — Colore e audio avanzati)
 Dalla SPEC §8: HSL, curve, ruote colore, LUT, scope, abbina colore, deflicker; EQ/compressore/effetti voce, "Migliora

@@ -14,6 +14,7 @@ qt_add_qml_module(vedit_ui
         items/MediaThumbnail.h items/MediaThumbnail.cpp
         items/AssetThumbnail.h items/AssetThumbnail.cpp
         items/WaveformView.h items/WaveformView.cpp
+        items/ScopeView.h items/ScopeView.cpp
         models/AudioLibraryModel.h models/AudioLibraryModel.cpp
         models/AssetLibraryModel.h models/AssetLibraryModel.cpp
         models/DraftsModel.h models/DraftsModel.cpp
@@ -51,6 +52,9 @@ qt_add_qml_module(vedit_ui
         qml/LevelMeter.qml
         qml/KeyframeButton.qml
         qml/CurveEditor.qml
+        qml/ColorWheel.qml
+        qml/ColorCurvesEditor.qml
+        qml/ScopePanel.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"
     PREFIX "/vedit/shaders"

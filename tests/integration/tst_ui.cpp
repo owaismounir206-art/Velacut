@@ -799,6 +799,63 @@ private slots:
         QTRY_COMPARE(m_app->drafts()->count(), drafts);
     }
 
+    void colorGradingAndScopes()
+    {
+        // Re-open a draft to test color grading and scopes
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        editor()->importAndInsert({QUrl::fromLocalFile(m_files.landscape)}, 0, editor()->timeline()->mainRow());
+        QTRY_VERIFY(!mainTrack().clips.empty());
+        const auto clips = mainTrack().clips;
+        editor()->select(clips.front().id.toString(), false);
+        QTRY_VERIFY(editor()->inspector()->active());
+
+        // 1. Toggle scopes panel on preview
+        QQuickItem *scopesBtn = byName(u"scopesButton"_s);
+        QVERIFY(scopesBtn);
+        click(scopesBtn);
+        QTRY_VERIFY(byName(u"scopePanel"_s));
+
+        QQuickItem *scopeView = byName(u"scopeView"_s);
+        QVERIFY(scopeView);
+        QCOMPARE(scopeView->property("mode").toInt(), 0); // Histogram
+
+        // Close scopes panel
+        click(scopesBtn);
+        QTRY_VERIFY(!byName(u"scopePanel"_s));
+
+        // 2. Adjust tab & color grading controls
+        auto *inspector = editor()->inspector();
+        QVERIFY(inspector->set(u"grade.shadows.level"_s, -0.2));
+        QVERIFY(inspector->set(u"grade.hsl.red.saturation"_s, 0.5));
+        QVERIFY(inspector->set(u"deflicker.enabled"_s, true));
+        QVERIFY(inspector->set(u"deflicker.size"_s, 8));
+
+        const Clip *focused = mainTrack().findClip(clips.front().id);
+        QVERIFY(focused);
+        const Effect *grade = nullptr;
+        const Effect *deflicker = nullptr;
+        for (const Effect &e : focused->effects) {
+            if (e.type == u"vedit.grade"_s) grade = &e;
+            if (e.type == u"vedit.deflicker"_s) deflicker = &e;
+        }
+        QVERIFY(grade);
+        QVERIFY(deflicker);
+        QCOMPARE(inspector->values().value(u"grade.shadows.level"_s).toDouble(), -0.2);
+        QCOMPARE(inspector->values().value(u"grade.hsl.red.saturation"_s).toDouble(), 0.5);
+        QCOMPARE(inspector->values().value(u"deflicker.size"_s).toDouble(), 8.0);
+
+        // Reset
+        QVERIFY(inspector->reset(u"adjust"_s));
+        const Clip *cleared = mainTrack().findClip(clips.front().id);
+        QVERIFY(cleared);
+        for (const Effect &e : cleared->effects) {
+            QVERIFY(e.type != u"vedit.grade"_s);
+            QVERIFY(e.type != u"vedit.deflicker"_s);
+        }
+    }
+
     void noQmlWarnings()
     {
         QVERIFY2(m_warnings.isEmpty(), qPrintable(m_warnings.join(u'\n')));

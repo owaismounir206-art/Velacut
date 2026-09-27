@@ -10,9 +10,13 @@
 #include "engine/playback/TimelinePlayer.h"
 #include "engine/timeline/ClipPlacement.h"
 #include "fx/Enhance.h"
+#include "fx/Grade.h"
 #include "fx/Library.h"
 
 #include <QColor>
+#include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QRandomGenerator>
 
 #include <algorithm>
@@ -27,6 +31,9 @@ namespace {
 
 const QString kFilterType = u"vedit.filter"_s;
 const QString kAdjustType = u"vedit.adjust.basic"_s;
+const QString kGradeType = u"vedit.grade"_s;
+const QString kLutType = u"vedit.lut"_s;
+const QString kDeflickerType = u"vedit.deflicker"_s;
 const QString kChromaType = u"vedit.chroma_key"_s;
 constexpr int kBlendModeCount = 17;
 
@@ -570,7 +577,7 @@ bool ClipInspector::supports(const Clip &clip, const QString &section) const
     // An adjustment layer has no picture of its own: only the looks it gives to what is under it.
     const bool adjustmentLayer = clip.adjustment() != nullptr;
     if (adjustmentLayer) {
-        return section == u"filter"_s || section == u"adjust"_s;
+        return section == u"filter"_s || section == u"adjust"_s || section == u"grade"_s || section == u"lut"_s || section == u"deflicker"_s;
     }
     if (section == u"video"_s) {
         return !audioOnly;
@@ -586,7 +593,7 @@ bool ClipInspector::supports(const Clip &clip, const QString &section) const
     if (section == u"speed"_s) {
         return media && !image;
     }
-    if (section == u"filter"_s || section == u"adjust"_s) {
+    if (section == u"filter"_s || section == u"adjust"_s || section == u"grade"_s || section == u"lut"_s || section == u"deflicker"_s) {
         return visualMedia;
     }
     if (section == u"text"_s) {
@@ -655,6 +662,11 @@ QStringList ClipInspector::modifiedSections() const
     if (const Effect *adjust = findEffect(*clip, kAdjustType)) {
         if (std::any_of(adjust->params.begin(), adjust->params.end(),
                         [](const auto &entry) { return numberOf(entry.second, 0.0) != 0.0; })) {
+            result << u"adjust"_s;
+        }
+    }
+    if (findEffect(*clip, kGradeType) || findEffect(*clip, kLutType) || findEffect(*clip, kDeflickerType)) {
+        if (!result.contains(u"adjust"_s)) {
             result << u"adjust"_s;
         }
     }
@@ -838,6 +850,80 @@ QVariantMap ClipInspector::values() const
                                                                          : param.value(u"default"_s).toDouble();
     }
 
+    const Effect *lut = findEffect(*clip, kLutType);
+    QString lutPath;
+    if (lut && lut->params.count(u"path"_s)) {
+        if (const auto *s = std::get_if<QString>(&lut->params.at(u"path"_s).staticValue())) {
+            lutPath = *s;
+        }
+    }
+    map[u"lut.path"_s] = lutPath;
+    map[u"lut.name"_s] = lutPath.isEmpty() ? QString() : QFileInfo(lutPath).fileName();
+    map[u"lut.intensity"_s] = lut ? numberOf(lut->intensity, 1.0) : 1.0;
+
+    const Effect *deflicker = findEffect(*clip, kDeflickerType);
+    map[u"deflicker.enabled"_s] = deflicker != nullptr && deflicker->enabled;
+    map[u"deflicker.size"_s] = deflicker && deflicker->params.count(u"size"_s) ? numberOf(deflicker->params.at(u"size"_s), 5.0) : 5.0;
+    QString defMode = u"pm"_s;
+    if (deflicker && deflicker->params.count(u"mode"_s)) {
+        if (const auto *s = std::get_if<QString>(&deflicker->params.at(u"mode"_s).staticValue())) {
+            defMode = *s;
+        }
+    }
+    map[u"deflicker.mode"_s] = defMode;
+
+    const Effect *grade = findEffect(*clip, kGradeType);
+    map[u"grade.balance.r"_s] = grade && grade->params.count(u"balance.r"_s) ? numberOf(grade->params.at(u"balance.r"_s), 1.0) : 1.0;
+    map[u"grade.balance.g"_s] = grade && grade->params.count(u"balance.g"_s) ? numberOf(grade->params.at(u"balance.g"_s), 1.0) : 1.0;
+    map[u"grade.balance.b"_s] = grade && grade->params.count(u"balance.b"_s) ? numberOf(grade->params.at(u"balance.b"_s), 1.0) : 1.0;
+
+    for (const QString &zone : {u"shadows"_s, u"midtones"_s, u"highlights"_s}) {
+        map[u"grade."_s + zone + u".r"_s] = grade && grade->params.count(zone + u".r"_s) ? numberOf(grade->params.at(zone + u".r"_s), 0.0) : 0.0;
+        map[u"grade."_s + zone + u".g"_s] = grade && grade->params.count(zone + u".g"_s) ? numberOf(grade->params.at(zone + u".g"_s), 0.0) : 0.0;
+        map[u"grade."_s + zone + u".b"_s] = grade && grade->params.count(zone + u".b"_s) ? numberOf(grade->params.at(zone + u".b"_s), 0.0) : 0.0;
+        map[u"grade."_s + zone + u".level"_s] = grade && grade->params.count(zone + u".level"_s) ? numberOf(grade->params.at(zone + u".level"_s), 0.0) : 0.0;
+    }
+
+    for (int r = 0; r < fx::Grade::kRanges; ++r) {
+        const QString rangeName = fx::Grade::rangeName(r);
+        map[u"grade.hsl."_s + rangeName + u".hue"_s] = grade && grade->params.count(u"hsl."_s + rangeName + u".hue"_s) ? numberOf(grade->params.at(u"hsl."_s + rangeName + u".hue"_s), 0.0) : 0.0;
+        map[u"grade.hsl."_s + rangeName + u".saturation"_s] = grade && grade->params.count(u"hsl."_s + rangeName + u".saturation"_s) ? numberOf(grade->params.at(u"hsl."_s + rangeName + u".saturation"_s), 0.0) : 0.0;
+        map[u"grade.hsl."_s + rangeName + u".lightness"_s] = grade && grade->params.count(u"hsl."_s + rangeName + u".lightness"_s) ? numberOf(grade->params.at(u"hsl."_s + rangeName + u".lightness"_s), 0.0) : 0.0;
+    }
+
+    for (const QString &ch : {u"master"_s, u"r"_s, u"g"_s, u"b"_s}) {
+        const QString curveKey = u"curve."_s + ch;
+        QVariantList curvePoints;
+        if (grade && grade->params.count(curveKey)) {
+            const ParamValue &pv = grade->params.at(curveKey).staticValue();
+            if (const auto *s = std::get_if<QString>(&pv)) {
+                QJsonDocument doc = QJsonDocument::fromJson(s->toUtf8());
+                if (doc.isArray()) {
+                    for (const auto &val : doc.array()) {
+                        if (val.isArray()) {
+                            const auto pt = val.toArray();
+                            if (pt.size() >= 2) {
+                                curvePoints << QVariant(QVariantList{pt.at(0).toDouble(), pt.at(1).toDouble()});
+                            }
+                        }
+                    }
+                }
+            } else if (const auto *jv = std::get_if<QJsonValue>(&pv)) {
+                if (jv->isArray()) {
+                    for (const auto &val : jv->toArray()) {
+                        if (val.isArray()) {
+                            const auto pt = val.toArray();
+                            if (pt.size() >= 2) {
+                                curvePoints << QVariant(QVariantList{pt.at(0).toDouble(), pt.at(1).toDouble()});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        map[u"grade.curve."_s + ch] = curvePoints;
+    }
+
     if (const TextClipData *text = clip->text()) {
         const TextStyle &style = text->style;
         map[u"text.content"_s] = text->text;
@@ -878,6 +964,9 @@ QString ClipInspector::sectionOf(const QString &key) const
     }
     if (key.startsWith(u"mask."_s) || key.startsWith(u"chroma."_s)) {
         return u"cutout"_s;
+    }
+    if (key.startsWith(u"grade."_s) || key.startsWith(u"lut."_s) || key.startsWith(u"deflicker."_s)) {
+        return u"adjust"_s;
     }
     const qsizetype dot = key.indexOf(u'.');
     return dot > 0 ? key.left(dot) : key; // background.*, filter.*, adjust.*, text.*
@@ -1151,6 +1240,64 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
         return update(clips, [&](Clip &c) { ensureEffect(c, kAdjustType).params[name] = Param(number); },
                       tr("Adjust colour"), mergeTarget);
     }
+    if (key == u"lut.path"_s) {
+        const QString path = value.toString();
+        return update(clips, [path](Clip &c) {
+            if (path.isEmpty()) {
+                removeEffect(c, kLutType);
+            } else {
+                ensureEffect(c, kLutType).params[u"path"_s] = Param(path);
+            }
+        }, tr("Change LUT"), mergeTarget);
+    }
+    if (key == u"lut.intensity"_s) {
+        return update(clips, [&](Clip &c) {
+            if (findEffect(c, kLutType)) {
+                ensureEffect(c, kLutType).intensity = Param(std::clamp(number, 0.0, 1.0));
+            }
+        }, tr("Change LUT intensity"), mergeTarget);
+    }
+    if (key == u"deflicker.enabled"_s) {
+        const bool on = value.toBool();
+        return update(clips, [on](Clip &c) {
+            if (on) {
+                ensureEffect(c, kDeflickerType);
+            } else {
+                removeEffect(c, kDeflickerType);
+            }
+        }, tr("Toggle deflicker"), mergeTarget);
+    }
+    if (key == u"deflicker.size"_s) {
+        return update(clips, [&](Clip &c) {
+            ensureEffect(c, kDeflickerType).params[u"size"_s] = Param(std::clamp(static_cast<double>(static_cast<int>(number)), 2.0, 129.0));
+        }, tr("Change deflicker size"), mergeTarget);
+    }
+    if (key == u"deflicker.mode"_s) {
+        const QString mode = value.toString();
+        return update(clips, [mode](Clip &c) {
+            ensureEffect(c, kDeflickerType).params[u"mode"_s] = Param(mode);
+        }, tr("Change deflicker mode"), mergeTarget);
+    }
+    if (key.startsWith(u"grade.curve."_s)) {
+        const QString channel = key.mid(12);
+        QJsonArray arr;
+        for (const QVariant &item : value.toList()) {
+            const QVariantList pt = item.toList();
+            if (pt.size() >= 2) {
+                arr.append(QJsonArray{pt.at(0).toDouble(), pt.at(1).toDouble()});
+            }
+        }
+        const QString jsonStr = QString::fromUtf8(QJsonDocument(arr).toJson(QJsonDocument::Compact));
+        return update(clips, [channel, jsonStr](Clip &c) {
+            ensureEffect(c, kGradeType).params[u"curve."_s + channel] = Param(jsonStr);
+        }, tr("Change color curve"), mergeTarget);
+    }
+    if (key.startsWith(u"grade."_s)) {
+        const QString paramName = key.mid(6);
+        return update(clips, [&](Clip &c) {
+            ensureEffect(c, kGradeType).params[paramName] = Param(number);
+        }, tr("Grade colour"), mergeTarget);
+    }
 
     // Text
     if (key == u"text.preset"_s) {
@@ -1243,7 +1390,18 @@ bool ClipInspector::reset(const QString &section)
     } else if (section == u"filter"_s) {
         done = update(clips, [](Clip &c) { removeEffect(c, kFilterType); }, tr("Remove filter"), {});
     } else if (section == u"adjust"_s) {
-        done = update(clips, [](Clip &c) { removeEffect(c, kAdjustType); }, tr("Reset adjustments"), {});
+        done = update(clips, [](Clip &c) {
+            removeEffect(c, kAdjustType);
+            removeEffect(c, kGradeType);
+            removeEffect(c, kLutType);
+            removeEffect(c, kDeflickerType);
+        }, tr("Reset adjustments"), {});
+    } else if (section == u"grade"_s) {
+        done = update(clips, [](Clip &c) { removeEffect(c, kGradeType); }, tr("Reset color grade"), {});
+    } else if (section == u"lut"_s) {
+        done = update(clips, [](Clip &c) { removeEffect(c, kLutType); }, tr("Remove LUT"), {});
+    } else if (section == u"deflicker"_s) {
+        done = update(clips, [](Clip &c) { removeEffect(c, kDeflickerType); }, tr("Reset deflicker"), {});
     } else if (section == u"text"_s) {
         done = update(clips, [](Clip &c) {
             c.text()->style = defaultTextStyle();
@@ -1336,8 +1494,22 @@ bool ClipInspector::applyToAll(const QString &section)
             change = [&source](Clip &c) { copyEffect(source, c, kFilterType); };
             text = tr("Apply filter to all");
         } else if (section == u"adjust"_s) {
-            change = [&source](Clip &c) { copyEffect(source, c, kAdjustType); };
+            change = [&source](Clip &c) {
+                copyEffect(source, c, kAdjustType);
+                copyEffect(source, c, kGradeType);
+                copyEffect(source, c, kLutType);
+                copyEffect(source, c, kDeflickerType);
+            };
             text = tr("Apply adjustments to all");
+        } else if (section == u"grade"_s) {
+            change = [&source](Clip &c) { copyEffect(source, c, kGradeType); };
+            text = tr("Apply grade to all");
+        } else if (section == u"lut"_s) {
+            change = [&source](Clip &c) { copyEffect(source, c, kLutType); };
+            text = tr("Apply LUT to all");
+        } else if (section == u"deflicker"_s) {
+            change = [&source](Clip &c) { copyEffect(source, c, kDeflickerType); };
+            text = tr("Apply deflicker to all");
         } else if (section == u"text"_s) {
             change = [&source](Clip &c) {
                 c.text()->style = source.text()->style;
@@ -1681,6 +1853,9 @@ bool ClipInspector::pasteAttributes()
         if (supports(c, u"filter"_s) && supports(source, u"filter"_s)) {
             copyEffect(source, c, kFilterType);
             copyEffect(source, c, kAdjustType);
+            copyEffect(source, c, kGradeType);
+            copyEffect(source, c, kLutType);
+            copyEffect(source, c, kDeflickerType);
         }
         if (c.media() && source.media()) {
             c.media()->audio = source.media()->audio;
@@ -1763,6 +1938,166 @@ bool ClipInspector::autoEnhance()
     endGesture();
     if (done) {
         emit m_editor.message(tr("Enhanced: light, colour and volume are in Adjust and Audio"), true);
+    }
+    return done;
+}
+
+bool ClipInspector::autoWhiteBalance()
+{
+    const Clip *clip = focus();
+    const MediaClipData *media = clip ? clip->media() : nullptr;
+    const Media *source = media ? m_editor.data().findMedia(media->mediaId) : nullptr;
+    if (!clip || !source) {
+        return false;
+    }
+    const QImage filmstrip = m_editor.analysis().thumbnails(*source);
+    if (filmstrip.isNull()) {
+        emit m_editor.message(tr("The clip is still being analysed: try again in a moment."), false);
+        return false;
+    }
+
+    const double mediaSeconds = source->info.duration ? source->info.duration->toSecondsDouble() : 0.0;
+    const double from = media->sourceIn.toSecondsDouble();
+    const int count = m_editor.analysis().thumbnailCount(*source);
+    const int width = filmstrip.width() / std::max(1, count);
+    const int idx = mediaSeconds > 0 ? std::clamp(static_cast<int>(from / mediaSeconds * count), 0, count - 1) : 0;
+    const QImage frame = filmstrip.copy(idx * width, 0, width, filmstrip.height());
+
+    double sumR = 0, sumG = 0, sumB = 0;
+    int sampled = 0;
+    for (int y = 0; y < frame.height(); y += 2) {
+        for (int x = 0; x < frame.width(); x += 2) {
+            const QRgb px = frame.pixel(x, y);
+            sumR += qRed(px);
+            sumG += qGreen(px);
+            sumB += qBlue(px);
+            ++sampled;
+        }
+    }
+    if (sampled == 0) {
+        return false;
+    }
+    const double avgR = sumR / sampled / 255.0;
+    const double avgG = sumG / sampled / 255.0;
+    const double avgB = sumB / sampled / 255.0;
+    const double grey = (avgR + avgG + avgB) / 3.0;
+    double gainR = avgR > 0.01 ? grey / avgR : 1.0;
+    double gainG = avgG > 0.01 ? grey / avgG : 1.0;
+    double gainB = avgB > 0.01 ? grey / avgB : 1.0;
+
+    if (gainG > 0.001) {
+        gainR /= gainG;
+        gainB /= gainG;
+        gainG = 1.0;
+    }
+
+    endGesture();
+    const bool done = update({clip->id}, [gainR, gainG, gainB](Clip &c) {
+        Effect &grade = ensureEffect(c, kGradeType);
+        grade.params[u"balance.r"_s] = Param(gainR);
+        grade.params[u"balance.g"_s] = Param(gainG);
+        grade.params[u"balance.b"_s] = Param(gainB);
+    }, tr("Auto white balance"), {});
+    endGesture();
+    if (done) {
+        emit m_editor.message(tr("White balance adjusted"), true);
+    }
+    return done;
+}
+
+bool ClipInspector::matchColor(const QString &referenceClipId)
+{
+    const Clip *clip = focus();
+    if (!clip) {
+        return false;
+    }
+    const Sequence *sequence = m_editor.data().mainSequence();
+    if (!sequence) {
+        return false;
+    }
+    const Clip *ref = nullptr;
+    if (!referenceClipId.isEmpty()) {
+        const std::optional<ClipId> targetId = ClipId::fromString(referenceClipId);
+        if (targetId) {
+            for (const Track &t : sequence->visualTracks) {
+                if (const Clip *c = t.findClip(*targetId)) {
+                    ref = c;
+                    break;
+                }
+            }
+        }
+    } else {
+        for (const Track &t : sequence->visualTracks) {
+            for (const Clip &c : t.clips) {
+                if (c.id != clip->id && c.start < clip->start) {
+                    ref = &c;
+                }
+            }
+        }
+        if (!ref) {
+            for (const Track &t : sequence->visualTracks) {
+                for (const Clip &c : t.clips) {
+                    if (c.id != clip->id) {
+                        ref = &c;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if (!ref) {
+        emit m_editor.message(tr("No reference clip found to match"), false);
+        return false;
+    }
+
+    const MediaClipData *curMedia = clip->media();
+    const MediaClipData *refMedia = ref->media();
+    const Media *curSource = curMedia ? m_editor.data().findMedia(curMedia->mediaId) : nullptr;
+    const Media *refSource = refMedia ? m_editor.data().findMedia(refMedia->mediaId) : nullptr;
+    if (!curSource || !refSource) {
+        return false;
+    }
+
+    const QImage curThumb = m_editor.analysis().thumbnails(*curSource);
+    const QImage refThumb = m_editor.analysis().thumbnails(*refSource);
+    if (curThumb.isNull() || refThumb.isNull()) {
+        emit m_editor.message(tr("Clips are still being analysed: try again in a moment."), false);
+        return false;
+    }
+
+    const auto computeMeanRgb = [](const QImage &img) {
+        double r = 0, g = 0, b = 0;
+        int count = 0;
+        for (int y = 0; y < img.height(); y += 2) {
+            for (int x = 0; x < img.width(); x += 2) {
+                const QRgb px = img.pixel(x, y);
+                r += qRed(px);
+                g += qGreen(px);
+                b += qBlue(px);
+                ++count;
+            }
+        }
+        if (count == 0) return std::array<double, 3>{0.5, 0.5, 0.5};
+        return std::array<double, 3>{r / count / 255.0, g / count / 255.0, b / count / 255.0};
+    };
+
+    const auto curMean = computeMeanRgb(curThumb);
+    const auto refMean = computeMeanRgb(refThumb);
+
+    const double gainR = curMean[0] > 0.01 ? std::clamp(refMean[0] / curMean[0], 0.2, 5.0) : 1.0;
+    const double gainG = curMean[1] > 0.01 ? std::clamp(refMean[1] / curMean[1], 0.2, 5.0) : 1.0;
+    const double gainB = curMean[2] > 0.01 ? std::clamp(refMean[2] / curMean[2], 0.2, 5.0) : 1.0;
+
+    endGesture();
+    const bool done = update({clip->id}, [gainR, gainG, gainB](Clip &c) {
+        Effect &grade = ensureEffect(c, kGradeType);
+        grade.params[u"balance.r"_s] = Param(gainR);
+        grade.params[u"balance.g"_s] = Param(gainG);
+        grade.params[u"balance.b"_s] = Param(gainB);
+    }, tr("Match colour"), {});
+    endGesture();
+    if (done) {
+        emit m_editor.message(tr("Color matched to reference clip"), true);
     }
     return done;
 }

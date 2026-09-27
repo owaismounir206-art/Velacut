@@ -12,6 +12,7 @@ Rectangle {
 
     required property Editor editor
     readonly property TimelinePlayer player: editor.player
+    property bool showScopes: false
 
     color: Theme.color.surfaceContainerLowest
 
@@ -55,6 +56,19 @@ Rectangle {
                 color: Theme.color.onSurfaceVariant
                 text: qsTr("Add a video or a photo to the timeline: the preview appears here.")
             }
+
+            ScopePanel {
+                id: scopeOverlay
+                objectName: "scopePanel"
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.editor.meterWidth + Theme.space.sm
+                height: Math.min(parent.height * 0.5, 220)
+                visible: panel.showScopes
+                sink: panel.player.sink
+                onCloseRequested: panel.showScopes = false
+            }
         }
 
         // Position on the left, buttons in the centre, duration on the right, at any width.
@@ -95,8 +109,18 @@ Rectangle {
                     onClicked: panel.player.seek(panel.editor.timeline.duration)
                 }
             }
+            IconButton {
+                id: scopesBtn
+                objectName: "scopesButton"
+                anchors { right: formatBtn.left; rightMargin: Theme.space.xs; verticalCenter: parent.verticalCenter }
+                variant: panel.showScopes ? "filled" : "standard"
+                iconName: "monitoring"
+                label: qsTr("Video scopes (histogram, waveform, vectorscope)")
+                onClicked: panel.showScopes = !panel.showScopes
+            }
             // Format of the canvas under the player (SPEC §4), one click away (SPEC 0bis rule 1).
             FormatButton {
+                id: formatBtn
                 anchors { right: durationLabel.left; rightMargin: Theme.space.sm; verticalCenter: parent.verticalCenter }
                 editor: panel.editor
             }

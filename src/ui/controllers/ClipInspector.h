@@ -159,6 +159,10 @@ public:
 
     // "Migliora automaticamente": light and colour (adjustments) and volume, computed from the clip (rule 9).
     Q_INVOKABLE bool autoEnhance();
+    // "Bilanciamento del bianco automatico" (SPEC §5.10): computes per-channel gains from the clip's frame.
+    Q_INVOKABLE bool autoWhiteBalance();
+    // "Abbina colore" (SPEC §5.10): matches color balance and brightness to a reference clip.
+    Q_INVOKABLE bool matchColor(const QString &referenceClipId = QString());
 
     // The style of a new text ("text/outline": readable on any picture, SPEC 0bis rule 6).
     static TextStyle defaultTextStyle();
