@@ -3,6 +3,7 @@
 
 #include "core/project/Clip.h"
 #include "fx/Color.h"
+#include "fx/Grade.h"
 #include "fx/Composite.h"
 #include "fx/Transition.h"
 
@@ -103,12 +104,16 @@ struct MaskSettings
 struct AdjustSettings
 {
     fx::ColorAdjust look;
+    fx::Grade grade;                        // "vedit.grade"
+    std::shared_ptr<const fx::CubeLut> cube; // "vedit.lut", applied after look and grade
+    QString cubeKey;                        // identifies the cube (file and date) in key()
     double intensity = 1;
     double vignette = 0;
     double grain = 0;
     double sharpness = 0;
 
     QByteArray key() const;
+    bool changesColour() const { return !look.isIdentity() || !grade.isIdentity() || cube; }
 };
 
 struct GainSettings
@@ -133,8 +138,20 @@ struct TransitionSettings
     double softness = 0.02;
 };
 
+struct DeflickerSettings
+{
+    int size = 5;
+    QString mode = QStringLiteral("pm");
+
+    QByteArray key() const
+    {
+        return QByteArray::number(size) + ':' + mode.toLatin1();
+    }
+};
+
 std::unique_ptr<Mlt::Filter> makeTransformFilter(Mlt::Profile &profile, const TransformSettings &settings);
 std::unique_ptr<Mlt::Filter> makeAdjustFilter(Mlt::Profile &profile, const AdjustSettings &settings);
+std::unique_ptr<Mlt::Filter> makeDeflickerFilter(Mlt::Profile &profile, const DeflickerSettings &settings);
 std::unique_ptr<Mlt::Filter> makeChromaKeyFilter(Mlt::Profile &profile, const ChromaKeySettings &settings);
 std::unique_ptr<Mlt::Filter> makeMaskFilter(Mlt::Profile &profile, const MaskSettings &settings);
 std::unique_ptr<Mlt::Filter> makeGainFilter(Mlt::Profile &profile, const GainSettings &settings);

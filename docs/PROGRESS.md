@@ -105,12 +105,15 @@ vedi sotto); l'utente ha poi chiesto di proseguire ("continua pure il lavoro").
 - Una volta, in 6 esecuzioni della suite RelWithDebInfo, un test è fallito senza che il nome sia stato registrato;
   non si è ripetuto (tst_ui eseguito 5 volte di fila senza errori). Da tenere d'occhio.
 
-### Prossimi passi (Fase 4 — Colore e audio avanzati), dopo il via
+## Fase 4 — Colore e audio avanzati (in corso)
+1. **Kernel colore e LUT (`P4.1`)**: `fx::Grade` con bilanciamento del bianco per canale, ruote colore lift/gamma/gain (RGB offset + livello), selettore HSL per 8 gamme con transizioni morbide tra tinte adiacenti, curve monotone cubiche (senza overshoot) RGB e master; parser e campionatore trilineare/lineare per LUT `.cube` 3D/1D (`fx::CubeLut`).
+2. **Proiezione colore e deflicker (`P4.2`)**: composizione look + grade + LUT in una singola 33³ `ColorLut` per MLT senza overhead a runtime; proiezione degli effetti `vedit.grade`, `vedit.lut` (con cache per modifica file) e `vedit.deflicker` (`avfilter.deflicker`) anche sui livelli di regolazione (`tst_projection::gradeEffectInProjection`, `cubeLutInProjection`, `deflickerInProjection`).
+
+### Prossimi passi (Fase 4 — Colore e audio avanzati)
 Dalla SPEC §8: HSL, curve, ruote colore, LUT, scope, abbina colore, deflicker; EQ/compressore/effetti voce, "Migliora
 voce", loudness, ducking, registrazione voce con teleprompter, registrazione schermo + webcam, sincronizzazione audio
 esterno, multicamera. Criterio: correggo colore con LUT e curve, il mix audio rispetta −14 LUFS, e monto
-un'intervista a due camere sincronizzate dall'audio. Prima: pulizia all'avvio dei file di job rimasti dopo un
-export interrotto (bug noto sotto).
+un'intervista a due camere sincronizzate dall'audio.
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata

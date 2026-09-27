@@ -332,7 +332,7 @@ int adjustGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, i
     const AdjustSettings &s = state->settings;
     const double k = std::clamp(s.intensity, 0.0, 1.0);
     const fx::ImageView view{*image, *width, *height, *width * 4};
-    if (!s.look.isIdentity()) {
+    if (s.changesColour()) {
         runSliced(*height, [&](int begin, int end) { state->lut.apply(view, k, begin, end); });
     }
     if (s.sharpness > 0) {
@@ -830,6 +830,7 @@ QByteArray AdjustSettings::key() const
     for (const auto &[x, y] : a.curve) {
         stream << x << y;
     }
+    stream << QJsonDocument(grade.toJson()).toJson(QJsonDocument::Compact) << cubeKey;
     return bytes;
 }
 
@@ -855,8 +856,25 @@ std::unique_ptr<Mlt::Filter> makeTransformFilter(Mlt::Profile &profile, const Tr
 std::unique_ptr<Mlt::Filter> makeAdjustFilter(Mlt::Profile &profile, const AdjustSettings &settings)
 {
     auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.adjust");
-    auto *state = new AdjustState{settings, fx::ColorLut(settings.look)};
+    // One LUT for the whole colour transform: adjustments, then grade, then the .cube (docs/ARCHITECTURE.md §22).
+    auto *state = new AdjustState{settings, fx::ColorLut([&settings](const std::array<double, 3> &rgb) {
+                                      std::array<double, 3> c = fx::ColorLut::evaluate(settings.look, rgb);
+                                      if (!settings.grade.isIdentity()) {
+                                          c = fx::applyGrade(settings.grade, c);
+                                      }
+                                      return settings.cube ? settings.cube->sample(c) : c;
+                                  })};
     filter->set(kSettings, state, 0, [](void *p) { delete static_cast<AdjustState *>(p); });
+    return filter;
+}
+
+std::unique_ptr<Mlt::Filter> makeDeflickerFilter(Mlt::Profile &profile, const DeflickerSettings &settings)
+{
+    auto filter = std::make_unique<Mlt::Filter>(profile, "avfilter.deflicker");
+    filter->set("av.size", settings.size);
+    if (!settings.mode.isEmpty()) {
+        filter->set("av.mode", settings.mode.toUtf8().constData());
+    }
     return filter;
 }
 

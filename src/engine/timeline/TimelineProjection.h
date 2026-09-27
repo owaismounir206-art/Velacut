@@ -5,12 +5,14 @@
 #include "core/project/ProjectData.h"
 #include "engine/mlt/Services.h"
 
+#include <QDateTime>
 #include <QImage>
 #include <QHash>
 #include <QSize>
 #include <QStringList>
 
 #include <chrono>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -108,6 +110,7 @@ private:
         std::optional<ChromaKeySettings> chromaKey;
         std::optional<MaskSettings> maskSettings;
         std::vector<AdjustSettings> adjusts;
+        std::optional<DeflickerSettings> deflicker;
         std::optional<TransformSettings> transform;
         std::optional<GainSettings> gain;
         QByteArray key;
@@ -197,6 +200,8 @@ private:
     // A model time in frames of the profile.
     std::int64_t toFrames(const RationalTime &time) const;
 
+    std::shared_ptr<const fx::CubeLut> cubeLut(const QString &path);
+
     Mlt::Profile &m_profile;
     Rational m_rate; // of the profile
     MediaProducerCache &m_cache;
@@ -212,6 +217,7 @@ private:
     QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_colors; // colour producers, shared by cuts
     QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_texts;  // text producers, by content
     QHash<SequenceId, std::shared_ptr<TimelineProjection>> m_compounds;
+    std::map<QString, std::pair<QDateTime, std::shared_ptr<const fx::CubeLut>>> m_cubeLuts;
     Preview m_preview;
     int m_duration = 1;
     int m_backgroundLength = 0;

@@ -10,6 +10,7 @@
 #include "engine/timeline/TimelineProjection.h"
 
 #include <QCryptographicHash>
+#include <QFile>
 #include <QTemporaryDir>
 
 #include <mlt++/Mlt.h>
@@ -802,6 +803,101 @@ private slots:
         QVERIFY(qRed(p) < 200 && qRed(p) > 50);
         QVERIFY(qGreen(p) < 200 && qGreen(p) > 50);
         QVERIFY(qBlue(p) < 200 && qBlue(p) > 50);
+    }
+
+    void gradeEffectInProjection()
+    {
+        ProjectData data = baseProject();
+
+        // White clip (255, 255, 255)
+        Clip clip;
+        clip.id = ClipId::create();
+        clip.start = frames(0);
+        clip.duration = frames(30);
+        clip.payload = ColorClipData{Param(Color{255, 255, 255, 255})};
+
+        // Grade effect: balance.r = 0.2
+        Effect gradeEffect;
+        gradeEffect.id = EffectId::create();
+        gradeEffect.type = u"vedit.grade"_s;
+        gradeEffect.params[u"balance.r"_s] = Param(0.2);
+        clip.effects.push_back(gradeEffect);
+
+        data.sequences.front().visualTracks.front().clips.push_back(clip);
+
+        const QImage img = renderFresh1(data, 5);
+        const QRgb p = pixel(img, 160, 90);
+        // Red channel attenuated (~51), green and blue remain 255
+        QVERIFY(qRed(p) < 100);
+        QVERIFY(qGreen(p) > 200);
+        QVERIFY(qBlue(p) > 200);
+    }
+
+    void cubeLutInProjection()
+    {
+        const QString lutPath = m_dir.filePath(u"test.cube"_s);
+        QFile file(lutPath);
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
+        const QByteArray cubeContent =
+            "TITLE \"Test LUT\"\n"
+            "LUT_3D_SIZE 2\n"
+            "0.0 0.0 0.0\n"
+            "0.0 0.0 0.0\n"
+            "0.0 0.0 0.0\n"
+            "0.0 0.0 0.0\n"
+            "0.0 0.0 0.0\n"
+            "0.0 0.0 0.0\n"
+            "0.0 0.0 0.0\n"
+            "0.0 1.0 0.0\n";
+        file.write(cubeContent);
+        file.close();
+
+        ProjectData data = baseProject();
+
+        Clip clip;
+        clip.id = ClipId::create();
+        clip.start = frames(0);
+        clip.duration = frames(30);
+        clip.payload = ColorClipData{Param(Color{255, 255, 255, 255})};
+
+        Effect lutEffect;
+        lutEffect.id = EffectId::create();
+        lutEffect.type = u"vedit.lut"_s;
+        lutEffect.params[u"path"_s] = Param(lutPath);
+        clip.effects.push_back(lutEffect);
+
+        data.sequences.front().visualTracks.front().clips.push_back(clip);
+
+        const QImage img = renderFresh1(data, 5);
+        const QRgb p = pixel(img, 160, 90);
+        // White transformed to green by LUT
+        QVERIFY(qRed(p) < 50);
+        QVERIFY(qGreen(p) > 200);
+        QVERIFY(qBlue(p) < 50);
+    }
+
+    void deflickerInProjection()
+    {
+        ProjectData data = baseProject();
+
+        Clip clip;
+        clip.id = ClipId::create();
+        clip.start = frames(0);
+        clip.duration = frames(30);
+        clip.payload = ColorClipData{Param(Color{200, 200, 200, 255})};
+
+        Effect deflickerEffect;
+        deflickerEffect.id = EffectId::create();
+        deflickerEffect.type = u"vedit.deflicker"_s;
+        deflickerEffect.params[u"size"_s] = Param(5.0);
+        deflickerEffect.params[u"mode"_s] = Param(u"pm"_s);
+        clip.effects.push_back(deflickerEffect);
+
+        data.sequences.front().visualTracks.front().clips.push_back(clip);
+
+        const QImage img = renderFresh1(data, 5);
+        const QRgb p = pixel(img, 160, 90);
+        QVERIFY(qRed(p) > 180 && qGreen(p) > 180 && qBlue(p) > 180);
     }
 
     void cleanupTestCase() { MltRuntime::shutdown(); }

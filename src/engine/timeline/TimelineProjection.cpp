@@ -7,7 +7,10 @@
 
 #include <QCoreApplication>
 #include <QDataStream>
+#include <QFileInfo>
 #include <QIODevice>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QLoggingCategory>
 
 #include <mlt++/Mlt.h>
@@ -268,6 +271,12 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
                         m_tractor->attach(*filter);
                         m_adjustmentFilters.push_back(std::move(filter));
                     }
+                    if (render->deflicker) {
+                        auto filter = makeDeflickerFilter(m_profile, *render->deflicker);
+                        filter->set_in_and_out(in, out);
+                        m_tractor->attach(*filter);
+                        m_adjustmentFilters.push_back(std::move(filter));
+                    }
                     if (render->chromaKey) {
                         auto filter = makeChromaKeyFilter(m_profile, *render->chromaKey);
                         filter->set_in_and_out(in, out);
@@ -353,6 +362,29 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::textProducer(const TextClipDa
     return producer;
 }
 
+std::shared_ptr<const fx::CubeLut> TimelineProjection::cubeLut(const QString &path)
+{
+    const QFileInfo info(path);
+    if (!info.exists()) {
+        m_warnings << u"LUT file not found: %1"_s.arg(path);
+        return nullptr;
+    }
+    const QDateTime modified = info.lastModified();
+    const auto it = m_cubeLuts.find(path);
+    if (it != m_cubeLuts.end() && it->second.first == modified) {
+        return it->second.second;
+    }
+    QString error;
+    auto loaded = fx::CubeLut::load(path, &error);
+    if (!loaded) {
+        m_warnings << u"LUT %1: %2"_s.arg(path, error);
+        return nullptr;
+    }
+    auto shared = std::make_shared<const fx::CubeLut>(std::move(*loaded));
+    m_cubeLuts[path] = {modified, shared};
+    return shared;
+}
+
 std::shared_ptr<Mlt::Producer> TimelineProjection::compoundProducer(const ProjectData &project, const SequenceId &sequenceId)
 {
     if (sequenceId == m_sequenceId) {
@@ -435,6 +467,61 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
                     }
                 }
                 render->chromaKey = ck;
+                continue;
+            } else if (effect.type == u"vedit.grade"_s) {
+                QJsonObject gradeObj;
+                for (const auto &[name, param] : effect.params) {
+                    const ParamValue &val = param.staticValue();
+                    if (const auto *d = std::get_if<double>(&val)) {
+                        gradeObj.insert(name, *d);
+                    } else if (const auto *b = std::get_if<bool>(&val)) {
+                        gradeObj.insert(name, *b);
+                    } else if (const auto *jv = std::get_if<QJsonValue>(&val)) {
+                        gradeObj.insert(name, *jv);
+                    } else if (const auto *s = std::get_if<QString>(&val)) {
+                        QJsonParseError err;
+                        QJsonDocument doc = QJsonDocument::fromJson(s->toUtf8(), &err);
+                        if (err.error == QJsonParseError::NoError) {
+                            if (doc.isArray()) {
+                                gradeObj.insert(name, doc.array());
+                            } else if (doc.isObject()) {
+                                gradeObj.insert(name, doc.object());
+                            } else {
+                                gradeObj.insert(name, *s);
+                            }
+                        } else {
+                            gradeObj.insert(name, *s);
+                        }
+                    }
+                }
+                adjust.grade = fx::Grade::fromJson(gradeObj);
+            } else if (effect.type == u"vedit.lut"_s) {
+                QString path;
+                if (const auto it = effect.params.find(u"path"_s); it != effect.params.end()) {
+                    const ParamValue &v = it->second.staticValue();
+                    if (const auto *s = std::get_if<QString>(&v)) {
+                        path = *s;
+                    }
+                }
+                if (!path.isEmpty()) {
+                    adjust.cube = cubeLut(path);
+                    if (adjust.cube) {
+                        const QFileInfo fi(path);
+                        adjust.cubeKey = path + u':' + QString::number(fi.lastModified().toMSecsSinceEpoch());
+                    }
+                }
+            } else if (effect.type == u"vedit.deflicker"_s) {
+                DeflickerSettings ds;
+                if (const auto it = effect.params.find(u"size"_s); it != effect.params.end()) {
+                    ds.size = std::clamp(static_cast<int>(numberOf(it->second, 5.0)), 2, 129);
+                }
+                if (const auto it = effect.params.find(u"mode"_s); it != effect.params.end()) {
+                    const ParamValue &v = it->second.staticValue();
+                    if (const auto *s = std::get_if<QString>(&v)) {
+                        ds.mode = *s;
+                    }
+                }
+                render->deflicker = ds;
                 continue;
             } else {
                 m_warnings << u"clip %1: effect %2 is rendered from a later phase"_s.arg(clip.id.toString(), effect.type);
@@ -537,6 +624,7 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
     for (const AdjustSettings &adjust : render->adjusts) {
         stream << adjust.key();
     }
+    stream << render->deflicker.has_value() << (render->deflicker ? render->deflicker->key() : QByteArray());
     stream << render->transform.has_value() << (render->transform ? render->transform->key() : QByteArray());
     stream << render->gain.has_value() << (render->gain ? render->gain->key() : QByteArray());
     render->key = key;
@@ -851,6 +939,10 @@ void TimelineProjection::attachFilters(Mlt::Producer &cut, const ClipRender &ren
     }
     for (const AdjustSettings &adjust : render.adjusts) {
         auto filter = makeAdjustFilter(m_profile, adjust);
+        cut.attach(*filter);
+    }
+    if (render.deflicker) {
+        auto filter = makeDeflickerFilter(m_profile, *render.deflicker);
         cut.attach(*filter);
     }
     if (render.transform) {
