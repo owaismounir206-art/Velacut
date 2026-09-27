@@ -57,6 +57,8 @@ struct TextStylePreset
     QString category;
     LocalizedText name;
     QJsonObject style; // FILE_FORMAT §5.5 text "style"
+    QJsonObject animation;
+    QString sampleText;
 };
 
 struct AnimationPreset

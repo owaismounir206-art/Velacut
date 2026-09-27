@@ -338,6 +338,111 @@ private slots:
         QCOMPARE(alphaAt(img, 310, 170), 0);
     }
 
+    void textAnimationRendersProgressively()
+    {
+        auto profile = profile320();
+        TextClipData text;
+        text.text = u"HELLO WORLD"_s;
+        text.style.size = Param(0.3);
+        text.style.color = Param(Color{255, 255, 255, 255});
+        text.animation = TextAnimation{
+            .type = TextAnimationType::Typewriter,
+            .scope = TextAnimationScope::Character,
+            .duration = RationalTime(30, 30),
+            .easing = Easing::preset(Easing::Preset::Linear),
+            .cursor = false,
+            .stagger = 0.0,
+            .params = {}
+        };
+
+        const QImage imgStart = TextRenderer::render(text, QSize(320, 180), 0.0, 1.0);
+        QCOMPARE(imgStart.size(), QSize(320, 180));
+
+        const QImage imgEnd = TextRenderer::render(text, QSize(320, 180), 1.0, 1.0);
+        QCOMPARE(imgEnd.size(), QSize(320, 180));
+
+        int pixelsStart = 0;
+        int pixelsEnd = 0;
+        for (int y = 0; y < 180; ++y) {
+            for (int x = 0; x < 320; ++x) {
+                if (qAlpha(imgStart.pixel(x, y)) > 0) {
+                    ++pixelsStart;
+                }
+                if (qAlpha(imgEnd.pixel(x, y)) > 0) {
+                    ++pixelsEnd;
+                }
+            }
+        }
+        QVERIFY(pixelsStart < pixelsEnd);
+        QVERIFY(pixelsEnd > 50);
+
+        auto producer = makeTextProducer(*profile, text);
+        const QImage frame0 = frameImage(*producer, 0);
+        const QImage frame29 = frameImage(*producer, 29);
+        QCOMPARE(frame0.size(), QSize(320, 180));
+        QCOMPARE(frame29.size(), QSize(320, 180));
+    }
+
+    void speechBubbleAndLowerThird()
+    {
+        TextClipData bubble;
+        bubble.text = u"Speech Bubble"_s;
+        bubble.style.size = Param(0.2);
+        bubble.style.background = TextBackground{
+            Color{0, 120, 255, 255},
+            0.2,
+            0.4,
+            BubbleShape::SpeechRound,
+            BubbleTail::BottomLeft,
+            0.5,
+            Color{255, 255, 255, 255},
+            0.05,
+            Color{255, 200, 0, 255}
+        };
+
+        const QRectF boundsNormal = TextRenderer::bounds(bubble, QSize(320, 180));
+        QVERIFY(boundsNormal.width() > 0 && boundsNormal.height() > 0);
+
+        const QImage bubbleImg = TextRenderer::render(bubble, QSize(320, 180));
+        QCOMPARE(bubbleImg.size(), QSize(320, 180));
+        bool hasBubbleBg = false;
+        for (int y = 0; y < 180 && !hasBubbleBg; ++y) {
+            for (int x = 0; x < 320 && !hasBubbleBg; ++x) {
+                const QRgb c = bubbleImg.pixel(x, y);
+                if (qAlpha(c) > 200 && qBlue(c) > 200) {
+                    hasBubbleBg = true;
+                }
+            }
+        }
+        QVERIFY(hasBubbleBg);
+
+        TextClipData lowerThird;
+        lowerThird.text = u"Breaking News"_s;
+        lowerThird.style.background = TextBackground{
+            Color{20, 20, 20, 230},
+            0.2,
+            0.2,
+            BubbleShape::LowerThirdBar,
+            BubbleTail::None,
+            0.4,
+            Color{},
+            0.0,
+            Color{255, 0, 0, 255}
+        };
+        const QImage ltImg = TextRenderer::render(lowerThird, QSize(320, 180));
+        QCOMPARE(ltImg.size(), QSize(320, 180));
+        bool hasAccent = false;
+        for (int y = 0; y < 180 && !hasAccent; ++y) {
+            for (int x = 0; x < 320 && !hasAccent; ++x) {
+                const QRgb c = ltImg.pixel(x, y);
+                if (qAlpha(c) > 200 && qRed(c) > 200 && qGreen(c) < 50 && qBlue(c) < 50) {
+                    hasAccent = true;
+                }
+            }
+        }
+        QVERIFY(hasAccent);
+    }
+
     void cleanupTestCase() { MltRuntime::shutdown(); }
 };
 

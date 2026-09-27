@@ -126,12 +126,13 @@ ProjectData richProject()
     textData.style.color = Param(Color{255, 213, 79, 255});
     textData.style.stroke = TextStroke{Param(Color{0, 0, 0, 255}), 0.1};
     textData.style.shadow = TextShadow{Color{0, 0, 0, 153}, Vec2{0.01, 0.02}, 0.05};
-    textData.style.background = TextBackground{Color{0, 0, 0, 128}, 0.3, 0.5};
+    textData.style.background = TextBackground{Color{0, 0, 0, 128}, 0.3, 0.5, BubbleShape::SpeechRound, BubbleTail::BottomLeft, 0.45, Color{255, 0, 0, 255}, 0.05, Color{0, 255, 0, 255}};
     textData.style.align = TextAlign::Left;
     textData.style.lineHeight = 1.4;
     textData.style.extras.insert(u"gradient"_s, QJsonObject{{u"type"_s, u"linear"_s}, {u"angle"_s, 90}});
     textData.stylePreset = AssetRef{u"vedit.core"_s, u"text/bold-outline"_s, 1};
     textData.boxWidth = 0.8;
+    textData.animation = TextAnimation{TextAnimationType::Typewriter, TextAnimationScope::Character, RationalTime(45, 30), Easing::preset(Easing::Preset::Linear), true, 0.05, {}};
     textData.fields.insert(u"spans"_s, QJsonArray{QJsonObject{{u"start"_s, 5}, {u"end"_s, 9}}});
     text.payload = textData;
     textTrack.clips.push_back(text);
@@ -223,6 +224,13 @@ private slots:
         QCOMPARE(text.value(u"text"_s).toString(), u"Ciao Roma!"_s);
         QCOMPARE(text.value(u"style"_s).toObject().value(u"size"_s).toDouble(), 0.06);
         QCOMPARE(text.value(u"style"_s).toObject().value(u"gradient"_s).toObject().value(u"angle"_s).toInt(), 90);
+        const QJsonObject bg = text.value(u"style"_s).toObject().value(u"background"_s).toObject();
+        QCOMPARE(bg.value(u"shape"_s).toString(), u"speechRound"_s);
+        QCOMPARE(bg.value(u"tail"_s).toString(), u"bottomLeft"_s);
+        const QJsonObject anim = text.value(u"animation"_s).toObject();
+        QCOMPARE(anim.value(u"type"_s).toString(), u"typewriter"_s);
+        QCOMPARE(anim.value(u"scope"_s).toString(), u"character"_s);
+        QCOMPARE(anim.value(u"cursor"_s).toBool(), true);
         QCOMPARE(text.value(u"spans"_s).toArray().size(), 1);
         QCOMPARE(tracks[0].toObject().value(u"gainDb"_s).toDouble(), -6.0);
     }

@@ -16,9 +16,13 @@ namespace vedit::engine {
 class TextRenderer
 {
 public:
-    // Straight-alpha RGBA8888 image of `canvas` size.
+    // Straight-alpha RGBA8888 image of `canvas` size at final/static state.
     static QImage render(const TextClipData &text, QSize canvas);
-    // The rectangle of the text block (with its background box) in canvas pixels, before the transform: for the
+    // Straight-alpha RGBA8888 image of `canvas` size at content time `timeSeconds` with clip duration `durationSeconds`.
+    static QImage render(const TextClipData &text, QSize canvas, double timeSeconds, double durationSeconds);
+    // Straight-alpha RGBA8888 image taking normalized animation progress (0.0 to 1.0).
+    static QImage render(const TextClipData &text, QSize canvas, double progress);
+    // The rectangle of the text block (with its background box/tail) in canvas pixels, before the transform: for the
     // handles on the preview.
     static QRectF bounds(const TextClipData &text, QSize canvas);
 };

@@ -570,29 +570,49 @@ mlt_frame transitionProcess(mlt_transition transition, mlt_frame aFrame, mlt_fra
 
 // ---- vedit.text -----------------------------------------------------------------------------------------------
 
-// The layer is drawn once, by makeTextProducer() on the calling thread (the projection's): fonts are never used in
-// MLT's threads. Besides the cost, Qt's per-thread FreeType data leaks when such a thread exits. Another size (a
-// scaled text: vedit.transform asks for the size it shows; a reduced preview) is a smooth scaling of that layer.
+// The layer is drawn on the calling thread (the projection's): fonts are never used in
+// MLT's threads. Besides the cost, Qt's per-thread FreeType data leaks when such a thread exits (D-39).
+// For animated text, frames across the animation duration are pre-rendered into `frames`.
+// Subsequent frames reuse the last (fully completed) frame, or loop for continuous effects like Wave.
 struct TextState
 {
-    QImage layer; // at the profile size
+    std::vector<QImage> frames; // pre-rendered at profile size
+    bool isLoop = false;
     QMutex mutex;
     QImage scaled; // the last other size asked for
+    int lastScaledIndex = -1;
 };
 
 int textGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
 {
     auto producer = static_cast<mlt_producer>(mlt_frame_pop_service(frame));
+    const int framePosition = mlt_frame_pop_service_int(frame);
     auto *state = static_cast<TextState *>(mlt_properties_get_data(MLT_PRODUCER_PROPERTIES(producer), kSettings, nullptr));
     int w = *width;
     int h = *height;
     profileSize(MLT_PRODUCER_SERVICE(producer), w, h);
-    QImage layer = state ? state->layer : QImage();
+    if (!state || state->frames.empty()) {
+        const int size = w * h * 4;
+        auto *buffer = static_cast<uint8_t *>(mlt_pool_alloc(size));
+        std::memset(buffer, 0, static_cast<size_t>(size));
+        mlt_frame_set_image(frame, buffer, size, mlt_pool_release);
+        *image = buffer;
+        *width = w;
+        *height = h;
+        *format = mlt_image_rgba;
+        return 0;
+    }
+
+    const int total = static_cast<int>(state->frames.size());
+    const int frameIndex = state->isLoop ? ((framePosition >= 0) ? (framePosition % total) : 0)
+                                         : std::clamp(framePosition, 0, total - 1);
+    QImage layer = state->frames[static_cast<size_t>(frameIndex)];
     if (!layer.isNull() && layer.size() != QSize(w, h)) {
         QMutexLocker lock(&state->mutex);
-        if (state->scaled.size() != QSize(w, h)) {
-            state->scaled = state->layer.scaled(w, h, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+        if (state->scaled.size() != QSize(w, h) || state->lastScaledIndex != frameIndex) {
+            state->scaled = layer.scaled(w, h, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
                                 .convertToFormat(QImage::Format_RGBA8888);
+            state->lastScaledIndex = frameIndex;
         }
         layer = state->scaled;
     }
@@ -618,9 +638,11 @@ int textGetFrame(mlt_producer producer, mlt_frame_ptr frame, int)
     *frame = mlt_frame_init(MLT_PRODUCER_SERVICE(producer));
     if (*frame) {
         mlt_properties properties = MLT_FRAME_PROPERTIES(*frame);
-        mlt_frame_set_position(*frame, mlt_producer_position(producer));
+        const int pos = static_cast<int>(mlt_producer_position(producer));
+        mlt_frame_set_position(*frame, pos);
         mlt_properties_set_int(properties, "progressive", 1);
         mlt_properties_set_int(properties, "test_audio", 1); // no sound
+        mlt_frame_push_service_int(*frame, pos);
         mlt_frame_push_service(*frame, producer);
         mlt_frame_push_get_image(*frame, textGetImage);
     }
@@ -935,7 +957,22 @@ std::unique_ptr<Mlt::Producer> makeTextProducer(Mlt::Profile &profile, const Tex
 {
     auto producer = std::make_unique<Mlt::Producer>(profile, "vedit.text");
     auto *state = new TextState;
-    state->layer = TextRenderer::render(text, QSize(profile.width(), profile.height()));
+    const QSize canvasSize(profile.width(), profile.height());
+    if (!text.animation || text.animation->type == TextAnimationType::None) {
+        state->frames.push_back(TextRenderer::render(text, canvasSize));
+    } else {
+        const double fps = profile.fps() > 0 ? profile.fps() : 30.0;
+        const double duration = (text.animation->duration.toSecondsDouble() > 0.05)
+                                    ? text.animation->duration.toSecondsDouble()
+                                    : 1.5;
+        const int totalFrames = std::clamp(static_cast<int>(std::ceil(duration * fps)), 2, 120);
+        state->isLoop = (text.animation->type == TextAnimationType::Wave);
+        state->frames.reserve(static_cast<size_t>(totalFrames));
+        for (int f = 0; f < totalFrames; ++f) {
+            const double t = static_cast<double>(f) / fps;
+            state->frames.push_back(TextRenderer::render(text, canvasSize, t, duration));
+        }
+    }
     producer->set(kSettings, state, 0, [](void *p) { delete static_cast<TextState *>(p); });
     return producer;
 }

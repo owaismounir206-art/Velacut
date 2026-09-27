@@ -675,6 +675,12 @@ bool EditorController::addText(const QString &styleId)
     if (const fx::TextStylePreset *preset = styleId.isEmpty() ? nullptr : fx::Library::core().textStyle(styleId)) {
         text.style = projectjson::textStyleFromJson(preset->style);
         text.stylePreset = AssetRef{QString::fromLatin1(fx::Library::kCorePack), preset->id, preset->version};
+        if (!preset->sampleText.isEmpty()) {
+            text.text = preset->sampleText;
+        }
+        if (!preset->animation.isEmpty()) {
+            text.animation = projectjson::textAnimationFromJson(preset->animation);
+        }
     }
     const Rational rate = data().settings.frameRate;
     return apply(TimelineEditor(data(), data().mainSequenceId)

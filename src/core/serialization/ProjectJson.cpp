@@ -80,6 +80,41 @@ constexpr EnumName<BackgroundType> kBackgroundTypes[] = {{BackgroundType::Color,
                                                          {BackgroundType::Pattern, "pattern"_L1}};
 constexpr EnumName<TextAlign> kTextAligns[] = {
     {TextAlign::Left, "left"_L1}, {TextAlign::Center, "center"_L1}, {TextAlign::Right, "right"_L1}};
+constexpr EnumName<BubbleShape> kBubbleShapes[] = {
+    {BubbleShape::Rectangle, "rectangle"_L1},
+    {BubbleShape::SpeechRound, "speechRound"_L1},
+    {BubbleShape::SpeechSquare, "speechSquare"_L1},
+    {BubbleShape::ThoughtCloud, "thoughtCloud"_L1},
+    {BubbleShape::ComicShout, "comicShout"_L1},
+    {BubbleShape::Callout, "callout"_L1},
+    {BubbleShape::LowerThirdBar, "lowerThirdBar"_L1},
+    {BubbleShape::LowerThirdTwoTone, "lowerThirdTwoTone"_L1},
+    {BubbleShape::Badge, "badge"_L1}};
+constexpr EnumName<BubbleTail> kBubbleTails[] = {
+    {BubbleTail::None, "none"_L1},
+    {BubbleTail::BottomLeft, "bottomLeft"_L1},
+    {BubbleTail::BottomCenter, "bottomCenter"_L1},
+    {BubbleTail::BottomRight, "bottomRight"_L1},
+    {BubbleTail::TopLeft, "topLeft"_L1},
+    {BubbleTail::TopRight, "topRight"_L1},
+    {BubbleTail::Left, "left"_L1},
+    {BubbleTail::Right, "right"_L1}};
+constexpr EnumName<TextAnimationType> kTextAnimationTypes[] = {
+    {TextAnimationType::None, "none"_L1},
+    {TextAnimationType::Typewriter, "typewriter"_L1},
+    {TextAnimationType::FadeIn, "fadeIn"_L1},
+    {TextAnimationType::SlideUp, "slideUp"_L1},
+    {TextAnimationType::SlideDown, "slideDown"_L1},
+    {TextAnimationType::Bounce, "bounce"_L1},
+    {TextAnimationType::PopIn, "popIn"_L1},
+    {TextAnimationType::Wave, "wave"_L1},
+    {TextAnimationType::Glitch, "glitch"_L1},
+    {TextAnimationType::Blur, "blur"_L1}};
+constexpr EnumName<TextAnimationScope> kTextAnimationScopes[] = {
+    {TextAnimationScope::Character, "character"_L1},
+    {TextAnimationScope::Word, "word"_L1},
+    {TextAnimationScope::Line, "line"_L1},
+    {TextAnimationScope::All, "all"_L1}};
 
 template<typename E, size_t N>
 QString nameOf(const EnumName<E> (&table)[N], E value)
@@ -116,7 +151,7 @@ const QSet<QString> kClipCommonKeys{u"id"_s,        u"kind"_s,        u"start"_s
                                     u"name"_s,      u"enabled"_s,     u"linkId"_s,     u"transform"_s,
                                     u"opacity"_s,   u"blendMode"_s,   u"effects"_s,    u"masks"_s,
                                     u"animations"_s, u"markers"_s,    u"background"_s};
-const QSet<QString> kTextClipKeys{u"text"_s, u"style"_s, u"stylePreset"_s, u"box"_s};
+const QSet<QString> kTextClipKeys{u"text"_s, u"style"_s, u"stylePreset"_s, u"box"_s, u"animation"_s};
 const QSet<QString> kTextStyleKeys{u"font"_s,          u"size"_s,       u"color"_s, u"stroke"_s,   u"shadow"_s,
                                    u"background"_s,    u"letterSpacing"_s, u"lineHeight"_s, u"align"_s,
                                    u"underline"_s};
@@ -314,7 +349,13 @@ QJsonObject textStyleJson(const TextStyle &style)
                                    : QJsonValue::Null},
         {u"background"_s, style.background ? QJsonValue(QJsonObject{{u"color"_s, style.background->color.toString()},
                                                                     {u"padding"_s, style.background->padding},
-                                                                    {u"radius"_s, style.background->radius}})
+                                                                    {u"radius"_s, style.background->radius},
+                                                                    {u"shape"_s, nameOf(kBubbleShapes, style.background->shape)},
+                                                                    {u"tail"_s, nameOf(kBubbleTails, style.background->tail)},
+                                                                    {u"tailSize"_s, style.background->tailSize},
+                                                                    {u"borderColor"_s, style.background->borderColor.toString()},
+                                                                    {u"borderWidth"_s, style.background->borderWidth},
+                                                                    {u"accentColor"_s, style.background->accentColor.toString()}})
                                            : QJsonValue::Null},
         {u"letterSpacing"_s, paramJson(style.letterSpacing)},
         {u"lineHeight"_s, style.lineHeight},
@@ -356,6 +397,20 @@ QJsonObject clipAnimationJson(const ClipAnimation &anim)
     QJsonObject object{{u"type"_s, assetRefJson(anim.type)},
                        {u"duration"_s, timeValue(anim.duration)},
                        {u"easing"_s, anim.easing.name()}};
+    if (!anim.params.isEmpty()) {
+        object.insert(u"params"_s, anim.params);
+    }
+    return object;
+}
+
+QJsonObject textAnimationJson(const TextAnimation &anim)
+{
+    QJsonObject object{{u"type"_s, nameOf(kTextAnimationTypes, anim.type)},
+                       {u"scope"_s, nameOf(kTextAnimationScopes, anim.scope)},
+                       {u"duration"_s, timeValue(anim.duration)},
+                       {u"easing"_s, anim.easing.name()},
+                       {u"cursor"_s, anim.cursor},
+                       {u"stagger"_s, anim.stagger}};
     if (!anim.params.isEmpty()) {
         object.insert(u"params"_s, anim.params);
     }
@@ -437,6 +492,9 @@ QJsonObject clipJson(const Clip &clip)
                 object.insert(u"style"_s, textStyleJson(data.style));
                 object.insert(u"stylePreset"_s, data.stylePreset ? QJsonValue(assetRefJson(*data.stylePreset)) : QJsonValue::Null);
                 object.insert(u"box"_s, QJsonObject{{u"width"_s, data.boxWidth ? QJsonValue(*data.boxWidth) : QJsonValue::Null}});
+                if (data.animation) {
+                    object.insert(u"animation"_s, textAnimationJson(*data.animation));
+                }
                 mergeInto(object, data.fields);
             } else if constexpr (std::is_same_v<T, AdjustmentClipData>) {
                 // Effects are serialized at the clip level
@@ -948,8 +1006,32 @@ public:
         if (width.isDouble() && width.toDouble() > 0.0) {
             data.boxWidth = std::min(width.toDouble(), 4.0);
         }
+        if (object.value(u"animation"_s).isObject()) {
+            data.animation = textAnimation(object.value(u"animation"_s).toObject(), join(path, u"animation"_s));
+        }
         data.fields = unknownKeys(object, kClipCommonKeys, kTextClipKeys);
         return data;
+    }
+
+    std::optional<TextAnimation> textAnimation(const QJsonObject &object, const QString &path)
+    {
+        if (object.isEmpty()) {
+            return std::nullopt;
+        }
+        TextAnimation anim;
+        anim.type = enumeration(object, u"type"_s, path, kTextAnimationTypes, TextAnimationType::None);
+        anim.scope = enumeration(object, u"scope"_s, path, kTextAnimationScopes, TextAnimationScope::Character);
+        anim.duration = optionalTime(object, u"duration"_s, path).value_or(RationalTime(45, 30));
+        const QString easingName = string(object, u"easing"_s, path);
+        if (!easingName.isEmpty()) {
+            if (auto e = Easing::fromName(easingName)) {
+                anim.easing = *e;
+            }
+        }
+        anim.cursor = boolean(object, u"cursor"_s, path, true);
+        anim.stagger = number(object, u"stagger"_s, path, 0.05, 0.0, 2.0);
+        anim.params = this->object(object, u"params"_s, path, false);
+        return anim;
     }
 
     TextStyle textStyle(const QJsonObject &style, const QString &s)
@@ -987,6 +1069,12 @@ public:
             value.color = colorValue(box.value(u"color"_s), join(k, u"color"_s), value.color);
             value.padding = number(box, u"padding"_s, k, 0.25, 0.0, 4.0);
             value.radius = number(box, u"radius"_s, k, 0.2, 0.0, 4.0);
+            value.shape = enumeration(box, u"shape"_s, k, kBubbleShapes, BubbleShape::Rectangle);
+            value.tail = enumeration(box, u"tail"_s, k, kBubbleTails, BubbleTail::None);
+            value.tailSize = number(box, u"tailSize"_s, k, 0.4, 0.0, 4.0);
+            value.borderColor = colorValue(box.value(u"borderColor"_s), join(k, u"borderColor"_s), value.borderColor);
+            value.borderWidth = number(box, u"borderWidth"_s, k, 0.0, 0.0, 1.0);
+            value.accentColor = colorValue(box.value(u"accentColor"_s), join(k, u"accentColor"_s), value.accentColor);
             result.background = value;
         }
         result.letterSpacing = param(style.value(u"letterSpacing"_s), join(s, u"letterSpacing"_s), Param(0.0));
@@ -1418,6 +1506,17 @@ TextStyle textStyleFromJson(const QJsonObject &json)
 {
     Reader reader;
     return reader.textStyle(json, u"style"_s);
+}
+
+QJsonObject textAnimationToJson(const TextAnimation &animation)
+{
+    return ::vedit::projectjson::textAnimationJson(animation);
+}
+
+std::optional<TextAnimation> textAnimationFromJson(const QJsonObject &json)
+{
+    Reader reader;
+    return reader.textAnimation(json, u"animation"_s);
 }
 
 QJsonObject mediaToJson(const Media &media)

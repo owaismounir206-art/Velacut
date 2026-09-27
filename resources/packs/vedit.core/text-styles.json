@@ -34,6 +34,34 @@
                 "en": "Neon",
                 "it": "Neon"
             }
+        },
+        {
+            "id": "lowerthird",
+            "name": {
+                "en": "Lower Thirds",
+                "it": "Terzi inferiori"
+            }
+        },
+        {
+            "id": "bubble",
+            "name": {
+                "en": "Speech Bubbles",
+                "it": "Fumetti e nuvolette"
+            }
+        },
+        {
+            "id": "animated",
+            "name": {
+                "en": "Animated Titles",
+                "it": "Titoli animati"
+            }
+        },
+        {
+            "id": "quote",
+            "name": {
+                "en": "Quotes",
+                "it": "Citazioni"
+            }
         }
     ],
     "items": [
@@ -785,6 +813,1851 @@
                 "lineHeight": 1.2,
                 "align": "center",
                 "underline": false
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/lowerthird-minimal",
+            "version": 1,
+            "category": "lowerthird",
+            "name": {
+                "en": "Minimal Lower Third",
+                "it": "Terzo inferiore minimale"
+            },
+            "sampleText": "Mario Rossi\nRegista & Produttore",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.05,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000088",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#1E1E24D0",
+                    "padding": 0.35,
+                    "radius": 0.15,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#00000000",
+                    "borderWidth": 0.0,
+                    "accentColor": "#00E5FFFF"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.25,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "typewriter",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": true,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/lowerthird-news",
+            "version": 1,
+            "category": "lowerthird",
+            "name": {
+                "en": "Breaking News Lower Third",
+                "it": "Terzo inferiore news"
+            },
+            "sampleText": "ULTIM'ORA\nConferenza stampa in diretta",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.055,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#121212EE",
+                    "padding": 0.35,
+                    "radius": 0.05,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#E50914FF",
+                    "borderWidth": 0.04,
+                    "accentColor": "#E50914FF"
+                },
+                "letterSpacing": 0.04,
+                "lineHeight": 1.2,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideUp",
+                "scope": "character",
+                "duration": "40@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.02
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/lowerthird-corporate",
+            "version": 1,
+            "category": "lowerthird",
+            "name": {
+                "en": "Corporate Gold",
+                "it": "Aziendale oro"
+            },
+            "sampleText": "Elena Bianchi\nDirettrice Creativa",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.05,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000066",
+                    "offset": [
+                        0.0,
+                        0.01
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#0A192FD8",
+                    "padding": 0.3,
+                    "radius": 0.12,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#FFD70088",
+                    "borderWidth": 0.02,
+                    "accentColor": "#FFD700FF"
+                },
+                "letterSpacing": 0.01,
+                "lineHeight": 1.3,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "fadeIn",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/lowerthird-twotone",
+            "version": 1,
+            "category": "lowerthird",
+            "name": {
+                "en": "Two-Tone Chevron",
+                "it": "Due toni chevron"
+            },
+            "sampleText": "Marco Bellini\nTech Reviewer",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.05,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000088",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#202028E0",
+                    "padding": 0.35,
+                    "radius": 0.08,
+                    "shape": "lowerThirdTwoTone",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#00000000",
+                    "borderWidth": 0.0,
+                    "accentColor": "#7C4DFFFF"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.25,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "bounce",
+                "scope": "character",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/lowerthird-cyber",
+            "version": 1,
+            "category": "lowerthird",
+            "name": {
+                "en": "Cyberpunk Lower Third",
+                "it": "Terzo cyber"
+            },
+            "sampleText": "SYSTEM: ONLINE\nProtocollo v5.2 attivo",
+            "style": {
+                "font": {
+                    "family": "monospace",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.048,
+                "color": "#00FF66FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00FF6666",
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "blur": 0.06
+                },
+                "background": {
+                    "color": "#050C07EE",
+                    "padding": 0.35,
+                    "radius": 0.04,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#00FF66AA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#00FF66FF"
+                },
+                "letterSpacing": 0.05,
+                "lineHeight": 1.25,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "glitch",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/lowerthird-pill",
+            "version": 1,
+            "category": "lowerthird",
+            "name": {
+                "en": "Pill Badge Lower Third",
+                "it": "Terzo inferiore pillola"
+            },
+            "sampleText": "LIVE STREAM • 1080p 60fps",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.045,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000066",
+                    "offset": [
+                        0.0,
+                        0.01
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#1A1A1AE6",
+                    "padding": 0.4,
+                    "radius": 1.0,
+                    "shape": "badge",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#FFFFFFAA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#FF3366FF"
+                },
+                "letterSpacing": 0.03,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "popIn",
+                "scope": "character",
+                "duration": "40@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.02
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/lowerthird-gradient",
+            "version": 1,
+            "category": "lowerthird",
+            "name": {
+                "en": "Gradient Sunset",
+                "it": "Tramonto sfumato"
+            },
+            "sampleText": "VLOG 42 • Roma antica",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.052,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000088",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#2A0845E0",
+                    "padding": 0.35,
+                    "radius": 0.2,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#FF6B6B88",
+                    "borderWidth": 0.02,
+                    "accentColor": "#FF6B6BFF"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.2,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideUp",
+                "scope": "word",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.08
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/lowerthird-broadcast",
+            "version": 1,
+            "category": "lowerthird",
+            "name": {
+                "en": "Broadcast Solid",
+                "it": "Broadcast pieno"
+            },
+            "sampleText": "SPECIALE TG\nAggiornamenti in tempo reale",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.05,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000077",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#003366EE",
+                    "padding": 0.35,
+                    "radius": 0.0,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#FFCC00FF",
+                    "borderWidth": 0.04,
+                    "accentColor": "#FFCC00FF"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.25,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "typewriter",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": true,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/lowerthird-clean-box",
+            "version": 1,
+            "category": "lowerthird",
+            "name": {
+                "en": "Clean Box",
+                "it": "Riquadro pulito"
+            },
+            "sampleText": "Capitolo 3: Tecniche di montaggio",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.046,
+                "color": "#111111FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000044",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#FFFFFFF0",
+                    "padding": 0.35,
+                    "radius": 0.1,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#E0E0E0FF",
+                    "borderWidth": 0.02,
+                    "accentColor": "#2979FFFF"
+                },
+                "letterSpacing": 0.01,
+                "lineHeight": 1.2,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "fadeIn",
+                "scope": "word",
+                "duration": "40@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.06
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/lowerthird-bold-accent",
+            "version": 1,
+            "category": "lowerthird",
+            "name": {
+                "en": "Bold Accent",
+                "it": "Accento marcato"
+            },
+            "sampleText": "INTERVISTA ESCLUSIVA\nIncontro con l'autore",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.052,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000088",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#181818E6",
+                    "padding": 0.35,
+                    "radius": 0.12,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#00000000",
+                    "borderWidth": 0.0,
+                    "accentColor": "#FF5722FF"
+                },
+                "letterSpacing": 0.03,
+                "lineHeight": 1.25,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "bounce",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/bubble-speech-left",
+            "version": 1,
+            "category": "bubble",
+            "name": {
+                "en": "Speech Bubble Left",
+                "it": "Nuvoletta sinistra"
+            },
+            "sampleText": "Ciao! Come stai?",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.055,
+                "color": "#1A1A1AFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000044",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#FFFFFFF4",
+                    "padding": 0.35,
+                    "radius": 0.3,
+                    "shape": "speechRound",
+                    "tail": "bottomLeft",
+                    "tailSize": 0.4,
+                    "borderColor": "#00000022",
+                    "borderWidth": 0.03,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "typewriter",
+                "scope": "character",
+                "duration": "40@30",
+                "easing": "easeOut",
+                "cursor": true,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/bubble-speech-right",
+            "version": 1,
+            "category": "bubble",
+            "name": {
+                "en": "Speech Bubble Right",
+                "it": "Nuvoletta destra"
+            },
+            "sampleText": "Tutto fantastico!",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.055,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000055",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#007AFFFA",
+                    "padding": 0.35,
+                    "radius": 0.3,
+                    "shape": "speechRound",
+                    "tail": "bottomRight",
+                    "tailSize": 0.4,
+                    "borderColor": "#00000000",
+                    "borderWidth": 0.0,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.0,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "popIn",
+                "scope": "character",
+                "duration": "35@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.02
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/bubble-comic-shout",
+            "version": 1,
+            "category": "bubble",
+            "name": {
+                "en": "Comic Shout Boom",
+                "it": "Fumetto urlo boom"
+            },
+            "sampleText": "WOW!! INCREDIBILE!",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": true
+                },
+                "size": 0.065,
+                "color": "#E50914FF",
+                "stroke": {
+                    "color": "#000000FF",
+                    "width": 0.08
+                },
+                "shadow": {
+                    "color": "#00000088",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#FFEB3BFA",
+                    "padding": 0.5,
+                    "radius": 0.0,
+                    "shape": "comicShout",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#000000FF",
+                    "borderWidth": 0.05,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.04,
+                "lineHeight": 1.1,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "bounce",
+                "scope": "character",
+                "duration": "40@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.02
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/bubble-thought-cloud",
+            "version": 1,
+            "category": "bubble",
+            "name": {
+                "en": "Thought Cloud",
+                "it": "Nuvola di pensiero"
+            },
+            "sampleText": "Chissà cosa succederà...",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": true
+                },
+                "size": 0.052,
+                "color": "#222222FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000033",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.04
+                },
+                "background": {
+                    "color": "#F0F4F8FA",
+                    "padding": 0.45,
+                    "radius": 0.5,
+                    "shape": "thoughtCloud",
+                    "tail": "bottomLeft",
+                    "tailSize": 0.5,
+                    "borderColor": "#90CAF9AA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.01,
+                "lineHeight": 1.25,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "fadeIn",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/bubble-square-comic",
+            "version": 1,
+            "category": "bubble",
+            "name": {
+                "en": "Square Comic Box",
+                "it": "Fumetto riquadro"
+            },
+            "sampleText": "Ehi, guarda laggiù!",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.055,
+                "color": "#000000FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000055",
+                    "offset": [
+                        0.005,
+                        0.02
+                    ],
+                    "blur": 0.01
+                },
+                "background": {
+                    "color": "#FFFFFFF6",
+                    "padding": 0.35,
+                    "radius": 0.05,
+                    "shape": "speechSquare",
+                    "tail": "bottomLeft",
+                    "tailSize": 0.4,
+                    "borderColor": "#000000FF",
+                    "borderWidth": 0.04,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "typewriter",
+                "scope": "character",
+                "duration": "40@30",
+                "easing": "easeOut",
+                "cursor": true,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/bubble-callout-hud",
+            "version": 1,
+            "category": "bubble",
+            "name": {
+                "en": "HUD Callout Tracker",
+                "it": "Callout tracciatore HUD"
+            },
+            "sampleText": "OBIETTIVO IDENTIFICATO\nCoordinate: 41.9028° N",
+            "style": {
+                "font": {
+                    "family": "monospace",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.045,
+                "color": "#00E5FFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00E5FF66",
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "blur": 0.04
+                },
+                "background": {
+                    "color": "#031525DD",
+                    "padding": 0.35,
+                    "radius": 0.08,
+                    "shape": "callout",
+                    "tail": "bottomLeft",
+                    "tailSize": 0.5,
+                    "borderColor": "#00E5FFAA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#00E5FFFF"
+                },
+                "letterSpacing": 0.04,
+                "lineHeight": 1.25,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "glitch",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/bubble-retro-pixel",
+            "version": 1,
+            "category": "bubble",
+            "name": {
+                "en": "Retro Pixel Dialogue",
+                "it": "Dialogo pixel retro"
+            },
+            "sampleText": "VUOI SALVARE IL GIOCO? [S/N]",
+            "style": {
+                "font": {
+                    "family": "monospace",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.048,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": null,
+                "background": {
+                    "color": "#0000AAE6",
+                    "padding": 0.4,
+                    "radius": 0.0,
+                    "shape": "speechSquare",
+                    "tail": "bottomLeft",
+                    "tailSize": 0.35,
+                    "borderColor": "#FFFFFFFF",
+                    "borderWidth": 0.04,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.04,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "typewriter",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": true,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/bubble-callout-marker",
+            "version": 1,
+            "category": "bubble",
+            "name": {
+                "en": "Target Callout Marker",
+                "it": "Callout punto d'interesse"
+            },
+            "sampleText": "PUNTO DI SVOLTA",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.05,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000066",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#FF5722F0",
+                    "padding": 0.35,
+                    "radius": 0.15,
+                    "shape": "callout",
+                    "tail": "bottomLeft",
+                    "tailSize": 0.45,
+                    "borderColor": "#FFFFFFAA",
+                    "borderWidth": 0.02,
+                    "accentColor": "#FFD54FFF"
+                },
+                "letterSpacing": 0.03,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "popIn",
+                "scope": "character",
+                "duration": "40@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.02
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/bubble-dark-mode",
+            "version": 1,
+            "category": "bubble",
+            "name": {
+                "en": "Dark Bubble",
+                "it": "Nuvoletta scura"
+            },
+            "sampleText": "Messaggio ricevuto!",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.052,
+                "color": "#F0F0F0FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000088",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#252528F4",
+                    "padding": 0.35,
+                    "radius": 0.25,
+                    "shape": "speechRound",
+                    "tail": "bottomLeft",
+                    "tailSize": 0.4,
+                    "borderColor": "#3A3A3CFF",
+                    "borderWidth": 0.02,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.01,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "typewriter",
+                "scope": "character",
+                "duration": "35@30",
+                "easing": "easeOut",
+                "cursor": true,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/bubble-speech-top",
+            "version": 1,
+            "category": "bubble",
+            "name": {
+                "en": "Top Pointer Bubble",
+                "it": "Nuvoletta con freccia in alto"
+            },
+            "sampleText": "Nota importante in alto",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.05,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000066",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#111111EE",
+                    "padding": 0.35,
+                    "radius": 0.2,
+                    "shape": "speechRound",
+                    "tail": "topLeft",
+                    "tailSize": 0.4,
+                    "borderColor": "#FFCC00AA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#FFCC00FF"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideDown",
+                "scope": "character",
+                "duration": "40@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.02
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/anim-typewriter-cinematic",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Cinematic Typewriter",
+                "it": "Macchina da scrivere cinema"
+            },
+            "sampleText": "Capitolo Uno: L'inizio",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#000000AA",
+                    "offset": [
+                        0.0,
+                        0.025
+                    ],
+                    "blur": 0.04
+                },
+                "background": null,
+                "letterSpacing": 0.05,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "typewriter",
+                "scope": "character",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": true,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/anim-bounce-pop",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Bounce & Pop",
+                "it": "Rimbalzo elastico"
+            },
+            "sampleText": "SUPER SCONTO 50%",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.08,
+                "color": "#FFD700FF",
+                "stroke": {
+                    "color": "#000000FF",
+                    "width": 0.08
+                },
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.03
+                    ],
+                    "blur": 0.03
+                },
+                "background": null,
+                "letterSpacing": 0.03,
+                "lineHeight": 1.1,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "bounce",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/anim-wave-retro",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Wave Loop",
+                "it": "Onda continua"
+            },
+            "sampleText": "SUMMER VIBES 2026",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.075,
+                "color": "#FF007FFF",
+                "stroke": {
+                    "color": "#00FFFFFF",
+                    "width": 0.06
+                },
+                "shadow": {
+                    "color": "#FF007F66",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.05
+                },
+                "background": null,
+                "letterSpacing": 0.04,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "wave",
+                "scope": "character",
+                "duration": "60@30",
+                "easing": "easeInOut",
+                "cursor": false,
+                "stagger": 0.05
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/anim-slide-up-char",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Slide Up Letter by Letter",
+                "it": "Scorrimento su per lettera"
+            },
+            "sampleText": "SCOPRI LA COLLEZIONE",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.065,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000088",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": null,
+                "letterSpacing": 0.06,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideUp",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.025
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/anim-fade-in-words",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Fade In Word by Word",
+                "it": "Comparsa parola per parola"
+            },
+            "sampleText": "Il futuro del video editing",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.068,
+                "color": "#E0E0E0FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000077",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": null,
+                "letterSpacing": 0.02,
+                "lineHeight": 1.25,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "fadeIn",
+                "scope": "word",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.08
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/anim-glitch-cyber",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Cyber Glitch Reveal",
+                "it": "Glitch cyber decodifica"
+            },
+            "sampleText": "CYBER_SECURITY // V5",
+            "style": {
+                "font": {
+                    "family": "monospace",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#00FFCCFF",
+                "stroke": {
+                    "color": "#FF0055AA",
+                    "width": 0.04
+                },
+                "shadow": {
+                    "color": "#00FFCC88",
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "blur": 0.06
+                },
+                "background": null,
+                "letterSpacing": 0.05,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "glitch",
+                "scope": "character",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/anim-pop-in-bold",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Pop-In Overshoot",
+                "it": "Pop-in elastico"
+            },
+            "sampleText": "NUOVO EPISODIO",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.075,
+                "color": "#FFFFFFFF",
+                "stroke": {
+                    "color": "#6200EAE6",
+                    "width": 0.06
+                },
+                "shadow": {
+                    "color": "#6200EA88",
+                    "offset": [
+                        0.0,
+                        0.025
+                    ],
+                    "blur": 0.04
+                },
+                "background": null,
+                "letterSpacing": 0.04,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "popIn",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/anim-blur-focus",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Blur to Focus",
+                "it": "Sfocatura e messa a fuoco"
+            },
+            "sampleText": "UN VIAGGIO INDIMENTICABILE",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.065,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.04
+                },
+                "background": null,
+                "letterSpacing": 0.08,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "blur",
+                "scope": "character",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/anim-slide-down-bold",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Slide Down Drop",
+                "it": "Discesa dall'alto"
+            },
+            "sampleText": "NON PERDERTI LA DIRETTA",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.062,
+                "color": "#FFC107FF",
+                "stroke": {
+                    "color": "#000000FF",
+                    "width": 0.06
+                },
+                "shadow": {
+                    "color": "#00000088",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": null,
+                "letterSpacing": 0.03,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideDown",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.025
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/anim-typewriter-code",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Terminal Code Typewriter",
+                "it": "Terminale codice"
+            },
+            "sampleText": "$ git commit -m 'feat(editor)'",
+            "style": {
+                "font": {
+                    "family": "monospace",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.05,
+                "color": "#50FA7BFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#282A36F0",
+                    "padding": 0.35,
+                    "radius": 0.1,
+                    "shape": "rectangle",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#6272A4FF",
+                    "borderWidth": 0.02,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.2,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "typewriter",
+                "scope": "character",
+                "duration": "55@30",
+                "easing": "easeOut",
+                "cursor": true,
+                "stagger": 0.03
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/quote-serif",
+            "version": 1,
+            "category": "quote",
+            "name": {
+                "en": "Serif Quote",
+                "it": "Citazione con grazie"
+            },
+            "sampleText": "«La semplicità è l'apice della sofisticazione.»\n— Leonardo da Vinci",
+            "style": {
+                "font": {
+                    "family": "serif",
+                    "weight": 400,
+                    "italic": true
+                },
+                "size": 0.055,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000077",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#121212A0",
+                    "padding": 0.4,
+                    "radius": 0.15,
+                    "shape": "rectangle",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#FFFFFF44",
+                    "borderWidth": 0.02,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.4,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "fadeIn",
+                "scope": "word",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.08
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/quote-modern-card",
+            "version": 1,
+            "category": "quote",
+            "name": {
+                "en": "Modern Quote Card",
+                "it": "Scheda citazione moderna"
+            },
+            "sampleText": "“Il montaggio è la vera grammatica del cinema.”",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.052,
+                "color": "#212121FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000033",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.04
+                },
+                "background": {
+                    "color": "#FAFAFAF4",
+                    "padding": 0.45,
+                    "radius": 0.2,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#E0E0E0FF",
+                    "borderWidth": 0.02,
+                    "accentColor": "#6200EAFF"
+                },
+                "letterSpacing": 0.01,
+                "lineHeight": 1.35,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideUp",
+                "scope": "word",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.06
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/quote-bold-statement",
+            "version": 1,
+            "category": "quote",
+            "name": {
+                "en": "Bold Statement Quote",
+                "it": "Dichiarazione audace"
+            },
+            "sampleText": "NON PENSARE A COME FARE.\nFALLO.",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.07,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#000000AA",
+                    "offset": [
+                        0.0,
+                        0.03
+                    ],
+                    "blur": 0.04
+                },
+                "background": {
+                    "color": "#E50914E6",
+                    "padding": 0.35,
+                    "radius": 0.08,
+                    "shape": "rectangle",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#00000000",
+                    "borderWidth": 0.0,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.04,
+                "lineHeight": 1.15,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "bounce",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.02
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/quote-testimonial",
+            "version": 1,
+            "category": "quote",
+            "name": {
+                "en": "Customer Testimonial",
+                "it": "Recensione cliente"
+            },
+            "sampleText": "★★★★★\n«Il miglior editor video mai provato.»",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.052,
+                "color": "#FFB300FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000066",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#1C1C1EE6",
+                    "padding": 0.4,
+                    "radius": 0.18,
+                    "shape": "rectangle",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#FFB30066",
+                    "borderWidth": 0.02,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.3,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "popIn",
+                "scope": "word",
+                "duration": "40@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.07
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/social-subscribe-btn",
+            "version": 1,
+            "category": "social",
+            "name": {
+                "en": "Subscribe Button",
+                "it": "Pulsante Iscriviti"
+            },
+            "sampleText": "ISCRIVITI AL CANALE 🔔",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.055,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#E5091488",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#E50914FF",
+                    "padding": 0.4,
+                    "radius": 0.5,
+                    "shape": "badge",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#FFFFFFAA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.03,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "bounce",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.02
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/social-follow-handle",
+            "version": 1,
+            "category": "social",
+            "name": {
+                "en": "Follow @Username",
+                "it": "Segui @Username"
+            },
+            "sampleText": "Seguimi su @nomecanale",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.05,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000066",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#000000D9",
+                    "padding": 0.35,
+                    "radius": 0.4,
+                    "shape": "badge",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#1DA1F2AA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#1DA1F2FF"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "popIn",
+                "scope": "character",
+                "duration": "40@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.025
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/social-like-comment",
+            "version": 1,
+            "category": "social",
+            "name": {
+                "en": "Like & Comment",
+                "it": "Lascia un like e commenta"
+            },
+            "sampleText": "👍 Lascia un like se ti è piaciuto!",
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.048,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000077",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#212124E6",
+                    "padding": 0.35,
+                    "radius": 0.2,
+                    "shape": "rectangle",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#00C853AA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#00C853FF"
+                },
+                "letterSpacing": 0.01,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideUp",
+                "scope": "character",
+                "duration": "45@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.02
             }
         }
     ]

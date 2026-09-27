@@ -139,7 +139,8 @@ Library Library::load(const QString &folder)
         const QJsonObject item = value.toObject();
         library.m_textStyles.push_back({item.value(u"id"_s).toString(), item.value(u"version"_s).toInt(1),
                                         item.value(u"category"_s).toString(), localized(item.value(u"name"_s)),
-                                        item.value(u"style"_s).toObject()});
+                                        item.value(u"style"_s).toObject(), item.value(u"animation"_s).toObject(),
+                                        item.value(u"sampleText"_s).toString()});
     }
 
     const QJsonObject animations = read(u"animations.json"_s);

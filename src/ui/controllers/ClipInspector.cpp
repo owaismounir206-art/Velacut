@@ -619,7 +619,7 @@ bool ClipInspector::supports(const Clip &clip, const QString &section) const
     if (section == u"filter"_s || section == u"adjust"_s || section == u"grade"_s || section == u"lut"_s || section == u"deflicker"_s) {
         return visualMedia;
     }
-    if (section == u"text"_s) {
+    if (section == u"text"_s || section == u"textAnimation"_s) {
         return clip.text() != nullptr;
     }
     if (section == u"animation"_s) {
@@ -693,8 +693,13 @@ QStringList ClipInspector::modifiedSections() const
             result << u"adjust"_s;
         }
     }
-    if (const TextClipData *text = clip->text(); text && text->style != defaultTextStyle()) {
-        result << u"text"_s;
+    if (const TextClipData *text = clip->text()) {
+        if (text->style != defaultTextStyle()) {
+            result << u"text"_s;
+        }
+        if (text->animation.has_value()) {
+            result << u"textAnimation"_s;
+        }
     }
     return result;
 }
@@ -989,6 +994,18 @@ QVariantMap ClipInspector::values() const
         map[u"text.shadow"_s] = style.shadow.has_value();
         map[u"text.background"_s] = style.background.has_value();
         map[u"text.backgroundColor"_s] = toQColor(style.background ? style.background->color : TextBackground{}.color);
+        map[u"text.bubbleShape"_s] = style.background ? static_cast<int>(style.background->shape) : 0;
+        map[u"text.bubbleTail"_s] = style.background ? static_cast<int>(style.background->tail) : 0;
+        map[u"text.bubbleTailSize"_s] = style.background ? style.background->tailSize : 0.4;
+        map[u"text.bubbleBorder"_s] = style.background ? (style.background->borderWidth > 0.0) : false;
+        map[u"text.bubbleBorderColor"_s] = toQColor(style.background ? style.background->borderColor : Color{});
+        map[u"text.bubbleBorderWidth"_s] = style.background ? style.background->borderWidth : 0.03;
+        map[u"text.accentColor"_s] = toQColor(style.background ? style.background->accentColor : Color{255, 180, 0, 255});
+        map[u"text.animation.enabled"_s] = text->animation.has_value() && (text->animation->type != TextAnimationType::None);
+        map[u"text.animation.type"_s] = text->animation ? static_cast<int>(text->animation->type) : 0;
+        map[u"text.animation.scope"_s] = text->animation ? static_cast<int>(text->animation->scope) : 0;
+        map[u"text.animation.duration"_s] = text->animation ? text->animation->duration.toSecondsDouble() : 1.5;
+        map[u"text.animation.cursor"_s] = text->animation ? text->animation->cursor : true;
         map[u"text.letterSpacing"_s] = numberOf(style.letterSpacing, 0.0);
         map[u"text.lineHeight"_s] = style.lineHeight;
         map[u"text.preset"_s] = text->stylePreset ? text->stylePreset->id : QString();
@@ -1451,6 +1468,58 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
             } else if (field == u"backgroundColor"_s) {
                 style.background = style.background.value_or(TextBackground{});
                 style.background->color = toColor(value);
+            } else if (field == u"bubbleShape"_s) {
+                style.background = style.background.value_or(TextBackground{});
+                style.background->shape = static_cast<BubbleShape>(std::clamp(value.toInt(), 0, 8));
+            } else if (field == u"bubbleTail"_s) {
+                style.background = style.background.value_or(TextBackground{});
+                style.background->tail = static_cast<BubbleTail>(std::clamp(value.toInt(), 0, 7));
+            } else if (field == u"bubbleTailSize"_s) {
+                style.background = style.background.value_or(TextBackground{});
+                style.background->tailSize = std::clamp(number, 0.05, 2.0);
+            } else if (field == u"bubbleBorder"_s) {
+                style.background = style.background.value_or(TextBackground{});
+                style.background->borderWidth = flag ? 0.03 : 0.0;
+            } else if (field == u"bubbleBorderColor"_s) {
+                style.background = style.background.value_or(TextBackground{});
+                style.background->borderColor = toColor(value);
+            } else if (field == u"bubbleBorderWidth"_s) {
+                style.background = style.background.value_or(TextBackground{});
+                style.background->borderWidth = std::clamp(number, 0.0, 0.2);
+            } else if (field == u"accentColor"_s) {
+                style.background = style.background.value_or(TextBackground{});
+                style.background->accentColor = toColor(value);
+            } else if (field == u"animation.enabled"_s) {
+                if (flag) {
+                    if (!c.text()->animation) {
+                        TextAnimation a;
+                        a.type = TextAnimationType::Typewriter;
+                        a.duration = RationalTime(45, 30);
+                        c.text()->animation = a;
+                    }
+                } else {
+                    c.text()->animation = std::nullopt;
+                }
+            } else if (field == u"animation.type"_s) {
+                TextAnimation a = c.text()->animation.value_or(TextAnimation{});
+                a.type = static_cast<TextAnimationType>(std::clamp(value.toInt(), 0, 9));
+                if (a.duration.value() <= 0) {
+                    a.duration = RationalTime(45, 30);
+                }
+                c.text()->animation = a;
+            } else if (field == u"animation.scope"_s) {
+                TextAnimation a = c.text()->animation.value_or(TextAnimation{});
+                a.scope = static_cast<TextAnimationScope>(std::clamp(value.toInt(), 0, 3));
+                c.text()->animation = a;
+            } else if (field == u"animation.duration"_s) {
+                TextAnimation a = c.text()->animation.value_or(TextAnimation{});
+                const double durSec = std::clamp(number, 0.1, 10.0);
+                a.duration = RationalTime(std::llround(durSec * 30.0), 30);
+                c.text()->animation = a;
+            } else if (field == u"animation.cursor"_s) {
+                TextAnimation a = c.text()->animation.value_or(TextAnimation{});
+                a.cursor = flag;
+                c.text()->animation = a;
             } else if (field == u"letterSpacing"_s) {
                 style.letterSpacing = Param(std::clamp(number, -0.5, 2.0));
             } else if (field == u"lineHeight"_s) {
@@ -1527,6 +1596,10 @@ bool ClipInspector::reset(const QString &section)
             c.text()->style = defaultTextStyle();
             c.text()->stylePreset.reset();
         }, tr("Reset text style"), {});
+    } else if (section == u"textAnimation"_s) {
+        done = update(clips, [](Clip &c) {
+            c.text()->animation.reset();
+        }, tr("Reset text animation"), {});
     }
     endGesture();
     return done;
@@ -1644,6 +1717,11 @@ bool ClipInspector::applyToAll(const QString &section)
                 c.text()->stylePreset = source.text()->stylePreset;
             };
             text = tr("Apply text style to all");
+        } else if (section == u"textAnimation"_s) {
+            change = [&source](Clip &c) {
+                c.text()->animation = source.text()->animation;
+            };
+            text = tr("Apply text animation to all");
         }
         if (!change) {
             return false;
@@ -1708,6 +1786,9 @@ void ClipInspector::previewTextStyle(const QString &styleId)
     style.size = previewed.text()->style.size; // the size is layout, not look
     style.align = previewed.text()->style.align;
     previewed.text()->style = style;
+    if (!preset->animation.isEmpty()) {
+        previewed.text()->animation = projectjson::textAnimationFromJson(preset->animation);
+    }
     engine::TimelineProjection::Preview preview;
     preview.clip = std::move(previewed);
     m_editor.player()->setPreview(std::move(preview));
@@ -1721,13 +1802,19 @@ bool ClipInspector::applyTextStyle(const QString &styleId)
     }
     const TextStyle look = projectjson::textStyleFromJson(preset->style);
     const AssetRef ref = coreAsset(preset->id, preset->version);
+    const std::optional<TextAnimation> anim = !preset->animation.isEmpty()
+                                                ? projectjson::textAnimationFromJson(preset->animation)
+                                                : std::nullopt;
     endGesture();
-    const bool done = update(targets(u"text"_s), [&look, &ref](Clip &c) {
+    const bool done = update(targets(u"text"_s), [&look, &ref, &anim](Clip &c) {
         TextStyle style = look;
         style.size = c.text()->style.size;
         style.align = c.text()->style.align;
         c.text()->style = style;
         c.text()->stylePreset = ref;
+        if (anim) {
+            c.text()->animation = anim;
+        }
     }, tr("Change text style"), {});
     clearPreview();
     return done;
@@ -1995,6 +2082,7 @@ bool ClipInspector::pasteAttributes()
         if (c.text() && source.text()) {
             c.text()->style = source.text()->style;
             c.text()->stylePreset = source.text()->stylePreset;
+            c.text()->animation = source.text()->animation;
         }
     }, tr("Paste attributes"), {});
     endGesture();

@@ -250,13 +250,79 @@ struct TextShadow
     friend bool operator==(const TextShadow &, const TextShadow &) = default;
 };
 
+enum class BubbleShape
+{
+    Rectangle,
+    SpeechRound,
+    SpeechSquare,
+    ThoughtCloud,
+    ComicShout,
+    Callout,
+    LowerThirdBar,
+    LowerThirdTwoTone,
+    Badge,
+};
+
+enum class BubbleTail
+{
+    None,
+    BottomLeft,
+    BottomCenter,
+    BottomRight,
+    TopLeft,
+    TopRight,
+    Left,
+    Right,
+};
+
 struct TextBackground
 {
     Color color{0, 0, 0, 160};
     double padding = 0.25; // fractions of the font size
     double radius = 0.2;
+    BubbleShape shape = BubbleShape::Rectangle;
+    BubbleTail tail = BubbleTail::None;
+    double tailSize = 0.4;
+    Color borderColor{0, 0, 0, 0};
+    double borderWidth = 0.0;
+    Color accentColor{255, 180, 0, 255};
 
     friend bool operator==(const TextBackground &, const TextBackground &) = default;
+};
+
+enum class TextAnimationType
+{
+    None,
+    Typewriter,
+    FadeIn,
+    SlideUp,
+    SlideDown,
+    Bounce,
+    PopIn,
+    Wave,
+    Glitch,
+    Blur,
+};
+
+enum class TextAnimationScope
+{
+    Character,
+    Word,
+    Line,
+    All,
+};
+
+struct TextAnimation
+{
+    TextAnimationType type = TextAnimationType::None;
+    TextAnimationScope scope = TextAnimationScope::Character;
+    RationalTime duration;
+    Easing easing = Easing::preset(Easing::Preset::EaseOut);
+    bool cursor = true;
+    double stagger = 0.05;
+    QJsonObject params;
+
+    friend bool operator==(const TextAnimation &, const TextAnimation &) = default;
 };
 
 struct TextStyle
@@ -286,6 +352,7 @@ struct TextClipData
     TextStyle style;
     std::optional<AssetRef> stylePreset;
     std::optional<double> boxWidth; // fraction of the canvas width; none = automatic
+    std::optional<TextAnimation> animation;
     QJsonObject fields;
 
     friend bool operator==(const TextClipData &, const TextClipData &) = default;

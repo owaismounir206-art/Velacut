@@ -301,6 +301,66 @@ Rectangle {
                             current: panel.values["text.backgroundColor"] ?? "black"
                             onPicked: (value) => panel.inspector.set("text.backgroundColor", value)
                         }
+                        Label {
+                            visible: panel.values["text.background"] ?? false
+                            text: qsTr("Shape")
+                            role: "bodyMedium"
+                        }
+                        ComboBox {
+                            visible: panel.values["text.background"] ?? false
+                            Layout.fillWidth: true
+                            model: [
+                                qsTr("Rectangle"),
+                                qsTr("Speech (Round)"),
+                                qsTr("Speech (Square)"),
+                                qsTr("Thought Cloud"),
+                                qsTr("Comic Shout"),
+                                qsTr("Callout HUD"),
+                                qsTr("Lower Third Bar"),
+                                qsTr("Lower Third Two-Tone"),
+                                qsTr("Badge / Pill")
+                            ]
+                            currentIndex: panel.values["text.bubbleShape"] ?? 0
+                            displayText: model[currentIndex] ?? ""
+                            Accessible.name: qsTr("Bubble shape")
+                            onActivated: (index) => panel.inspector.set("text.bubbleShape", index)
+                        }
+                        Label {
+                            visible: (panel.values["text.background"] ?? false) && (panel.values["text.bubbleShape"] >= 1 && panel.values["text.bubbleShape"] <= 3)
+                            text: qsTr("Tail position")
+                            role: "bodyMedium"
+                        }
+                        ComboBox {
+                            visible: (panel.values["text.background"] ?? false) && (panel.values["text.bubbleShape"] >= 1 && panel.values["text.bubbleShape"] <= 3)
+                            Layout.fillWidth: true
+                            model: [
+                                qsTr("None"),
+                                qsTr("Bottom Left"),
+                                qsTr("Bottom Centre"),
+                                qsTr("Bottom Right"),
+                                qsTr("Top Left"),
+                                qsTr("Top Right"),
+                                qsTr("Left"),
+                                qsTr("Right")
+                            ]
+                            currentIndex: panel.values["text.bubbleTail"] ?? 0
+                            displayText: model[currentIndex] ?? ""
+                            Accessible.name: qsTr("Tail position")
+                            onActivated: (index) => panel.inspector.set("text.bubbleTail", index)
+                        }
+                        Label {
+                            visible: (panel.values["text.background"] ?? false) && (panel.values["text.bubbleShape"] >= 5 && panel.values["text.bubbleShape"] <= 7)
+                            text: qsTr("Accent colour")
+                            role: "bodyMedium"
+                        }
+                        ColorSwatches {
+                            Layout.fillWidth: true
+                            visible: (panel.values["text.background"] ?? false) && (panel.values["text.bubbleShape"] >= 5 && panel.values["text.bubbleShape"] <= 7)
+                            inspector: panel.inspector
+                            label: qsTr("Accent colour")
+                            current: panel.values["text.accentColor"] ?? "#ffb400"
+                            onPicked: (value) => panel.inspector.set("text.accentColor", value)
+                        }
 
                         advanced: [
                             PropertySlider {
@@ -311,6 +371,16 @@ Rectangle {
                                 from: 0.02
                                 to: 0.3
                                 neutral: 0.08
+                                format: v => Math.round(v * 100)
+                            },
+                            PropertySlider {
+                                visible: (panel.values["text.background"] ?? false) && (panel.values["text.bubbleShape"] >= 1 && panel.values["text.bubbleShape"] <= 3)
+                                inspector: panel.inspector
+                                key: "text.bubbleTailSize"
+                                label: qsTr("Tail size")
+                                from: 0.1
+                                to: 1.0
+                                neutral: 0.4
                                 format: v => Math.round(v * 100)
                             },
                             PropertySlider {
@@ -330,6 +400,89 @@ Rectangle {
                                 neutral: 1.2
                             }
                         ]
+                    }
+
+                    PropertySection {
+                        inspector: panel.inspector
+                        section: "textAnimation"
+                        title: qsTr("Text animation")
+                        applyToAllText: qsTr("Apply animation to all texts")
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label { Layout.fillWidth: true; text: qsTr("Enable animation"); role: "bodyMedium" }
+                            Switch {
+                                objectName: "textAnimationEnabled"
+                                checked: panel.values["text.animation.enabled"] ?? false
+                                Accessible.name: qsTr("Enable animation")
+                                onToggled: panel.inspector.set("text.animation.enabled", checked)
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            visible: panel.values["text.animation.enabled"] ?? false
+                            spacing: Theme.space.sm
+
+                            Label { text: qsTr("Type"); role: "bodyMedium" }
+                            ComboBox {
+                                objectName: "textAnimationType"
+                                Layout.fillWidth: true
+                                model: [
+                                    qsTr("None"),
+                                    qsTr("Typewriter"),
+                                    qsTr("Fade in"),
+                                    qsTr("Slide up"),
+                                    qsTr("Slide down"),
+                                    qsTr("Bounce"),
+                                    qsTr("Pop in"),
+                                    qsTr("Wave"),
+                                    qsTr("Glitch"),
+                                    qsTr("Blur")
+                                ]
+                                currentIndex: panel.values["text.animation.type"] ?? 1
+                                displayText: model[currentIndex] ?? ""
+                                Accessible.name: qsTr("Animation type")
+                                onActivated: (index) => panel.inspector.set("text.animation.type", index)
+                            }
+
+                            Label { text: qsTr("Scope"); role: "bodyMedium" }
+                            ComboBox {
+                                objectName: "textAnimationScope"
+                                Layout.fillWidth: true
+                                model: [
+                                    qsTr("Character"),
+                                    qsTr("Word"),
+                                    qsTr("Line"),
+                                    qsTr("All")
+                                ]
+                                currentIndex: panel.values["text.animation.scope"] ?? 0
+                                displayText: model[currentIndex] ?? ""
+                                Accessible.name: qsTr("Animation scope")
+                                onActivated: (index) => panel.inspector.set("text.animation.scope", index)
+                            }
+
+                            PropertySlider {
+                                inspector: panel.inspector
+                                key: "text.animation.duration"
+                                label: qsTr("Duration")
+                                from: 0.2
+                                to: 10.0
+                                neutral: 1.5
+                                format: v => (Math.round(v * 10) / 10).toFixed(1) + " s"
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                visible: (panel.values["text.animation.type"] ?? 1) === 1
+                                Label { Layout.fillWidth: true; text: qsTr("Blinking cursor"); role: "bodyMedium" }
+                                Switch {
+                                    checked: panel.values["text.animation.cursor"] ?? true
+                                    Accessible.name: qsTr("Blinking cursor")
+                                    onToggled: panel.inspector.set("text.animation.cursor", checked)
+                                }
+                            }
+                        }
                     }
                 }
 

@@ -165,15 +165,39 @@ Ultimo aggiornamento: 2026-09-27 (Fase 4 completata)
      - *3D & Rotazioni (8)*: cubo 3D (4 direzioni con ombreggiatura prospettica), capovolgimento orizzontale/verticale, porta girevole, piegatura ad angolo.
    - `src/fx/Transition.h` e `src/fx/Transition.cpp`: modello ed esecuzione con garanzia di identità a t=0 (coincide con clip A) e a t=1 (coincide con clip B).
    - `resources/packs/vedit.core/transitions.json`: catalogo completo con nomi bilingue (italiano e inglese) e durate consigliate.
-   - Test unitari in `tst_kernels::everyTransitionStartsOnAAndEndsOnB` e `coreLibraryLoads` (114/114 verificate), test di integrazione in `tst_editor::librariesAndTransitions` (>= 100 verificate), 100% test CTest (25/25) verdi.
+    - Test unitari in `tst_kernels::everyTransitionStartsOnAAndEndsOnB` e `coreLibraryLoads` (114/114 verificate), test di integrazione in `tst_editor::librariesAndTransitions` (>= 100 verificate), 100% test CTest (25/25) verdi.
+
+2. **Animazioni di testo avanzate, speech bubbles e terzi inferiori (`P5.2`)**:
+   - Modello dati e formati di serializzazione JSON (`src/core/project/Clip.h`, `ProjectJson.h`, `ProjectJson.cpp`):
+     - `BubbleShape`: Rectangle, SpeechRound, SpeechSquare, ThoughtCloud, ComicShout, Callout, LowerThirdBar, LowerThirdTwoTone, Badge;
+     - `BubbleTail`: None, BottomLeft, BottomCenter, BottomRight, TopLeft, TopRight, Left, Right;
+     - `TextBackground` esteso con shape, tail, tailSize, borderColor, borderWidth, accentColor;
+     - `TextAnimationType`: None, Typewriter, FadeIn, SlideUp, SlideDown, Bounce, PopIn, Wave, Glitch, Blur;
+     - `TextAnimationScope`: Character, Word, Line, All;
+     - `struct TextAnimation` (type, scope, duration, easing, cursor, stagger, params) aggiunto come proprietà opzionale in `TextClipData`.
+   - Catalogo predefiniti stili testo (`resources/packs/vedit.core/text-styles.json`):
+     - Espanso da 24 a 61 preset ricchi bilingue (italiano/inglese) con template per terzi inferiori (broadcast, minimal, neon, corporate, breaking news), speech bubble (fumetti, manga, nuvola di pensiero, shout, callout HUD) e testi animati.
+   - Motore di rendering e conformità FreeType D-39 (`src/engine/text/TextRenderer.h`, `TextRenderer.cpp`, `Services.cpp`):
+     - Rendering parametrizzato `TextRenderer::render` con tempo/progresso e rendering sfondi personalizzati per tutte le 9 forme di bolla e terzi inferiori.
+     - Animazioni di testo avanzate a tempo per carattere, parola, riga o intero blocco: macchina da scrivere (con cursore lampeggiante), dissolvenza, scorrimento, rimbalzo elastico, pop-in, onda sinusoidale, glitch con cifrario casuale, defocus/sfocatura.
+     - Calcolo `TextRenderer::bounds` ad incastro dinamico per includere code e accenti grafici nelle maniglie di selezione a schermo.
+     - Piena conformità D-39: le animazioni di testo vengono pre-renderizzate sul thread di proiezione Qt in `TextState::frames` e lette dai thread worker MLT come meri buffer di pixel senza chiamate a FreeType concorrenti o memory leak thread-local.
+   - Interfaccia utente (`src/ui/controllers/ClipInspector.cpp`, `EditorController.cpp`, `PropertiesPanel.qml`):
+     - Controlli completi nel pannello proprietà (scheda Testo): selezione forma sfondo bolla, direzione e dimensione coda, colore accento e bordi;
+     - Sezione dedicata "Animazione del testo": abilitazione/disabilitazione, tipo animazione, ambito (carattere, parola, riga, blocco), durata e cursore lampeggiante;
+     - Supporto per "Ripristina" e "Applica a tutti" per stile e animazione in modo indipendente;
+     - Preset con testo di esempio e animazione preconfigurata applicabili con un clic.
+   - Suite di test:
+     - Test unitari di serializzazione e roundtrip in `tst_serialization` (15/15);
+     - Test di integrazione motore e MLT in `tst_services` (`textAnimationRendersProgressively`, `speechBubbleAndLowerThird`, 13/13);
+     - 100% CTest passati (25/25) con zero compiler warnings (`-Wall -Wextra -Wpedantic -Werror`).
 
 ### Prossimi passi (Fase 5 — Libreria creativa)
-1. P5.2: Animazioni di testo avanzate (carattere per carattere / macchina da scrivere, parola, riga), template di titoli, speech bubbles e terzi inferiori;
-2. P5.3: Curve di velocità (Speed Ramping con nodi o Bézier) e motion blur;
-3. P5.4: Sticker vettoriali (SVG) e animati (GIF/WebP), visualizzatori audio sul ritmo;
-4. P5.5: Clip segnaposto (placeholder), sostituzione rapida media, modelli di progetto e generatore slideshow da foto;
-5. P5.6: Brand Kit (palette, font, loghi) e generatore copertina;
-6. P5.7: Criterio di chiusura Fase 5 e test di integrazione ("Uso un template, sostituisco i media e ottengo un video completo; ogni transizione supera il test di rendering CPU/GPU; applico uno stile del brand kit, uso 3 transizioni diverse e un testo animato carattere per carattere").
+1. P5.3: Curve di velocità (Speed Ramping con nodi o Bézier) e motion blur sintetico direzionale;
+2. P5.4: Sticker vettoriali (SVG) e animati (GIF/WebP), visualizzatori audio sul ritmo;
+3. P5.5: Clip segnaposto (placeholder), sostituzione rapida media, modelli di progetto e generatore slideshow da foto;
+4. P5.6: Brand Kit (palette, font, loghi) e generatore copertina;
+5. P5.7: Criterio di chiusura Fase 5 e test di integrazione ("Uso un template, sostituisco i media e ottengo un video completo; ogni transizione supera il test di rendering CPU/GPU; applico uno stile del brand kit, uso 3 transizioni diverse e un testo animato carattere per carattere").
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata

@@ -102,7 +102,15 @@ QByteArray textKey(const TextClipData &text)
         stream << s.shadow->color.toString() << s.shadow->offset.x << s.shadow->offset.y << s.shadow->blur;
     }
     if (s.background) {
-        stream << s.background->color.toString() << s.background->padding << s.background->radius;
+        stream << s.background->color.toString() << s.background->padding << s.background->radius
+               << int(s.background->shape) << int(s.background->tail) << s.background->tailSize
+               << s.background->borderColor.toString() << s.background->borderWidth << s.background->accentColor.toString();
+    }
+    stream << text.animation.has_value();
+    if (text.animation) {
+        stream << int(text.animation->type) << int(text.animation->scope)
+               << text.animation->duration.toSecondsDouble() << text.animation->cursor
+               << text.animation->stagger << text.animation->easing.name();
     }
     return bytes;
 }
