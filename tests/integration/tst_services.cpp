@@ -443,6 +443,73 @@ private slots:
         QVERIFY(hasAccent);
     }
 
+    void speedRampProducer()
+    {
+        auto profile = profile320();
+        auto base = std::make_shared<Mlt::Producer>(*profile, "color:#0000FF");
+        QVERIFY(base->is_valid());
+        base->set("length", 300);
+        base->set("out", 299);
+
+        const SpeedCurve hero = SpeedCurveUtil::preset(u"hero"_s);
+        auto ramp = makeSpeedRampProducer(*profile, base, hero, 0, 150, false);
+        QVERIFY(ramp != nullptr);
+        QVERIFY(ramp->is_valid());
+        QCOMPARE(ramp->get_length(), 150);
+
+        ramp->seek(0);
+        std::unique_ptr<Mlt::Frame> f0(ramp->get_frame());
+        QVERIFY(f0 != nullptr);
+        QVERIFY(f0->is_valid());
+        QCOMPARE(f0->get_position(), 0);
+
+        ramp->seek(75);
+        std::unique_ptr<Mlt::Frame> f75(ramp->get_frame());
+        QVERIFY(f75 != nullptr);
+        QVERIFY(f75->is_valid());
+        QCOMPARE(f75->get_position(), 75);
+
+        // Also test reversed
+        auto rampRev = makeSpeedRampProducer(*profile, base, hero, 0, 150, true);
+        QVERIFY(rampRev != nullptr);
+        rampRev->seek(149);
+        std::unique_ptr<Mlt::Frame> fRev(rampRev->get_frame());
+        QVERIFY(fRev != nullptr);
+        QVERIFY(fRev->is_valid());
+        QCOMPARE(fRev->get_position(), 149);
+    }
+
+    void motionBlurFilter()
+    {
+        auto profile = profile320();
+        auto producer = std::make_unique<Mlt::Producer>(*profile, "color:#00FF00");
+        QVERIFY(producer->is_valid());
+        producer->set("length", 10);
+        producer->set("out", 9);
+
+        fx::MotionBlurSettings settings;
+        settings.intensity = 0.5;
+        settings.angle = 45.0;
+        settings.samples = 9;
+
+        auto filter = makeMotionBlurFilter(*profile, settings);
+        QVERIFY(filter != nullptr);
+        QVERIFY(filter->is_valid());
+        producer->attach(*filter);
+
+        producer->seek(0);
+        std::unique_ptr<Mlt::Frame> frame(producer->get_frame());
+        QVERIFY(frame != nullptr);
+        QVERIFY(frame->is_valid());
+
+        mlt_image_format format = mlt_image_rgba;
+        int width = 320, height = 180;
+        const uint8_t *imgData = frame->get_image(format, width, height);
+        QVERIFY(imgData != nullptr);
+        QCOMPARE(width, 320);
+        QCOMPARE(height, 180);
+    }
+
     void cleanupTestCase() { MltRuntime::shutdown(); }
 };
 

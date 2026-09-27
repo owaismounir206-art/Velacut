@@ -902,33 +902,114 @@ Rectangle {
                         title: qsTr("Speed")
                         applyToAll: false
 
-                        PropertySlider {
-                            inspector: panel.inspector
-                            key: "speed"
-                            label: qsTr("Speed")
-                            from: 0.1
-                            to: 100
-                            neutral: 1
-                            logarithmic: true
-                            format: v => qsTr("%1×").arg((Math.round(v * 10) / 10).toLocaleString(Qt.locale()))
-                        }
-                        Flow {
+                        SegmentedButton {
                             Layout.fillWidth: true
-                            spacing: Theme.space.xs
-                            Repeater {
-                                model: [0.25, 0.5, 1, 2, 4]
-                                delegate: Chip {
-                                    required property real modelData
-                                    text: qsTr("%1×").arg(modelData.toLocaleString(Qt.locale()))
-                                    checkable: false // shows the current speed; a click sets it
-                                    checked: Math.abs((panel.values["speed"] ?? 1) - modelData) < 0.001
-                                    onClicked: {
-                                        panel.inspector.set("speed", modelData)
-                                        panel.inspector.endGesture()
+                            model: [{ text: qsTr("Costante") }, { text: qsTr("Curva") }]
+                            currentIndex: (panel.values["speed.isCurve"] ?? false) ? 1 : 0
+                            onActivated: (index) => panel.inspector.set("speed.isCurve", index === 1)
+                        }
+
+                        // Constant speed controls
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            visible: !(panel.values["speed.isCurve"] ?? false)
+                            spacing: Theme.space.sm
+
+                            PropertySlider {
+                                inspector: panel.inspector
+                                key: "speed"
+                                label: qsTr("Speed")
+                                from: 0.1
+                                to: 100
+                                neutral: 1
+                                logarithmic: true
+                                format: v => qsTr("%1×").arg((Math.round(v * 10) / 10).toLocaleString(Qt.locale()))
+                            }
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: Theme.space.xs
+                                Repeater {
+                                    model: [0.25, 0.5, 1, 2, 4]
+                                    delegate: Chip {
+                                        required property real modelData
+                                        text: qsTr("%1×").arg(modelData.toLocaleString(Qt.locale()))
+                                        checkable: false // shows the current speed; a click sets it
+                                        checked: Math.abs((panel.values["speed"] ?? 1) - modelData) < 0.001
+                                        onClicked: {
+                                            panel.inspector.set("speed", modelData)
+                                            panel.inspector.endGesture()
+                                        }
                                     }
                                 }
                             }
                         }
+
+                        // Speed ramp curve controls (SPEC §5.5)
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            visible: panel.values["speed.isCurve"] ?? false
+                            spacing: Theme.space.sm
+
+                            Label {
+                                text: qsTr("Predefiniti di velocità")
+                                role: "bodySmall"
+                                color: Theme.color.onSurfaceVariant
+                            }
+
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: Theme.space.xs
+                                Repeater {
+                                    model: panel.inspector.speedPresets
+                                    delegate: Chip {
+                                        required property var modelData
+                                        objectName: "speedPreset_" + modelData.id
+                                        text: modelData.label
+                                        checkable: false
+                                        checked: (panel.values["speed.curvePreset"] ?? "") === modelData.id
+                                        onClicked: {
+                                            panel.inspector.set("speed.curvePreset", modelData.id)
+                                            panel.inspector.endGesture()
+                                        }
+                                    }
+                                }
+                            }
+
+                            SpeedCurveEditor {
+                                Layout.fillWidth: true
+                                inspector: panel.inspector
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Trascina i punti per regolare la velocità. Doppio clic per aggiungere un punto. Clic destro per rimuovere.")
+                                role: "bodySmall"
+                                color: Theme.color.outline
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+
+                        // Motion blur (SPEC §5.5)
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label { Layout.fillWidth: true; text: qsTr("Motion blur"); role: "bodyMedium" }
+                            Switch {
+                                objectName: "motionBlurSwitch"
+                                checked: panel.values["speed.motionBlur"] ?? false
+                                Accessible.name: qsTr("Motion blur")
+                                onToggled: panel.inspector.set("speed.motionBlur", checked)
+                            }
+                        }
+                        PropertySlider {
+                            visible: panel.values["speed.motionBlur"] ?? false
+                            inspector: panel.inspector
+                            key: "speed.motionBlurIntensity"
+                            label: qsTr("Intensità motion blur")
+                            from: 0.0
+                            to: 1.0
+                            format: v => Math.round(v * 100) + " %"
+                        }
+
                         RowLayout {
                             Layout.fillWidth: true
                             Label { Layout.fillWidth: true; text: qsTr("Keep the voice natural"); role: "bodyMedium"; wrapMode: Text.WordWrap }

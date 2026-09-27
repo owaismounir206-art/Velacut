@@ -2,6 +2,7 @@
 #include "TimelineEditor.h"
 
 #include "core/edit/SequenceDiff.h"
+#include "core/project/SpeedCurve.h"
 
 #include <QCoreApplication>
 
@@ -779,7 +780,7 @@ EditResult TimelineEditor::setSpeed(const ClipId &clipId, double speed)
     }
     speed = std::clamp(speed, 0.1, 100.0);
     // The material used stays the same: duration × speed source frames.
-    const double currentSpeed = media->curve ? 1.0 : media->speed;
+    const double currentSpeed = media->curve ? SpeedCurveUtil::averageSpeed(*media->curve) : media->speed;
     const double sourceSpan = static_cast<double>(clip.duration.value()) * currentSpeed;
     const auto frames = std::max<std::int64_t>(1, std::llround(sourceSpan / speed));
     media->speed = speed;
@@ -799,6 +800,55 @@ EditResult TimelineEditor::setSpeed(const ClipId &clipId, double speed)
         removeEmptyTracks(modified);
     }
     return finish(std::move(modified), tr("Change speed"), clipId);
+}
+
+EditResult TimelineEditor::setSpeedCurve(const ClipId &clipId, const SpeedCurve &curve)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (ref->track->locked) {
+        return fail(tr("The track is locked."));
+    }
+    Clip &clip = ref->clip();
+    MediaClipData *media = clip.media();
+    const Media *item = media ? m_project.findMedia(media->mediaId) : nullptr;
+    if (!media || !item || item->kind == MediaKind::Image) {
+        return fail(tr("The speed can be changed only on video and audio clips."));
+    }
+
+    const double currentAvgSpeed = media->curve ? SpeedCurveUtil::averageSpeed(*media->curve) : media->speed;
+    const double sourceSpan = static_cast<double>(clip.duration.value()) * currentAvgSpeed;
+    const double newAvgSpeed = std::clamp(SpeedCurveUtil::averageSpeed(curve), 0.05, 100.0);
+    const auto frames = std::max<std::int64_t>(1, std::llround(sourceSpan / newAvgSpeed));
+
+    media->curve = curve;
+    media->speed = newAvgSpeed;
+    clip.duration = RationalTime(frames, m_rate);
+
+    Track &track = *ref->track;
+    clampTransitions(track);
+    if (isMagneticMain(modified, track)) {
+        pack(track, m_rate);
+    } else if (!hasRoom(track, clip.range(), clip.id)) {
+        Clip moved = takeClip(track, ref->index);
+        auto &tracks = ref->audio ? modified.audioTracks : modified.visualTracks;
+        Track fresh = makeTrack(track.kind);
+        insertSorted(fresh, std::move(moved));
+        tracks.insert(tracks.begin() + ref->trackIndex + 1, std::move(fresh));
+        removeEmptyTracks(modified);
+    }
+    return finish(std::move(modified), tr("Apply speed curve"), clipId);
+}
+
+EditResult TimelineEditor::removeSpeedCurve(const ClipId &clipId)
+{
+    return setSpeed(clipId, 1.0);
 }
 
 EditResult TimelineEditor::insertFreezeFrame(const ClipId &clipId, const RationalTime &requestedTime,

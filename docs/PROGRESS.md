@@ -1,9 +1,29 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-09-27 (Fase 4 completata)
+Ultimo aggiornamento: 2026-09-27 (Fase 5 in corso: P5.1, P5.2 e P5.3 completati)
 
 ## Fase corrente
-**Fase 4 — Colore e audio avanzati: completata al 100%, in avvio Fase 5 (Libreria creativa).**
+**Fase 5 — Libreria creativa: 75% completata (P5.1, P5.2, P5.3 completati, in corso P5.4).**
+
+### Fase 5: fatto (un commit per incremento)
+1. **P5.1 — Pacchetti creativi, filtri e transizioni estese**:
+   - Espansione catalogo con 60+ filtri creativi e 40+ transizioni suddivisi per categorie tematiche.
+2. **P5.2 — Animazioni testo avanzate, template titoli, fumetti e terzi inferiori**:
+   - Algoritmi di animazione testo a livello di carattere, parola, linea e blocco (typewriter, bounce, pop-in, wave, glitch, blur).
+   - Fumetti (speech bubbles) con 9 forme geometriche SDF (Oval, RoundedRect, ThoughtCloud, ShoutBurst, ComicSquare, Pill, Diamond, Hexagon, Ribbon) e code vettoriali orientabili.
+   - Terzi inferiori (lower thirds) con sfondi grafici, accenti cromatici e calcolo preciso bounding box.
+   - 61 stili di testo pronti all'uso in `text-styles.json`.
+3. **P5.3 — Curve di velocità (Speed Ramping) e Motion Blur direzionale**:
+   - Modello matematico spline cubica Hermite monotona (PCHIP Fritsch-Carlson) in `core/project/SpeedCurve.h`/`.cpp`.
+   - 7 preset completi (Montaggio, Eroe, Proiettile, Salto, Flash in, Flash out, Personalizzata).
+   - Integrazione analitica esatta $I(u) = \int_0^u v(t) dt$ e inversione esatta via Newton-Raphson `progressAtSource`.
+   - Mappatura temporale reversibile dei fotogrammi e dei keyframe (`sourceTimeAt`, `timelineOffsetAtSourceTime`).
+   - Servizio MLT custom `vedit.speed_ramp` con riproduzione fluida accurata al singolo fotogramma senza ricampionamenti a scatti.
+   - Kernel CPU straight-alpha multi-tap di Motion Blur direzionale con angolo, campioni e intensità regolabili (`fx/MotionBlur.h`/`.cpp`) e servizio MLT `vedit.motion_blur`.
+   - Editor visuale interattivo `SpeedCurveEditor.qml` con visualizzazione scala logaritmica centrata su 1.0×, trascinamento nodi, aggiunta con doppio clic, rimozione con clic destro e indicatore tooltip.
+   - Integrazione in `ClipInspector` e `PropertiesPanel.qml`: commutatore modalità Costante/Curva, chip preset, motion blur switch e slider d'intensità.
+   - Ripple magnetico automatico e ripristino durata coerente in `TimelineEditor::setSpeedCurve` e `removeSpeedCurve`.
+   - Suite completa di test unitari (`tst_kernels`, `tst_timelineeditor`) e integrazione (`tst_services`), 25/25 test CTest passati al 100%.
 
 ### Criterio di completamento della Fase 4 (SPEC §8)
 | Requisito | Esito | Verifica |

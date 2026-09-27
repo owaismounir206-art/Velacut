@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ClipTime.h"
+#include "SpeedCurve.h"
 
 #include <algorithm>
 #include <cmath>
@@ -31,9 +32,10 @@ RationalTime keyframeTime(const RationalTime &sourceIn, double speed, bool rever
 RationalTime keyframeTime(const Clip &clip, const RationalTime &offset)
 {
     if (const MediaClipData *media = clip.media()) {
-        // A speed curve (Phase 5) has no single factor: until then its keyframes follow the clip at 1x.
-        const double speed = media->curve ? 1.0 : media->speed;
-        return keyframeTime(media->sourceIn, speed, media->reversed, clip.duration, offset);
+        if (media->curve && !media->curve->points.empty()) {
+            return SpeedCurveUtil::sourceTimeAt(*media->curve, media->sourceIn, clip.duration, offset, media->reversed);
+        }
+        return keyframeTime(media->sourceIn, media->speed, media->reversed, clip.duration, offset);
     }
     return offset;
 }
@@ -44,7 +46,10 @@ RationalTime offsetOfKeyframeTime(const Clip &clip, const RationalTime &time)
     const std::int64_t length = clip.duration.value();
     std::int64_t offset = time.rescaled(rate, Rounding::NearestEven).value();
     if (const MediaClipData *media = clip.media()) {
-        const double speed = media->curve || media->speed <= 0 ? 1.0 : media->speed;
+        if (media->curve && !media->curve->points.empty()) {
+            return SpeedCurveUtil::timelineOffsetAtSourceTime(*media->curve, media->sourceIn, clip.duration, time, media->reversed);
+        }
+        const double speed = media->speed <= 0 ? 1.0 : media->speed;
         const std::int64_t played =
             std::llround(static_cast<double>((time - media->sourceIn).rescaled(rate, Rounding::NearestEven).value()) / speed);
         offset = media->reversed ? length - 1 - played : played;

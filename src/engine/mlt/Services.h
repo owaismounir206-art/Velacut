@@ -2,9 +2,11 @@
 #pragma once
 
 #include "core/project/Clip.h"
+#include "core/project/SpeedCurve.h"
 #include "fx/Color.h"
 #include "fx/Grade.h"
 #include "fx/Composite.h"
+#include "fx/MotionBlur.h"
 #include "fx/Transition.h"
 
 #include <QByteArray>
@@ -185,5 +187,12 @@ std::unique_ptr<Mlt::Filter> makeMaskFilter(Mlt::Profile &profile, const MaskSet
 std::unique_ptr<Mlt::Filter> makeGainFilter(Mlt::Profile &profile, const GainSettings &settings);
 std::unique_ptr<Mlt::Transition> makeTransition(Mlt::Profile &profile, const TransitionSettings &settings);
 std::unique_ptr<Mlt::Producer> makeTextProducer(Mlt::Profile &profile, const TextClipData &text);
+std::unique_ptr<Mlt::Filter> makeMotionBlurFilter(Mlt::Profile &profile, const fx::MotionBlurSettings &settings);
+std::unique_ptr<Mlt::Producer> makeSpeedRampProducer(Mlt::Profile &profile,
+                                                     std::shared_ptr<Mlt::Producer> baseProducer,
+                                                     const SpeedCurve &curve,
+                                                     int sourceIn,
+                                                     int length,
+                                                     bool reversed);
 
 } // namespace vedit::engine

@@ -12,6 +12,7 @@ add_library(vedit_fx STATIC
     Library.h Library.cpp
     Loudness.h Loudness.cpp
     Mask.h Mask.cpp
+    MotionBlur.h MotionBlur.cpp
     Transform.h Transform.cpp
     Transition.h Transition.cpp
 )

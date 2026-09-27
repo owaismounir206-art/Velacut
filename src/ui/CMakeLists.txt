@@ -53,6 +53,7 @@ qt_add_qml_module(vedit_ui
         qml/LevelMeter.qml
         qml/KeyframeButton.qml
         qml/CurveEditor.qml
+        qml/SpeedCurveEditor.qml
         qml/ColorWheel.qml
         qml/ColorCurvesEditor.qml
         qml/ScopePanel.qml

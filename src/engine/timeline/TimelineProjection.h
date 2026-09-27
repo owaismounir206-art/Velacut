@@ -111,6 +111,7 @@ private:
         std::optional<MaskSettings> maskSettings;
         std::vector<AdjustSettings> adjusts;
         std::optional<DeflickerSettings> deflicker;
+        std::optional<fx::MotionBlurSettings> motionBlur;
         std::optional<TransformSettings> transform;
         std::optional<GainSettings> gain;
         std::optional<AudioEffectsSettings> audioEffects;

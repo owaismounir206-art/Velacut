@@ -392,6 +392,32 @@ mlt_frame chromaKeyProcess(mlt_filter filter, mlt_frame frame)
     return frame;
 }
 
+// ---- vedit.motion_blur ----------------------------------------------------------------------------------------
+
+int motionBlurGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
+{
+    auto filter = static_cast<mlt_filter>(mlt_frame_pop_service(frame));
+    *format = mlt_image_rgba;
+    const int error = mlt_frame_get_image(frame, image, format, width, height, 1);
+    const auto *s = settingsOf<fx::MotionBlurSettings>(MLT_FILTER_PROPERTIES(filter));
+    if (error || !s || s->intensity <= 0.001 || *format != mlt_image_rgba || !*image) {
+        return error;
+    }
+
+    const int w = *width;
+    const int h = *height;
+    const fx::ImageView view{*image, w, h, w * 4};
+    fx::applyMotionBlur(view, *s);
+    return 0;
+}
+
+mlt_frame motionBlurProcess(mlt_filter filter, mlt_frame frame)
+{
+    mlt_frame_push_service(frame, filter);
+    mlt_frame_push_get_image(frame, motionBlurGetImage);
+    return frame;
+}
+
 // ---- vedit.mask -----------------------------------------------------------------------------------------------
 
 int maskGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
@@ -662,6 +688,63 @@ void *createText(mlt_profile profile, mlt_service_type, const char *, const void
     return producer;
 }
 
+// ---- vedit.speed_ramp -----------------------------------------------------------------------------------------
+
+struct SpeedRampState
+{
+    std::shared_ptr<Mlt::Producer> base;
+    SpeedCurve curve;
+    int sourceIn = 0;
+    int length = 0;
+    bool reversed = false;
+    QMutex mutex;
+};
+
+int speedRampGetFrame(mlt_producer producer, mlt_frame_ptr frame, int index)
+{
+    auto *state = static_cast<SpeedRampState *>(mlt_properties_get_data(MLT_PRODUCER_PROPERTIES(producer), kSettings, nullptr));
+    if (!state || !state->base || state->length <= 0) {
+        *frame = mlt_frame_init(MLT_PRODUCER_SERVICE(producer));
+        mlt_producer_prepare_next(producer);
+        return 0;
+    }
+
+    const int pos = static_cast<int>(mlt_producer_position(producer));
+    const double u = std::clamp(static_cast<double>(pos) / std::max(1, state->length - 1), 0.0, 1.0);
+    const double integral = SpeedCurveUtil::integratedTime(state->curve, u);
+    const double sourceFramesFromStart = integral * static_cast<double>(state->length);
+    int mappedSourceFrame = 0;
+    if (!state->reversed) {
+        mappedSourceFrame = state->sourceIn + static_cast<int>(std::round(sourceFramesFromStart));
+    } else {
+        const int totalSource = static_cast<int>(std::round(SpeedCurveUtil::averageSpeed(state->curve) * static_cast<double>(state->length)));
+        mappedSourceFrame = state->sourceIn + totalSource - 1 - static_cast<int>(std::round(sourceFramesFromStart));
+    }
+
+    QMutexLocker lock(&state->mutex);
+    state->base->seek(mappedSourceFrame);
+    const int error = mlt_service_get_frame(MLT_PRODUCER_SERVICE(state->base->get_producer()), frame, index);
+    if (!error && *frame) {
+        mlt_frame_set_position(*frame, pos);
+    } else {
+        *frame = mlt_frame_init(MLT_PRODUCER_SERVICE(producer));
+    }
+    mlt_producer_prepare_next(producer);
+    return 0;
+}
+
+void *createSpeedRamp(mlt_profile profile, mlt_service_type, const char *, const void *)
+{
+    mlt_producer producer = mlt_producer_new(profile);
+    if (producer) {
+        producer->get_frame = speedRampGetFrame;
+        mlt_properties properties = MLT_PRODUCER_PROPERTIES(producer);
+        mlt_properties_set_position(properties, "length", 0x7fffffff);
+        mlt_properties_set_position(properties, "out", 0x7ffffffe);
+    }
+    return producer;
+}
+
 template<mlt_frame (*Process)(mlt_filter, mlt_frame)>
 void *createFilter(mlt_profile, mlt_service_type, const char *, const void *)
 {
@@ -698,10 +781,12 @@ void registerServices(Mlt::Repository *repository)
     repository->register_service(mlt_service_filter_type, "vedit.transform", createFilter<transformProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.adjust", createFilter<adjustProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.chroma_key", createFilter<chromaKeyProcess>);
+    repository->register_service(mlt_service_filter_type, "vedit.motion_blur", createFilter<motionBlurProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.mask", createFilter<maskProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.gain", createFilter<gainProcess>);
     repository->register_service(mlt_service_transition_type, "vedit.transition", createTransitionService);
     repository->register_service(mlt_service_producer_type, "vedit.text", createText);
+    repository->register_service(mlt_service_producer_type, "vedit.speed_ramp", createSpeedRamp);
 }
 
 // ---- settings -----------------------------------------------------------------------------------------------------
@@ -974,6 +1059,33 @@ std::unique_ptr<Mlt::Producer> makeTextProducer(Mlt::Profile &profile, const Tex
         }
     }
     producer->set(kSettings, state, 0, [](void *p) { delete static_cast<TextState *>(p); });
+    return producer;
+}
+
+std::unique_ptr<Mlt::Filter> makeMotionBlurFilter(Mlt::Profile &profile, const fx::MotionBlurSettings &settings)
+{
+    auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.motion_blur");
+    attachSettings(*filter, settings);
+    return filter;
+}
+
+std::unique_ptr<Mlt::Producer> makeSpeedRampProducer(Mlt::Profile &profile,
+                                                     std::shared_ptr<Mlt::Producer> baseProducer,
+                                                     const SpeedCurve &curve,
+                                                     int sourceIn,
+                                                     int length,
+                                                     bool reversed)
+{
+    auto producer = std::make_unique<Mlt::Producer>(profile, "vedit.speed_ramp");
+    auto *state = new SpeedRampState;
+    state->base = std::shared_ptr<Mlt::Producer>(baseProducer ? baseProducer->cut(0, baseProducer->get_length() - 1) : nullptr);
+    state->curve = curve;
+    state->sourceIn = sourceIn;
+    state->length = length;
+    state->reversed = reversed;
+    producer->set("length", length);
+    producer->set("out", length - 1);
+    producer->set(kSettings, state, 0, [](void *p) { delete static_cast<SpeedRampState *>(p); });
     return producer;
 }
 

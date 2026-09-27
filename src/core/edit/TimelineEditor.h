@@ -76,6 +76,9 @@ public:
     // Constant speed 0.1–100: the clip keeps its source material, so its duration changes (ripple on the main track;
     // elsewhere a new track above if it no longer fits).
     EditResult setSpeed(const ClipId &clipId, double speed);
+    // Speed ramping curve with variable speed profile across the clip duration.
+    EditResult setSpeedCurve(const ClipId &clipId, const SpeedCurve &curve);
+    EditResult removeSpeedCurve(const ClipId &clipId);
     // A still of `imageMediaId` (the frame at `time`, prepared by the caller) inserted at `time`, splitting the clip
     // if needed; the rest of the track moves along. The still gets the clip's look (transform, effects…).
     EditResult insertFreezeFrame(const ClipId &clipId, const RationalTime &time, const MediaId &imageMediaId,

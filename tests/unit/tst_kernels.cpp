@@ -7,7 +7,9 @@
 #include "fx/Enhance.h"
 #include "fx/Grade.h"
 #include "fx/Library.h"
+#include "core/project/SpeedCurve.h"
 #include "fx/Mask.h"
+#include "fx/MotionBlur.h"
 #include "fx/Transform.h"
 #include "fx/Transition.h"
 
@@ -18,6 +20,10 @@
 #include <cmath>
 #include <vector>
 
+using vedit::Rational;
+using vedit::RationalTime;
+using vedit::SpeedCurve;
+using vedit::SpeedCurveUtil;
 using namespace vedit::fx;
 using namespace Qt::StringLiterals;
 
@@ -735,6 +741,115 @@ private slots:
         QCOMPARE(dbToGain(0), 1.0f);
         QCOMPARE(dbToGain(-80), 0.0f);
         QVERIFY(std::abs(dbToGain(-6) - 0.501f) < 0.01f);
+    }
+
+    // ---- speed curves (SPEC §5.5) -------------------------------------------------------------------------------
+    void speedCurves()
+    {
+        const QStringList presetIds = SpeedCurveUtil::presetIds();
+        QCOMPARE(presetIds.size(), 7);
+        QVERIFY(presetIds.contains(QStringLiteral("montage")));
+        QVERIFY(presetIds.contains(QStringLiteral("hero")));
+        QVERIFY(presetIds.contains(QStringLiteral("bullet")));
+        QVERIFY(presetIds.contains(QStringLiteral("jump")));
+        QVERIFY(presetIds.contains(QStringLiteral("flash_in")));
+        QVERIFY(presetIds.contains(QStringLiteral("flash_out")));
+        QVERIFY(presetIds.contains(QStringLiteral("custom")));
+
+        // Preset titles in both Italian and English
+        for (const QString &id : presetIds) {
+            const QString itTitle = SpeedCurveUtil::presetTitle(id, QStringLiteral("it"));
+            const QString enTitle = SpeedCurveUtil::presetTitle(id, QStringLiteral("en"));
+            QVERIFY(!itTitle.isEmpty());
+            QVERIFY(!enTitle.isEmpty());
+        }
+
+        // Test each preset mathematical properties
+        for (const QString &id : presetIds) {
+            const SpeedCurve curve = SpeedCurveUtil::preset(id);
+            const auto norm = SpeedCurveUtil::normalizedPoints(curve);
+            QVERIFY(norm.size() >= 2);
+            QCOMPARE(norm.front().first, 0.0);
+            QCOMPARE(norm.back().first, 1.0);
+
+            // Integrated time must be monotonic and non-negative
+            double prevIntegral = 0.0;
+            for (int step = 0; step <= 20; ++step) {
+                const double u = static_cast<double>(step) / 20.0;
+                const double speed = SpeedCurveUtil::speedAt(curve, u);
+                QVERIFY(speed >= 0.05);
+
+                const double integral = SpeedCurveUtil::integratedTime(curve, u);
+                QVERIFY(integral >= prevIntegral - 1e-6);
+                prevIntegral = integral;
+
+                if (step == 0) {
+                    QCOMPARE(integral, 0.0);
+                }
+            }
+
+            const double avgSpeed = SpeedCurveUtil::averageSpeed(curve);
+            QVERIFY(avgSpeed >= 0.05);
+            QVERIFY(std::abs(SpeedCurveUtil::integratedTime(curve, 1.0) - avgSpeed) < 1e-6);
+
+            // Invertibility: progressAtSource should invert I(u)/I(1)
+            for (int step = 1; step < 10; ++step) {
+                const double u = static_cast<double>(step) / 10.0;
+                const double normSource = SpeedCurveUtil::integratedTime(curve, u) / avgSpeed;
+                const double recoveredU = SpeedCurveUtil::progressAtSource(curve, normSource);
+                QVERIFY2(std::abs(recoveredU - u) < 1e-3,
+                         qPrintable(QStringLiteral("Preset %1: u=%2, normSource=%3, recoveredU=%4")
+                                        .arg(id).arg(u).arg(normSource).arg(recoveredU)));
+            }
+
+            // Keyframe time conversions
+            const RationalTime sourceIn(0, Rational(30));
+            const RationalTime duration(100, Rational(30));
+            const RationalTime tOffset(50, Rational(30));
+            const RationalTime sTime = SpeedCurveUtil::sourceTimeAt(curve, sourceIn, duration, tOffset, false);
+            const RationalTime recoveredOffset = SpeedCurveUtil::timelineOffsetAtSourceTime(curve, sourceIn, duration, sTime, false);
+            QVERIFY(std::abs(recoveredOffset.toSecondsDouble() - tOffset.toSecondsDouble()) < 0.1);
+        }
+    }
+
+    // ---- motion blur (SPEC §5.5) --------------------------------------------------------------------------------
+    void motionBlur()
+    {
+        // 16x16 image with a high-contrast dot in the middle
+        Buffer img(16, 16, {0, 0, 0, 255});
+        img.set(8, 8, {255, 255, 255, 255});
+
+        MotionBlurSettings zeroBlur;
+        zeroBlur.intensity = 0.0;
+        applyMotionBlur(img.view(), zeroBlur);
+        QCOMPARE(img.at(8, 8)[0], 255);
+        QCOMPARE(img.at(9, 8)[0], 0);
+
+        // Horizontal motion blur along 0 degrees
+        Buffer blurredH(16, 16, {0, 0, 0, 255});
+        blurredH.set(8, 8, {255, 255, 255, 255});
+        MotionBlurSettings blurH;
+        blurH.intensity = 0.5;
+        blurH.angle = 0.0;
+        blurH.samples = 9;
+        applyMotionBlur(blurredH.view(), blurH);
+
+        // Center pixel energy should spread to horizontal neighbors (x=7, x=9)
+        QVERIFY(blurredH.at(7, 8)[0] > 0);
+        QVERIFY(blurredH.at(9, 8)[0] > 0);
+        // Vertical neighbors (x=8, y=7 and y=9) should have almost zero contribution
+        QVERIFY(blurredH.at(8, 7)[0] < blurredH.at(7, 8)[0]);
+
+        // Diagonal motion blur (45 degrees)
+        Buffer blurredDiag(16, 16, {0, 0, 0, 255});
+        blurredDiag.set(8, 8, {255, 255, 255, 255});
+        MotionBlurSettings blurDiag;
+        blurDiag.intensity = 0.8;
+        blurDiag.angle = 45.0;
+        blurDiag.samples = 11;
+        applyMotionBlur(blurredDiag.view(), blurDiag);
+        QVERIFY(blurredDiag.at(8, 8)[0] > 0);
+        QVERIFY(blurredDiag.at(8, 8)[3] == 255);
     }
 };
 

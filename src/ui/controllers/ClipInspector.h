@@ -74,6 +74,8 @@ class ClipInspector : public QObject
     Q_PROPERTY(QString canvasMode READ canvasMode WRITE setCanvasMode NOTIFY canvasModeChanged FINAL)
     // Colours offered for texts and backgrounds (content colours, not the theme's).
     Q_PROPERTY(QVariantList swatches READ swatches CONSTANT FINAL)
+    // Speed ramping curve presets matching SPEC §5.5
+    Q_PROPERTY(QVariantList speedPresets READ speedPresets CONSTANT FINAL)
 
 public:
     enum Kind
@@ -103,6 +105,7 @@ public:
     QVariantList adjustParams() const;
     bool canPaste() const { return m_clipboard.has_value(); }
     QVariantList swatches() const;
+    QVariantList speedPresets() const;
     QVariantMap canvasBox() const;
     QVariantList keyframes() const;
     QVariantMap maskBox() const;
@@ -127,6 +130,8 @@ public:
     Q_INVOKABLE void endGesture();
     // Back to the defaults of a section ("Ripristina", SPEC 0bis rule 8).
     Q_INVOKABLE bool reset(const QString &section);
+    // Control points for a speed curve preset.
+    Q_INVOKABLE QVariantList speedPresetPoints(const QString &presetId) const;
     // The section of the focused clip copied to every clip of the same kind ("Applica a tutte", rule 5). For the
     // background: it becomes the default of the video, and every clip of the main track uses it.
     Q_INVOKABLE bool applyToAll(const QString &section);

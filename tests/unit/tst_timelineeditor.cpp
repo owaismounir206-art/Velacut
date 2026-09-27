@@ -2,6 +2,7 @@
 #include "ProjectFixture.h"
 
 #include "core/project/ClipTime.h"
+#include "core/project/SpeedCurve.h"
 
 #include <QSignalSpy>
 
@@ -385,6 +386,28 @@ private slots:
         QVERIFY(session.apply(session.editor().setSpeed(a, 0.5))); // back to the same material at half speed
         QCOMPARE(session.data().findClip(a)->duration, frames(600));
         QVERIFY(!session.editor().setSpeed(c, 2.0).ok()); // a photo
+    }
+
+    void speedCurveChangesDurationAndRipples()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+        const SpeedCurve hero = SpeedCurveUtil::preset(QStringLiteral("hero"));
+        const double avg = SpeedCurveUtil::averageSpeed(hero);
+        const auto origDuration = session.data().findClip(a)->duration;
+        const auto expectedFrames = std::max<std::int64_t>(1, std::llround(origDuration.rescaled(kRate, Rounding::NearestEven).value() / avg));
+
+        QVERIFY(session.apply(session.editor().setSpeedCurve(a, hero)));
+        QVERIFY(session.data().findClip(a)->media()->curve.has_value());
+        QCOMPARE(session.data().findClip(a)->duration, frames(expectedFrames));
+        QCOMPARE(session.data().findClip(b)->start, session.data().findClip(a)->end());
+
+        // Remove curve restores original duration
+        QVERIFY(session.apply(session.editor().removeSpeedCurve(a)));
+        QVERIFY(!session.data().findClip(a)->media()->curve.has_value());
+        QCOMPARE(session.data().findClip(a)->duration, origDuration);
+        QCOMPARE(session.data().findClip(b)->start, session.data().findClip(a)->end());
     }
 
     void freezeFrameInsertsAStill()

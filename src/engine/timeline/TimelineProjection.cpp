@@ -292,6 +292,12 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
                         m_tractor->attach(*filter);
                         m_adjustmentFilters.push_back(std::move(filter));
                     }
+                    if (render->motionBlur) {
+                        auto filter = makeMotionBlurFilter(m_profile, *render->motionBlur);
+                        filter->set_in_and_out(in, out);
+                        m_tractor->attach(*filter);
+                        m_adjustmentFilters.push_back(std::move(filter));
+                    }
                     if (render->chromaKey) {
                         auto filter = makeChromaKeyFilter(m_profile, *render->chromaKey);
                         filter->set_in_and_out(in, out);
@@ -540,6 +546,21 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
                 }
                 render->deflicker = ds;
                 continue;
+            } else if (effect.type == u"vedit.motion_blur"_s) {
+                fx::MotionBlurSettings mb;
+                if (const auto it = effect.params.find(u"intensity"_s); it != effect.params.end()) {
+                    mb.intensity = std::clamp(numberOf(it->second, 0.5), 0.0, 1.0);
+                } else if (const auto it2 = effect.params.find(u"amount"_s); it2 != effect.params.end()) {
+                    mb.intensity = std::clamp(numberOf(it2->second, 0.5), 0.0, 1.0);
+                }
+                if (const auto it = effect.params.find(u"angle"_s); it != effect.params.end()) {
+                    mb.angle = numberOf(it->second, 0.0);
+                }
+                if (const auto it = effect.params.find(u"samples"_s); it != effect.params.end()) {
+                    mb.samples = std::clamp(static_cast<int>(numberOf(it->second, 7.0)), 3, 17);
+                }
+                render->motionBlur = mb;
+                continue;
             } else if (effect.type == u"vedit.denoise"_s) {
                 if (!audioEffects) {
                     audioEffects = AudioEffectsSettings{};
@@ -696,6 +717,10 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
         stream << adjust.key();
     }
     stream << render->deflicker.has_value() << (render->deflicker ? render->deflicker->key() : QByteArray());
+    stream << render->motionBlur.has_value();
+    if (render->motionBlur) {
+        stream << render->motionBlur->intensity << render->motionBlur->angle << render->motionBlur->samples;
+    }
     stream << render->transform.has_value() << (render->transform ? render->transform->key() : QByteArray());
     stream << render->gain.has_value() << (render->gain ? render->gain->key() : QByteArray());
     stream << render->audioEffects.has_value() << (render->audioEffects ? render->audioEffects->key() : QByteArray());
@@ -725,10 +750,22 @@ std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &
             return placed;
         }
         const bool image = media->kind == MediaKind::Image;
-        if (data->curve) {
-            m_warnings << u"clip %1: speed curves are rendered from a later phase"_s.arg(clip.id.toString());
+        if (data->curve && !image) {
+            auto base = producerFor(*media, 1.0, data->preservePitch);
+            if (!base) {
+                if (!m_cache.error(media->id).isEmpty()) {
+                    m_warnings << m_cache.error(media->id);
+                }
+                return placed;
+            }
+            const std::int64_t sourceIn = toFrames(data->sourceIn);
+            placed.producer = makeSpeedRampProducer(m_profile, std::move(base), *data->curve,
+                                                   static_cast<int>(sourceIn), static_cast<int>(placed.length), data->reversed);
+            placed.in = 0;
+            placed.render = renderOf(clip, track, project, media, mainTrack, placed.in, placed.length);
+            return placed;
         }
-        const double speed = image || data->curve ? 1.0 : data->speed;
+        const double speed = image ? 1.0 : data->speed;
         const double signedSpeed = data->reversed && !image ? -speed : speed;
         placed.producer = producerFor(*media, signedSpeed, data->preservePitch);
         if (!placed.producer) {

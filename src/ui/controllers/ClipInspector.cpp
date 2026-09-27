@@ -4,6 +4,7 @@
 #include "EditorController.h"
 #include "core/edit/TimelineEditor.h"
 #include "core/project/ClipTime.h"
+#include "core/project/SpeedCurve.h"
 #include "core/serialization/ProjectJson.h"
 #include "engine/analysis/Decoding.h"
 #include "engine/analysis/MediaAnalysis.h"
@@ -36,6 +37,7 @@ const QString kGradeType = u"vedit.grade"_s;
 const QString kLutType = u"vedit.lut"_s;
 const QString kDeflickerType = u"vedit.deflicker"_s;
 const QString kChromaType = u"vedit.chroma_key"_s;
+const QString kMotionBlurType = u"vedit.motion_blur"_s;
 constexpr int kBlendModeCount = 17;
 
 double numberOf(const Param &param, double fallback)
@@ -669,7 +671,7 @@ QStringList ClipInspector::modifiedSections() const
         if (media->audio != ClipAudio{}) {
             result << u"audio"_s;
         }
-        if (media->speed != 1.0 || media->reversed || !media->preservePitch) {
+        if (media->speed != 1.0 || media->reversed || !media->preservePitch || media->curve.has_value() || findEffect(*clip, kMotionBlurType)) {
             result << u"speed"_s;
         }
     }
@@ -752,6 +754,28 @@ QVariantList ClipInspector::swatches() const
     for (const char *name : {"#FFFFFF", "#000000", "#9E9E9E", "#F44336", "#FF9800", "#FFD54F", "#8BC34A", "#26C6DA",
                              "#2196F3", "#7E57C2", "#EC407A", "#795548"}) {
         list << QColor(QLatin1StringView(name));
+    }
+    return list;
+}
+
+QVariantList ClipInspector::speedPresets() const
+{
+    QVariantList list;
+    for (const QString &id : SpeedCurveUtil::presetIds()) {
+        QVariantMap item;
+        item[u"id"_s] = id;
+        item[u"label"_s] = SpeedCurveUtil::presetTitle(id, u"it"_s);
+        list.append(item);
+    }
+    return list;
+}
+
+QVariantList ClipInspector::speedPresetPoints(const QString &presetId) const
+{
+    QVariantList list;
+    const SpeedCurve curve = SpeedCurveUtil::preset(presetId);
+    for (const auto &pt : curve.points) {
+        list.append(QVariantList{QVariant(pt.first), QVariant(pt.second)});
     }
     return list;
 }
@@ -858,7 +882,20 @@ QVariantMap ClipInspector::values() const
         map[u"speed"_s] = media->speed;
         map[u"reversed"_s] = media->reversed;
         map[u"preservePitch"_s] = media->preservePitch;
+        map[u"speed.isCurve"_s] = media->curve.has_value();
+        map[u"speed.curvePreset"_s] = media->curve ? media->curve->preset : QString();
+        QVariantList pointsList;
+        if (media->curve) {
+            for (const auto &pt : media->curve->points) {
+                pointsList.append(QVariantList{QVariant(pt.first), QVariant(pt.second)});
+            }
+        }
+        map[u"speed.curvePoints"_s] = pointsList;
     }
+    const Effect *motionBlurFx = findEffect(*clip, kMotionBlurType);
+    map[u"speed.motionBlur"_s] = (motionBlurFx != nullptr && motionBlurFx->enabled);
+    map[u"speed.motionBlurIntensity"_s] = motionBlurFx && motionBlurFx->params.count(u"intensity"_s)
+        ? numberOf(motionBlurFx->params.at(u"intensity"_s), 0.5) : 0.5;
     const Effect *denoise = findEffect(*clip, u"vedit.denoise"_s);
     map[u"audio.denoise"_s] = denoise != nullptr && denoise->enabled;
     map[u"audio.denoiseAmount"_s] = denoise && denoise->params.count(u"amount"_s) ? numberOf(denoise->params.at(u"amount"_s), 1.0) : 1.0;
@@ -1025,7 +1062,7 @@ QString ClipInspector::sectionOf(const QString &key) const
     if (audio.contains(key) || key.startsWith(u"audio."_s)) {
         return u"audio"_s;
     }
-    if (speed.contains(key)) {
+    if (speed.contains(key) || key.startsWith(u"speed."_s)) {
         return u"speed"_s;
     }
     if (key.startsWith(u"mask."_s) || key.startsWith(u"chroma."_s)) {
@@ -1340,6 +1377,75 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
     if (key == u"preservePitch"_s) {
         return update(clips, [&](Clip &c) { c.media()->preservePitch = flag; }, tr("Change pitch"), {});
     }
+    if (key == u"speed.isCurve"_s) {
+        if (!supports(*clip, u"speed"_s)) {
+            return false;
+        }
+        if (flag) {
+            auto curve = SpeedCurveUtil::preset(u"montage"_s);
+            EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                                    .setSpeedCurve(clip->id, curve);
+            result.primaryClip = {};
+            return m_editor.push(std::move(result), gestureKey(u"speed-curve:"_s + clip->id.toString()));
+        } else {
+            EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                                    .removeSpeedCurve(clip->id);
+            result.primaryClip = {};
+            return m_editor.push(std::move(result), gestureKey(u"speed-curve:"_s + clip->id.toString()));
+        }
+    }
+    if (key == u"speed.curvePreset"_s) {
+        if (!supports(*clip, u"speed"_s)) {
+            return false;
+        }
+        const QString presetName = value.toString();
+        auto curve = SpeedCurveUtil::preset(presetName);
+        EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                                .setSpeedCurve(clip->id, curve);
+        result.primaryClip = {};
+        return m_editor.push(std::move(result), gestureKey(u"speed-curve:"_s + clip->id.toString()));
+    }
+    if (key == u"speed.curvePoints"_s) {
+        if (!supports(*clip, u"speed"_s)) {
+            return false;
+        }
+        SpeedCurve curve;
+        curve.preset = u"custom"_s;
+        const QVariantList list = value.toList();
+        for (const auto &item : list) {
+            if (item.canConvert<QVariantList>()) {
+                const QVariantList pt = item.toList();
+                if (pt.size() >= 2) {
+                    curve.points.push_back({pt[0].toDouble(), pt[1].toDouble()});
+                }
+            } else if (item.canConvert<QVariantMap>()) {
+                const QVariantMap pt = item.toMap();
+                curve.points.push_back({pt.value(u"x"_s).toDouble(), pt.value(u"y"_s).toDouble()});
+            }
+        }
+        if (curve.points.size() < 2) {
+            return false;
+        }
+        EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                                .setSpeedCurve(clip->id, curve);
+        result.primaryClip = {};
+        return m_editor.push(std::move(result), gestureKey(u"speed-curve-points:"_s + clip->id.toString()));
+    }
+    if (key == u"speed.motionBlur"_s) {
+        const bool on = value.toBool();
+        return update(clips, [on](Clip &c) {
+            if (on) {
+                ensureEffect(c, kMotionBlurType);
+            } else {
+                removeEffect(c, kMotionBlurType);
+            }
+        }, tr("Toggle motion blur"), mergeTarget);
+    }
+    if (key == u"speed.motionBlurIntensity"_s) {
+        return update(clips, [&](Clip &c) {
+            ensureEffect(c, kMotionBlurType).params[u"intensity"_s] = Param(std::clamp(number, 0.0, 1.0));
+        }, tr("Change motion blur intensity"), mergeTarget);
+    }
 
     // Preset animations: their length (at most the clip's)
     if (key.startsWith(u"animation."_s) && key.endsWith(u".duration"_s)) {
@@ -1559,13 +1665,17 @@ bool ClipInspector::reset(const QString &section)
             removeEffect(c, u"vedit.compressor"_s);
         }, tr("Reset volume and audio effects"), {});
     } else if (section == u"speed"_s) {
-        // One undo step: the direction, then the speed (which moves the following clips).
+        // One undo step: the direction and effects, then the speed (which moves the following clips).
         const QString target = u"reset-speed:"_s + clip->id.toString();
         done = update({clip->id}, [](Clip &c) {
             c.media()->reversed = false;
             c.media()->preservePitch = true;
+            removeEffect(c, kMotionBlurType);
         }, tr("Reset speed"), target);
-        EditResult speed = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId).setSpeed(clip->id, 1.0);
+        EditResult speed = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId).removeSpeedCurve(clip->id);
+        if (clip->media()->speed != 1.0) {
+            speed = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId).setSpeed(clip->id, 1.0);
+        }
         speed.primaryClip = {};
         speed.text = tr("Reset speed");
         done = m_editor.push(std::move(speed), gestureKey(target)) || done;
