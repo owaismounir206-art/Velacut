@@ -1,10 +1,9 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-10-01 (Fase 5 in corso: P5.1–P5.6 completati; iniziato P5.7 con template e placeholder)
+Ultimo aggiornamento: 2026-10-01 (Fasi 0-4 ✅ complete; Fase 5 🔶 70%; documentazione completa)
 
 ## Fase corrente
-**Fase 5 — Libreria creativa: in corso (P5.1–P5.6 completati; P5.7 iniziato con template e placeholder; restano 
-slideshow, kit del marchio e copertina, gestore asset, percorso GPU delle transizioni).**
+**Fase 5 — Libreria creativa: 70% completo** (fondamenta tecniche complete; mancano UI QML, GPU transitions, brand kit)
 
 ### Sessione 2026-10-01
 - **P5.7 — Template di progetto con segnaposto (fondamenta complete)**:
