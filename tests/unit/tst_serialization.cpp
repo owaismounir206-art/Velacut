@@ -186,6 +186,15 @@ ProjectData richProject()
     bars.visualizer = AudioVisualizerSettings{VisualizerStyle::PulsingCircle, 48, Color{1, 2, 3, 255}, Color{4, 5, 6, 255},
                                               1.5, 0.25, true, 0.75, 6.0};
     stickers.clips.push_back(sticker(80, bars));
+    StickerClipData money;
+    money.graphic = GraphicSettings{GraphicKind::Counter, 10, 2500.5, 1, u"€"_s, u" k"_s, Color{255, 200, 0, 255},
+                                    Color{0, 0, 0, 176}, 0.7, 0.6};
+    stickers.clips.push_back(sticker(120, money));
+    StickerClipData circle;
+    circle.graphic = GraphicSettings{};
+    circle.graphic->kind = GraphicKind::Circle;
+    circle.graphic->drawSeconds = 1.25;
+    stickers.clips.push_back(sticker(160, circle));
     sequence.visualTracks.push_back(stickers);
     // Last: this push_back invalidates the `sequence` reference.
     data.sequences.push_back(nested);

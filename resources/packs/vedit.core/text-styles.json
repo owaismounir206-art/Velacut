@@ -62,6 +62,27 @@
                 "en": "Quotes",
                 "it": "Citazioni"
             }
+        },
+        {
+            "id": "list",
+            "name": {
+                "en": "Lists",
+                "it": "Elenchi"
+            }
+        },
+        {
+            "id": "dateplace",
+            "name": {
+                "en": "Dates & places",
+                "it": "Date e luoghi"
+            }
+        },
+        {
+            "id": "cta",
+            "name": {
+                "en": "Calls to action",
+                "it": "Inviti all'azione"
+            }
         }
     ],
     "items": [
@@ -824,7 +845,10 @@
                 "en": "Minimal Lower Third",
                 "it": "Terzo inferiore minimale"
             },
-            "sampleText": "Mario Rossi\nRegista & Produttore",
+            "sampleText": {
+                "en": "Mario Rossi\nDirector & Producer",
+                "it": "Mario Rossi\nRegista & Produttore"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -876,7 +900,10 @@
                 "en": "Breaking News Lower Third",
                 "it": "Terzo inferiore news"
             },
-            "sampleText": "ULTIM'ORA\nConferenza stampa in diretta",
+            "sampleText": {
+                "en": "BREAKING NEWS\nLive press conference",
+                "it": "ULTIM'ORA\nConferenza stampa in diretta"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -928,7 +955,10 @@
                 "en": "Corporate Gold",
                 "it": "Aziendale oro"
             },
-            "sampleText": "Elena Bianchi\nDirettrice Creativa",
+            "sampleText": {
+                "en": "Elena Bianchi\nCreative Director",
+                "it": "Elena Bianchi\nDirettrice Creativa"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -980,7 +1010,10 @@
                 "en": "Two-Tone Chevron",
                 "it": "Due toni chevron"
             },
-            "sampleText": "Marco Bellini\nTech Reviewer",
+            "sampleText": {
+                "en": "Marco Bellini\nTech Reviewer",
+                "it": "Marco Bellini\nTech Reviewer"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1032,7 +1065,10 @@
                 "en": "Cyberpunk Lower Third",
                 "it": "Terzo cyber"
             },
-            "sampleText": "SYSTEM: ONLINE\nProtocollo v5.2 attivo",
+            "sampleText": {
+                "en": "SYSTEM: ONLINE\nProtocol v5.2 active",
+                "it": "SYSTEM: ONLINE\nProtocollo v5.2 attivo"
+            },
             "style": {
                 "font": {
                     "family": "monospace",
@@ -1084,7 +1120,10 @@
                 "en": "Pill Badge Lower Third",
                 "it": "Terzo inferiore pillola"
             },
-            "sampleText": "LIVE STREAM • 1080p 60fps",
+            "sampleText": {
+                "en": "LIVE STREAM • 1080p 60fps",
+                "it": "LIVE STREAM • 1080p 60fps"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1136,7 +1175,10 @@
                 "en": "Gradient Sunset",
                 "it": "Tramonto sfumato"
             },
-            "sampleText": "VLOG 42 • Roma antica",
+            "sampleText": {
+                "en": "VLOG 42 • Ancient Rome",
+                "it": "VLOG 42 • Roma antica"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1188,7 +1230,10 @@
                 "en": "Broadcast Solid",
                 "it": "Broadcast pieno"
             },
-            "sampleText": "SPECIALE TG\nAggiornamenti in tempo reale",
+            "sampleText": {
+                "en": "NEWS SPECIAL\nLive updates",
+                "it": "SPECIALE TG\nAggiornamenti in tempo reale"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1240,7 +1285,10 @@
                 "en": "Clean Box",
                 "it": "Riquadro pulito"
             },
-            "sampleText": "Capitolo 3: Tecniche di montaggio",
+            "sampleText": {
+                "en": "Chapter 3: Editing techniques",
+                "it": "Capitolo 3: Tecniche di montaggio"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1292,7 +1340,10 @@
                 "en": "Bold Accent",
                 "it": "Accento marcato"
             },
-            "sampleText": "INTERVISTA ESCLUSIVA\nIncontro con l'autore",
+            "sampleText": {
+                "en": "EXCLUSIVE INTERVIEW\nMeeting the author",
+                "it": "INTERVISTA ESCLUSIVA\nIncontro con l'autore"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1344,7 +1395,10 @@
                 "en": "Speech Bubble Left",
                 "it": "Nuvoletta sinistra"
             },
-            "sampleText": "Ciao! Come stai?",
+            "sampleText": {
+                "en": "Hi! How are you?",
+                "it": "Ciao! Come stai?"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1396,7 +1450,10 @@
                 "en": "Speech Bubble Right",
                 "it": "Nuvoletta destra"
             },
-            "sampleText": "Tutto fantastico!",
+            "sampleText": {
+                "en": "All great!",
+                "it": "Tutto fantastico!"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1448,7 +1505,10 @@
                 "en": "Comic Shout Boom",
                 "it": "Fumetto urlo boom"
             },
-            "sampleText": "WOW!! INCREDIBILE!",
+            "sampleText": {
+                "en": "WOW!! AMAZING!",
+                "it": "WOW!! INCREDIBILE!"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1503,7 +1563,10 @@
                 "en": "Thought Cloud",
                 "it": "Nuvola di pensiero"
             },
-            "sampleText": "Chissà cosa succederà...",
+            "sampleText": {
+                "en": "I wonder what will happen...",
+                "it": "Chissà cosa succederà..."
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1555,7 +1618,10 @@
                 "en": "Square Comic Box",
                 "it": "Fumetto riquadro"
             },
-            "sampleText": "Ehi, guarda laggiù!",
+            "sampleText": {
+                "en": "Hey, look over there!",
+                "it": "Ehi, guarda laggiù!"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1607,7 +1673,10 @@
                 "en": "HUD Callout Tracker",
                 "it": "Callout tracciatore HUD"
             },
-            "sampleText": "OBIETTIVO IDENTIFICATO\nCoordinate: 41.9028° N",
+            "sampleText": {
+                "en": "TARGET IDENTIFIED\nCoordinates: 41.9028° N",
+                "it": "OBIETTIVO IDENTIFICATO\nCoordinate: 41.9028° N"
+            },
             "style": {
                 "font": {
                     "family": "monospace",
@@ -1659,7 +1728,10 @@
                 "en": "Retro Pixel Dialogue",
                 "it": "Dialogo pixel retro"
             },
-            "sampleText": "VUOI SALVARE IL GIOCO? [S/N]",
+            "sampleText": {
+                "en": "SAVE THE GAME? [Y/N]",
+                "it": "VUOI SALVARE IL GIOCO? [S/N]"
+            },
             "style": {
                 "font": {
                     "family": "monospace",
@@ -1704,7 +1776,10 @@
                 "en": "Target Callout Marker",
                 "it": "Callout punto d'interesse"
             },
-            "sampleText": "PUNTO DI SVOLTA",
+            "sampleText": {
+                "en": "TURNING POINT",
+                "it": "PUNTO DI SVOLTA"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1756,7 +1831,10 @@
                 "en": "Dark Bubble",
                 "it": "Nuvoletta scura"
             },
-            "sampleText": "Messaggio ricevuto!",
+            "sampleText": {
+                "en": "Message received!",
+                "it": "Messaggio ricevuto!"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1808,7 +1886,10 @@
                 "en": "Top Pointer Bubble",
                 "it": "Nuvoletta con freccia in alto"
             },
-            "sampleText": "Nota importante in alto",
+            "sampleText": {
+                "en": "Important note up here",
+                "it": "Nota importante in alto"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1860,7 +1941,10 @@
                 "en": "Cinematic Typewriter",
                 "it": "Macchina da scrivere cinema"
             },
-            "sampleText": "Capitolo Uno: L'inizio",
+            "sampleText": {
+                "en": "Chapter One: The beginning",
+                "it": "Capitolo Uno: L'inizio"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1902,7 +1986,10 @@
                 "en": "Bounce & Pop",
                 "it": "Rimbalzo elastico"
             },
-            "sampleText": "SUPER SCONTO 50%",
+            "sampleText": {
+                "en": "HUGE 50% OFF",
+                "it": "SUPER SCONTO 50%"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1947,7 +2034,10 @@
                 "en": "Wave Loop",
                 "it": "Onda continua"
             },
-            "sampleText": "SUMMER VIBES 2026",
+            "sampleText": {
+                "en": "SUMMER VIBES 2026",
+                "it": "SUMMER VIBES 2026"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -1992,7 +2082,10 @@
                 "en": "Slide Up Letter by Letter",
                 "it": "Scorrimento su per lettera"
             },
-            "sampleText": "SCOPRI LA COLLEZIONE",
+            "sampleText": {
+                "en": "DISCOVER THE COLLECTION",
+                "it": "SCOPRI LA COLLEZIONE"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -2034,7 +2127,10 @@
                 "en": "Fade In Word by Word",
                 "it": "Comparsa parola per parola"
             },
-            "sampleText": "Il futuro del video editing",
+            "sampleText": {
+                "en": "The future of video editing",
+                "it": "Il futuro del video editing"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -2076,7 +2172,10 @@
                 "en": "Cyber Glitch Reveal",
                 "it": "Glitch cyber decodifica"
             },
-            "sampleText": "CYBER_SECURITY // V5",
+            "sampleText": {
+                "en": "CYBER_SECURITY // V5",
+                "it": "CYBER_SECURITY // V5"
+            },
             "style": {
                 "font": {
                     "family": "monospace",
@@ -2121,7 +2220,10 @@
                 "en": "Pop-In Overshoot",
                 "it": "Pop-in elastico"
             },
-            "sampleText": "NUOVO EPISODIO",
+            "sampleText": {
+                "en": "NEW EPISODE",
+                "it": "NUOVO EPISODIO"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -2166,7 +2268,10 @@
                 "en": "Blur to Focus",
                 "it": "Sfocatura e messa a fuoco"
             },
-            "sampleText": "UN VIAGGIO INDIMENTICABILE",
+            "sampleText": {
+                "en": "AN UNFORGETTABLE JOURNEY",
+                "it": "UN VIAGGIO INDIMENTICABILE"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -2208,7 +2313,10 @@
                 "en": "Slide Down Drop",
                 "it": "Discesa dall'alto"
             },
-            "sampleText": "NON PERDERTI LA DIRETTA",
+            "sampleText": {
+                "en": "DON'T MISS THE LIVE",
+                "it": "NON PERDERTI LA DIRETTA"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -2253,7 +2361,10 @@
                 "en": "Terminal Code Typewriter",
                 "it": "Terminale codice"
             },
-            "sampleText": "$ git commit -m 'feat(editor)'",
+            "sampleText": {
+                "en": "$ git commit -m 'feat(editor)'",
+                "it": "$ git commit -m 'feat(editor)'"
+            },
             "style": {
                 "font": {
                     "family": "monospace",
@@ -2305,7 +2416,10 @@
                 "en": "Serif Quote",
                 "it": "Citazione con grazie"
             },
-            "sampleText": "«La semplicità è l'apice della sofisticazione.»\n— Leonardo da Vinci",
+            "sampleText": {
+                "en": "“Simplicity is the ultimate sophistication.”\n— Leonardo da Vinci",
+                "it": "«La semplicità è l'apice della sofisticazione.»\n— Leonardo da Vinci"
+            },
             "style": {
                 "font": {
                     "family": "serif",
@@ -2357,7 +2471,10 @@
                 "en": "Modern Quote Card",
                 "it": "Scheda citazione moderna"
             },
-            "sampleText": "“Il montaggio è la vera grammatica del cinema.”",
+            "sampleText": {
+                "en": "“Editing is the true grammar of cinema.”",
+                "it": "“Il montaggio è la vera grammatica del cinema.”"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -2409,7 +2526,10 @@
                 "en": "Bold Statement Quote",
                 "it": "Dichiarazione audace"
             },
-            "sampleText": "NON PENSARE A COME FARE.\nFALLO.",
+            "sampleText": {
+                "en": "DON'T THINK ABOUT HOW.\nDO IT.",
+                "it": "NON PENSARE A COME FARE.\nFALLO."
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -2461,7 +2581,10 @@
                 "en": "Customer Testimonial",
                 "it": "Recensione cliente"
             },
-            "sampleText": "★★★★★\n«Il miglior editor video mai provato.»",
+            "sampleText": {
+                "en": "★★★★★\n“The best video editor I have ever tried.”",
+                "it": "★★★★★\n«Il miglior editor video mai provato.»"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -2513,7 +2636,10 @@
                 "en": "Subscribe Button",
                 "it": "Pulsante Iscriviti"
             },
-            "sampleText": "ISCRIVITI AL CANALE 🔔",
+            "sampleText": {
+                "en": "SUBSCRIBE TO THE CHANNEL 🔔",
+                "it": "ISCRIVITI AL CANALE 🔔"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -2565,7 +2691,10 @@
                 "en": "Follow @Username",
                 "it": "Segui @Username"
             },
-            "sampleText": "Seguimi su @nomecanale",
+            "sampleText": {
+                "en": "Follow me @channelname",
+                "it": "Seguimi su @nomecanale"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -2617,7 +2746,10 @@
                 "en": "Like & Comment",
                 "it": "Lascia un like e commenta"
             },
-            "sampleText": "👍 Lascia un like se ti è piaciuto!",
+            "sampleText": {
+                "en": "👍 Leave a like if you enjoyed it!",
+                "it": "👍 Lascia un like se ti è piaciuto!"
+            },
             "style": {
                 "font": {
                     "family": "Inter",
@@ -2658,6 +2790,818 @@
                 "easing": "easeOut",
                 "cursor": false,
                 "stagger": 0.02
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/title-chapter",
+            "version": 1,
+            "category": "title",
+            "name": {
+                "en": "Chapter title",
+                "it": "Titolo capitolo"
+            },
+            "sampleText": {
+                "en": "CHAPTER 2",
+                "it": "CAPITOLO 2"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.062,
+                "color": "#FFC107FF",
+                "stroke": {
+                    "color": "#000000FF",
+                    "width": 0.06
+                },
+                "shadow": {
+                    "color": "#00000088",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": null,
+                "letterSpacing": 0.03,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideDown",
+                "scope": "character",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/title-the-end",
+            "version": 1,
+            "category": "title",
+            "name": {
+                "en": "The end",
+                "it": "Fine"
+            },
+            "sampleText": {
+                "en": "THANKS FOR WATCHING",
+                "it": "GRAZIE PER LA VISIONE"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.068,
+                "color": "#E0E0E0FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000077",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": null,
+                "letterSpacing": 0.02,
+                "lineHeight": 1.25,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "fadeIn",
+                "scope": "word",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/title-coming-soon",
+            "version": 1,
+            "category": "title",
+            "name": {
+                "en": "Coming soon",
+                "it": "Prossimamente"
+            },
+            "sampleText": {
+                "en": "COMING SOON",
+                "it": "PROSSIMAMENTE"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.065,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.04
+                },
+                "background": null,
+                "letterSpacing": 0.08,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "blur",
+                "scope": "character",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/title-big-reveal",
+            "version": 1,
+            "category": "title",
+            "name": {
+                "en": "Big reveal",
+                "it": "Grande annuncio"
+            },
+            "sampleText": {
+                "en": "THE BIG REVEAL",
+                "it": "LA GRANDE NOVITÀ"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.075,
+                "color": "#FFFFFFFF",
+                "stroke": {
+                    "color": "#6200EAE6",
+                    "width": 0.06
+                },
+                "shadow": {
+                    "color": "#6200EA88",
+                    "offset": [
+                        0.0,
+                        0.025
+                    ],
+                    "blur": 0.04
+                },
+                "background": null,
+                "letterSpacing": 0.04,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "popIn",
+                "scope": "word",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/list-three",
+            "version": 1,
+            "category": "list",
+            "name": {
+                "en": "Three points",
+                "it": "Tre punti"
+            },
+            "sampleText": {
+                "en": "1. Plan\n2. Shoot\n3. Edit",
+                "it": "1. Pianifica\n2. Gira\n3. Monta"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.046,
+                "color": "#111111FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000044",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#FFFFFFF0",
+                    "padding": 0.35,
+                    "radius": 0.1,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#E0E0E0FF",
+                    "borderWidth": 0.02,
+                    "accentColor": "#2979FFFF"
+                },
+                "letterSpacing": 0.01,
+                "lineHeight": 1.2,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideUp",
+                "scope": "line",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/list-checklist",
+            "version": 1,
+            "category": "list",
+            "name": {
+                "en": "Checklist",
+                "it": "Lista di controllo"
+            },
+            "sampleText": {
+                "en": "✓ Light\n✓ Sound\n✓ Story",
+                "it": "✓ Luce\n✓ Audio\n✓ Storia"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.046,
+                "color": "#111111FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000044",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#FFFFFFF0",
+                    "padding": 0.35,
+                    "radius": 0.1,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#E0E0E0FF",
+                    "borderWidth": 0.02,
+                    "accentColor": "#2979FFFF"
+                },
+                "letterSpacing": 0.01,
+                "lineHeight": 1.2,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "fadeIn",
+                "scope": "line",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/list-top-five",
+            "version": 1,
+            "category": "list",
+            "name": {
+                "en": "Top 5",
+                "it": "Top 5"
+            },
+            "sampleText": {
+                "en": "TOP 5\nPLACES TO SEE",
+                "it": "TOP 5\nLUOGHI DA VEDERE"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.065,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000088",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": null,
+                "letterSpacing": 0.06,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideUp",
+                "scope": "line",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/list-pros-cons",
+            "version": 1,
+            "category": "list",
+            "name": {
+                "en": "Pros and cons",
+                "it": "Pro e contro"
+            },
+            "sampleText": {
+                "en": "+ Fast\n+ Simple\n− Pricey",
+                "it": "+ Veloce\n+ Semplice\n− Costoso"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.05,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000066",
+                    "offset": [
+                        0.0,
+                        0.01
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#0A192FD8",
+                    "padding": 0.3,
+                    "radius": 0.12,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#FFD70088",
+                    "borderWidth": 0.02,
+                    "accentColor": "#FFD700FF"
+                },
+                "letterSpacing": 0.01,
+                "lineHeight": 1.3,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "typewriter",
+                "scope": "line",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": true,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/date-day",
+            "version": 1,
+            "category": "dateplace",
+            "name": {
+                "en": "Date",
+                "it": "Data"
+            },
+            "sampleText": {
+                "en": "SATURDAY, 12 OCTOBER",
+                "it": "SABATO 12 OTTOBRE"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 600,
+                    "italic": false
+                },
+                "size": 0.068,
+                "color": "#E0E0E0FF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000077",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": null,
+                "letterSpacing": 0.02,
+                "lineHeight": 1.25,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "fadeIn",
+                "scope": "word",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/date-year",
+            "version": 1,
+            "category": "dateplace",
+            "name": {
+                "en": "Year",
+                "it": "Anno"
+            },
+            "sampleText": {
+                "en": "2026",
+                "it": "2026"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.075,
+                "color": "#FF007FFF",
+                "stroke": {
+                    "color": "#00FFFFFF",
+                    "width": 0.06
+                },
+                "shadow": {
+                    "color": "#FF007F66",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.05
+                },
+                "background": null,
+                "letterSpacing": 0.04,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "wave",
+                "scope": "character",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/place-pin",
+            "version": 1,
+            "category": "dateplace",
+            "name": {
+                "en": "Location pin",
+                "it": "Posizione"
+            },
+            "sampleText": {
+                "en": "📍 Rome, Italy",
+                "it": "📍 Roma, Italia"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.045,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000066",
+                    "offset": [
+                        0.0,
+                        0.01
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#1A1A1AE6",
+                    "padding": 0.4,
+                    "radius": 1.0,
+                    "shape": "badge",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#FFFFFFAA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#FF3366FF"
+                },
+                "letterSpacing": 0.03,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "popIn",
+                "scope": "word",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/place-journey",
+            "version": 1,
+            "category": "dateplace",
+            "name": {
+                "en": "Journey",
+                "it": "Viaggio"
+            },
+            "sampleText": {
+                "en": "✈️ Tokyo → Kyoto",
+                "it": "✈️ Tokyo → Kyoto"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.052,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000088",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#2A0845E0",
+                    "padding": 0.35,
+                    "radius": 0.2,
+                    "shape": "lowerThirdBar",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#FF6B6B88",
+                    "borderWidth": 0.02,
+                    "accentColor": "#FF6B6BFF"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.2,
+                "align": "left",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideUp",
+                "scope": "word",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/cta-link-bio",
+            "version": 1,
+            "category": "cta",
+            "name": {
+                "en": "Link in bio",
+                "it": "Link in bio"
+            },
+            "sampleText": {
+                "en": "Link in bio 👆",
+                "it": "Link in bio 👆"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 800,
+                    "italic": false
+                },
+                "size": 0.055,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#E5091488",
+                    "offset": [
+                        0.0,
+                        0.02
+                    ],
+                    "blur": 0.03
+                },
+                "background": {
+                    "color": "#E50914FF",
+                    "padding": 0.4,
+                    "radius": 0.5,
+                    "shape": "badge",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#FFFFFFAA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#00000000"
+                },
+                "letterSpacing": 0.03,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "bounce",
+                "scope": "character",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/cta-shop-now",
+            "version": 1,
+            "category": "cta",
+            "name": {
+                "en": "Shop now",
+                "it": "Acquista ora"
+            },
+            "sampleText": {
+                "en": "SHOP NOW",
+                "it": "ACQUISTA ORA"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 900,
+                    "italic": false
+                },
+                "size": 0.08,
+                "color": "#FFD700FF",
+                "stroke": {
+                    "color": "#000000FF",
+                    "width": 0.08
+                },
+                "shadow": {
+                    "color": "#00000099",
+                    "offset": [
+                        0.0,
+                        0.03
+                    ],
+                    "blur": 0.03
+                },
+                "background": null,
+                "letterSpacing": 0.03,
+                "lineHeight": 1.1,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "popIn",
+                "scope": "character",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/cta-notifications",
+            "version": 1,
+            "category": "cta",
+            "name": {
+                "en": "Notifications on",
+                "it": "Attiva le notifiche"
+            },
+            "sampleText": {
+                "en": "Turn on notifications 🔔",
+                "it": "Attiva le notifiche 🔔"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.05,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000066",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#000000D9",
+                    "padding": 0.35,
+                    "radius": 0.4,
+                    "shape": "badge",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#1DA1F2AA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#1DA1F2FF"
+                },
+                "letterSpacing": 0.02,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "slideUp",
+                "scope": "word",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
+            }
+        },
+        {
+            "kind": "textStyle",
+            "id": "text/cta-share",
+            "version": 1,
+            "category": "cta",
+            "name": {
+                "en": "Share",
+                "it": "Condividi"
+            },
+            "sampleText": {
+                "en": "Share it with a friend ↗",
+                "it": "Condividilo con un amico ↗"
+            },
+            "style": {
+                "font": {
+                    "family": "Inter",
+                    "weight": 700,
+                    "italic": false
+                },
+                "size": 0.048,
+                "color": "#FFFFFFFF",
+                "stroke": null,
+                "shadow": {
+                    "color": "#00000077",
+                    "offset": [
+                        0.0,
+                        0.015
+                    ],
+                    "blur": 0.02
+                },
+                "background": {
+                    "color": "#212124E6",
+                    "padding": 0.35,
+                    "radius": 0.2,
+                    "shape": "rectangle",
+                    "tail": "none",
+                    "tailSize": 0.0,
+                    "borderColor": "#00C853AA",
+                    "borderWidth": 0.03,
+                    "accentColor": "#00C853FF"
+                },
+                "letterSpacing": 0.01,
+                "lineHeight": 1.2,
+                "align": "center",
+                "underline": false
+            },
+            "animation": {
+                "type": "fadeIn",
+                "scope": "word",
+                "duration": "50@30",
+                "easing": "easeOut",
+                "cursor": false,
+                "stagger": 0.04
             }
         }
     ]

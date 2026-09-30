@@ -1114,6 +1114,35 @@ private slots:
         QVERIFY2(equal > 80, qPrintable(QString::number(equal)));
     }
 
+    // Graphic elements (P5.6): a counter shows other digits at the end than at the start; a hand-drawn arrow is not there
+    // at its first frame and is there once drawn.
+    void graphicElementsInProjection()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        StickerClipData counter;
+        counter.graphic = GraphicSettings{};
+        counter.graphic->to = 999;
+        QVERIFY(session.apply(session.editor().insertSticker(frames(0), counter, frames(60))));
+        StickerClipData arrow;
+        arrow.graphic = GraphicSettings{};
+        arrow.graphic->kind = GraphicKind::Arrow;
+        arrow.graphic->color = Color{255, 0, 0, 255};
+        QVERIFY(session.apply(session.editor().insertSticker(frames(60), arrow, frames(60))));
+        QVERIFY(rgbHash(renderFresh1(session.data(), 1)) != rgbHash(renderFresh1(session.data(), 59)));
+        const QImage plain = renderFresh1(baseProjectWithClip(), 60);
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 60)), rgbHash(plain)); // nothing drawn yet
+        const QImage drawn = renderFresh1(session.data(), 100);
+        int red = 0;
+        for (int y = 0; y < drawn.height(); ++y) {
+            for (int x = 0; x < drawn.width(); ++x) {
+                const QRgb p = drawn.pixel(x, y);
+                red += qRed(p) > 220 && qGreen(p) < 40 && qBlue(p) < 40 ? 1 : 0;
+            }
+        }
+        QVERIFY2(red > 100, qPrintable(QString::number(red)));
+    }
+
     void cleanupTestCase() { MltRuntime::shutdown(); }
 };
 

@@ -286,6 +286,14 @@ QImage AssetThumbnail::render(int kind, const QString &assetId, double progress,
         }
         QPainter painter(&image);
         painter.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+        if (!preset->graphic.isEmpty()) {
+            // A three-second element at `progress`: counting, ticking, being drawn.
+            const GraphicSettings settings = projectjson::graphicFromJson(preset->graphic);
+            const double total = std::max(1.0, preset->defaultDuration);
+            painter.drawImage(0, 0, fx::renderGraphic(engine::graphicParams(settings), progress * total, total, size,
+                                                      engine::makeGraphicGlyphs(settings, size.height())));
+            return image;
+        }
         if (!preset->visualizer.isEmpty()) {
             const fx::VisualizerSettings settings = engine::visualizerSettings(projectjson::visualizerFromJson(preset->visualizer));
             painter.drawImage(0, 0, fx::renderAudioVisualizer(settings, fx::exampleVisualizerFrame(progress * 2.0, settings.barCount), size));

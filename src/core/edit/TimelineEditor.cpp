@@ -743,8 +743,9 @@ EditResult TimelineEditor::insertSticker(const RationalTime &position, StickerCl
     if (clip.duration.value() <= 0) {
         clip.duration = RationalTime::fromSeconds(Rational(kDefaultStickerSeconds), m_rate, Rounding::NearestEven);
     }
-    // A picture sticker starts at a third of the canvas, in the middle (a visualizer spans the canvas).
-    if (!sticker.visualizer) {
+    // A picture sticker starts at a third of the canvas, in the middle (visualizers and graphic elements span the canvas:
+    // they are drawn at their size).
+    if (!sticker.visualizer && !sticker.graphic) {
         clip.transform.scale = Param(Vec2{kDefaultStickerScale, kDefaultStickerScale});
     }
     clip.payload = std::move(sticker);

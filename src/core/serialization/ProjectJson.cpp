@@ -83,6 +83,12 @@ constexpr EnumName<VisualizerStyle> kVisualizerStyles[] = {
     {VisualizerStyle::Spectrum, "spectrum"_L1},
     {VisualizerStyle::Waveform, "waveform"_L1},
     {VisualizerStyle::PulsingCircle, "circle"_L1}};
+constexpr EnumName<GraphicKind> kGraphicKinds[] = {
+    {GraphicKind::Counter, "counter"_L1},         {GraphicKind::Countdown, "countdown"_L1},
+    {GraphicKind::Timer, "timer"_L1},             {GraphicKind::ProgressBar, "progressBar"_L1},
+    {GraphicKind::Arrow, "arrow"_L1},             {GraphicKind::Circle, "circle"_L1},
+    {GraphicKind::Underline, "underline"_L1},     {GraphicKind::Highlighter, "highlighter"_L1},
+    {GraphicKind::Check, "check"_L1},             {GraphicKind::Cross, "cross"_L1}};
 constexpr EnumName<TextAlign> kTextAligns[] = {
     {TextAlign::Left, "left"_L1}, {TextAlign::Center, "center"_L1}, {TextAlign::Right, "right"_L1}};
 constexpr EnumName<BubbleShape> kBubbleShapes[] = {
@@ -164,7 +170,8 @@ const QSet<QString> kMediaClipKeys{u"mediaId"_s,       u"streams"_s,  u"sourceIn
                                    u"preservePitch"_s, u"reversed"_s, u"audio"_s};
 const QSet<QString> kColorClipKeys{u"color"_s};
 const QSet<QString> kCompoundClipKeys{u"sequenceId"_s, u"sourceIn"_s, u"activeAngle"_s};
-const QSet<QString> kStickerClipKeys{u"source"_s, u"mediaId"_s, u"emoji"_s, u"loop"_s, u"speed"_s, u"tint"_s, u"visualizer"_s};
+const QSet<QString> kStickerClipKeys{u"source"_s, u"mediaId"_s, u"emoji"_s, u"loop"_s, u"speed"_s, u"tint"_s, u"visualizer"_s,
+                                     u"graphic"_s};
 
 QJsonObject unknownKeys(const QJsonObject &object, const QSet<QString> &known,
                         const QSet<QString> &alsoKnown = {})
@@ -452,6 +459,25 @@ QJsonObject visualizerJson(const AudioVisualizerSettings &v)
     return object;
 }
 
+QJsonObject graphicJson(const GraphicSettings &g)
+{
+    QJsonObject object{{u"kind"_s, nameOf(kGraphicKinds, g.kind)},
+                       {u"color"_s, g.color.toString()},
+                       {u"color2"_s, g.color2.toString()},
+                       {u"thickness"_s, g.thickness}};
+    if (g.kind == GraphicKind::Counter) {
+        object.insert(u"from"_s, g.from);
+        object.insert(u"to"_s, g.to);
+        object.insert(u"decimals"_s, g.decimals);
+        object.insert(u"prefix"_s, g.prefix);
+        object.insert(u"suffix"_s, g.suffix);
+    }
+    if (g.kind >= GraphicKind::Arrow) {
+        object.insert(u"drawSeconds"_s, g.drawSeconds);
+    }
+    return object;
+}
+
 QJsonObject clipJson(const Clip &clip)
 {
     QJsonObject object{{u"id"_s, idValue(clip.id)},
@@ -539,6 +565,9 @@ QJsonObject clipJson(const Clip &clip)
                 }
                 if (data.visualizer) {
                     object.insert(u"visualizer"_s, visualizerJson(*data.visualizer));
+                }
+                if (data.graphic) {
+                    object.insert(u"graphic"_s, graphicJson(*data.graphic));
                 }
                 mergeInto(object, data.fields);
             } else {
@@ -1039,6 +1068,22 @@ public:
         return background;
     }
 
+    GraphicSettings graphic(const QJsonObject &gObj, const QString &gPath)
+    {
+        GraphicSettings g;
+        g.kind = enumeration(gObj, u"kind"_s, gPath, kGraphicKinds, GraphicKind::Counter);
+        g.from = number(gObj, u"from"_s, gPath, 0.0, -1e12, 1e12);
+        g.to = number(gObj, u"to"_s, gPath, 100.0, -1e12, 1e12);
+        g.decimals = integer(gObj, u"decimals"_s, gPath, 0, 0, 4);
+        g.prefix = string(gObj, u"prefix"_s, gPath, {});
+        g.suffix = string(gObj, u"suffix"_s, gPath, {});
+        g.color = colorValue(gObj.value(u"color"_s), join(gPath, u"color"_s), Color{255, 255, 255, 255});
+        g.color2 = colorValue(gObj.value(u"color2"_s), join(gPath, u"color2"_s), Color{255, 255, 255, 80});
+        g.thickness = number(gObj, u"thickness"_s, gPath, 0.5, 0.0, 1.0);
+        g.drawSeconds = number(gObj, u"drawSeconds"_s, gPath, 0.6, 0.05, 10.0);
+        return g;
+    }
+
     AudioVisualizerSettings visualizer(const QJsonObject &vObj, const QString &vPath)
     {
         AudioVisualizerSettings v;
@@ -1307,8 +1352,11 @@ public:
             if (object.contains(u"visualizer"_s)) {
                 data.visualizer = visualizer(this->object(object, u"visualizer"_s, path, false), join(path, u"visualizer"_s));
             }
-            if (!data.source && data.mediaId.isNull() && data.emoji.isEmpty() && !data.visualizer) {
-                warn(path, u"sticker without source, mediaId, emoji or visualizer: it shows nothing"_s);
+            if (object.contains(u"graphic"_s)) {
+                data.graphic = graphic(this->object(object, u"graphic"_s, path, false), join(path, u"graphic"_s));
+            }
+            if (!data.source && data.mediaId.isNull() && data.emoji.isEmpty() && !data.visualizer && !data.graphic) {
+                warn(path, u"sticker without source, mediaId, emoji, visualizer or graphic: it shows nothing"_s);
             }
             data.fields = unknownKeys(object, kClipCommonKeys, kStickerClipKeys);
             clip.payload = std::move(data);
@@ -1595,6 +1643,12 @@ std::optional<TextAnimation> textAnimationFromJson(const QJsonObject &json)
 {
     Reader reader;
     return reader.textAnimation(json, u"animation"_s);
+}
+
+GraphicSettings graphicFromJson(const QJsonObject &json)
+{
+    Reader reader;
+    return reader.graphic(json, u"graphic"_s);
 }
 
 AudioVisualizerSettings visualizerFromJson(const QJsonObject &json)

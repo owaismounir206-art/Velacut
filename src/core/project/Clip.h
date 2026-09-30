@@ -398,14 +398,48 @@ struct AudioVisualizerSettings
     friend bool operator==(const AudioVisualizerSettings &, const AudioVisualizerSettings &) = default;
 };
 
+// Animated graphic element drawn by a sticker clip (SPEC §5.7): numbers that count, clocks, the video's progress, and
+// marks drawn by hand. Its animation spans the clip: progress 0 at its start, 1 at its end.
+enum class GraphicKind
+{
+    Counter,     // from `from` to `to`, `decimals` digits, between `prefix` and `suffix`
+    Countdown,   // the seconds left in the clip, m:ss
+    Timer,       // the seconds since the clip's start, m:ss
+    ProgressBar, // a bar filling with the clip
+    Arrow,       // drawn by hand over `drawSeconds`
+    Circle,
+    Underline,
+    Highlighter,
+    Check,
+    Cross,
+};
+
+struct GraphicSettings
+{
+    GraphicKind kind = GraphicKind::Counter;
+    double from = 0.0;
+    double to = 100.0;
+    int decimals = 0;
+    QString prefix;
+    QString suffix;
+    Color color{255, 255, 255, 255};
+    Color color2{255, 255, 255, 80}; // progress bar track, number outline
+    double thickness = 0.5;          // 0–1: line width / text size
+    double drawSeconds = 0.6;        // hand-drawn marks: time to draw them
+
+    friend bool operator==(const GraphicSettings &, const GraphicSettings &) = default;
+};
+
 // A sticker (docs/FILE_FORMAT.md §5.5): exactly one of a library item (`source`), an image of the project's media
-// (`mediaId`: PNG, SVG, WebP, animated GIF…), an emoji drawn with the system's colour emoji font, or a visualizer.
+// (`mediaId`: PNG, SVG, WebP, animated GIF…), an emoji drawn with the system's colour emoji font, a visualizer, or an
+// animated graphic element.
 struct StickerClipData
 {
     std::optional<AssetRef> source;
     MediaId mediaId;
     QString emoji;
     std::optional<AudioVisualizerSettings> visualizer;
+    std::optional<GraphicSettings> graphic;
     bool loop = true;   // animated stickers: start again at the end (otherwise hold the last frame)
     double speed = 1.0; // animated stickers
     Color tint{0, 0, 0, 0}; // alpha 0 = no tint

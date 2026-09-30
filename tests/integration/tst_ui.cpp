@@ -903,10 +903,9 @@ private slots:
         QTRY_VERIFY(editor());
         editor()->player()->setVolume(0.0);
         click(byText(u"Stickers"_s));
+        QTRY_VERIFY(byText(u"Shapes"_s));
+        click(byText(u"Shapes"_s)); // the chip, scrolled into view as with the wheel
         QTRY_VERIFY(byName(u"asset_stickers/shapes/star"_s));
-        // Scrolled to it, as with the wheel.
-        QQuickItem *grid = byName(u"assetGrid"_s);
-        grid->setProperty("contentY", byName(u"asset_stickers/shapes/star"_s)->y());
         QTest::qWait(50);
         click(byName(u"asset_stickers/shapes/star"_s));
         const auto stickerClips = [this] {
@@ -1003,6 +1002,37 @@ private slots:
         QTest::qWait(300); // the page just opened is still being laid out
         click(byName(u"removeEffect_0"_s));
         QTRY_COMPARE(effects(video), 0);
+    }
+
+    // Animated elements (P5.6): a counter from the Stickers tab; its target typed in the Element page.
+    void animatedElements()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        QVERIFY(editor()->addSticker(u"graphics/counter-percent"_s));
+        const auto counter = [this]() -> const GraphicSettings * {
+            for (const Track &track : editor()->data().mainSequence()->visualTracks) {
+                for (const Clip &clip : track.clips) {
+                    if (clip.sticker() && clip.sticker()->graphic) {
+                        return &*clip.sticker()->graphic;
+                    }
+                }
+            }
+            return nullptr;
+        };
+        QTRY_VERIFY(counter());
+        QCOMPARE(counter()->suffix, u"%"_s);
+        editor()->propertiesRequested(u"sticker"_s);
+        QTRY_VERIFY(byName(u"graphicTo"_s));
+        QTest::qWait(300); // the page just opened is still being laid out
+        click(byName(u"graphicTo"_s));
+        QTest::keyClick(m_window, Qt::Key_A, Qt::ControlModifier);
+        for (const char c : {'7', '5'}) {
+            QTest::keyClick(m_window, c);
+        }
+        QTest::keyClick(m_window, Qt::Key_Return);
+        QTRY_COMPARE(counter()->to, 75.0);
+        shot(u"16-counter"_s);
     }
 
     // Regression: a clip minutes long had its waveform painted whole (tens of thousands of pixels, as one path) and

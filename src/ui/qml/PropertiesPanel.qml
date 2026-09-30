@@ -41,7 +41,8 @@ Rectangle {
         if (sections.includes("text"))
             list.push({ text: qsTr("Text"), page: "text" })
         if (sections.includes("sticker"))
-            list.push({ text: values["sticker.visualizer"] ? qsTr("Visualizer") : qsTr("Sticker"), page: "sticker" })
+            list.push({ text: values["sticker.visualizer"] ? qsTr("Visualizer")
+                            : values["sticker.graphic"] ? qsTr("Element") : qsTr("Sticker"), page: "sticker" })
         if (sections.includes("video"))
             list.push({ text: inspector.kind === Inspector.Text || inspector.kind === Inspector.Sticker ? qsTr("Position")
                                                                                                        : qsTr("Video"), page: "video" })
@@ -702,9 +703,103 @@ Rectangle {
                     spacing: Theme.space.md
 
                     PropertySection {
+                        id: stickerSection
                         inspector: panel.inspector
                         section: "sticker"
-                        title: panel.values["sticker.visualizer"] ? qsTr("Visualizer") : qsTr("Colour")
+                        title: panel.values["sticker.visualizer"] ? qsTr("Visualizer")
+                             : panel.values["sticker.graphic"] ? qsTr("Element") : qsTr("Colour")
+                        readonly property bool graphic: panel.values["sticker.graphic"] ?? false
+                        readonly property int graphicKind: panel.values["sticker.graphicKind"] ?? -1
+                        readonly property bool counter: graphic && graphicKind === 0
+                        readonly property bool drawn: graphic && graphicKind >= 4
+
+                        // Graphic element: numbers, colours, line, drawing time.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: stickerSection.counter
+                            spacing: Theme.space.sm
+                            TextField {
+                                objectName: "graphicFrom"
+                                Layout.fillWidth: true
+                                Layout.preferredWidth: 1 // equal halves
+                                label: qsTr("From")
+                                text: (panel.values["sticker.from"] ?? 0).toString()
+                                inputMethodHints: Qt.ImhFormattedNumbersOnly
+                                onEditingFinished: panel.inspector.set("sticker.from", Number(text.replace(",", ".")))
+                            }
+                            TextField {
+                                objectName: "graphicTo"
+                                Layout.fillWidth: true
+                                Layout.preferredWidth: 1 // equal halves
+                                label: qsTr("To")
+                                text: (panel.values["sticker.to"] ?? 100).toString()
+                                inputMethodHints: Qt.ImhFormattedNumbersOnly
+                                onEditingFinished: panel.inspector.set("sticker.to", Number(text.replace(",", ".")))
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: stickerSection.counter
+                            spacing: Theme.space.sm
+                            TextField {
+                                Layout.fillWidth: true
+                                Layout.preferredWidth: 1 // equal halves
+                                label: qsTr("Before")
+                                text: panel.values["sticker.prefix"] ?? ""
+                                onEditingFinished: panel.inspector.set("sticker.prefix", text)
+                            }
+                            TextField {
+                                Layout.fillWidth: true
+                                Layout.preferredWidth: 1 // equal halves
+                                label: qsTr("After")
+                                text: panel.values["sticker.suffix"] ?? ""
+                                onEditingFinished: panel.inspector.set("sticker.suffix", text)
+                            }
+                        }
+                        PropertySlider {
+                            visible: stickerSection.counter
+                            inspector: panel.inspector
+                            key: "sticker.decimals"
+                            label: qsTr("Decimals")
+                            to: 4
+                            stepSize: 1
+                            format: v => Math.round(v).toLocaleString(Qt.locale(), "f", 0)
+                        }
+                        ColorSwatches {
+                            Layout.fillWidth: true
+                            visible: stickerSection.graphic
+                            inspector: panel.inspector
+                            label: qsTr("Colour")
+                            current: panel.values["sticker.color"] ?? "white"
+                            onPicked: (value) => panel.inspector.set("sticker.color", value)
+                        }
+                        ColorSwatches {
+                            Layout.fillWidth: true
+                            visible: stickerSection.graphic && !stickerSection.drawn
+                            inspector: panel.inspector
+                            label: stickerSection.graphicKind === 3 ? qsTr("Track colour") : qsTr("Outline colour")
+                            current: panel.values["sticker.color2"] ?? "black"
+                            onPicked: (value) => panel.inspector.set("sticker.color2", value)
+                        }
+                        PropertySlider {
+                            visible: stickerSection.graphic
+                            inspector: panel.inspector
+                            key: "sticker.thickness"
+                            label: stickerSection.drawn || stickerSection.graphicKind === 3 ? qsTr("Thickness") : qsTr("Size")
+                            neutral: 0.5
+                            format: v => Math.round(v * 100) + " %"
+                        }
+                        PropertySlider {
+                            visible: stickerSection.drawn
+                            inspector: panel.inspector
+                            key: "sticker.drawSeconds"
+                            label: qsTr("Drawing time")
+                            from: 0.1
+                            to: 3
+                            neutral: 0.6
+                            stepSize: 0.1
+                            format: v => qsTr("%1 s").arg(v.toLocaleString(Qt.locale(), "f", 1))
+                        }
 
                         // Visualizer: the shape, its colours and how it reacts to the music.
                         SegmentedButton {
@@ -776,7 +871,7 @@ Rectangle {
                         // Picture: an optional colour over it, and the speed of an animated one.
                         RowLayout {
                             Layout.fillWidth: true
-                            visible: !(panel.values["sticker.visualizer"] ?? false)
+                            visible: !(panel.values["sticker.visualizer"] ?? false) && !stickerSection.graphic
                             Label { Layout.fillWidth: true; text: qsTr("Recolour"); role: "bodyMedium" }
                             Switch {
                                 objectName: "stickerTinted"
@@ -787,7 +882,8 @@ Rectangle {
                         }
                         ColorSwatches {
                             Layout.fillWidth: true
-                            visible: !(panel.values["sticker.visualizer"] ?? false) && (panel.values["sticker.tinted"] ?? false)
+                            visible: !(panel.values["sticker.visualizer"] ?? false) && !stickerSection.graphic &&
+                                     (panel.values["sticker.tinted"] ?? false)
                             inspector: panel.inspector
                             label: qsTr("Colour")
                             current: panel.values["sticker.tint"] ?? "white"

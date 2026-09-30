@@ -1,6 +1,13 @@
 {
     "categories": [
         {
+            "id": "graphics",
+            "name": {
+                "en": "Animated elements",
+                "it": "Elementi animati"
+            }
+        },
+        {
             "id": "emoji",
             "name": {
                 "en": "Emoji",
@@ -44,6 +51,326 @@
         }
     ],
     "items": [
+        {
+            "id": "graphics/counter",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Counter 0–100",
+                "it": "Contatore 0–100"
+            },
+            "graphic": {
+                "kind": "counter",
+                "from": 0,
+                "to": 100,
+                "color": "#FFFFFFFF",
+                "color2": "#000000B0",
+                "thickness": 0.5
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/counter-percent",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Percentage",
+                "it": "Percentuale"
+            },
+            "graphic": {
+                "kind": "counter",
+                "from": 0,
+                "to": 100,
+                "suffix": "%",
+                "color": "#FFFFFFFF",
+                "color2": "#000000B0",
+                "thickness": 0.5
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/counter-money",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Money counter",
+                "it": "Contatore soldi"
+            },
+            "graphic": {
+                "kind": "counter",
+                "from": 0,
+                "to": 1000,
+                "prefix": "€",
+                "color": "#FFD60AFF",
+                "color2": "#000000B0",
+                "thickness": 0.5
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/counter-dollars",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Dollar counter",
+                "it": "Contatore dollari"
+            },
+            "graphic": {
+                "kind": "counter",
+                "from": 0,
+                "to": 1000,
+                "prefix": "$",
+                "color": "#34C759FF",
+                "color2": "#000000B0",
+                "thickness": 0.5
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/counter-year",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Year counter",
+                "it": "Contatore anni"
+            },
+            "graphic": {
+                "kind": "counter",
+                "from": 2000,
+                "to": 2026,
+                "color": "#FFFFFFFF",
+                "color2": "#000000B0",
+                "thickness": 0.6
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/counter-decimal",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Decimal counter",
+                "it": "Contatore decimale"
+            },
+            "graphic": {
+                "kind": "counter",
+                "from": 0,
+                "to": 9.9,
+                "decimals": 1,
+                "color": "#FFFFFFFF",
+                "color2": "#000000B0",
+                "thickness": 0.5
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/countdown",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Countdown",
+                "it": "Conto alla rovescia"
+            },
+            "graphic": {
+                "kind": "countdown",
+                "color": "#FFFFFFFF",
+                "color2": "#000000B0",
+                "thickness": 0.6
+            },
+            "defaultDuration": 5
+        },
+        {
+            "id": "graphics/timer",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Stopwatch",
+                "it": "Cronometro"
+            },
+            "graphic": {
+                "kind": "timer",
+                "color": "#FFFFFFFF",
+                "color2": "#000000B0",
+                "thickness": 0.4
+            },
+            "defaultDuration": 10
+        },
+        {
+            "id": "graphics/progress-bar",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Progress bar",
+                "it": "Barra di avanzamento"
+            },
+            "graphic": {
+                "kind": "progressBar",
+                "color": "#FFFFFFFF",
+                "color2": "#FFFFFF50",
+                "thickness": 0.3
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/progress-bar-red",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Red progress bar",
+                "it": "Barra di avanzamento rossa"
+            },
+            "graphic": {
+                "kind": "progressBar",
+                "color": "#FF3B30FF",
+                "color2": "#FFFFFF50",
+                "thickness": 0.3
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/arrow-red",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Red arrow",
+                "it": "Freccia rossa"
+            },
+            "graphic": {
+                "kind": "arrow",
+                "color": "#FF3B30FF",
+                "thickness": 0.4,
+                "drawSeconds": 0.6
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/arrow-white",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "White arrow",
+                "it": "Freccia bianca"
+            },
+            "graphic": {
+                "kind": "arrow",
+                "color": "#FFFFFFFF",
+                "thickness": 0.4,
+                "drawSeconds": 0.6
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/circle-red",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Red circle",
+                "it": "Cerchio rosso"
+            },
+            "graphic": {
+                "kind": "circle",
+                "color": "#FF3B30FF",
+                "thickness": 0.35,
+                "drawSeconds": 0.8
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/circle-yellow",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Yellow circle",
+                "it": "Cerchio giallo"
+            },
+            "graphic": {
+                "kind": "circle",
+                "color": "#FFD60AFF",
+                "thickness": 0.35,
+                "drawSeconds": 0.8
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/underline",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Underline",
+                "it": "Sottolineatura"
+            },
+            "graphic": {
+                "kind": "underline",
+                "color": "#FFD60AFF",
+                "thickness": 0.4,
+                "drawSeconds": 0.5
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/highlighter-yellow",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Yellow highlighter",
+                "it": "Evidenziatore giallo"
+            },
+            "graphic": {
+                "kind": "highlighter",
+                "color": "#FFE600FF",
+                "thickness": 0.5,
+                "drawSeconds": 0.5
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/highlighter-pink",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Pink highlighter",
+                "it": "Evidenziatore rosa"
+            },
+            "graphic": {
+                "kind": "highlighter",
+                "color": "#FF4F9AFF",
+                "thickness": 0.5,
+                "drawSeconds": 0.5
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/check",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Check mark",
+                "it": "Segno di spunta"
+            },
+            "graphic": {
+                "kind": "check",
+                "color": "#34C759FF",
+                "thickness": 0.5,
+                "drawSeconds": 0.5
+            },
+            "defaultDuration": 3
+        },
+        {
+            "id": "graphics/cross",
+            "version": 1,
+            "category": "graphics",
+            "name": {
+                "en": "Cross",
+                "it": "Croce"
+            },
+            "graphic": {
+                "kind": "cross",
+                "color": "#FF3B30FF",
+                "thickness": 0.5,
+                "drawSeconds": 0.6
+            },
+            "defaultDuration": 3
+        },
         {
             "id": "stickers/emoji/smile",
             "version": 1,

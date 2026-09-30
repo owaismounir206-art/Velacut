@@ -59,7 +59,7 @@ struct TextStylePreset
     LocalizedText name;
     QJsonObject style; // FILE_FORMAT §5.5 text "style"
     QJsonObject animation;
-    QString sampleText;
+    LocalizedText sampleText; // what a new text in this style says (templates); empty: "Your text"
 };
 
 struct AnimationPreset
@@ -107,7 +107,8 @@ struct VideoEffectPreset
 };
 
 // A sticker of the library (docs/EFFECT_FORMAT.md §6): a picture of the pack (`path`, resolved in the pack's folder),
-// an emoji drawn with the system's colour emoji font, or an audio visualizer (`visualizer`: its settings).
+// an emoji drawn with the system's colour emoji font, an audio visualizer (`visualizer`: its settings) or an animated
+// graphic element (`graphic`).
 struct StickerPreset
 {
     QString id;
@@ -119,6 +120,7 @@ struct StickerPreset
     bool animated = false;
     double defaultDuration = 3.0;
     QJsonObject visualizer;
+    QJsonObject graphic; // an animated graphic element (FILE_FORMAT §5.5)
 };
 
 // The assets of a pack (docs/EFFECT_FORMAT.md): the core pack is built into the application (:/vedit/packs/…).

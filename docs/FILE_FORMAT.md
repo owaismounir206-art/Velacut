@@ -342,7 +342,12 @@ La traccia `captions` aggiunge `captionStyle` (stesso schema di `style` + `prese
 - `"visualizer": { … }` — un visualizzatore audio (insieme a `source` se viene dalla libreria), che reagisce all'audio
   della timeline sotto di esso: `style` (`"bars"`, `"spectrum"`, `"waveform"`, `"circle"`), `barCount` (4–128),
   `primaryColor`, `secondaryColor`, `sensitivity` (0,1–10), `smoothing` (0–1: media sugli ultimi 0,25 s), `mirror`,
-  `roundness` (0–1), `thickness` (pixel a 1080p).
+  `roundness` (0–1), `thickness` (pixel a 1080p);
+- `"graphic": { … }` — un elemento grafico animato, la cui animazione copre la clip: `kind` (`"counter"`, `"countdown"`,
+  `"timer"`, `"progressBar"`, `"arrow"`, `"circle"`, `"underline"`, `"highlighter"`, `"check"`, `"cross"`), `color`,
+  `color2` (contorno dei numeri o traccia della barra), `thickness` (0–1: dimensione del testo o spessore del tratto);
+  per `counter` anche `from`, `to`, `decimals` (0–4), `prefix`, `suffix` (conta nel primo 80% della clip rallentando,
+  poi resta sul valore finale); per i segni disegnati a mano `drawSeconds` (tempo per disegnarli).
 
 Facoltativi: `tint` (colore che ricolora l'immagine mantenendone le ombre; assente = nessuno), `loop` (default `true`:
 uno sticker animato ricomincia; `false` = resta sull'ultimo fotogramma), `speed` (0,1–10, default 1). Le chiavi

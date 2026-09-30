@@ -40,6 +40,8 @@ std::optional<TextAnimation> textAnimationFromJson(const QJsonObject &json);
 // The settings of an audio visualizer (sticker clips, library presets).
 AudioVisualizerSettings visualizerFromJson(const QJsonObject &json);
 QJsonObject visualizerToJson(const AudioVisualizerSettings &settings);
+// The settings of an animated graphic element (sticker clips, library presets).
+GraphicSettings graphicFromJson(const QJsonObject &json);
 // One media item (the probe process sends them to the editor in this form).
 QJsonObject mediaToJson(const Media &media);
 std::optional<Media> mediaFromJson(const QJsonObject &json, QString *error = nullptr);

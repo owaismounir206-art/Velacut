@@ -691,8 +691,8 @@ bool EditorController::addText(const QString &styleId)
     if (const fx::TextStylePreset *preset = styleId.isEmpty() ? nullptr : fx::Library::core().textStyle(styleId)) {
         text.style = projectjson::textStyleFromJson(preset->style);
         text.stylePreset = AssetRef{QString::fromLatin1(fx::Library::kCorePack), preset->id, preset->version};
-        if (!preset->sampleText.isEmpty()) {
-            text.text = preset->sampleText;
+        if (!preset->sampleText.text().isEmpty()) {
+            text.text = preset->sampleText.text();
         }
         if (!preset->animation.isEmpty()) {
             text.animation = projectjson::textAnimationFromJson(preset->animation);
@@ -714,9 +714,14 @@ bool EditorController::addSticker(const QString &assetId)
     const Rational rate = data().settings.frameRate;
     RationalTime duration = RationalTime::fromSeconds(Rational(std::max(1, static_cast<int>(std::lround(preset->defaultDuration)))),
                                                       rate, Rounding::NearestEven);
-    if (!preset->visualizer.isEmpty()) {
-        sticker.visualizer = projectjson::visualizerFromJson(preset->visualizer);
-        // A visualizer follows the music: it lasts until the end of the video.
+    if (!preset->graphic.isEmpty()) {
+        sticker.graphic = projectjson::graphicFromJson(preset->graphic);
+    }
+    if (!preset->visualizer.isEmpty() || (sticker.graphic && sticker.graphic->kind == GraphicKind::ProgressBar)) {
+        if (!preset->visualizer.isEmpty()) {
+            sticker.visualizer = projectjson::visualizerFromJson(preset->visualizer);
+        }
+        // A visualizer follows the music and a progress bar the video: they last until the end of the video.
         const int remaining = m_timeline->duration() - playhead();
         if (remaining > duration.value()) {
             duration = RationalTime(remaining, rate);

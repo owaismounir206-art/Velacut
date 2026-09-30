@@ -1228,23 +1228,29 @@
     <name>PropertiesPanel</name>
     <message>
         <location filename="../src/ui/qml/PropertiesPanel.qml" line="+42"/>
-        <location line="+142"/>
+        <location line="+143"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-140"/>
-        <location line="+663"/>
+        <location line="-141"/>
+        <location line="+665"/>
         <source>Visualizer</source>
         <translation>Visualizzatore</translation>
     </message>
     <message>
-        <location line="-663"/>
+        <location line="-664"/>
         <source>Sticker</source>
         <translation>Sticker</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+0"/>
+        <location line="+665"/>
+        <source>Element</source>
+        <translation>Elemento</translation>
+    </message>
+    <message>
+        <location line="-663"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
@@ -1260,13 +1266,13 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1058"/>
+        <location line="+1153"/>
         <location line="+19"/>
         <source>Speed</source>
         <translation>Velocità</translation>
     </message>
     <message>
-        <location line="-1075"/>
+        <location line="-1170"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -1282,12 +1288,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1523"/>
+        <location line="+1618"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
     <message>
-        <location line="-1487"/>
+        <location line="-1582"/>
         <source>Select a clip on the timeline to change it here.</source>
         <translation>Seleziona una clip sulla timeline per modificarla qui.</translation>
     </message>
@@ -1368,20 +1374,22 @@
     <message>
         <location line="+15"/>
         <location line="+330"/>
+        <location line="+206"/>
         <source>Size</source>
         <translation>Dimensione</translation>
     </message>
     <message>
-        <location line="-324"/>
+        <location line="-530"/>
         <location line="+375"/>
         <location line="+43"/>
-        <location line="+32"/>
-        <location line="+85"/>
+        <location line="+34"/>
+        <location line="+62"/>
+        <location line="+116"/>
         <source>Colour</source>
         <translation>Colore</translation>
     </message>
     <message>
-        <location line="-531"/>
+        <location line="-626"/>
         <source>Text colour</source>
         <translation>Colore del testo</translation>
     </message>
@@ -1393,11 +1401,12 @@
     </message>
     <message>
         <location line="+8"/>
+        <location line="+500"/>
         <source>Outline colour</source>
         <translation>Colore del contorno</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-494"/>
         <location line="+3"/>
         <source>Shadow</source>
         <translation>Ombra</translation>
@@ -1584,12 +1593,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+270"/>
+        <location line="+364"/>
         <source>Wave</source>
         <translation>Onda</translation>
     </message>
     <message>
-        <location line="-269"/>
+        <location line="-363"/>
         <source>Glitch</source>
         <translation>Glitch</translation>
     </message>
@@ -1709,12 +1718,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+766"/>
+        <location line="+861"/>
         <source>Rotation</source>
         <translation>Rotazione</translation>
     </message>
     <message>
-        <location line="-756"/>
+        <location line="-851"/>
         <source>Opacity</source>
         <translation>Opacità</translation>
     </message>
@@ -1795,18 +1804,18 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+1059"/>
+        <location line="+1154"/>
         <source>Hue</source>
         <translation>Tonalità</translation>
     </message>
     <message>
-        <location line="-1059"/>
-        <location line="+1068"/>
+        <location line="-1154"/>
+        <location line="+1163"/>
         <source>Saturation</source>
         <translation>Saturazione</translation>
     </message>
     <message>
-        <location line="-1066"/>
+        <location line="-1161"/>
         <source>Blend mode</source>
         <translation>Modalità di fusione</translation>
     </message>
@@ -1836,7 +1845,47 @@
         <translation>Riempie il canvas dove la clip non arriva.</translation>
     </message>
     <message>
-        <location line="+174"/>
+        <location line="+53"/>
+        <source>From</source>
+        <translation>Da</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>To</source>
+        <translation>A</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Before</source>
+        <translation>Prima</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>After</source>
+        <translation>Dopo</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Decimals</source>
+        <translation>Decimali</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Track colour</source>
+        <translation>Colore della traccia</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Thickness</source>
+        <translation>Spessore</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Drawing time</source>
+        <translation>Tempo di disegno</translation>
+    </message>
+    <message>
+        <location line="+145"/>
         <source>Remove the effect</source>
         <translation>Rimuovi l&apos;effetto</translation>
     </message>
@@ -2001,39 +2050,40 @@
         <translation>Curve colore</translation>
     </message>
     <message>
-        <location line="-1275"/>
+        <location line="-1370"/>
         <location line="+229"/>
         <location line="+16"/>
         <source>Blur</source>
         <translation>Sfocatura</translation>
     </message>
     <message>
-        <location line="+218"/>
+        <location line="+313"/>
         <location line="+6"/>
         <source>Volume</source>
         <translation>Volume</translation>
     </message>
     <message>
-        <location line="-476"/>
-        <location line="+485"/>
+        <location line="-571"/>
+        <location line="+580"/>
         <source>Fade in</source>
         <translation>Dissolvenza in entrata</translation>
     </message>
     <message>
-        <location line="-768"/>
-        <location line="+771"/>
+        <location line="-863"/>
+        <location line="+644"/>
+        <location line="+222"/>
         <location line="+8"/>
         <location line="+370"/>
         <source>%1 s</source>
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-1265"/>
+        <location line="-1361"/>
         <source>Transition</source>
         <translation>Transizione</translation>
     </message>
     <message>
-        <location line="+892"/>
+        <location line="+988"/>
         <source>Fade out</source>
         <translation>Dissolvenza in uscita</translation>
     </message>
@@ -2121,16 +2171,16 @@
         <translation>Maschera</translation>
     </message>
     <message>
-        <location line="-986"/>
+        <location line="-1081"/>
         <location line="+95"/>
-        <location line="+556"/>
+        <location line="+651"/>
         <location line="+342"/>
         <source>None</source>
         <translation>Nessuna</translation>
     </message>
     <message>
-        <location line="-874"/>
-        <location line="+874"/>
+        <location line="-969"/>
+        <location line="+969"/>
         <source>Line</source>
         <translation>Linea</translation>
     </message>
@@ -2140,13 +2190,13 @@
         <translation>Fascia</translation>
     </message>
     <message>
-        <location line="-621"/>
-        <location line="+621"/>
+        <location line="-622"/>
+        <location line="+622"/>
         <source>Circle</source>
         <translation>Cerchio</translation>
     </message>
     <message>
-        <location line="-1316"/>
+        <location line="-1412"/>
         <source>Choose 3D LUT (.cube)</source>
         <translation>Scegli una LUT 3D (.cube)</translation>
     </message>
@@ -2161,13 +2211,13 @@
         <translation>Tutti i file (*)</translation>
     </message>
     <message>
-        <location line="+296"/>
-        <location line="+1019"/>
+        <location line="+297"/>
+        <location line="+1114"/>
         <source>Rectangle</source>
         <translation>Rettangolo</translation>
     </message>
     <message>
-        <location line="-623"/>
+        <location line="-624"/>
         <location line="+44"/>
         <source>Bars</source>
         <translation>Barre</translation>
@@ -2210,7 +2260,7 @@
         <translation>Ricolora</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+17"/>
         <source>Animation speed</source>
         <translation>Velocità dell&apos;animazione</translation>
     </message>
@@ -2833,7 +2883,7 @@
         <location line="+45"/>
         <location line="+59"/>
         <location line="+23"/>
-        <location line="+28"/>
+        <location line="+29"/>
         <location line="+31"/>
         <location line="+43"/>
         <location line="+50"/>
@@ -2862,7 +2912,7 @@
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-1457"/>
+        <location line="-1458"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -2905,7 +2955,7 @@
         <location line="+63"/>
         <location line="+34"/>
         <location line="+40"/>
-        <location line="+114"/>
+        <location line="+115"/>
         <location line="+27"/>
         <location line="+43"/>
         <location line="+50"/>
@@ -2919,14 +2969,14 @@
         <translation>La clip non esiste.</translation>
     </message>
     <message>
-        <location line="-1113"/>
+        <location line="-1114"/>
         <location line="+10"/>
         <location line="+49"/>
         <location line="+80"/>
         <location line="+62"/>
         <location line="+34"/>
         <location line="+40"/>
-        <location line="+114"/>
+        <location line="+115"/>
         <location line="+27"/>
         <location line="+43"/>
         <location line="+50"/>
@@ -2942,15 +2992,15 @@
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-1387"/>
-        <location line="+661"/>
+        <location line="-1388"/>
+        <location line="+662"/>
         <location line="+47"/>
         <location line="+14"/>
         <source>The track does not exist.</source>
         <translation>La traccia non esiste.</translation>
     </message>
     <message>
-        <location line="-716"/>
+        <location line="-717"/>
         <source>This clip cannot be placed on that track.</source>
         <translation>Questa clip non può andare su quella traccia.</translation>
     </message>
@@ -3001,7 +3051,7 @@
         <translation>Aggiungi testo</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+28"/>
         <source>Add sticker</source>
         <translation>Aggiungi sticker</translation>
     </message>
@@ -3468,12 +3518,12 @@
 <context>
     <name>vedit::projectjson</name>
     <message>
-        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1543"/>
+        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1591"/>
         <source>The project file is damaged (%1).</source>
         <translation>Il file del progetto è danneggiato (%1).</translation>
     </message>
     <message>
-        <location line="+95"/>
+        <location line="+101"/>
         <source>This file is not a vedit project.</source>
         <translation>Questo file non è un progetto vedit.</translation>
     </message>
@@ -3809,7 +3859,7 @@
 <context>
     <name>vedit::ui::AssetThumbnail</name>
     <message>
-        <location filename="../src/ui/items/AssetThumbnail.cpp" line="+313"/>
+        <location filename="../src/ui/items/AssetThumbnail.cpp" line="+321"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
@@ -3818,13 +3868,13 @@
     <name>vedit::ui::ClipInspector</name>
     <message>
         <location filename="../src/ui/controllers/ClipInspector.cpp" line="+362"/>
-        <location line="+998"/>
+        <location line="+1024"/>
         <location line="+26"/>
         <source>Change mask</source>
         <translation>Modifica maschera</translation>
     </message>
     <message>
-        <location line="-998"/>
+        <location line="-1024"/>
         <source>Click on the clip to pick the colour to remove.</source>
         <translation>Fai clic sulla clip per scegliere il colore da rimuovere.</translation>
     </message>
@@ -3859,7 +3909,7 @@
         <translation>Cambia la curva del keyframe</translation>
     </message>
     <message>
-        <location line="+600"/>
+        <location line="+614"/>
         <source>Colour</source>
         <translation>Colore</translation>
     </message>
@@ -3889,7 +3939,7 @@
         <translation>Angolo</translation>
     </message>
     <message>
-        <location line="+138"/>
+        <location line="+150"/>
         <source>Change transition duration</source>
         <translation>Cambia durata della transizione</translation>
     </message>
@@ -4084,7 +4134,7 @@
         <translation>Correggi il colore</translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+56"/>
         <source>Edit sticker</source>
         <translation>Modifica sticker</translation>
     </message>
@@ -4095,12 +4145,12 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+404"/>
+        <location line="+405"/>
         <source>Change text style</source>
         <translation>Cambia stile del testo</translation>
     </message>
     <message>
-        <location line="-384"/>
+        <location line="-385"/>
         <source>Reset position and size</source>
         <translation>Ripristina posizione e dimensione</translation>
     </message>
@@ -4110,7 +4160,7 @@
         <translation>Ripristina sfondo</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>Reset sticker</source>
         <translation>Ripristina sticker</translation>
     </message>
@@ -4450,7 +4500,7 @@
         <translation>Il tuo testo</translation>
     </message>
     <message>
-        <location line="+58"/>
+        <location line="+63"/>
         <source>Select a music or video clip with sound to find its beats.</source>
         <translation>Seleziona una musica o un video con audio per trovarne i beat.</translation>
     </message>

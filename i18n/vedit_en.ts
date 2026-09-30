@@ -15,7 +15,7 @@
 <context>
     <name>PropertiesPanel</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+120"/>
+        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+121"/>
         <source>%n clip(s) selected: changes apply to all of them.</source>
         <translation>
             <numerusform>%n clip selected: changes apply to it.</numerusform>
@@ -34,7 +34,7 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+1934"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+1982"/>
         <location line="+454"/>
         <source>Transition on %n cut(s)</source>
         <translation>
@@ -54,7 +54,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+830"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+835"/>
         <source>%n beat(s) marked on the clip</source>
         <translation>
             <numerusform>%n beat marked on the clip</numerusform>

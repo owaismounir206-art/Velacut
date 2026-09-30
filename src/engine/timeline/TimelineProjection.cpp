@@ -1022,7 +1022,18 @@ std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &
         return placed;
     }
     if (const StickerClipData *sticker = clip.sticker()) {
-        if (sticker->visualizer) {
+        if (sticker->graphic) {
+            const GraphicSettings &g = *sticker->graphic;
+            QByteArray key;
+            QDataStream stream(&key, QIODevice::WriteOnly);
+            stream << QStringLiteral("graphic") << static_cast<int>(g.kind) << g.from << g.to << g.decimals << g.prefix << g.suffix
+                   << g.color.toString() << g.color2.toString() << g.thickness << g.drawSeconds << static_cast<qint64>(placed.length);
+            placed.producer = m_stickers.value(key);
+            if (!placed.producer) {
+                placed.producer = makeGraphicProducer(m_profile, g, static_cast<int>(placed.length));
+                m_stickers.insert(key, placed.producer);
+            }
+        } else if (sticker->visualizer) {
             placed.producer = visualizerProducer(project, clip, *sticker->visualizer, usedMedia);
         } else {
             placed.producer = stickerProducer(project, *sticker, usedMedia);

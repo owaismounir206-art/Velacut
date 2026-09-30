@@ -13,6 +13,7 @@
 #include "fx/Transform.h"
 #include "fx/Transition.h"
 #include "fx/VideoEffect.h"
+#include "fx/Graphic.h"
 
 #include <QSet>
 #include <QTest>
@@ -526,6 +527,66 @@ private slots:
         QVERIFY(!effectKernel(u"noSuchEffect"_s));
     }
 
+    // Graphic elements: numbers that count to their target and hold it, clocks, a bar filling with the clip, marks that
+    // are drawn over time (nothing at the start, the whole mark once drawn).
+    void graphicElements()
+    {
+        GraphicParams counter;
+        counter.from = 0;
+        counter.to = 100;
+        QCOMPARE(graphicText(counter, 0.0, 3.0), u"0"_s);
+        QCOMPARE(graphicText(counter, 2.4, 3.0), u"100"_s);
+        QCOMPARE(graphicText(counter, 3.0, 3.0), u"100"_s);
+        const int middle = graphicText(counter, 1.2, 3.0).toInt();
+        QVERIFY2(middle > 50 && middle < 100, qPrintable(QString::number(middle))); // eases out: past half at half time
+        counter.decimals = 1;
+        counter.to = 9.9;
+        QCOMPARE(graphicText(counter, 3.0, 3.0), u"9.9"_s);
+        GraphicParams clock;
+        clock.type = GraphicType::Countdown;
+        QCOMPARE(graphicText(clock, 0.0, 65.0), u"1:05"_s);
+        QCOMPARE(graphicText(clock, 64.5, 65.0), u"0:01"_s);
+        clock.type = GraphicType::Timer;
+        QCOMPARE(graphicText(clock, 61.9, 65.0), u"1:01"_s);
+
+        const QSize canvas(160, 90);
+        const auto painted = [](const QImage &image) {
+            int count = 0;
+            for (int y = 0; y < image.height(); ++y) {
+                for (int x = 0; x < image.width(); ++x) {
+                    count += qAlpha(image.pixel(x, y)) > 0 ? 1 : 0;
+                }
+            }
+            return count;
+        };
+        GraphicParams bar;
+        bar.type = GraphicType::ProgressBar;
+        bar.color = Qt::red;
+        bar.color2 = QColor(255, 255, 255, 80);
+        const auto redPixels = [](const QImage &image) {
+            int count = 0;
+            for (int y = 0; y < image.height(); ++y) {
+                for (int x = 0; x < image.width(); ++x) {
+                    const QRgb p = image.pixel(x, y);
+                    count += qRed(p) > 200 && qGreen(p) < 80 && qAlpha(p) > 200 ? 1 : 0;
+                }
+            }
+            return count;
+        };
+        const int quarter = redPixels(renderGraphic(bar, 1.0, 4.0, canvas, {}));
+        const int full = redPixels(renderGraphic(bar, 4.0, 4.0, canvas, {}));
+        QVERIFY2(full > quarter * 3 && full < quarter * 5, qPrintable(u"%1 %2"_s.arg(quarter).arg(full)));
+        for (const GraphicType type : {GraphicType::Arrow, GraphicType::Circle, GraphicType::Underline, GraphicType::Highlighter,
+                                       GraphicType::Check, GraphicType::Cross}) {
+            GraphicParams mark;
+            mark.type = type;
+            QCOMPARE(painted(renderGraphic(mark, 0.0, 3.0, canvas, {})), 0);
+            const int half = painted(renderGraphic(mark, mark.drawSeconds / 2, 3.0, canvas, {}));
+            const int done = painted(renderGraphic(mark, 2.0, 3.0, canvas, {}));
+            QVERIFY2(half > 0 && done > half, qPrintable(u"%1: %2 %3"_s.arg(int(type)).arg(half).arg(done)));
+        }
+    }
+
     void coreLibraryLoads()
     {
         const Library &library = Library::core();
@@ -533,7 +594,14 @@ private slots:
         QCOMPARE(library.packId(), QStringLiteral("vedit.core"));
         QVERIFY(library.filters().size() >= 30);
         QVERIFY(library.transitions().size() >= 100);
-        QVERIFY(library.textStyles().size() >= 24);
+        QVERIFY(library.textStyles().size() >= 40); // SPEC §5.7: at least 40 styles
+        // … and at least 50 animated text templates, with their text in both languages.
+        const auto templates = std::count_if(library.textStyles().begin(), library.textStyles().end(),
+                                             [](const TextStylePreset &t) { return !t.animation.isEmpty(); });
+        QVERIFY2(templates >= 50, qPrintable(QString::number(templates)));
+        for (const TextStylePreset &t : library.textStyles()) {
+            QVERIFY2(t.animation.isEmpty() || (!t.sampleText.en.isEmpty() && !t.sampleText.it.isEmpty()), qPrintable(t.id));
+        }
         // Preset animations: at least 30 entry, 30 exit and 30 loop animations (SPEC §5.6).
         for (const char *category : {"in", "out", "loop"}) {
             const auto count = std::count_if(library.animations().begin(), library.animations().end(),

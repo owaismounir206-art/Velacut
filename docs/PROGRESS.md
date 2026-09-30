@@ -72,6 +72,14 @@ template con segnaposto, slideshow, kit del marchio e copertina, gestore asset, 
    l'immagine) e `coreLibraryLoads` (≥ 80 effetti, ogni kernel usato), `tst_projection::videoEffectsInProjection`,
    `tst_ui::effectsLibrary`. Limite: solo percorso CPU (il GPU è in P5.10).
 
+6. **P5.6 — Elementi grafici animati e template di testo**: 19 elementi nella scheda Sticker ("Elementi animati":
+   contatori — anche %, €, $, anni, decimali —, conto alla rovescia, cronometro, barre di avanzamento, frecce, cerchi,
+   sottolineatura, evidenziatori, spunta, croce), pagina **Elemento** (da/a, prima/dopo, decimali, colori, spessore,
+   tempo di disegno) (D-53). Template di testo: 77 stili, **53 animati** (nuove categorie Elenchi, Date e luoghi, Inviti
+   all'azione, più titoli), con il testo d'esempio in italiano e inglese (prima era solo italiano). Test:
+   `tst_kernels::graphicElements`, `coreLibraryLoads` (≥ 40 stili, ≥ 50 template bilingui),
+   `tst_projection::graphicElementsInProjection`, `tst_serialization`, `tst_ui::animatedElements`.
+
 ### Criterio di completamento della Fase 4 (SPEC §8)
 | Requisito | Esito | Verifica |
 |---|---|---|
@@ -260,8 +268,6 @@ template con segnaposto, slideshow, kit del marchio e copertina, gestore asset, 
      - 100% CTest passati (25/25) con zero compiler warnings (`-Wall -Wextra -Wpedantic -Werror`).
 
 ### Prossimi passi (Fase 5 — Libreria creativa)
-2. P5.6: elementi grafici animati (contatori, timer/conto alla rovescia, barra di avanzamento, frecce e cerchi a mano,
-   evidenziatore) e template di testo animati (≥ 50).
 3. P5.7: template di progetto con segnaposto, "Sostituisci" (anche Alt+trascina), salva come template; slideshow
    dalle foto.
 4. P5.8: kit del marchio (più kit: palette, font, loghi, stili, intro/outro, watermark, musiche; colori del kit primi nei

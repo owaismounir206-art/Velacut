@@ -19,6 +19,15 @@ LocalizedText localized(const QJsonValue &value)
     return {object.value(u"en"_s).toString(), object.value(u"it"_s).toString()};
 }
 
+// A template's text: {"en", "it"}, or one string for both languages (a name, a number…).
+LocalizedText sampleTextOf(const QJsonValue &value)
+{
+    if (value.isString()) {
+        return {value.toString(), value.toString()};
+    }
+    return localized(value);
+}
+
 std::vector<Category> categories(const QJsonObject &root)
 {
     std::vector<Category> result;
@@ -140,7 +149,7 @@ Library Library::load(const QString &folder)
         library.m_textStyles.push_back({item.value(u"id"_s).toString(), item.value(u"version"_s).toInt(1),
                                         item.value(u"category"_s).toString(), localized(item.value(u"name"_s)),
                                         item.value(u"style"_s).toObject(), item.value(u"animation"_s).toObject(),
-                                        item.value(u"sampleText"_s).toString()});
+                                        sampleTextOf(item.value(u"sampleText"_s))});
     }
 
     const QJsonObject animations = read(u"animations.json"_s);
@@ -190,6 +199,7 @@ Library Library::load(const QString &folder)
             preset.animated = item.value(u"animated"_s).toBool(false);
             preset.defaultDuration = item.value(u"defaultDuration"_s).toDouble(3.0);
             preset.visualizer = item.value(u"visualizer"_s).toObject();
+            preset.graphic = item.value(u"graphic"_s).toObject();
             library.m_stickers.push_back(std::move(preset));
         }
     }

@@ -7,6 +7,7 @@ add_library(vedit_fx STATIC
     AudioVisualizer.h AudioVisualizer.cpp
     BeatEffects.h BeatEffects.cpp
     VideoEffect.h VideoEffect.cpp
+    Graphic.h Graphic.cpp
     ChromaKey.h ChromaKey.cpp
     Color.h Color.cpp
     Composite.h Composite.cpp

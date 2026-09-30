@@ -82,8 +82,10 @@ distorsioni con la Fase 5, effetti testo con la Fase 3).
 ```
 `path` è relativo alla cartella del pacchetto (SVG disegnato alla risoluzione del canvas; PNG/WebP; GIF/WebP animati
 con `"animated": true`). `emoji` usa il font emoji a colori del sistema. `visualizer` ha lo schema di FILE_FORMAT §5.5 e
-viene copiato nella clip, dove resta modificabile. Il pacchetto `vedit.core` ha 90 sticker in 6 categorie (23 immagini,
-63 emoji, 4 visualizzatori).
+viene copiato nella clip, dove resta modificabile; lo stesso vale per `graphic` (elementi animati, FILE_FORMAT §5.5).
+Il pacchetto `vedit.core` ha 109 sticker in 7 categorie (19 elementi animati, 23 immagini, 63 emoji, 4 visualizzatori).
+Negli stili di testo `sampleText` è `{ "en", "it" }` (o una stringa uguale nelle due lingue): 77 stili, 53 dei quali
+template animati.
 
 ## 8. Effetti a ritmo (`effects.json`, categoria `rhythm`)
 `vedit.beat.flash` (`amount` 0–1 verso il bianco), `vedit.beat.zoom` (`amount`: ingrandimento in più sul beat),

@@ -8,6 +8,7 @@
 #include "fx/Composite.h"
 #include "fx/MotionBlur.h"
 #include "fx/AudioVisualizer.h"
+#include "fx/Graphic.h"
 #include "fx/VideoEffect.h"
 #include "fx/Transition.h"
 #include "engine/analysis/Spectrum.h"
@@ -43,6 +44,7 @@ namespace vedit::engine {
 //  - producer "vedit.sticker": a sticker (picture, animated picture, emoji) fitted in a canvas-sized layer;
 //  - producer "vedit.visualizer": an audio visualizer drawn from the spectrum of the audio under it;
 //  - filter "vedit.beat": flash, zoom or shake on the beats;
+//  - producer "vedit.graphic": an animated graphic element (counter, clock, progress bar, hand-drawn mark);
 //  - filter "vedit.effect": a video effect of the library (fx::renderVideoEffect), animated with the clip's time.
 // Called by MltRuntime right after Mlt::Factory::init().
 void registerServices(Mlt::Repository *repository);
@@ -260,6 +262,13 @@ struct BeatEffectSettings
     QByteArray key() const;
 };
 std::unique_ptr<Mlt::Filter> makeBeatFilter(Mlt::Profile &profile, const BeatEffectSettings &settings);
+
+fx::GraphicParams graphicParams(const GraphicSettings &settings);
+// The characters of a graphic element with text, `canvasHeight` the height of the canvas: drawn on the calling thread
+// (the projection's, D-39) with the application's bold font, filled with `color` and outlined with `color2`.
+fx::GraphicGlyphs makeGraphicGlyphs(const GraphicSettings &settings, int canvasHeight);
+// `length`: frames of the clip (the animation spans it).
+std::unique_ptr<Mlt::Producer> makeGraphicProducer(Mlt::Profile &profile, const GraphicSettings &settings, int length);
 
 struct VideoEffectSettings
 {

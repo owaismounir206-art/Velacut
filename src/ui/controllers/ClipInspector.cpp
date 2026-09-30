@@ -583,6 +583,19 @@ std::optional<AudioVisualizerSettings> presetVisualizer(const StickerClipData &s
     return projectjson::visualizerFromJson(preset->visualizer);
 }
 
+// The graphic element of a sticker as its library item defines it.
+std::optional<GraphicSettings> presetGraphic(const StickerClipData &sticker)
+{
+    if (!sticker.graphic) {
+        return std::nullopt;
+    }
+    const fx::StickerPreset *preset = sticker.source ? fx::Library::core().sticker(sticker.source->id) : nullptr;
+    if (!preset || preset->graphic.isEmpty()) {
+        return sticker.graphic;
+    }
+    return projectjson::graphicFromJson(preset->graphic);
+}
+
 bool isLibraryEffect(const Effect &effect)
 {
     return effect.type == u"vedit.effect"_s || effect.type.startsWith(u"vedit.beat."_s);
@@ -783,7 +796,8 @@ QStringList ClipInspector::modifiedSections() const
         }
     }
     if (const StickerClipData *sticker = clip->sticker()) {
-        if (sticker->tint.a > 0 || sticker->speed != 1.0 || !sticker->loop || sticker->visualizer != presetVisualizer(*sticker)) {
+        if (sticker->tint.a > 0 || sticker->speed != 1.0 || !sticker->loop || sticker->visualizer != presetVisualizer(*sticker) ||
+            sticker->graphic != presetGraphic(*sticker)) {
             result << u"sticker"_s;
         }
     }
@@ -1168,6 +1182,18 @@ QVariantMap ClipInspector::values() const
                                      (media && media->path.endsWith(u".webp"_s, Qt::CaseInsensitive));
         map[u"sticker.speed"_s] = sticker->speed;
         map[u"sticker.loop"_s] = sticker->loop;
+        map[u"sticker.graphic"_s] = sticker->graphic.has_value();
+        const GraphicSettings graphic = sticker->graphic.value_or(GraphicSettings{});
+        map[u"sticker.graphicKind"_s] = static_cast<int>(graphic.kind);
+        map[u"sticker.from"_s] = graphic.from;
+        map[u"sticker.to"_s] = graphic.to;
+        map[u"sticker.decimals"_s] = graphic.decimals;
+        map[u"sticker.prefix"_s] = graphic.prefix;
+        map[u"sticker.suffix"_s] = graphic.suffix;
+        map[u"sticker.color"_s] = toQColor(graphic.color);
+        map[u"sticker.color2"_s] = toQColor(graphic.color2);
+        map[u"sticker.thickness"_s] = graphic.thickness;
+        map[u"sticker.drawSeconds"_s] = graphic.drawSeconds;
     }
     if (const TextClipData *text = clip->text()) {
         const TextStyle &style = text->style;
@@ -1702,6 +1728,27 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
                 sticker.speed = std::clamp(number, 0.1, 10.0);
             } else if (field == u"loop"_s) {
                 sticker.loop = flag;
+            } else if (sticker.graphic) {
+                GraphicSettings &g = *sticker.graphic;
+                if (field == u"from"_s) {
+                    g.from = number;
+                } else if (field == u"to"_s) {
+                    g.to = number;
+                } else if (field == u"decimals"_s) {
+                    g.decimals = std::clamp(value.toInt(), 0, 4);
+                } else if (field == u"prefix"_s) {
+                    g.prefix = value.toString().left(12);
+                } else if (field == u"suffix"_s) {
+                    g.suffix = value.toString().left(12);
+                } else if (field == u"color"_s) {
+                    g.color = toColor(value);
+                } else if (field == u"color2"_s) {
+                    g.color2 = toColor(value);
+                } else if (field == u"thickness"_s) {
+                    g.thickness = std::clamp(number, 0.0, 1.0);
+                } else if (field == u"drawSeconds"_s) {
+                    g.drawSeconds = std::clamp(number, 0.05, 10.0);
+                }
             } else if (sticker.visualizer) {
                 AudioVisualizerSettings &v = *sticker.visualizer;
                 if (field == u"style"_s) {
@@ -1850,6 +1897,7 @@ bool ClipInspector::reset(const QString &section)
             sticker.speed = 1.0;
             sticker.loop = true;
             sticker.visualizer = presetVisualizer(sticker);
+            sticker.graphic = presetGraphic(sticker);
         }, tr("Reset sticker"), {});
     } else if (section == u"audio"_s) {
         done = update(clips, [](Clip &c) {

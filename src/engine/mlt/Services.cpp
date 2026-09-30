@@ -17,6 +17,8 @@
 #include <QCryptographicHash>
 #include <QDataStream>
 #include <QFont>
+#include <QFontMetricsF>
+#include <QPainterPath>
 #include <QImageReader>
 #include <QIODevice>
 #include <QJsonArray>
@@ -906,6 +908,37 @@ void *createLayerProducer(mlt_profile profile, mlt_service_type, const char *, c
     return producer;
 }
 
+// ---- vedit.graphic -------------------------------------------------------------------------------------------
+
+struct GraphicState
+{
+    fx::GraphicParams params;
+    fx::GraphicGlyphs glyphs; // at the profile's size
+    QSize canvas;             // the profile's
+    int length = 1;
+    double fps = 30.0;
+};
+
+int graphicGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
+{
+    auto producer = static_cast<mlt_producer>(mlt_frame_pop_service(frame));
+    const int position = mlt_frame_pop_service_int(frame);
+    const auto *state = static_cast<const GraphicState *>(mlt_properties_get_data(MLT_PRODUCER_PROPERTIES(producer), kSettings, nullptr));
+    int w = *width;
+    int h = *height;
+    profileSize(MLT_PRODUCER_SERVICE(producer), w, h);
+    if (!state) {
+        setTransparent(frame, image, format, width, height, w, h);
+        return 0;
+    }
+    QImage layer = fx::renderGraphic(state->params, position / state->fps, state->length / state->fps, state->canvas, state->glyphs);
+    if (layer.size() != QSize(w, h)) {
+        layer = layer.scaled(w, h, Qt::IgnoreAspectRatio, Qt::SmoothTransformation).convertToFormat(QImage::Format_RGBA8888);
+    }
+    setLayer(frame, layer, image, format, width, height);
+    return 0;
+}
+
 // ---- vedit.visualizer -----------------------------------------------------------------------------------------
 
 struct VisualizerState
@@ -1081,6 +1114,7 @@ void registerServices(Mlt::Repository *repository)
     repository->register_service(mlt_service_producer_type, "vedit.speed_ramp", createSpeedRamp);
     repository->register_service(mlt_service_producer_type, "vedit.sticker", createLayerProducer<stickerGetImage>);
     repository->register_service(mlt_service_producer_type, "vedit.visualizer", createLayerProducer<visualizerGetImage>);
+    repository->register_service(mlt_service_producer_type, "vedit.graphic", createLayerProducer<graphicGetImage>);
     repository->register_service(mlt_service_filter_type, "vedit.beat", createFilter<beatProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.effect", createFilter<videoEffectProcess>);
 }
@@ -1484,6 +1518,73 @@ std::unique_ptr<Mlt::Producer> makeVisualizerProducer(Mlt::Profile &profile, Vis
     state->render = std::move(render);
     state->fps = profile.fps() > 0 ? profile.fps() : 30.0;
     producer->set(kSettings, state, 0, [](void *p) { delete static_cast<VisualizerState *>(p); });
+    return producer;
+}
+
+fx::GraphicParams graphicParams(const GraphicSettings &settings)
+{
+    const auto color = [](const Color &c) { return QColor(c.r, c.g, c.b, c.a); };
+    fx::GraphicParams params;
+    params.type = static_cast<fx::GraphicType>(settings.kind);
+    params.from = settings.from;
+    params.to = settings.to;
+    params.decimals = settings.decimals;
+    params.color = color(settings.color);
+    params.color2 = color(settings.color2);
+    params.thickness = settings.thickness;
+    params.drawSeconds = settings.drawSeconds;
+    return params;
+}
+
+fx::GraphicGlyphs makeGraphicGlyphs(const GraphicSettings &settings, int canvasHeight)
+{
+    fx::GraphicGlyphs glyphs;
+    const fx::GraphicParams params = graphicParams(settings);
+    if (!fx::graphicHasText(params.type)) {
+        return glyphs;
+    }
+    glyphs.height = fx::graphicTextHeight(params, canvasHeight);
+    QFont font(QStringLiteral("Inter"));
+    font.setPixelSize(static_cast<int>(glyphs.height * 0.78));
+    font.setWeight(QFont::ExtraBold);
+    font.setFeature("tnum", 1); // digits of equal width: the number does not jump while it counts
+    const QFontMetricsF metrics(font);
+    const double outline = std::max(1.0, glyphs.height * 0.035);
+    const auto draw = [&](const QString &text) {
+        if (text.isEmpty()) {
+            return QImage();
+        }
+        const int width = static_cast<int>(std::ceil(metrics.horizontalAdvance(text) + outline * 2));
+        QImage image(std::max(1, width), glyphs.height, QImage::Format_RGBA8888);
+        image.fill(Qt::transparent);
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        QPainterPath path;
+        path.addText(outline, (glyphs.height + metrics.capHeight()) / 2.0, font, text);
+        if (params.color2.alpha() > 0) {
+            painter.strokePath(path, QPen(params.color2, outline * 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        }
+        painter.fillPath(path, params.color);
+        return image;
+    };
+    for (const QChar c : fx::graphicCharacters()) {
+        glyphs.glyphs.insert(c, draw(QString(c)));
+    }
+    glyphs.prefix = draw(settings.prefix);
+    glyphs.suffix = draw(settings.suffix);
+    return glyphs;
+}
+
+std::unique_ptr<Mlt::Producer> makeGraphicProducer(Mlt::Profile &profile, const GraphicSettings &settings, int length)
+{
+    auto producer = std::make_unique<Mlt::Producer>(profile, "vedit.graphic");
+    auto *state = new GraphicState;
+    state->params = graphicParams(settings);
+    state->canvas = QSize(profile.width(), profile.height());
+    state->glyphs = makeGraphicGlyphs(settings, profile.height());
+    state->length = std::max(1, length);
+    state->fps = profile.fps() > 0 ? profile.fps() : 30.0;
+    producer->set(kSettings, state, 0, [](void *p) { delete static_cast<GraphicState *>(p); });
     return producer;
 }
 
