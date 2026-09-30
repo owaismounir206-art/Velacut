@@ -1,9 +1,25 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-09-27 (Fase 5 in corso: P5.1, P5.2 e P5.3 completati)
+Ultimo aggiornamento: 2026-09-30 (Fase 5 in corso: P5.1–P5.4 completati; corretto il blocco della timeline)
 
 ## Fase corrente
-**Fase 5 — Libreria creativa: 75% completata (P5.1, P5.2, P5.3 completati, in corso P5.4).**
+**Fase 5 — Libreria creativa: in corso (P5.1–P5.4 completati; restano effetti video, elementi grafici animati,
+template con segnaposto, slideshow, kit del marchio e copertina, gestore asset, percorso GPU delle transizioni).**
+
+### Sessione 2026-09-30
+- **Bug "l'app crasha quando metto qualcosa nella timeline"** (segnalato dall'utente): era un **blocco**, non un crash.
+  `WaveformView::paint` disegnava la forma d'onda dell'intera clip come un unico path di un rettangolo per colonna;
+  con un video di 4 minuti (~43 000 px di larghezza) il riempimento del path nel rasterizzatore di Qt impiegava minuti,
+  bloccando interfaccia e thread di rendering: l'app sembrava morta, veniva chiusa a forza e restava il `lock` della
+  bozza (visto nei log del 27/09). Ora miniature e forma d'onda si disegnano solo attorno alla parte visibile
+  (a blocchi di `Theme.editor.paintChunk`), a rettangoli singoli. Test di regressione
+  `tst_ui::longClipIsPaintedOnlyInView` (fallisce senza la correzione). Riprodotto e verificato anche col file vero
+  dell'utente su Vulkan (driver di prova temporaneo, poi rimosso).
+- `tst_ui` in ASan dura ~260 s: limite portato a 600 s; soppressa una perdita di Qt 6.11 (`QFreetypeFace::cleanup`).
+- **P5.4** completato riscrivendo la bozza non committata lasciata da un altro assistente (vedi sotto).
+- **Traduzioni**: il file italiano era indietro di ~240 stringhe delle Fasi 4–5 (non erano mai state estratte, anche
+  se questo file diceva "traduzioni complete"). Ora complete; corrette 6 stringhe sorgente scritte in italiano nel QML.
+- `testMedia()` dei test dava a tutti i file la stessa impronta: ora una per file (le cache per impronta si mescolavano).
 
 ### Fase 5: fatto (un commit per incremento)
 1. **P5.1 — Pacchetti creativi, filtri e transizioni estese**:
@@ -24,6 +40,27 @@ Ultimo aggiornamento: 2026-09-27 (Fase 5 in corso: P5.1, P5.2 e P5.3 completati)
    - Integrazione in `ClipInspector` e `PropertiesPanel.qml`: commutatore modalità Costante/Curva, chip preset, motion blur switch e slider d'intensità.
    - Ripple magnetico automatico e ripristino durata coerente in `TimelineEditor::setSpeedCurve` e `removeSpeedCurve`.
    - Suite completa di test unitari (`tst_kernels`, `tst_timelineeditor`) e integrazione (`tst_services`), 25/25 test CTest passati al 100%.
+
+4. **P5.4 — Sticker, visualizzatori audio, effetti a ritmo**:
+   - Scheda **Sticker** (dopo Testo): 90 sticker in 6 categorie — 23 immagini del pacchetto (SVG, una GIF animata),
+     63 emoji a colori disegnate col font del sistema, 4 visualizzatori. Clic (o "+") = aggiunto al playhead su una
+     traccia sticker, al 35% del canvas; **Importa** aggiunge immagini proprie (PNG/WebP/JPEG/GIF) come sticker.
+     Miniature (animate al passaggio), ricerca Ctrl+K, azioni contestuali (Modifica sticker, Animazione, Specchia, Ruota).
+   - Pagina **Sticker/Visualizzatore** del pannello: ricolora (mantiene le ombre), velocità e ripetizione degli
+     animati; stile del visualizzatore (barre, spettro, onda, cerchio), due colori, sensibilità, morbidezza, barre,
+     specchiato; Ripristina e Applica a tutti.
+   - **Spettro audio** (D-49) in background con cache su disco; **visualizzatori** che seguono l'audio della timeline
+     sotto di loro (D-50).
+   - **Beat**: azione della barra contestuale sulle clip audio, rilevamento per flusso spettrale in background, marker
+     "Beat" sulla clip (sostituiti a ogni nuova ricerca). **Effetti a ritmo** flash/zoom/scossa pilotati dai marker
+     (D-51) — nel modello e nel motore, ma **ancora senza interfaccia**: arrivano nella scheda Effetti (P5.5).
+   - Test: `tst_projection` (`stickersInProjection`, `visualizerFollowsTheMusic`, `beatFlashOnTheBeats`),
+     `tst_services` (`spectrumOfASine`, `beatsOfAClickTrack`), `tst_timelineeditor::stickersAndBeats`,
+     `tst_serialization` (sticker nel roundtrip), `tst_ui::stickersAndBeat`. 25/25 verdi.
+   - Rispetto alla bozza di Gemini: niente decodifica audio sul thread dell'interfaccia (avrebbe bloccato l'app come il
+     bug sopra), niente battito finto a 120 BPM senza beat, `fx` di nuovo indipendente da `core`/`engine`, tempo dei
+     beat relativo alla clip (prima sfasato con clip tagliate), percorsi degli sticker del pacchetto risolti (prima
+     gli sticker erano trasparenti), filtri nello schema `push_get_image` del progetto.
 
 ### Criterio di completamento della Fase 4 (SPEC §8)
 | Requisito | Esito | Verifica |
@@ -213,11 +250,20 @@ Ultimo aggiornamento: 2026-09-27 (Fase 5 in corso: P5.1, P5.2 e P5.3 completati)
      - 100% CTest passati (25/25) con zero compiler warnings (`-Wall -Wextra -Wpedantic -Werror`).
 
 ### Prossimi passi (Fase 5 — Libreria creativa)
-1. P5.3: Curve di velocità (Speed Ramping con nodi o Bézier) e motion blur sintetico direzionale;
-2. P5.4: Sticker vettoriali (SVG) e animati (GIF/WebP), visualizzatori audio sul ritmo;
-3. P5.5: Clip segnaposto (placeholder), sostituzione rapida media, modelli di progetto e generatore slideshow da foto;
-4. P5.6: Brand Kit (palette, font, loghi) e generatore copertina;
-5. P5.7: Criterio di chiusura Fase 5 e test di integrazione ("Uso un template, sostituisco i media e ottengo un video completo; ogni transizione supera il test di rendering CPU/GPU; applico uno stile del brand kit, uso 3 transizioni diverse e un testo animato carattere per carattere").
+1. P5.5: **scheda Effetti** con almeno 80 effetti video CPU (SPEC §5.11: glitch, sfocature, bagliore, retro/VHS, zoom,
+   scossa, flash, strobo, specchio, caleidoscopio, pixel, luci, bordi, vignette animate…), anteprima al passaggio,
+   effetti a ritmo inclusi; anche come traccia effetto su un intervallo.
+2. P5.6: elementi grafici animati (contatori, timer/conto alla rovescia, barra di avanzamento, frecce e cerchi a mano,
+   evidenziatore) e template di testo animati (≥ 50).
+3. P5.7: template di progetto con segnaposto, "Sostituisci" (anche Alt+trascina), salva come template; slideshow
+   dalle foto.
+4. P5.8: kit del marchio (più kit: palette, font, loghi, stili, intro/outro, watermark, musiche; colori del kit primi nei
+   selettori) e copertina (fotogramma o immagine + testi/sticker, export JPG/PNG, incorporata nell'MP4).
+5. P5.9: gestore asset (installa/rimuovi pacchetti da cartelle o .zip).
+6. P5.10: percorso GPU facoltativo delle transizioni (GLSL compatibile GL 2.1/GLES 2.0, offscreen) con test di
+   rendering CPU/GPU entro tolleranza PSNR.
+7. P5.11: criterio della Fase 5 ("Uso un template, sostituisco i media e ottengo un video completo; ogni transizione
+   supera il test di rendering CPU/GPU"), README, SHORTCUTS, USABILITY.
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata
