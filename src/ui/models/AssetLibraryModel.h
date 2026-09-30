@@ -31,6 +31,7 @@ public:
         Animations,
         Stickers,
         VideoEffects,
+        Templates,
     };
     Q_ENUM(Kind)
 
