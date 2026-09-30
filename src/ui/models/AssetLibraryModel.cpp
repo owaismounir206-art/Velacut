@@ -49,6 +49,7 @@ QVariantList AssetLibraryModel::categories() const
                                             : m_kind == Transitions ? library.transitionCategories()
                                             : m_kind == Animations  ? library.animationCategories()
                                             : m_kind == Stickers    ? library.stickerCategories()
+                                            : m_kind == VideoEffects ? library.videoEffectCategories()
                                                                     : library.textStyleCategories();
     QVariantList result;
     for (const fx::Category &category : list) {
@@ -82,6 +83,11 @@ std::vector<AssetLibraryModel::Item> AssetLibraryModel::itemsOfKind() const
         break;
     case Animations:
         for (const fx::AnimationPreset &preset : library.animations()) {
+            add(preset);
+        }
+        break;
+    case VideoEffects:
+        for (const fx::VideoEffectPreset &preset : library.videoEffects()) {
             add(preset);
         }
         break;

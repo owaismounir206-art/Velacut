@@ -1,6 +1,8 @@
 // A library of the core pack (Text, Stickers, Transitions, Filters, Animations): category chips, search, and items that
 // show on the player while the pointer is over them and apply with a click; a click on the one applied removes it
 // (SPEC 0bis rules 4, 5). A sticker is added at the playhead with a click; "Import" adds the user's own pictures.
+// An effect goes on the selected clip (or the one on screen) with a click, several stack; "+" puts it on its own layer
+// over a stretch of the timeline instead.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
@@ -22,12 +24,14 @@ Rectangle {
     readonly property bool texts: kind === AssetLibraryModel.TextStyles
     readonly property bool animations: kind === AssetLibraryModel.Animations
     readonly property bool stickers: kind === AssetLibraryModel.Stickers
+    readonly property bool effects: kind === AssetLibraryModel.VideoEffects
     // The item applied to what the library acts on (marked in the grid).
     readonly property var current: filters ? [inspector.values["filter"] ?? ""]
                                  : transitions ? [inspector.values["transition.type"] ?? ""]
                                  : animations ? [inspector.values["animation.in"] ?? "", inspector.values["animation.out"] ?? "",
                                                  inspector.values["animation.loop"] ?? ""]
                                  : stickers ? []
+                                 : effects ? (inspector.values["effects"] ?? []).map(e => e.preset)
                                  : [inspector.values["text.preset"] ?? ""]
 
     function preview(assetId) {
@@ -38,8 +42,9 @@ Rectangle {
         } else if (texts) {
             inspector.previewTextStyle(assetId)
         } else {
-            // Transitions and animations play in a loop on the player, without moving the playhead.
-            const range = transitions ? inspector.previewTransition(assetId) : inspector.previewAnimation(assetId)
+            // Transitions, animations and moving effects play in a loop on the player, without moving the playhead.
+            const range = transitions ? inspector.previewTransition(assetId)
+                        : effects ? inspector.previewEffect(assetId) : inspector.previewAnimation(assetId)
             if (range.start !== undefined) {
                 loop.first = range.start
                 loop.last = range.end
@@ -59,6 +64,8 @@ Rectangle {
         endPreview()
         if (stickers)
             editor.addSticker(assetId)
+        else if (effects)
+            inspector.toggleEffect(assetId)
         else if (filters)
             inspector.toggleFilter(assetId)
         else if (transitions)
@@ -72,7 +79,10 @@ Rectangle {
     }
     // "+": a new text in that style; for filters and transitions the same as a click.
     function add(assetId) {
-        if (texts) {
+        if (effects) {
+            endPreview()
+            editor.addEffectLayer(assetId)
+        } else if (texts) {
             endPreview()
             editor.addText(assetId)
         } else {
@@ -214,6 +224,15 @@ Rectangle {
             text: qsTr("Add a video or a photo first: filters apply to the selected clip, or to the one on screen.")
         }
 
+        Label {
+            Layout.fillWidth: true
+            visible: panel.effects && !panel.inspector.active && panel.editor.timeline.duration === 0
+            wrapMode: Text.WordWrap
+            role: "bodySmall"
+            color: Theme.color.onSurfaceVariant
+            text: qsTr("Add a video or a photo first: effects apply to the selected clip, or to the one on screen.")
+        }
+
         GridView {
             id: grid
             objectName: "assetGrid"
@@ -265,7 +284,7 @@ Rectangle {
                             // Transitions play while the pointer is over them.
                             progress: 0.5
                             NumberAnimation on progress {
-                                running: (panel.transitions || panel.animations || panel.stickers) && mouse.containsMouse
+                                running: (panel.transitions || panel.animations || panel.stickers || panel.effects) && mouse.containsMouse
                                 from: 0
                                 to: 1
                                 duration: Theme.motion.long4 * 2
@@ -280,7 +299,8 @@ Rectangle {
                             variant: "filled"
                             iconName: "add"
                             label: panel.texts ? qsTr("New text in this style")
-                                 : panel.stickers ? qsTr("Add at the playhead") : qsTr("Apply")
+                                 : panel.stickers ? qsTr("Add at the playhead")
+                                 : panel.effects ? qsTr("Add as a layer over the timeline") : qsTr("Apply")
                             onClicked: panel.add(tile.assetId)
                         }
                     }

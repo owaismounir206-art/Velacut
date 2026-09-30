@@ -6,6 +6,7 @@
 
 #include <QJsonObject>
 #include <QString>
+#include <QStringList>
 
 #include <map>
 #include <vector>
@@ -90,6 +91,21 @@ struct EffectSpec
     std::vector<ParamSpec> params;
 };
 
+// A video effect of the library (docs/EFFECT_FORMAT.md §9): a CPU kernel (`kernel`, fx::EffectKernel's name) with its
+// parameters, or an effect of another type (`type`, e.g. "vedit.beat.flash"). `controls`: the parameters shown in the
+// properties panel.
+struct VideoEffectPreset
+{
+    QString id;
+    int version = 1;
+    QString category;
+    LocalizedText name;
+    QString type; // "vedit.effect" for a kernel
+    QString kernel;
+    QJsonObject params;
+    QStringList controls;
+};
+
 // A sticker of the library (docs/EFFECT_FORMAT.md §6): a picture of the pack (`path`, resolved in the pack's folder),
 // an emoji drawn with the system's colour emoji font, or an audio visualizer (`visualizer`: its settings).
 struct StickerPreset
@@ -134,6 +150,9 @@ public:
     const std::vector<Category> &stickerCategories() const { return m_stickerCategories; }
     const std::vector<StickerPreset> &stickers() const { return m_stickers; }
     const StickerPreset *sticker(const QString &id) const;
+    const std::vector<Category> &videoEffectCategories() const { return m_videoEffectCategories; }
+    const std::vector<VideoEffectPreset> &videoEffects() const { return m_videoEffects; }
+    const VideoEffectPreset *videoEffect(const QString &id) const;
     const EffectSpec *effect(const QString &id) const;
 
     // The "look" JSON of a filter manifest / the params of a "vedit.adjust.basic" effect, as colour adjustments.
@@ -152,6 +171,8 @@ private:
     std::vector<AnimationPreset> m_animations;
     std::vector<Category> m_stickerCategories;
     std::vector<StickerPreset> m_stickers;
+    std::vector<Category> m_videoEffectCategories;
+    std::vector<VideoEffectPreset> m_videoEffects;
     std::vector<EffectSpec> m_effects;
 };
 

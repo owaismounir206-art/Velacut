@@ -8,12 +8,15 @@
 #include "fx/Composite.h"
 #include "fx/MotionBlur.h"
 #include "fx/AudioVisualizer.h"
+#include "fx/VideoEffect.h"
 #include "fx/Transition.h"
 #include "engine/analysis/Spectrum.h"
 
 #include <QByteArray>
+#include <QJsonObject>
 #include <QImage>
 
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -39,7 +42,8 @@ namespace vedit::engine {
 //  - producer "vedit.text": a text clip as a canvas-sized layer;
 //  - producer "vedit.sticker": a sticker (picture, animated picture, emoji) fitted in a canvas-sized layer;
 //  - producer "vedit.visualizer": an audio visualizer drawn from the spectrum of the audio under it;
-//  - filter "vedit.beat": flash, zoom or shake on the beats.
+//  - filter "vedit.beat": flash, zoom or shake on the beats;
+//  - filter "vedit.effect": a video effect of the library (fx::renderVideoEffect), animated with the clip's time.
 // Called by MltRuntime right after Mlt::Factory::init().
 void registerServices(Mlt::Repository *repository);
 
@@ -256,5 +260,20 @@ struct BeatEffectSettings
     QByteArray key() const;
 };
 std::unique_ptr<Mlt::Filter> makeBeatFilter(Mlt::Profile &profile, const BeatEffectSettings &settings);
+
+struct VideoEffectSettings
+{
+    fx::EffectKernel kernel = fx::EffectKernel::Blur;
+    fx::VideoEffectParams params; // `time` is set per frame
+    double mix = 1.0;             // the effect over the original: 0 = none
+    int firstFrame = 0;           // position of the clip's first frame for the filter
+    Rational frameRate{30, 1};
+
+    QByteArray key() const;
+};
+std::unique_ptr<Mlt::Filter> makeVideoEffectFilter(Mlt::Profile &profile, const VideoEffectSettings &settings);
+// The parameters of a video effect: the preset's (manifest "params"), overridden by the clip's own
+// (docs/EFFECT_FORMAT.md §9).
+fx::VideoEffectParams videoEffectParams(const QJsonObject &preset, const std::map<QString, Param> &own);
 
 } // namespace vedit::engine

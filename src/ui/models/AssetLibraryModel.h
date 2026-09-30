@@ -30,6 +30,7 @@ public:
         TextStyles,
         Animations,
         Stickers,
+        VideoEffects,
     };
     Q_ENUM(Kind)
 

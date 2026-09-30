@@ -193,6 +193,23 @@ Library Library::load(const QString &folder)
             library.m_stickers.push_back(std::move(preset));
         }
     }
+    const QJsonObject videoEffects = read(u"video-effects.json"_s);
+    library.m_videoEffectCategories = categories(videoEffects);
+    for (const QJsonValue &value : videoEffects.value(u"items"_s).toArray()) {
+        const QJsonObject item = value.toObject();
+        VideoEffectPreset preset;
+        preset.id = item.value(u"id"_s).toString();
+        preset.version = item.value(u"version"_s).toInt(1);
+        preset.category = item.value(u"category"_s).toString();
+        preset.name = localized(item.value(u"name"_s));
+        preset.type = item.value(u"type"_s).toString(u"vedit.effect"_s);
+        preset.kernel = item.value(u"kernel"_s).toString();
+        preset.params = item.value(u"params"_s).toObject();
+        for (const QJsonValue &control : item.value(u"controls"_s).toArray()) {
+            preset.controls << control.toString();
+        }
+        library.m_videoEffects.push_back(std::move(preset));
+    }
     return library;
 }
 
@@ -247,6 +264,16 @@ const EffectSpec *Library::effect(const QString &id) const
     for (const EffectSpec &spec : m_effects) {
         if (spec.id == id) {
             return &spec;
+        }
+    }
+    return nullptr;
+}
+
+const VideoEffectPreset *Library::videoEffect(const QString &id) const
+{
+    for (const VideoEffectPreset &preset : m_videoEffects) {
+        if (preset.id == id) {
+            return &preset;
         }
     }
     return nullptr;

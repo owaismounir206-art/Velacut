@@ -6,6 +6,7 @@ add_library(vedit_fx STATIC
     Audio.h Audio.cpp
     AudioVisualizer.h AudioVisualizer.cpp
     BeatEffects.h BeatEffects.cpp
+    VideoEffect.h VideoEffect.cpp
     ChromaKey.h ChromaKey.cpp
     Color.h Color.cpp
     Composite.h Composite.cpp
@@ -33,6 +34,7 @@ qt_add_resources(vedit_fx "vedit_core_pack"
         "${core_pack}/stickers.json"
         "${core_pack}/text-styles.json"
         "${core_pack}/transitions.json"
+        "${core_pack}/video-effects.json"
         "${core_pack}/stickers/arrow_curved.svg"
         "${core_pack}/stickers/arrow_down.svg"
         "${core_pack}/stickers/arrow_right.svg"

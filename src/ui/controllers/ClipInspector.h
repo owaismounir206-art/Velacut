@@ -141,6 +141,12 @@ public:
     // applied = remove (SPEC 0bis rule 5).
     Q_INVOKABLE void previewFilter(const QString &filterId);
     Q_INVOKABLE bool toggleFilter(const QString &filterId);
+    // Video effects (SPEC §5.11): shown on the clip on screen while the pointer is over them (the frames to loop for an
+    // animated one, or an empty map), added or removed with a click; several can be stacked. `index`: in values().effects.
+    Q_INVOKABLE QVariantMap previewEffect(const QString &effectId);
+    Q_INVOKABLE bool toggleEffect(const QString &effectId);
+    Q_INVOKABLE bool removeEffectAt(int index);
+    Q_INVOKABLE bool setEffectParam(int index, const QString &name, const QVariant &value);
     Q_INVOKABLE void previewTextStyle(const QString &styleId);
     Q_INVOKABLE bool applyTextStyle(const QString &styleId);
     // Transitions of the library, for the cut EditorController::transitionTarget() chooses: the preview returns the

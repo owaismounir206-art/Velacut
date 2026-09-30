@@ -1009,6 +1009,46 @@ int beatGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int
     return 0;
 }
 
+// ---- vedit.effect ---------------------------------------------------------------------------------------------
+
+int videoEffectGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
+{
+    auto filter = static_cast<mlt_filter>(mlt_frame_pop_service(frame));
+    const int position = mlt_frame_pop_service_int(frame);
+    *format = mlt_image_rgba;
+    const int error = mlt_frame_get_image(frame, image, format, width, height, 1);
+    const auto *s = settingsOf<VideoEffectSettings>(MLT_FILTER_PROPERTIES(filter));
+    if (error || !s || *format != mlt_image_rgba || !*image || s->mix <= 0.001) {
+        return error;
+    }
+    const int w = *width;
+    const int h = *height;
+    const fx::ImageView view{*image, w, h, w * 4};
+    fx::VideoEffectParams params = s->params;
+    const double rate = s->frameRate.toDouble() > 0 ? s->frameRate.toDouble() : 30.0;
+    params.time = (position - s->firstFrame) / rate;
+    if (s->mix >= 0.999) {
+        fx::renderVideoEffect(s->kernel, view, params);
+        return 0;
+    }
+    const std::vector<uint8_t> original(*image, *image + static_cast<std::ptrdiff_t>(w) * h * 4);
+    fx::renderVideoEffect(s->kernel, view, params);
+    for (size_t i = 0; i < original.size(); ++i) {
+        if (i % 4 != 3) {
+            (*image)[i] = static_cast<uint8_t>(std::lround(original[i] + ((*image)[i] - original[i]) * s->mix));
+        }
+    }
+    return 0;
+}
+
+mlt_frame videoEffectProcess(mlt_filter filter, mlt_frame frame)
+{
+    mlt_frame_push_service_int(frame, static_cast<int>(mlt_frame_get_position(frame)));
+    mlt_frame_push_service(frame, filter);
+    mlt_frame_push_get_image(frame, videoEffectGetImage);
+    return frame;
+}
+
 mlt_frame beatProcess(mlt_filter filter, mlt_frame frame)
 {
     mlt_frame_push_service_int(frame, static_cast<int>(mlt_frame_get_position(frame)));
@@ -1042,6 +1082,7 @@ void registerServices(Mlt::Repository *repository)
     repository->register_service(mlt_service_producer_type, "vedit.sticker", createLayerProducer<stickerGetImage>);
     repository->register_service(mlt_service_producer_type, "vedit.visualizer", createLayerProducer<visualizerGetImage>);
     repository->register_service(mlt_service_filter_type, "vedit.beat", createFilter<beatProcess>);
+    repository->register_service(mlt_service_filter_type, "vedit.effect", createFilter<videoEffectProcess>);
 }
 
 // ---- settings -----------------------------------------------------------------------------------------------------
@@ -1472,6 +1513,66 @@ QByteArray BeatEffectSettings::key() const
         stream << beat;
     }
     return bytes;
+}
+
+// The parameters of a video effect: the preset's, overridden by the clip's own (docs/EFFECT_FORMAT.md §9).
+fx::VideoEffectParams videoEffectParams(const QJsonObject &preset, const std::map<QString, Param> &own)
+{
+    fx::VideoEffectParams params;
+    const auto rgb = [](const QJsonValue &value, fx::EffectRgb fallback) {
+        const QJsonArray array = value.toArray();
+        return array.size() == 3 ? fx::EffectRgb{array[0].toDouble(), array[1].toDouble(), array[2].toDouble()} : fallback;
+    };
+    params.amount = preset.value(QStringLiteral("amount")).toDouble(params.amount);
+    params.size = preset.value(QStringLiteral("size")).toDouble(params.size);
+    params.speed = preset.value(QStringLiteral("speed")).toDouble(params.speed);
+    params.angle = preset.value(QStringLiteral("angle")).toDouble(params.angle);
+    params.count = preset.value(QStringLiteral("count")).toInt(params.count);
+    params.color = rgb(preset.value(QStringLiteral("color")), params.color);
+    params.color2 = rgb(preset.value(QStringLiteral("color2")), params.color2);
+    for (const auto &[name, param] : own) {
+        const ParamValue &value = param.staticValue();
+        if (const Color *color = std::get_if<Color>(&value)) {
+            const fx::EffectRgb c{color->r / 255.0, color->g / 255.0, color->b / 255.0};
+            if (name == QStringLiteral("color")) {
+                params.color = c;
+            } else if (name == QStringLiteral("color2")) {
+                params.color2 = c;
+            }
+            continue;
+        }
+        const double *numberPtr = std::get_if<double>(&value);
+        const double number = numberPtr ? *numberPtr : 0.0;
+        if (name == QStringLiteral("amount")) {
+            params.amount = number;
+        } else if (name == QStringLiteral("size")) {
+            params.size = number;
+        } else if (name == QStringLiteral("speed")) {
+            params.speed = number;
+        } else if (name == QStringLiteral("angle")) {
+            params.angle = number;
+        } else if (name == QStringLiteral("count")) {
+            params.count = static_cast<int>(std::lround(number));
+        }
+    }
+    return params;
+}
+
+QByteArray VideoEffectSettings::key() const
+{
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream << static_cast<int>(kernel) << params.amount << params.size << params.speed << params.angle << params.count
+           << params.color.r << params.color.g << params.color.b << params.color2.r << params.color2.g << params.color2.b
+           << mix << firstFrame << static_cast<qint64>(frameRate.num()) << static_cast<qint64>(frameRate.den());
+    return bytes;
+}
+
+std::unique_ptr<Mlt::Filter> makeVideoEffectFilter(Mlt::Profile &profile, const VideoEffectSettings &settings)
+{
+    auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.effect");
+    attachSettings(*filter, settings);
+    return filter;
 }
 
 std::unique_ptr<Mlt::Filter> makeBeatFilter(Mlt::Profile &profile, const BeatEffectSettings &settings)

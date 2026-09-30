@@ -144,7 +144,7 @@ private slots:
         QVERIFY(inspector.active());
         QCOMPARE(inspector.kind(), int(ClipInspector::Video));
         QCOMPARE(inspector.sections(), (QStringList{u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s,
-                                                   u"cutout"_s, u"filter"_s, u"adjust"_s}));
+                                                   u"cutout"_s, u"filter"_s, u"effects"_s, u"adjust"_s}));
         QVERIFY(inspector.modifiedSections().isEmpty());
 
         // A slider drag: many values, one undo step.
@@ -247,7 +247,7 @@ private slots:
         editor.player()->seek(30);
         QVERIFY(editor.addText());
         QCOMPARE(inspector.kind(), int(ClipInspector::Text));
-        QCOMPARE(inspector.sections(), (QStringList{u"text"_s, u"video"_s, u"animation"_s}));
+        QCOMPARE(inspector.sections(), (QStringList{u"text"_s, u"video"_s, u"animation"_s, u"effects"_s}));
         QVERIFY(inspector.values().value(u"text.stroke"_s).toBool()); // readable on any picture
         QVERIFY(inspector.set(u"text.content"_s, u"Ciao"_s));
         QVERIFY(inspector.set(u"text.content"_s, u"Ciao a tutti"_s));
@@ -722,9 +722,9 @@ private slots:
         const size_t tracks = editor.data().mainSequence()->visualTracks.size();
         QVERIFY(actions.trigger(u"addAdjustment"_s));
         QCOMPARE(editor.data().mainSequence()->visualTracks.size(), tracks + 1);
-        // Selected, it offers its looks: a filter and adjustments for everything under it.
+        // Selected, it offers its looks: a filter, effects and adjustments for everything under it.
         QCOMPARE(inspector.kind(), int(ClipInspector::Adjustment));
-        QCOMPARE(inspector.sections(), (QStringList{u"filter"_s, u"adjust"_s}));
+        QCOMPARE(inspector.sections(), (QStringList{u"filter"_s, u"effects"_s, u"adjust"_s}));
         QVERIFY(actions.toolbar().first().toMap().value(u"id"_s) == u"split"_s);
         QVERIFY(inspector.toggleFilter(u"filters/bw"_s));
         QCOMPARE(value("filter").toString(), u"filters/bw"_s);

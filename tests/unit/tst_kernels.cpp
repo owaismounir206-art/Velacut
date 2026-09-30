@@ -12,6 +12,7 @@
 #include "fx/MotionBlur.h"
 #include "fx/Transform.h"
 #include "fx/Transition.h"
+#include "fx/VideoEffect.h"
 
 #include <QSet>
 #include <QTest>
@@ -488,6 +489,43 @@ private slots:
     }
 
     // ---- library ------------------------------------------------------------------------------------------------
+    // Every video effect kernel: a name that maps back to it, a deterministic picture (the same time gives the same
+    // frame), the alpha left as it is, and a visible change.
+    void everyVideoEffect()
+    {
+        Buffer photo(64, 36);
+        for (int y = 0; y < 36; ++y) {
+            for (int x = 0; x < 64; ++x) {
+                const bool disc = (x - 40) * (x - 40) + (y - 15) * (y - 15) < 64;
+                photo.set(x, y, {std::uint8_t(disc ? 250 : 40 + x * 2), std::uint8_t(disc ? 240 : 60 + y * 3),
+                                 std::uint8_t(disc ? 200 : 150 - x), 255});
+            }
+        }
+        for (int k = int(EffectKernel::Blur); k <= int(EffectKernel::ColorShift); ++k) {
+            const auto kernel = static_cast<EffectKernel>(k);
+            const QString name = effectKernelName(kernel);
+            QVERIFY(!name.isEmpty());
+            QCOMPARE(effectKernel(name), kernel);
+            bool changed = false;
+            for (const double time : {0.05, 0.37, 1.1}) {
+                VideoEffectParams params;
+                params.amount = 0.7;
+                params.time = time;
+                Buffer first = photo;
+                renderVideoEffect(kernel, first.view(), params);
+                Buffer second = photo;
+                renderVideoEffect(kernel, second.view(), params);
+                QVERIFY2(first.pixels == second.pixels, qPrintable(name));
+                for (int i = 3; i < int(first.pixels.size()); i += 4) {
+                    QCOMPARE(first.pixels[size_t(i)], std::uint8_t(255));
+                }
+                changed = changed || first.pixels != photo.pixels;
+            }
+            QVERIFY2(changed, qPrintable(name + u" changes nothing"_s));
+        }
+        QVERIFY(!effectKernel(u"noSuchEffect"_s));
+    }
+
     void coreLibraryLoads()
     {
         const Library &library = Library::core();
@@ -517,6 +555,21 @@ private slots:
         check(library.filters(), library.filterCategories());
         check(library.transitions(), library.transitionCategories());
         check(library.textStyles(), library.textStyleCategories());
+        // Video effects (SPEC §5.11: at least 80): each a kernel that exists, or an effect on the beat; every kernel used.
+        QVERIFY2(library.videoEffects().size() >= 80, qPrintable(QString::number(library.videoEffects().size())));
+        check(library.videoEffects(), library.videoEffectCategories());
+        QSet<QString> usedKernels;
+        for (const VideoEffectPreset &effect : library.videoEffects()) {
+            if (effect.type == u"vedit.effect"_s) {
+                QVERIFY2(effectKernel(effect.kernel), qPrintable(effect.id));
+                usedKernels.insert(effect.kernel);
+            } else {
+                QVERIFY2(effect.type.startsWith(u"vedit.beat."_s), qPrintable(effect.id));
+            }
+        }
+        for (int k = int(EffectKernel::Blur); k <= int(EffectKernel::ColorShift); ++k) {
+            QVERIFY2(usedKernels.contains(effectKernelName(EffectKernel(k))), qPrintable(effectKernelName(EffectKernel(k))));
+        }
         // Every kernel is used by a transition; every filter changes something.
         for (int k = int(TransitionKind::Dissolve); k <= int(TransitionKind::FoldOver); ++k) {
             QVERIFY(std::any_of(library.transitions().begin(), library.transitions().end(),

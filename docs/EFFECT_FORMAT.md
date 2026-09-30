@@ -12,6 +12,7 @@ resources/packs/vedit.core/
 ├── effects.json       # effetti con parametri (pannello "Regola")
 ├── filters.json       # filtri (look di colore)
 ├── transitions.json   # transizioni
+├── video-effects.json # effetti video
 ├── stickers.json      # sticker ed emoji, visualizzatori audio
 ├── stickers/          # immagini degli sticker (SVG, PNG, GIF)
 └── text-styles.json   # stili di testo
@@ -88,3 +89,25 @@ viene copiato nella clip, dove resta modificabile. Il pacchetto `vedit.core` ha 
 `vedit.beat.flash` (`amount` 0–1 verso il bianco), `vedit.beat.zoom` (`amount`: ingrandimento in più sul beat),
 `vedit.beat.shake` (`amount`: pixel a 1080p); `decay` = secondi in cui l'impulso si spegne. I beat vengono dai marker
 "Beat" (ARCHITECTURE D-51).
+
+## 9. Effetti video (`video-effects.json`, Fase 5)
+```json
+{ "kind": "videoEffect", "id": "effects/glitch", "version": 1, "category": "glitch", "name": { … },
+  "kernel": "glitch", "params": { "amount": 0.6, "speed": 1 }, "controls": ["amount", "speed"] }
+{ "kind": "videoEffect", "id": "effects/beat-flash", "version": 1, "category": "rhythm", "name": { … },
+  "type": "vedit.beat.flash", "params": { "amount": 0.7, "decay": 0.18 }, "controls": ["amount"] }
+```
+`kernel` è uno dei 48 kernel CPU di `fx::EffectKernel` (`blur`, `zoomBlur`, `spinBlur`, `directionalBlur`, `glow`,
+`dreamy`, `rgbSplit`, `glitch`, `blockGlitch`, `scanlines`, `vhs`, `noise`, `pixelate`, `mirror`, `kaleidoscope`, `shake`,
+`zoomPulse`, `strobe`, `invert`, `posterize`, `edges`, `sketch`, `emboss`, `pulseVignette`, `hueCycle`, `duotone`,
+`thermal`, `nightVision`, `oldFilm`, `lightLeak`, `rain`, `snow`, `sparkles`, `bokeh`, `wave`, `swirl`, `bulge`, `grid`,
+`letterbox`, `halftone`, `dither`, `neonEdges`, `tiltShift`, `prism`, `lensAberration`, `spotlight`, `flicker`,
+`colorShift`). Parametri comuni: `amount`, `size` (0–1, relative all'altezza dell'immagine), `speed` (per secondo),
+`angle` (gradi), `count` (intero: modo, spicchi, copie), `color`/`color2` (`[r, g, b]` 0–1). `controls` elenca quelli
+mostrati nel pannello. Senza `kernel`, `type` indica un effetto di altro tipo (gli effetti a ritmo, §8).
+Il pacchetto `vedit.core` ha 101 effetti in 13 categorie.
+
+Nel progetto: `{ "type": "vedit.effect", "preset": AssetRef, "intensity": 0…1, "params": { … } }` — i parametri della
+clip sostituiscono quelli del preset (FILE_FORMAT §5.6); `intensity` mescola il risultato con l'immagine originale. Gli
+effetti si sommano nell'ordine della lista. Su un livello di regolazione (traccia `adjustment`) agiscono su tutto ciò che
+sta sotto, per la durata del livello.

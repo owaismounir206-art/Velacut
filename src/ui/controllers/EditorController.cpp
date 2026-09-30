@@ -747,9 +747,70 @@ void EditorController::detectBeats()
         emit message(tr("Select a music or video clip with sound to find its beats."), false);
         return;
     }
+    detectBeatsOf(*id);
+}
+
+void EditorController::ensureBeats()
+{
+    const Sequence *sequence = data().mainSequence();
+    if (!sequence) {
+        return;
+    }
+    const auto isBeat = [](const Marker &m) { return m.kind == MarkerKind::Beat; };
+    if (std::any_of(sequence->markers.begin(), sequence->markers.end(), isBeat)) {
+        return;
+    }
+    const Clip *music = nullptr;
+    for (const auto *tracks : {&sequence->audioTracks, &sequence->visualTracks}) {
+        for (const Track &track : *tracks) {
+            for (const Clip &clip : track.clips) {
+                if (std::any_of(clip.markers.begin(), clip.markers.end(), isBeat)) {
+                    return;
+                }
+                const MediaClipData *media = clip.media();
+                const Media *source = media ? data().findMedia(media->mediaId) : nullptr;
+                if (!music && tracks == &sequence->audioTracks && source && source->info.audio) {
+                    music = &clip;
+                }
+            }
+        }
+    }
+    if (!music) {
+        emit message(tr("Add music: the effect follows its beats."), false);
+        return;
+    }
+    detectBeatsOf(music->id);
+}
+
+bool EditorController::addEffectLayer(const QString &effectId)
+{
+    const fx::VideoEffectPreset *preset = fx::Library::core().videoEffect(effectId);
+    if (!preset) {
+        return false;
+    }
+    const Rational rate = data().settings.frameRate;
+    EditResult layer = TimelineEditor(data(), data().mainSequenceId)
+                           .insertAdjustment(RationalTime(playhead(), rate), RationalTime::fromSeconds(Rational(3), rate, Rounding::NearestEven));
+    const ClipId layerId = layer.primaryClip;
+    if (!apply(std::move(layer))) {
+        return false;
+    }
+    // The effect on the new (selected) layer: a second undo step, undone first.
+    select(layerId.toString(), false);
+    return inspector()->toggleEffect(effectId);
+}
+
+void EditorController::detectBeatsOf(const ClipId &clipId)
+{
+    const Clip *clip = data().findClip(clipId);
+    const MediaClipData *media = clip ? clip->media() : nullptr;
+    const Media *source = media ? data().findMedia(media->mediaId) : nullptr;
+    if (!source) {
+        return;
+    }
     emit message(tr("Finding the beats…"), false);
     QPointer<EditorController> self(this);
-    QThreadPool::globalInstance()->start([self, clipId = *id, media = *source] {
+    QThreadPool::globalInstance()->start([self, clipId, media = *source] {
         const std::optional<engine::Spectrum> spectrum = engine::cachedSpectrum(media);
         const std::vector<double> beats = spectrum ? engine::detectBeats(*spectrum) : std::vector<double>{};
         QMetaObject::invokeMethod(qApp, [self, clipId, beats] {

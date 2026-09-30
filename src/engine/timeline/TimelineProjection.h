@@ -113,6 +113,7 @@ private:
         std::optional<DeflickerSettings> deflicker;
         std::optional<fx::MotionBlurSettings> motionBlur;
         std::vector<BeatEffectSettings> beats;
+        std::vector<VideoEffectSettings> videoEffects;
         std::optional<TransformSettings> transform;
         std::optional<GainSettings> gain;
         std::optional<AudioEffectsSettings> audioEffects;

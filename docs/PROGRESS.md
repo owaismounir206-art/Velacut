@@ -62,6 +62,16 @@ template con segnaposto, slideshow, kit del marchio e copertina, gestore asset, 
      beat relativo alla clip (prima sfasato con clip tagliate), percorsi degli sticker del pacchetto risolti (prima
      gli sticker erano trasparenti), filtri nello schema `push_get_image` del progetto.
 
+5. **P5.5 — Scheda Effetti**: 101 effetti video in 13 categorie (sfocature, bagliore e luci, glitch, retrò/VHS, zoom e
+   scossa, flash e strobo, specchio e caleidoscopio, stilizza, distorsioni, particelle e meteo, cornici e vignette,
+   colore, a ritmo) su 48 kernel CPU (`fx/VideoEffect`, D-52). Anteprima al passaggio (in ciclo per quelli animati),
+   clic = sulla clip selezionata o sullo schermo (sommabili, clic di nuovo = tolto), "+" = livello effetto di 3 s sulla
+   timeline; pagina **Effetti** del pannello con intensità e parametri di ogni effetto e cestino; Ctrl+K. Gli effetti a
+   ritmo trovano da soli i beat della musica se non ce ne sono. Le schede del pannello proprietà ora scorrono invece di
+   troncare le etichette. Test: `tst_kernels::everyVideoEffect` (ogni kernel: deterministico, alfa intatto, cambia
+   l'immagine) e `coreLibraryLoads` (≥ 80 effetti, ogni kernel usato), `tst_projection::videoEffectsInProjection`,
+   `tst_ui::effectsLibrary`. Limite: solo percorso CPU (il GPU è in P5.10).
+
 ### Criterio di completamento della Fase 4 (SPEC §8)
 | Requisito | Esito | Verifica |
 |---|---|---|
@@ -250,9 +260,6 @@ template con segnaposto, slideshow, kit del marchio e copertina, gestore asset, 
      - 100% CTest passati (25/25) con zero compiler warnings (`-Wall -Wextra -Wpedantic -Werror`).
 
 ### Prossimi passi (Fase 5 — Libreria creativa)
-1. P5.5: **scheda Effetti** con almeno 80 effetti video CPU (SPEC §5.11: glitch, sfocature, bagliore, retro/VHS, zoom,
-   scossa, flash, strobo, specchio, caleidoscopio, pixel, luci, bordi, vignette animate…), anteprima al passaggio,
-   effetti a ritmo inclusi; anche come traccia effetto su un intervallo.
 2. P5.6: elementi grafici animati (contatori, timer/conto alla rovescia, barra di avanzamento, frecce e cerchi a mano,
    evidenziatore) e template di testo animati (≥ 50).
 3. P5.7: template di progetto con segnaposto, "Sostituisci" (anche Alt+trascina), salva come template; slideshow

@@ -1,0 +1,2097 @@
+{
+    "categories": [
+        {
+            "id": "blur",
+            "name": {
+                "en": "Blur",
+                "it": "Sfocature"
+            }
+        },
+        {
+            "id": "light",
+            "name": {
+                "en": "Glow & light",
+                "it": "Bagliore e luci"
+            }
+        },
+        {
+            "id": "glitch",
+            "name": {
+                "en": "Glitch",
+                "it": "Glitch"
+            }
+        },
+        {
+            "id": "retro",
+            "name": {
+                "en": "Retro & VHS",
+                "it": "Retrò e VHS"
+            }
+        },
+        {
+            "id": "motion",
+            "name": {
+                "en": "Zoom & shake",
+                "it": "Zoom e scossa"
+            }
+        },
+        {
+            "id": "flash",
+            "name": {
+                "en": "Flash & strobe",
+                "it": "Flash e strobo"
+            }
+        },
+        {
+            "id": "mirror",
+            "name": {
+                "en": "Mirror & kaleidoscope",
+                "it": "Specchio e caleidoscopio"
+            }
+        },
+        {
+            "id": "stylize",
+            "name": {
+                "en": "Stylize",
+                "it": "Stilizza"
+            }
+        },
+        {
+            "id": "distort",
+            "name": {
+                "en": "Distort",
+                "it": "Distorsioni"
+            }
+        },
+        {
+            "id": "particles",
+            "name": {
+                "en": "Particles & weather",
+                "it": "Particelle e meteo"
+            }
+        },
+        {
+            "id": "frame",
+            "name": {
+                "en": "Frames & vignettes",
+                "it": "Cornici e vignette"
+            }
+        },
+        {
+            "id": "color",
+            "name": {
+                "en": "Colour",
+                "it": "Colore"
+            }
+        },
+        {
+            "id": "rhythm",
+            "name": {
+                "en": "On the beat",
+                "it": "A ritmo"
+            }
+        }
+    ],
+    "items": [
+        {
+            "kind": "videoEffect",
+            "id": "effects/blur-soft",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Soft blur",
+                "it": "Sfocatura leggera"
+            },
+            "kernel": "blur",
+            "params": {
+                "amount": 0.3
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/blur-strong",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Strong blur",
+                "it": "Sfocatura forte"
+            },
+            "kernel": "blur",
+            "params": {
+                "amount": 0.9
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/zoom-blur",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Zoom blur",
+                "it": "Sfocatura zoom"
+            },
+            "kernel": "zoomBlur",
+            "params": {
+                "amount": 0.6
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/spin-blur",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Spin blur",
+                "it": "Sfocatura rotante"
+            },
+            "kernel": "spinBlur",
+            "params": {
+                "amount": 0.6
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/motion-blur-horizontal",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Horizontal motion blur",
+                "it": "Mosso orizzontale"
+            },
+            "kernel": "directionalBlur",
+            "params": {
+                "amount": 0.7,
+                "angle": 0
+            },
+            "controls": [
+                "amount",
+                "angle"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/motion-blur-vertical",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Vertical motion blur",
+                "it": "Mosso verticale"
+            },
+            "kernel": "directionalBlur",
+            "params": {
+                "amount": 0.7,
+                "angle": 90
+            },
+            "controls": [
+                "amount",
+                "angle"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/tilt-shift",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Miniature (tilt-shift)",
+                "it": "Miniatura (tilt-shift)"
+            },
+            "kernel": "tiltShift",
+            "params": {
+                "amount": 0.8,
+                "size": 0.3
+            },
+            "controls": [
+                "amount",
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/dreamy",
+            "version": 1,
+            "category": "blur",
+            "name": {
+                "en": "Dreamy",
+                "it": "Sogno"
+            },
+            "kernel": "dreamy",
+            "params": {
+                "amount": 0.6
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/glow-soft",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Soft glow",
+                "it": "Bagliore morbido"
+            },
+            "kernel": "glow",
+            "params": {
+                "amount": 0.5,
+                "size": 0.6
+            },
+            "controls": [
+                "amount",
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/glow-bright",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Bright glow",
+                "it": "Bagliore intenso"
+            },
+            "kernel": "glow",
+            "params": {
+                "amount": 1.0,
+                "size": 0.4
+            },
+            "controls": [
+                "amount",
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/bloom",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Bloom",
+                "it": "Fioritura di luce"
+            },
+            "kernel": "glow",
+            "params": {
+                "amount": 0.8,
+                "size": 0.0
+            },
+            "controls": [
+                "amount",
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/light-leak-warm",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Warm light leak",
+                "it": "Luce calda"
+            },
+            "kernel": "lightLeak",
+            "params": {
+                "amount": 0.6,
+                "speed": 1,
+                "color": [
+                    1,
+                    0.55,
+                    0.2
+                ],
+                "color2": [
+                    1,
+                    0.3,
+                    0.5
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/light-leak-cool",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Cool light leak",
+                "it": "Luce fredda"
+            },
+            "kernel": "lightLeak",
+            "params": {
+                "amount": 0.6,
+                "speed": 1,
+                "color": [
+                    0.3,
+                    0.6,
+                    1
+                ],
+                "color2": [
+                    0.4,
+                    1,
+                    0.9
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/spotlight",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Spotlight",
+                "it": "Occhio di bue"
+            },
+            "kernel": "spotlight",
+            "params": {
+                "amount": 0.8,
+                "speed": 1,
+                "size": 0.4
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/neon-edges-pink",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Pink neon",
+                "it": "Neon rosa"
+            },
+            "kernel": "neonEdges",
+            "params": {
+                "amount": 1.0,
+                "color": [
+                    1,
+                    0.2,
+                    0.7
+                ]
+            },
+            "controls": [
+                "amount",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/neon-edges-cyan",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Cyan neon",
+                "it": "Neon ciano"
+            },
+            "kernel": "neonEdges",
+            "params": {
+                "amount": 1.0,
+                "color": [
+                    0,
+                    0.9,
+                    1
+                ]
+            },
+            "controls": [
+                "amount",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/prism",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Prism",
+                "it": "Prisma"
+            },
+            "kernel": "prism",
+            "params": {
+                "amount": 0.7
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/sparkles-gold",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Gold sparkles",
+                "it": "Scintille dorate"
+            },
+            "kernel": "sparkles",
+            "params": {
+                "amount": 0.5,
+                "speed": 1,
+                "color": [
+                    1,
+                    0.8,
+                    0.3
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/sparkles-white",
+            "version": 1,
+            "category": "light",
+            "name": {
+                "en": "Twinkles",
+                "it": "Luccichii"
+            },
+            "kernel": "sparkles",
+            "params": {
+                "amount": 0.6,
+                "speed": 1.5,
+                "color": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/glitch",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Glitch",
+                "it": "Glitch"
+            },
+            "kernel": "glitch",
+            "params": {
+                "amount": 0.6,
+                "speed": 1
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/glitch-heavy",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Heavy glitch",
+                "it": "Glitch pesante"
+            },
+            "kernel": "glitch",
+            "params": {
+                "amount": 1.0,
+                "speed": 2
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/glitch-subtle",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Subtle glitch",
+                "it": "Glitch leggero"
+            },
+            "kernel": "glitch",
+            "params": {
+                "amount": 0.3,
+                "speed": 0.5
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/block-glitch",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Block glitch",
+                "it": "Glitch a blocchi"
+            },
+            "kernel": "blockGlitch",
+            "params": {
+                "amount": 0.5,
+                "speed": 1
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/data-storm",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Data storm",
+                "it": "Tempesta di dati"
+            },
+            "kernel": "blockGlitch",
+            "params": {
+                "amount": 1.0,
+                "speed": 2
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/rgb-split",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "RGB split",
+                "it": "Separazione RGB"
+            },
+            "kernel": "rgbSplit",
+            "params": {
+                "amount": 0.6,
+                "speed": 0,
+                "angle": 0
+            },
+            "controls": [
+                "amount",
+                "angle"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/rgb-pulse",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "RGB pulse",
+                "it": "Pulsazione RGB"
+            },
+            "kernel": "rgbSplit",
+            "params": {
+                "amount": 0.8,
+                "speed": 2,
+                "angle": 0
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/rgb-split-vertical",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Vertical RGB split",
+                "it": "Separazione RGB verticale"
+            },
+            "kernel": "rgbSplit",
+            "params": {
+                "amount": 0.6,
+                "speed": 0,
+                "angle": 90
+            },
+            "controls": [
+                "amount",
+                "angle"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/chromatic-lens",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Chromatic lens",
+                "it": "Aberrazione cromatica"
+            },
+            "kernel": "lensAberration",
+            "params": {
+                "amount": 0.8
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/channel-swap",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Channel swap",
+                "it": "Canali scambiati"
+            },
+            "kernel": "colorShift",
+            "params": {
+                "amount": 1.0,
+                "count": 0
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/channel-swap-2",
+            "version": 1,
+            "category": "glitch",
+            "name": {
+                "en": "Alien colours",
+                "it": "Colori alieni"
+            },
+            "kernel": "colorShift",
+            "params": {
+                "amount": 1.0,
+                "count": 1
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/vhs",
+            "version": 1,
+            "category": "retro",
+            "name": {
+                "en": "VHS",
+                "it": "VHS"
+            },
+            "kernel": "vhs",
+            "params": {
+                "amount": 0.6,
+                "speed": 1
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/vhs-worn",
+            "version": 1,
+            "category": "retro",
+            "name": {
+                "en": "Worn tape",
+                "it": "Nastro consumato"
+            },
+            "kernel": "vhs",
+            "params": {
+                "amount": 1.0,
+                "speed": 1.5
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/old-film",
+            "version": 1,
+            "category": "retro",
+            "name": {
+                "en": "Old film",
+                "it": "Pellicola d'epoca"
+            },
+            "kernel": "oldFilm",
+            "params": {
+                "amount": 0.8
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/old-film-light",
+            "version": 1,
+            "category": "retro",
+            "name": {
+                "en": "Faded film",
+                "it": "Pellicola sbiadita"
+            },
+            "kernel": "oldFilm",
+            "params": {
+                "amount": 0.4
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/scanlines",
+            "version": 1,
+            "category": "retro",
+            "name": {
+                "en": "Scanlines",
+                "it": "Linee di scansione"
+            },
+            "kernel": "scanlines",
+            "params": {
+                "amount": 0.6,
+                "size": 0.3
+            },
+            "controls": [
+                "amount",
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/crt",
+            "version": 1,
+            "category": "retro",
+            "name": {
+                "en": "Old TV",
+                "it": "TV d'epoca"
+            },
+            "kernel": "scanlines",
+            "params": {
+                "amount": 0.9,
+                "size": 0.1
+            },
+            "controls": [
+                "amount",
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/8-bit",
+            "version": 1,
+            "category": "retro",
+            "name": {
+                "en": "8-bit",
+                "it": "8 bit"
+            },
+            "kernel": "dither",
+            "params": {
+                "size": 0.5,
+                "count": 3
+            },
+            "controls": [
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/16-bit",
+            "version": 1,
+            "category": "retro",
+            "name": {
+                "en": "16-bit",
+                "it": "16 bit"
+            },
+            "kernel": "dither",
+            "params": {
+                "size": 0.25,
+                "count": 5
+            },
+            "controls": [
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/grain",
+            "version": 1,
+            "category": "retro",
+            "name": {
+                "en": "Film grain",
+                "it": "Grana"
+            },
+            "kernel": "noise",
+            "params": {
+                "amount": 0.4,
+                "speed": 1
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/grain-heavy",
+            "version": 1,
+            "category": "retro",
+            "name": {
+                "en": "Heavy grain",
+                "it": "Grana forte"
+            },
+            "kernel": "noise",
+            "params": {
+                "amount": 1.0,
+                "speed": 1
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/shake",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Shake",
+                "it": "Scossa"
+            },
+            "kernel": "shake",
+            "params": {
+                "amount": 0.4,
+                "speed": 1
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/shake-strong",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Strong shake",
+                "it": "Scossa forte"
+            },
+            "kernel": "shake",
+            "params": {
+                "amount": 1.0,
+                "speed": 2
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/earthquake",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Earthquake",
+                "it": "Terremoto"
+            },
+            "kernel": "shake",
+            "params": {
+                "amount": 1.0,
+                "speed": 4
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/handheld",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Handheld camera",
+                "it": "Camera a mano"
+            },
+            "kernel": "shake",
+            "params": {
+                "amount": 0.25,
+                "speed": 0.3
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/zoom-pulse",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Zoom pulse",
+                "it": "Zoom pulsante"
+            },
+            "kernel": "zoomPulse",
+            "params": {
+                "amount": 0.6,
+                "speed": 2
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/zoom-pulse-slow",
+            "version": 1,
+            "category": "motion",
+            "name": {
+                "en": "Slow zoom pulse",
+                "it": "Zoom pulsante lento"
+            },
+            "kernel": "zoomPulse",
+            "params": {
+                "amount": 0.5,
+                "speed": 1
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/strobe-white",
+            "version": 1,
+            "category": "flash",
+            "name": {
+                "en": "White strobe",
+                "it": "Strobo bianco"
+            },
+            "kernel": "strobe",
+            "params": {
+                "amount": 0.8,
+                "speed": 2,
+                "color": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/strobe-black",
+            "version": 1,
+            "category": "flash",
+            "name": {
+                "en": "Black strobe",
+                "it": "Strobo nero"
+            },
+            "kernel": "strobe",
+            "params": {
+                "amount": 0.8,
+                "speed": 2,
+                "color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/strobe-fast",
+            "version": 1,
+            "category": "flash",
+            "name": {
+                "en": "Fast strobe",
+                "it": "Strobo veloce"
+            },
+            "kernel": "strobe",
+            "params": {
+                "amount": 0.9,
+                "speed": 4,
+                "color": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/flash-pink",
+            "version": 1,
+            "category": "flash",
+            "name": {
+                "en": "Pink flash",
+                "it": "Flash rosa"
+            },
+            "kernel": "strobe",
+            "params": {
+                "amount": 0.7,
+                "speed": 1,
+                "color": [
+                    1,
+                    0.2,
+                    0.7
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/flicker",
+            "version": 1,
+            "category": "flash",
+            "name": {
+                "en": "Flicker",
+                "it": "Sfarfallio"
+            },
+            "kernel": "flicker",
+            "params": {
+                "amount": 0.6,
+                "speed": 1
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/flicker-strong",
+            "version": 1,
+            "category": "flash",
+            "name": {
+                "en": "Broken light",
+                "it": "Luce rotta"
+            },
+            "kernel": "flicker",
+            "params": {
+                "amount": 1.0,
+                "speed": 2
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/mirror-left",
+            "version": 1,
+            "category": "mirror",
+            "name": {
+                "en": "Mirror (left)",
+                "it": "Specchio (sinistra)"
+            },
+            "kernel": "mirror",
+            "params": {
+                "count": 0
+            },
+            "controls": []
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/mirror-right",
+            "version": 1,
+            "category": "mirror",
+            "name": {
+                "en": "Mirror (right)",
+                "it": "Specchio (destra)"
+            },
+            "kernel": "mirror",
+            "params": {
+                "count": 1
+            },
+            "controls": []
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/mirror-top",
+            "version": 1,
+            "category": "mirror",
+            "name": {
+                "en": "Mirror (top)",
+                "it": "Specchio (sopra)"
+            },
+            "kernel": "mirror",
+            "params": {
+                "count": 2
+            },
+            "controls": []
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/mirror-quad",
+            "version": 1,
+            "category": "mirror",
+            "name": {
+                "en": "Four mirrors",
+                "it": "Quattro specchi"
+            },
+            "kernel": "mirror",
+            "params": {
+                "count": 3
+            },
+            "controls": []
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/kaleidoscope",
+            "version": 1,
+            "category": "mirror",
+            "name": {
+                "en": "Kaleidoscope",
+                "it": "Caleidoscopio"
+            },
+            "kernel": "kaleidoscope",
+            "params": {
+                "count": 6,
+                "speed": 0.5
+            },
+            "controls": [
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/kaleidoscope-8",
+            "version": 1,
+            "category": "mirror",
+            "name": {
+                "en": "Kaleidoscope 8",
+                "it": "Caleidoscopio 8"
+            },
+            "kernel": "kaleidoscope",
+            "params": {
+                "count": 8,
+                "speed": 1
+            },
+            "controls": [
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/kaleidoscope-still",
+            "version": 1,
+            "category": "mirror",
+            "name": {
+                "en": "Still kaleidoscope",
+                "it": "Caleidoscopio fermo"
+            },
+            "kernel": "kaleidoscope",
+            "params": {
+                "count": 4,
+                "speed": 0
+            },
+            "controls": []
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/grid-2",
+            "version": 1,
+            "category": "mirror",
+            "name": {
+                "en": "Split 2×2",
+                "it": "Griglia 2×2"
+            },
+            "kernel": "grid",
+            "params": {
+                "count": 2
+            },
+            "controls": []
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/grid-3",
+            "version": 1,
+            "category": "mirror",
+            "name": {
+                "en": "Split 3×3",
+                "it": "Griglia 3×3"
+            },
+            "kernel": "grid",
+            "params": {
+                "count": 3
+            },
+            "controls": []
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/grid-4",
+            "version": 1,
+            "category": "mirror",
+            "name": {
+                "en": "Split 4×4",
+                "it": "Griglia 4×4"
+            },
+            "kernel": "grid",
+            "params": {
+                "count": 4
+            },
+            "controls": []
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/pixelate",
+            "version": 1,
+            "category": "stylize",
+            "name": {
+                "en": "Pixelate",
+                "it": "Pixel"
+            },
+            "kernel": "pixelate",
+            "params": {
+                "size": 0.2
+            },
+            "controls": [
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/pixelate-big",
+            "version": 1,
+            "category": "stylize",
+            "name": {
+                "en": "Big pixels",
+                "it": "Pixel grandi"
+            },
+            "kernel": "pixelate",
+            "params": {
+                "size": 0.7
+            },
+            "controls": [
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/edges",
+            "version": 1,
+            "category": "stylize",
+            "name": {
+                "en": "Edges",
+                "it": "Contorni"
+            },
+            "kernel": "edges",
+            "params": {
+                "amount": 1.0
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/sketch",
+            "version": 1,
+            "category": "stylize",
+            "name": {
+                "en": "Pencil sketch",
+                "it": "Schizzo a matita"
+            },
+            "kernel": "sketch",
+            "params": {
+                "amount": 1.0
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/emboss",
+            "version": 1,
+            "category": "stylize",
+            "name": {
+                "en": "Emboss",
+                "it": "Rilievo"
+            },
+            "kernel": "emboss",
+            "params": {
+                "amount": 1.0
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/comic",
+            "version": 1,
+            "category": "stylize",
+            "name": {
+                "en": "Comic dots",
+                "it": "Retino fumetto"
+            },
+            "kernel": "halftone",
+            "params": {
+                "amount": 1.0,
+                "size": 0.3,
+                "color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "controls": [
+                "amount",
+                "size",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/halftone-blue",
+            "version": 1,
+            "category": "stylize",
+            "name": {
+                "en": "Blue print",
+                "it": "Stampa blu"
+            },
+            "kernel": "halftone",
+            "params": {
+                "amount": 1.0,
+                "size": 0.2,
+                "color": [
+                    0.1,
+                    0.2,
+                    0.6
+                ]
+            },
+            "controls": [
+                "amount",
+                "size",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/posterize",
+            "version": 1,
+            "category": "stylize",
+            "name": {
+                "en": "Posterize",
+                "it": "Poster"
+            },
+            "kernel": "posterize",
+            "params": {
+                "amount": 0.6
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/wave",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Wave",
+                "it": "Onda"
+            },
+            "kernel": "wave",
+            "params": {
+                "amount": 0.5,
+                "speed": 1,
+                "size": 0.3,
+                "angle": 0
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/wave-vertical",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Vertical wave",
+                "it": "Onda verticale"
+            },
+            "kernel": "wave",
+            "params": {
+                "amount": 0.5,
+                "speed": 1,
+                "size": 0.3,
+                "angle": 90
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/underwater",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Underwater",
+                "it": "Sott'acqua"
+            },
+            "kernel": "wave",
+            "params": {
+                "amount": 0.3,
+                "speed": 2,
+                "size": 0.1,
+                "angle": 0
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "size"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/swirl",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Swirl",
+                "it": "Vortice"
+            },
+            "kernel": "swirl",
+            "params": {
+                "amount": 0.6,
+                "speed": 0
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/swirl-animated",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Twister",
+                "it": "Tornado"
+            },
+            "kernel": "swirl",
+            "params": {
+                "amount": 0.7,
+                "speed": 0.5
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/bulge",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Bulge",
+                "it": "Lente"
+            },
+            "kernel": "bulge",
+            "params": {
+                "amount": 0.6
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/pinch",
+            "version": 1,
+            "category": "distort",
+            "name": {
+                "en": "Pinch",
+                "it": "Pizzico"
+            },
+            "kernel": "bulge",
+            "params": {
+                "amount": -0.6
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/rain",
+            "version": 1,
+            "category": "particles",
+            "name": {
+                "en": "Rain",
+                "it": "Pioggia"
+            },
+            "kernel": "rain",
+            "params": {
+                "amount": 0.5,
+                "speed": 1
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/rain-storm",
+            "version": 1,
+            "category": "particles",
+            "name": {
+                "en": "Storm",
+                "it": "Temporale"
+            },
+            "kernel": "rain",
+            "params": {
+                "amount": 1.0,
+                "speed": 1.5
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/snow",
+            "version": 1,
+            "category": "particles",
+            "name": {
+                "en": "Snow",
+                "it": "Neve"
+            },
+            "kernel": "snow",
+            "params": {
+                "amount": 0.5,
+                "speed": 1
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/blizzard",
+            "version": 1,
+            "category": "particles",
+            "name": {
+                "en": "Blizzard",
+                "it": "Bufera di neve"
+            },
+            "kernel": "snow",
+            "params": {
+                "amount": 1.0,
+                "speed": 2
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/bokeh-warm",
+            "version": 1,
+            "category": "particles",
+            "name": {
+                "en": "Warm bokeh",
+                "it": "Bokeh caldo"
+            },
+            "kernel": "bokeh",
+            "params": {
+                "amount": 0.6,
+                "speed": 1,
+                "color": [
+                    1,
+                    0.75,
+                    0.4
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/bokeh-cool",
+            "version": 1,
+            "category": "particles",
+            "name": {
+                "en": "Cool bokeh",
+                "it": "Bokeh freddo"
+            },
+            "kernel": "bokeh",
+            "params": {
+                "amount": 0.6,
+                "speed": 1,
+                "color": [
+                    0.5,
+                    0.7,
+                    1
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/confetti-lights",
+            "version": 1,
+            "category": "particles",
+            "name": {
+                "en": "Party lights",
+                "it": "Luci di festa"
+            },
+            "kernel": "bokeh",
+            "params": {
+                "amount": 1.0,
+                "speed": 2,
+                "color": [
+                    1,
+                    0.2,
+                    0.7
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/cinema",
+            "version": 1,
+            "category": "frame",
+            "name": {
+                "en": "Cinema bars",
+                "it": "Bande cinema"
+            },
+            "kernel": "letterbox",
+            "params": {
+                "size": 0.3,
+                "color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "controls": [
+                "size",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/cinema-wide",
+            "version": 1,
+            "category": "frame",
+            "name": {
+                "en": "Wide cinema",
+                "it": "Cinema panoramico"
+            },
+            "kernel": "letterbox",
+            "params": {
+                "size": 0.5,
+                "color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "controls": [
+                "size",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/white-bars",
+            "version": 1,
+            "category": "frame",
+            "name": {
+                "en": "White bars",
+                "it": "Bande bianche"
+            },
+            "kernel": "letterbox",
+            "params": {
+                "size": 0.3,
+                "color": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "controls": [
+                "size",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/vignette-pulse",
+            "version": 1,
+            "category": "frame",
+            "name": {
+                "en": "Pulsing vignette",
+                "it": "Vignetta pulsante"
+            },
+            "kernel": "pulseVignette",
+            "params": {
+                "amount": 0.8,
+                "speed": 1,
+                "color": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/heartbeat",
+            "version": 1,
+            "category": "frame",
+            "name": {
+                "en": "Heartbeat",
+                "it": "Battito"
+            },
+            "kernel": "pulseVignette",
+            "params": {
+                "amount": 0.9,
+                "speed": 2,
+                "color": [
+                    0.7,
+                    0,
+                    0.05
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/dream-vignette",
+            "version": 1,
+            "category": "frame",
+            "name": {
+                "en": "Dream frame",
+                "it": "Cornice sognante"
+            },
+            "kernel": "pulseVignette",
+            "params": {
+                "amount": 0.7,
+                "speed": 0.3,
+                "color": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "controls": [
+                "amount",
+                "speed",
+                "color"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/hue-cycle",
+            "version": 1,
+            "category": "color",
+            "name": {
+                "en": "Colour cycle",
+                "it": "Ciclo di colori"
+            },
+            "kernel": "hueCycle",
+            "params": {
+                "amount": 0.3,
+                "speed": 0.5
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/rainbow",
+            "version": 1,
+            "category": "color",
+            "name": {
+                "en": "Rainbow",
+                "it": "Arcobaleno"
+            },
+            "kernel": "hueCycle",
+            "params": {
+                "amount": 0.6,
+                "speed": 2
+            },
+            "controls": [
+                "amount",
+                "speed"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/invert",
+            "version": 1,
+            "category": "color",
+            "name": {
+                "en": "Invert",
+                "it": "Negativo"
+            },
+            "kernel": "invert",
+            "params": {
+                "amount": 1.0
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/thermal",
+            "version": 1,
+            "category": "color",
+            "name": {
+                "en": "Thermal camera",
+                "it": "Termocamera"
+            },
+            "kernel": "thermal",
+            "params": {
+                "amount": 1.0
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/night-vision",
+            "version": 1,
+            "category": "color",
+            "name": {
+                "en": "Night vision",
+                "it": "Visore notturno"
+            },
+            "kernel": "nightVision",
+            "params": {
+                "amount": 0.8
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/duotone-pop",
+            "version": 1,
+            "category": "color",
+            "name": {
+                "en": "Pop duotone",
+                "it": "Bicromia pop"
+            },
+            "kernel": "duotone",
+            "params": {
+                "color": [
+                    0.35,
+                    0.05,
+                    0.5
+                ],
+                "color2": [
+                    1,
+                    0.85,
+                    0.2
+                ]
+            },
+            "controls": [
+                "color",
+                "color2"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/duotone-ocean",
+            "version": 1,
+            "category": "color",
+            "name": {
+                "en": "Ocean duotone",
+                "it": "Bicromia oceano"
+            },
+            "kernel": "duotone",
+            "params": {
+                "color": [
+                    0.02,
+                    0.1,
+                    0.3
+                ],
+                "color2": [
+                    0.4,
+                    1,
+                    0.95
+                ]
+            },
+            "controls": [
+                "color",
+                "color2"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/duotone-sunset",
+            "version": 1,
+            "category": "color",
+            "name": {
+                "en": "Sunset duotone",
+                "it": "Bicromia tramonto"
+            },
+            "kernel": "duotone",
+            "params": {
+                "color": [
+                    0.4,
+                    0,
+                    0.2
+                ],
+                "color2": [
+                    1,
+                    0.6,
+                    0.3
+                ]
+            },
+            "controls": [
+                "color",
+                "color2"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/beat-flash",
+            "version": 1,
+            "category": "rhythm",
+            "name": {
+                "en": "Flash on the beat",
+                "it": "Flash a tempo"
+            },
+            "type": "vedit.beat.flash",
+            "params": {
+                "amount": 0.7,
+                "decay": 0.18
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/beat-zoom",
+            "version": 1,
+            "category": "rhythm",
+            "name": {
+                "en": "Zoom on the beat",
+                "it": "Zoom a tempo"
+            },
+            "type": "vedit.beat.zoom",
+            "params": {
+                "amount": 0.15,
+                "decay": 0.18
+            },
+            "controls": [
+                "amount"
+            ]
+        },
+        {
+            "kind": "videoEffect",
+            "id": "effects/beat-shake",
+            "version": 1,
+            "category": "rhythm",
+            "name": {
+                "en": "Shake on the beat",
+                "it": "Scossa a tempo"
+            },
+            "type": "vedit.beat.shake",
+            "params": {
+                "amount": 12,
+                "decay": 0.18
+            },
+            "controls": [
+                "amount"
+            ]
+        }
+    ]
+}

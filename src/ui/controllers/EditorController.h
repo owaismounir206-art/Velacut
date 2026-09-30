@@ -173,6 +173,10 @@ public:
     Q_INVOKABLE void importStickers(const QList<QUrl> &urls);
     // "Beat" (SPEC 0bis rule 3): the beats of the focused clip's audio become its beat markers (in background).
     Q_INVOKABLE void detectBeats();
+    // Effects on the beat need beats: when the video has none, those of the first music are found (in background).
+    void ensureBeats();
+    // An effect of the library on its own layer at the playhead (3 s): it acts on everything under it.
+    Q_INVOKABLE bool addEffectLayer(const QString &effectId);
 
     // Mixer (SPEC §5.9): the volume of a whole track in dB (a slider drag is one undo step until endTrackGesture()),
     // mute.
@@ -242,6 +246,7 @@ signals:
 
 private:
     bool apply(EditResult result, bool selectResult = true);
+    void detectBeatsOf(const ClipId &clipId);
     void onProjectChanged(const ChangeSet &changes);
     void onImported(const Media &media);
     void setSelection(QSet<ClipId> selection);

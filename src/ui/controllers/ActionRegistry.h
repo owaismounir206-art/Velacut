@@ -48,7 +48,7 @@ public:
     Q_INVOKABLE bool trigger(const QString &id);
     Q_INVOKABLE bool isEnabled(const QString &id) const;
 
-    // Results of the universal search, best first: [{kind ("action", "filter", "transition", "text", "sticker", "animation",
+    // Results of the universal search, best first: [{kind ("action", "filter", "transition", "text", "sticker", "effect", "animation",
     // "music", "media"), id, text, detail, icon, enabled}]. An empty text lists the actions of the selection.
     Q_INVOKABLE QVariantList search(const QString &text, int limit = 40) const;
     // Applies or opens a result of search().

@@ -1,5 +1,6 @@
 // Material 3 secondary tabs: model = list of { text }, currentIndex (set by the owner); the active tab is underlined.
-// The tabs share the width equally (a side panel has room for a few short labels).
+// The tabs share the width equally, each at least as wide as its label: when they do not fit they scroll sideways
+// (M3 scrollable tabs) and the active one is kept in view. Labels are never cut.
 import QtQuick
 import Vedit.Theme
 
@@ -27,9 +28,26 @@ FocusScope {
         anchors.bottom: parent.bottom
         width: parent.width
     }
-    Row {
+    Flickable {
+        id: flick
         anchors.fill: parent
+        contentWidth: row.width
+        interactive: contentWidth > width
+        flickableDirection: Flickable.HorizontalFlick
+        boundsBehavior: Flickable.StopAtBounds
+        clip: true
+        WheelHandler {
+            enabled: flick.interactive
+            onWheel: (event) => {
+                const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+                flick.contentX = Math.max(0, Math.min(flick.contentWidth - flick.width, flick.contentX - delta))
+            }
+        }
+    Row {
+        id: row
+        height: parent.height
         Repeater {
+            id: tabs
             model: root.model
             delegate: Item {
                 id: tab
@@ -38,13 +56,14 @@ FocusScope {
                 readonly property bool selected: index === root.currentIndex
 
                 objectName: "tab_" + index
-                width: root.width / Math.max(1, root.model.length)
+                width: Math.max(root.width / Math.max(1, root.model.length), label.implicitWidth + 2 * Theme.space.md)
                 height: root.height
                 Accessible.role: Accessible.PageTab
                 Accessible.name: modelData.text ?? ""
                 Accessible.selected: selected
 
                 TypeText {
+                    id: label
                     anchors.fill: parent
                     anchors.leftMargin: Theme.space.xs
                     anchors.rightMargin: Theme.space.xs
@@ -77,4 +96,18 @@ FocusScope {
             }
         }
     }
+    }
+
+    // The active tab stays in view.
+    function reveal() {
+        const tab = tabs.itemAt(currentIndex)
+        if (!tab || !flick.interactive)
+            return
+        if (tab.x < flick.contentX)
+            flick.contentX = tab.x
+        else if (tab.x + tab.width > flick.contentX + flick.width)
+            flick.contentX = tab.x + tab.width - flick.width
+    }
+    onCurrentIndexChanged: Qt.callLater(reveal)
+    onWidthChanged: Qt.callLater(reveal)
 }

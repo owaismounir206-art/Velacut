@@ -14,6 +14,7 @@
 #include "fx/Grade.h"
 #include "fx/Library.h"
 #include "fx/Loudness.h"
+#include "fx/VideoEffect.h"
 
 #include <QColor>
 #include <QFileInfo>
@@ -582,6 +583,65 @@ std::optional<AudioVisualizerSettings> presetVisualizer(const StickerClipData &s
     return projectjson::visualizerFromJson(preset->visualizer);
 }
 
+bool isLibraryEffect(const Effect &effect)
+{
+    return effect.type == u"vedit.effect"_s || effect.type.startsWith(u"vedit.beat."_s);
+}
+
+// The effects of the library on a clip, in order.
+std::vector<const Effect *> libraryEffects(const Clip &clip)
+{
+    std::vector<const Effect *> result;
+    for (const Effect &effect : clip.effects) {
+        if (isLibraryEffect(effect)) {
+            result.push_back(&effect);
+        }
+    }
+    return result;
+}
+
+Effect effectOf(const fx::VideoEffectPreset &preset)
+{
+    Effect effect;
+    effect.id = EffectId::create();
+    effect.type = preset.type;
+    effect.preset = AssetRef{QString::fromLatin1(fx::Library::kCorePack), preset.id, preset.version};
+    if (preset.type != u"vedit.effect"_s) {
+        // Effects of other types keep their parameters in the clip (the renderer does not read the preset).
+        for (auto it = preset.params.begin(); it != preset.params.end(); ++it) {
+            effect.params[it.key()] = Param(it.value().toDouble());
+        }
+    }
+    return effect;
+}
+
+// The range of a control of the properties panel: [from, to] and its name.
+struct ControlRange
+{
+    double from = 0;
+    double to = 1;
+};
+
+ControlRange controlRange(const QString &type, const QString &name, double preset)
+{
+    if (name == u"amount"_s) {
+        if (type == u"vedit.beat.zoom"_s) {
+            return {0, 0.5};
+        }
+        if (type == u"vedit.beat.shake"_s) {
+            return {0, 30};
+        }
+        return {preset < 0 ? -1.0 : 0.0, 1.0};
+    }
+    if (name == u"speed"_s) {
+        return {0, 4};
+    }
+    if (name == u"angle"_s) {
+        return {0, 180};
+    }
+    return {0, 1};
+}
+
 } // namespace
 
 int ClipInspector::kind() const
@@ -622,7 +682,11 @@ bool ClipInspector::supports(const Clip &clip, const QString &section) const
     // An adjustment layer has no picture of its own: only the looks it gives to what is under it.
     const bool adjustmentLayer = clip.adjustment() != nullptr;
     if (adjustmentLayer) {
-        return section == u"filter"_s || section == u"adjust"_s || section == u"grade"_s || section == u"lut"_s || section == u"deflicker"_s;
+        return section == u"filter"_s || section == u"adjust"_s || section == u"grade"_s || section == u"lut"_s ||
+               section == u"deflicker"_s || section == u"effects"_s;
+    }
+    if (section == u"effects"_s) {
+        return !audioOnly;
     }
     if (section == u"video"_s) {
         return !audioOnly;
@@ -667,7 +731,7 @@ QStringList ClipInspector::sections() const
         return result;
     }
     for (const QString &section : {u"text"_s, u"sticker"_s, u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s, u"cutout"_s,
-                                   u"filter"_s, u"adjust"_s}) {
+                                   u"filter"_s, u"effects"_s, u"adjust"_s}) {
         if (supports(*clip, section)) {
             result << section;
         }
@@ -1043,6 +1107,48 @@ QVariantMap ClipInspector::values() const
         map[u"grade.curve."_s + ch] = curvePoints;
     }
 
+    {
+        QVariantList effects;
+        int index = 0;
+        for (const Effect *effect : libraryEffects(*clip)) {
+            const fx::VideoEffectPreset *preset = effect->preset ? fx::Library::core().videoEffect(effect->preset->id) : nullptr;
+            QVariantList controls;
+            if (preset) {
+                for (const QString &name : preset->controls) {
+                    const auto own = effect->params.find(name);
+                    if (name == u"color"_s || name == u"color2"_s) {
+                        QColor value;
+                        if (own != effect->params.end()) {
+                            value = toQColor(colorOf(own->second, Color{255, 255, 255, 255}));
+                        } else {
+                            const QJsonArray rgb = preset->params.value(name).toArray();
+                            value = QColor::fromRgbF(static_cast<float>(rgb.at(0).toDouble(1)), static_cast<float>(rgb.at(1).toDouble(1)),
+                                                     static_cast<float>(rgb.at(2).toDouble(1)));
+                        }
+                        controls << QVariantMap{{u"name"_s, name}, {u"color"_s, true}, {u"value"_s, value},
+                                                {u"label"_s, name == u"color"_s ? tr("Colour") : tr("Second colour")}};
+                        continue;
+                    }
+                    const double presetValue = preset->params.value(name).toDouble(name == u"speed"_s ? 1.0 : 0.5);
+                    const double value = own != effect->params.end() ? numberOf(own->second, presetValue) : presetValue;
+                    const ControlRange range = controlRange(effect->type, name, presetValue);
+                    const QString label = name == u"amount"_s ? tr("Intensity")
+                                          : name == u"size"_s ? tr("Size")
+                                          : name == u"speed"_s ? tr("Speed")
+                                          : name == u"angle"_s ? tr("Angle")
+                                                               : name;
+                    controls << QVariantMap{{u"name"_s, name}, {u"color"_s, false}, {u"value"_s, value}, {u"from"_s, range.from},
+                                            {u"to"_s, range.to}, {u"neutral"_s, presetValue}, {u"label"_s, label}};
+                }
+            }
+            effects << QVariantMap{{u"index"_s, index++},
+                                   {u"preset"_s, effect->preset ? effect->preset->id : QString()},
+                                   {u"name"_s, preset ? preset->name.text() : effect->type},
+                                   {u"mix"_s, numberOf(effect->intensity, 1.0)},
+                                   {u"controls"_s, controls}};
+        }
+        map[u"effects"_s] = effects;
+    }
     if (const StickerClipData *sticker = clip->sticker()) {
         map[u"sticker.visualizer"_s] = sticker->visualizer.has_value();
         const AudioVisualizerSettings visualizer = sticker->visualizer.value_or(AudioVisualizerSettings{});
@@ -1983,6 +2089,98 @@ bool ClipInspector::toggleFilter(const QString &filterId)
     }
     clearPreview();
     return done;
+}
+
+QVariantMap ClipInspector::previewEffect(const QString &effectId)
+{
+    const Clip *clip = libraryClip();
+    const fx::VideoEffectPreset *preset = fx::Library::core().videoEffect(effectId);
+    if (!clip || !preset || !supports(*clip, u"effects"_s)) {
+        return {};
+    }
+    Clip previewed = *clip;
+    previewed.effects.push_back(effectOf(*preset));
+    engine::TimelineProjection::Preview preview;
+    preview.clip = std::move(previewed);
+    m_editor.player()->setPreview(std::move(preview));
+    const std::optional<fx::EffectKernel> kernel = fx::effectKernel(preset->kernel);
+    if (preset->type == u"vedit.effect"_s && !(kernel && fx::isAnimatedKernel(*kernel))) {
+        return {}; // a still effect shows on the current frame
+    }
+    // An animated one plays in a loop: two seconds from the playhead (or the clip's start), within the clip.
+    const Rational rate = m_editor.data().settings.frameRate;
+    const std::int64_t start = clip->start.rescaled(rate, Rounding::NearestEven).value();
+    const std::int64_t end = clip->end().rescaled(rate, Rounding::NearestEven).value();
+    const std::int64_t first = std::clamp<std::int64_t>(m_editor.player()->position(), start, std::max(start, end - 1));
+    const std::int64_t last = std::min<std::int64_t>(end - 1, first + 2 * std::llround(rate.toDouble()));
+    return {{u"start"_s, static_cast<int>(first)}, {u"end"_s, static_cast<int>(std::max(first, last))}};
+}
+
+bool ClipInspector::toggleEffect(const QString &effectId)
+{
+    m_editor.selectClipAtPlayhead(); // nothing selected: the clip on screen
+    const Clip *clip = focus();
+    clearPreview();
+    const fx::VideoEffectPreset *preset = fx::Library::core().videoEffect(effectId);
+    if (!clip || !preset || !supports(*clip, u"effects"_s)) {
+        emit m_editor.message(tr("Select a video, a photo or a layer first."), false);
+        return false;
+    }
+    const std::vector<ClipId> clips = targets(u"effects"_s);
+    endGesture();
+    const auto applied = [&effectId](const Effect &e) { return isLibraryEffect(e) && e.preset && e.preset->id == effectId; };
+    if (std::any_of(clip->effects.begin(), clip->effects.end(), applied)) {
+        return update(clips, [&applied](Clip &c) { std::erase_if(c.effects, applied); }, tr("Remove effect"), {});
+    }
+    const bool done = update(clips, [&preset](Clip &c) { c.effects.push_back(effectOf(*preset)); }, tr("Apply effect"), {});
+    if (done && preset->type.startsWith(u"vedit.beat."_s)) {
+        m_editor.ensureBeats();
+    }
+    return done;
+}
+
+bool ClipInspector::removeEffectAt(int index)
+{
+    const Clip *clip = focus();
+    if (!clip) {
+        return false;
+    }
+    const std::vector<const Effect *> effects = libraryEffects(*clip);
+    if (index < 0 || index >= static_cast<int>(effects.size())) {
+        return false;
+    }
+    const EffectId id = effects[static_cast<size_t>(index)]->id;
+    endGesture();
+    return update({clip->id}, [&id](Clip &c) { std::erase_if(c.effects, [&id](const Effect &e) { return e.id == id; }); },
+                  tr("Remove effect"), {});
+}
+
+bool ClipInspector::setEffectParam(int index, const QString &name, const QVariant &value)
+{
+    const Clip *clip = focus();
+    if (!clip) {
+        return false;
+    }
+    const std::vector<const Effect *> effects = libraryEffects(*clip);
+    if (index < 0 || index >= static_cast<int>(effects.size())) {
+        return false;
+    }
+    const EffectId id = effects[static_cast<size_t>(index)]->id;
+    const bool isColor = name == u"color"_s || name == u"color2"_s;
+    return update({clip->id}, [&](Clip &c) {
+        for (Effect &e : c.effects) {
+            if (e.id != id) {
+                continue;
+            }
+            if (name == u"mix"_s) {
+                e.intensity = Param(std::clamp(value.toDouble(), 0.0, 1.0));
+            } else if (isColor) {
+                e.params[name] = Param(toColor(value));
+            } else {
+                e.params[name] = Param(value.toDouble());
+            }
+        }
+    }, tr("Change effect"), u"effect:"_s + id.toString() + u':' + name);
 }
 
 void ClipInspector::previewTextStyle(const QString &styleId)

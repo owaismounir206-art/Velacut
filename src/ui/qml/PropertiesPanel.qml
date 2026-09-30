@@ -53,6 +53,8 @@ Rectangle {
             list.push({ text: qsTr("Animation"), page: "animation" })
         if (sections.includes("cutout"))
             list.push({ text: qsTr("Cutout"), page: "cutout" })
+        if (sections.includes("effects") && (values["effects"] ?? []).length > 0)
+            list.push({ text: qsTr("Effects"), page: "effects" })
         if (sections.includes("adjust"))
             list.push({ text: qsTr("Adjust"), page: "adjust" })
         return list
@@ -812,6 +814,86 @@ Rectangle {
                                 onToggled: panel.inspector.set("sticker.loop", checked)
                             }
                         }
+                    }
+                }
+
+                // ---- Effects ---------------------------------------------------------------------------------
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: panel.page === "effects"
+                    spacing: Theme.space.lg
+
+                    Repeater {
+                        model: panel.values["effects"] ?? []
+                        delegate: ColumnLayout {
+                            id: effectItem
+                            required property var modelData
+                            Layout.fillWidth: true
+                            spacing: Theme.space.xs
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: effectItem.modelData.name
+                                    role: "titleSmall"
+                                    elide: Text.ElideRight
+                                }
+                                IconButton {
+                                    objectName: "removeEffect_" + effectItem.modelData.index
+                                    iconName: "delete"
+                                    label: qsTr("Remove the effect")
+                                    onClicked: panel.inspector.removeEffectAt(effectItem.modelData.index)
+                                }
+                            }
+                            EffectSlider {
+                                inspector: panel.inspector
+                                index: effectItem.modelData.index
+                                name: "mix"
+                                label: qsTr("Strength")
+                                value: effectItem.modelData.mix
+                                neutral: 1
+                            }
+                            Repeater {
+                                model: effectItem.modelData.controls
+                                delegate: Loader {
+                                    id: control
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    sourceComponent: control.modelData.color ? colorControl : sliderControl
+                                    Component {
+                                        id: sliderControl
+                                        EffectSlider {
+                                            inspector: panel.inspector
+                                            index: effectItem.modelData.index
+                                            name: control.modelData.name
+                                            label: control.modelData.label
+                                            value: control.modelData.value
+                                            from: control.modelData.from
+                                            to: control.modelData.to
+                                            neutral: control.modelData.neutral
+                                        }
+                                    }
+                                    Component {
+                                        id: colorControl
+                                        ColorSwatches {
+                                            inspector: panel.inspector
+                                            label: control.modelData.label
+                                            current: control.modelData.value
+                                            onPicked: (value) => panel.inspector.setEffectParam(effectItem.modelData.index,
+                                                                                               control.modelData.name, value)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        role: "bodySmall"
+                        color: Theme.color.onSurfaceVariant
+                        text: qsTr("Add more from the Effects library: they stack in this order.")
                     }
                 }
 

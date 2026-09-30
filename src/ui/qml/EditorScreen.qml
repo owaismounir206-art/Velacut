@@ -20,7 +20,7 @@ Item {
         function onExportRequested() { exportDialog.openDialog() }
         function onImportRequested() { library.importFiles() }
         function onLibraryRequested(name) {
-            const index = ["media", "audio", "text", "stickers", "transitions", "filters", "animations"].indexOf(name)
+            const index = ["media", "audio", "text", "stickers", "effects", "transitions", "filters", "animations"].indexOf(name)
             if (index >= 0)
                 rail.currentIndex = index
         }
@@ -100,6 +100,7 @@ Item {
                             { text: qsTr("Audio"), iconName: "music_note" },
                             { text: qsTr("Text"), iconName: "title" },
                             { text: qsTr("Stickers"), iconName: "add_reaction" },
+                            { text: qsTr("Effects"), iconName: "auto_awesome" },
                             { text: qsTr("Transitions"), iconName: "transition_fade" },
                             { text: qsTr("Filters"), iconName: "filter_vintage" },
                             { text: qsTr("Animations"), iconName: "animation" }]
@@ -127,6 +128,11 @@ Item {
                         editor: root.editor
                         kind: AssetLibraryModel.Stickers
                         title: qsTr("Stickers")
+                    }
+                    AssetPanel {
+                        editor: root.editor
+                        kind: AssetLibraryModel.VideoEffects
+                        title: qsTr("Effects")
                     }
                     AssetPanel {
                         editor: root.editor

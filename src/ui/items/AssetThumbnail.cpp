@@ -11,6 +11,7 @@
 #include "fx/Color.h"
 #include "fx/Library.h"
 #include "fx/Transition.h"
+#include "fx/VideoEffect.h"
 #include "models/AssetLibraryModel.h"
 
 #include <QCache>
@@ -93,7 +94,7 @@ void AssetThumbnail::setEditor(EditorController *editor)
     if (m_editor) {
         // Filters show the clip they would apply to: another selection, another picture.
         m_selectionConnection = connect(m_editor, &EditorController::selectionChanged, this, [this] {
-            if (m_kind == AssetLibraryModel::Filters) {
+            if (m_kind == AssetLibraryModel::Filters || m_kind == AssetLibraryModel::VideoEffects) {
                 request();
             }
         });
@@ -132,7 +133,7 @@ void AssetThumbnail::setProgress(double progress)
 
 QImage AssetThumbnail::sample(QString *key) const
 {
-    if (m_kind != AssetLibraryModel::Filters || !m_editor) {
+    if ((m_kind != AssetLibraryModel::Filters && m_kind != AssetLibraryModel::VideoEffects) || !m_editor) {
         return {};
     }
     const std::optional<ClipId> clipId = m_editor->clipForLibrary();
@@ -167,7 +168,7 @@ void AssetThumbnail::request()
     const QImage frame = sample(&sampleKey);
     // Transitions and animations are drawn at a few steps of progress: smooth enough for the hover animation, cached.
     const bool animated = m_kind == AssetLibraryModel::Transitions || m_kind == AssetLibraryModel::Animations ||
-                          m_kind == AssetLibraryModel::Stickers;
+                          m_kind == AssetLibraryModel::Stickers || m_kind == AssetLibraryModel::VideoEffects;
     const double progress = animated ? std::round(m_progress * 24) / 24 : 0.0;
     const QString key = u"%1|%2|%3|%4|%5x%6"_s.arg(m_kind).arg(m_assetId, sampleKey).arg(progress).arg(size.width()).arg(size.height());
     if (const QImage *cached = cache().object(key)) {
@@ -253,6 +254,26 @@ QImage AssetThumbnail::render(int kind, const QString &assetId, double progress,
                              target.width() * std::max(0.0, 1.0 - cropL - cropR), target.height() * std::max(0.0, 1.0 - cropT - cropB));
         painter.setClipRect(visible, Qt::IntersectClip);
         painter.drawImage(target, card);
+        return image;
+    }
+    if (kind == AssetLibraryModel::VideoEffects) {
+        // The clip it would apply to (or the sample scene), with the effect at `progress` of a two-second loop.
+        QImage image = sample.isNull() ? scene(size, true) : cover(sample, size);
+        const fx::VideoEffectPreset *preset = library.videoEffect(assetId);
+        if (!preset) {
+            return image;
+        }
+        if (const std::optional<fx::EffectKernel> kernel = fx::effectKernel(preset->kernel)) {
+            fx::VideoEffectParams params = engine::videoEffectParams(preset->params, {});
+            params.time = progress * 2.0;
+            fx::renderVideoEffect(*kernel, viewOf(image), params);
+        } else if (preset->type.startsWith(u"vedit.beat."_s)) {
+            // Effects on the beat: a pulse every half second.
+            const double pulse = std::exp(-4.0 * std::fmod(progress * 2.0, 0.5) / 0.18);
+            QPainter painter(&image);
+            painter.setOpacity(std::clamp(pulse * 0.7, 0.0, 1.0));
+            painter.fillRect(image.rect(), Qt::white);
+        }
         return image;
     }
     if (kind == AssetLibraryModel::Stickers) {

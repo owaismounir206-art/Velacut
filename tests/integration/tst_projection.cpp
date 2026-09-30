@@ -1065,6 +1065,55 @@ private slots:
         QCOMPARE(rgbHash(renderFresh1(session.data(), 45)), rgbHash(betweenPlain));
     }
 
+    // Video effects (P5.5): on a clip, with its strength; on a layer, only under it and only for its stretch.
+    void videoEffectsInProjection()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const ClipId clip = session.mainTrack().clips.front().id;
+        const QImage plain10 = renderFresh1(session.data(), 10);
+        const QImage plain100 = renderFresh1(session.data(), 100);
+        const auto effect = [](const QString &id, double mix) {
+            Effect e;
+            e.id = EffectId::create();
+            e.type = u"vedit.effect"_s;
+            e.preset = AssetRef{u"vedit.core"_s, id, 1};
+            e.intensity = Param(mix);
+            return e;
+        };
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [&](Clip &c) { c.effects.push_back(effect(u"effects/invert"_s, 0.0)); },
+                                                           u"invert"_s)));
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 10)), rgbHash(plain10)); // strength 0: nothing
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [](Clip &c) { c.effects.back().intensity = Param(1.0); }, u"x"_s)));
+        const QRgb inverted = renderFresh1(session.data(), 10).pixel(40, 40);
+        const QRgb original = plain10.pixel(40, 40);
+        QVERIFY2(std::abs(qRed(inverted) - (255 - qRed(original))) <= 2, qPrintable(u"%1 vs %2"_s.arg(qRed(inverted)).arg(qRed(original))));
+
+        // A layer with the effect from frame 60 to 90: frame 10 as before, frame 100 untouched, frame 70 changed.
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [](Clip &c) { c.effects.clear(); }, u"x"_s)));
+        QVERIFY(session.apply(session.editor().insertAdjustment(frames(60), frames(30))));
+        ClipId layer;
+        for (const Track &track : session.sequence().visualTracks) {
+            for (const Clip &c : track.clips) {
+                if (c.adjustment() || track.kind == TrackKind::Adjustment) {
+                    layer = c.id;
+                }
+            }
+        }
+        QVERIFY(!layer.isNull());
+        QVERIFY(session.apply(session.editor().updateClips({layer}, [&](Clip &c) { c.effects.push_back(effect(u"effects/pixelate-big"_s, 1.0)); },
+                                                           u"pixelate"_s)));
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 10)), rgbHash(plain10));
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 100)), rgbHash(plain100));
+        const QImage pixelated = renderFresh1(session.data(), 70);
+        // Pixelated: neighbours inside a block are equal.
+        int equal = 0;
+        for (int x = 0; x < 300; x += 3) {
+            equal += pixel(pixelated, x, 90) == pixel(pixelated, x + 1, 90) ? 1 : 0;
+        }
+        QVERIFY2(equal > 80, qPrintable(QString::number(equal)));
+    }
+
     void cleanupTestCase() { MltRuntime::shutdown(); }
 };
 

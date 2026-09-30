@@ -94,18 +94,29 @@ class TestUi : public QObject
             }
             const QRectF box = item->mapRectToItem(parent, QRectF(0, 0, item->width(), item->height()));
             const double contentY = parent->property("contentY").toDouble();
+            const double contentX = parent->property("contentX").toDouble();
+            bool moved = true;
             if (box.bottom() > parent->height()) {
                 parent->setProperty("contentY", contentY + box.bottom() - parent->height());
             } else if (box.top() < 0) {
                 parent->setProperty("contentY", contentY + box.top());
+            } else if (box.right() > parent->width()) {
+                parent->setProperty("contentX", contentX + box.right() - parent->width());
+            } else if (box.left() < 0) {
+                parent->setProperty("contentX", contentX + box.left());
+            } else {
+                moved = false;
             }
-            QTest::qWait(50);
+            if (moved) {
+                QTest::qWait(50);
+            }
             return;
         }
     }
     void click(QQuickItem *item, QPointF offset = {})
     {
         QVERIFY2(item, "item to click not found");
+        ensureVisible(item);
         QTest::mouseClick(m_window, Qt::LeftButton, {}, centre(item, offset));
         ++m_actions;
     }
@@ -939,6 +950,59 @@ private slots:
         QVERIFY(editor()->actions()->trigger(u"beat"_s));
         QTRY_VERIFY_WITH_TIMEOUT(music()->markers.size() >= 6, 20000);
         QCOMPARE(music()->markers.front().kind, MarkerKind::Beat);
+    }
+
+    // Effects tab (P5.5): a click puts the effect on the clip on screen and opens nothing else; the Effects page lists
+    // it with its controls; "+" puts one on its own layer; the bin removes it.
+    void effectsLibrary()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        editor()->importAndInsert({QUrl::fromLocalFile(m_files.landscape)}, 0, editor()->timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack().clips.size(), size_t(1), 20000);
+        editor()->clearSelection();
+        click(byText(u"Effects"_s));
+        QTRY_VERIFY(byName(u"asset_effects/blur-soft"_s));
+        QTest::qWait(50);
+        click(byName(u"asset_effects/blur-soft"_s));
+        const auto effects = [this](const ClipId &id) {
+            const Clip *clip = editor()->data().findClip(id);
+            return clip ? static_cast<int>(std::count_if(clip->effects.begin(), clip->effects.end(),
+                                                         [](const Effect &e) { return e.type == u"vedit.effect"_s; }))
+                        : 0;
+        };
+        const ClipId video = mainTrack().clips.front().id;
+        QTRY_COMPARE(effects(video), 1);
+        QVERIFY(editor()->inspector()->sections().contains(u"effects"_s));
+        QCOMPARE(editor()->inspector()->values().value(u"effects"_s).toList().size(), 1);
+        // The strength, from the Effects page: one undo step per drag.
+        QVERIFY(editor()->inspector()->setEffectParam(0, u"amount"_s, 0.9));
+        editor()->inspector()->endGesture();
+        QCOMPARE(editor()->inspector()->values().value(u"effects"_s).toList().front().toMap().value(u"controls"_s).toList()
+                     .front().toMap().value(u"value"_s).toDouble(), 0.9);
+        shot(u"15-effects"_s);
+
+        // "+": the effect on a layer of its own over the video.
+        const auto layers = [this] {
+            int count = 0;
+            for (const Track &track : editor()->data().mainSequence()->visualTracks) {
+                for (const Clip &clip : track.clips) {
+                    count += clip.adjustment() ? 1 : 0;
+                }
+            }
+            return count;
+        };
+        QVERIFY(editor()->addEffectLayer(u"effects/vhs"_s));
+        QTRY_COMPARE(layers(), 1);
+
+        // The bin on the page removes the effect from the video.
+        editor()->select(video.toString(), false);
+        editor()->propertiesRequested(u"effects"_s);
+        QTRY_VERIFY(byName(u"removeEffect_0"_s));
+        QTest::qWait(300); // the page just opened is still being laid out
+        click(byName(u"removeEffect_0"_s));
+        QTRY_COMPARE(effects(video), 0);
     }
 
     // Regression: a clip minutes long had its waveform painted whole (tens of thousands of pixels, as one path) and

@@ -312,6 +312,12 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
                         m_tractor->attach(*filter);
                         m_adjustmentFilters.push_back(std::move(filter));
                     }
+                    for (const VideoEffectSettings &effect : render->videoEffects) {
+                        auto filter = makeVideoEffectFilter(m_profile, effect);
+                        filter->set_in_and_out(in, out);
+                        m_tractor->attach(*filter);
+                        m_adjustmentFilters.push_back(std::move(filter));
+                    }
                     for (const BeatEffectSettings &beat : render->beats) {
                         auto filter = makeBeatFilter(m_profile, beat);
                         filter->set_in_and_out(in, out);
@@ -773,6 +779,25 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
                     audioEffects->compressorRatio = std::clamp(numberOf(it->second, 3.0), 1.0, 20.0);
                 }
                 continue;
+            } else if (effect.type == u"vedit.effect"_s) {
+                const fx::VideoEffectPreset *preset =
+                    effect.preset && effect.preset->pack == QLatin1StringView(fx::Library::kCorePack)
+                        ? fx::Library::core().videoEffect(effect.preset->id)
+                        : nullptr;
+                const std::optional<fx::EffectKernel> kernel = preset ? fx::effectKernel(preset->kernel) : std::nullopt;
+                if (!kernel) {
+                    m_warnings << u"clip %1: effect %2 is not installed"_s.arg(clip.id.toString(),
+                                                                              effect.preset ? effect.preset->id : QString());
+                    continue;
+                }
+                VideoEffectSettings settings;
+                settings.kernel = *kernel;
+                settings.params = videoEffectParams(preset->params, effect.params);
+                settings.mix = std::clamp(numberOf(effect.intensity, 1.0), 0.0, 1.0);
+                settings.firstFrame = in;
+                settings.frameRate = m_rate;
+                render->videoEffects.push_back(settings);
+                continue;
             } else if (effect.type == u"vedit.beat.flash"_s || effect.type == u"vedit.beat.zoom"_s ||
                        effect.type == u"vedit.beat.shake"_s) {
                 BeatEffectSettings beat;
@@ -908,6 +933,10 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
     stream << render->motionBlur.has_value();
     if (render->motionBlur) {
         stream << render->motionBlur->intensity << render->motionBlur->angle << render->motionBlur->samples;
+    }
+    stream << static_cast<quint32>(render->videoEffects.size());
+    for (const VideoEffectSettings &effect : render->videoEffects) {
+        stream << effect.key();
     }
     stream << static_cast<quint32>(render->beats.size());
     for (const BeatEffectSettings &beat : render->beats) {
@@ -1257,6 +1286,10 @@ void TimelineProjection::attachFilters(Mlt::Producer &cut, const ClipRender &ren
     }
     if (render.motionBlur) {
         auto filter = makeMotionBlurFilter(m_profile, *render.motionBlur);
+        cut.attach(*filter);
+    }
+    for (const VideoEffectSettings &effect : render.videoEffects) {
+        auto filter = makeVideoEffectFilter(m_profile, effect);
         cut.attach(*filter);
     }
     for (const BeatEffectSettings &beat : render.beats) {
