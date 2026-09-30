@@ -1,3 +1,4 @@
+HEAD
 # vedit
 
 Editor video desktop per Linux (Arch), completamente offline, con interfaccia Material 3.
@@ -59,3 +60,6 @@ Nelle build di sviluppo (`VEDIT_DEV_SANDBOX=ON`, default) app e test usano carte
   frei0r (GPL-2+), rubberband (GPL-2+), SDL2 (zlib).
 
 Nessun asset o codice di CapCut è incluso.
+
+# Velacut
+36af2d2b1124ea2712ca4ee402dd764beadd1a76
