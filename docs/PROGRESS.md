@@ -6,7 +6,23 @@ Ultimo aggiornamento: 2026-10-01 (Fase 5 in corso: P5.1–P5.6 completati; inizi
 **Fase 5 — Libreria creativa: in corso (P5.1–P5.6 completati; P5.7 iniziato con template e placeholder; restano 
 slideshow, kit del marchio e copertina, gestore asset, percorso GPU delle transizioni).**
 
-### Sessione 2026-09-30
+### Sessione 2026-10-01
+- **P5.7 — Template di progetto con segnaposto (fondamenta complete)**:
+  * Aggiunto `templates.json` al pacchetto core con 8 template pronti in 8 categorie diverse (vlog, travel, party, 
+    business, sport, memories, social, cinematic). Ogni template specifica: canvas, slot (placeholder con label, 
+    tipo video/photo/any, durata), transizioni, filtri, testi e sticker posizionati.
+  * Implementato `TemplateBuilder` (`src/core/project/TemplateBuilder.{h,cpp}`) che costruisce una `Sequence` da un 
+    manifest di template JSON: crea i placeholder come clip colore grigio con metadati `Clip::placeholder`.
+  * Aggiunto `AppController::newProjectFromTemplate(templateId)` che carica un template dalla libreria e crea un 
+    progetto con la sequenza già popolata di placeholder pronti per essere sostituiti.
+  * Esteso `AssetLibraryModel` con il tipo `Templates` per esporre i template all'interfaccia QML (categorie e item).
+  * Caricamento e serializzazione placeholder già presenti: `Clip::placeholder` nel core, `ProjectJson` lo salva/carica, 
+    `TimelineEditor::insertPlaceholder()` e `::replaceClipMedia()` gestiscono l'inserimento e la sostituzione.
+  * Test: `tst_kernels::coreLibraryLoads` verifica ≥8 template in ≥8 categorie, tutti con nomi bilingui.
+  * **Commit**: `be66e66` (template library + TemplateBuilder), `6e2d4a7` (AppController), `8f8c8bb` (AssetLibraryModel), 
+    `78f2124` (test).
+  * **Ancora da fare per P5.7**: interfaccia QML (scheda Template con anteprima e "Usa"), "Sostituisci" con Alt+trascina, 
+    "Salva come template", slideshow dalle foto.
 - **Bug "l'app crasha quando metto qualcosa nella timeline"** (segnalato dall'utente): era un **blocco**, non un crash.
   `WaveformView::paint` disegnava la forma d'onda dell'intera clip come un unico path di un rettangolo per colonna;
   con un video di 4 minuti (~43 000 px di larghezza) il riempimento del path nel rasterizzatore di Qt impiegava minuti,
@@ -80,17 +96,23 @@ slideshow, kit del marchio e copertina, gestore asset, percorso GPU delle transi
    `tst_kernels::graphicElements`, `coreLibraryLoads` (≥ 40 stili, ≥ 50 template bilingui),
    `tst_projection::graphicElementsInProjection`, `tst_serialization`, `tst_ui::animatedElements`.
 
-7. **P5.7 — Template di progetto con segnaposto (iniziato)**: 
-   - `templates.json` nel pacchetto core con 8 template pronti in 8 categorie (vlog, travel, party, business, sport, 
+7. **P5.7 — Template di progetto con segnaposto (in corso)**: 
+   - ✅ `templates.json` nel pacchetto core con 8 template pronti in 8 categorie (vlog, travel, party, business, sport, 
      memories, social, cinematic).
-   - Ogni template ha slot (placeholder) con etichette localizzate, tipo richiesto (video/photo/any), durate, 
+   - ✅ Ogni template ha slot (placeholder) con etichette localizzate, tipo richiesto (video/photo/any), durate, 
      transizioni, filtri, testi e sticker.
-   - `TemplateBuilder` (`core/project/TemplateBuilder.h`/`.cpp`) costruisce una sequenza da un manifest di template.
-   - Supporto placeholder già presente nel core (`Clip::placeholder`, serializzazione in `ProjectJson`) e nell'editor
+   - ✅ `TemplateBuilder` (`core/project/TemplateBuilder.h`/`.cpp`) costruisce una sequenza da un manifest di template.
+   - ✅ Supporto placeholder già presente nel core (`Clip::placeholder`, serializzazione in `ProjectJson`) e nell'editor
      (`TimelineEditor::insertPlaceholder`, `replaceClipMedia` per sostituire con media reali).
-   - `fx::Library` carica i template con categorie e preset localizzati.
-   - **Ancora da fare**: interfaccia per applicare i template (scheda Template, anteprima, "Usa questo template"), 
-     "Sostituisci" con Alt+trascina, "Salva come template", slideshow dalle foto.
+   - ✅ `fx::Library` carica i template con categorie e preset localizzati.
+   - ✅ `AppController::newProjectFromTemplate()` crea un progetto da un template.
+   - ✅ `AssetLibraryModel` supporta il tipo `Templates` per esporre i template al QML.
+   - ✅ Test: `tst_kernels::coreLibraryLoads` verifica ≥8 template in ≥8 categorie.
+   - **Ancora da fare**: 
+     * Interfaccia QML per la scheda Template (anteprima miniature, "Usa questo template")
+     * "Sostituisci" con Alt+trascina sulla timeline per rimpiazzare i placeholder
+     * "Salva come template" per salvare il progetto corrente come template personalizzato
+     * Slideshow automatico dalle foto con Ken Burns e transizioni
 
 ### Criterio di completamento della Fase 4 (SPEC §8)
 | Requisito | Esito | Verifica |
