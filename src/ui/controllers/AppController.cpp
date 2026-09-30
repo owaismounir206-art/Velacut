@@ -3,10 +3,12 @@
 
 #include "ActionRegistry.h"
 #include "RecordController.h"
+#include "core/project/TemplateBuilder.h"
 #include "document/Document.h"
 #include "document/DraftStore.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/render/RenderJob.h"
+#include "fx/Library.h"
 #include "ui/controllers/EditorController.h"
 #include "ui/models/AudioLibraryModel.h"
 #include "ui/models/DraftsModel.h"
@@ -105,6 +107,47 @@ bool AppController::newProject()
         emit message(error);
         return false;
     }
+    m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper);
+    m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
+    emit editorChanged();
+    return true;
+}
+
+bool AppController::newProjectFromTemplate(const QString &templateId)
+{
+    closeEditor();
+    QString error;
+    std::unique_ptr<document::Document> document = m_store->createDraft(&error);
+    if (!document) {
+        emit message(error);
+        return false;
+    }
+
+    // Load the template from the core pack
+    const fx::Library library = fx::Library::load(u":/vedit/packs/vedit.core"_s);
+    const fx::TemplatePreset *preset = library.templatePreset(templateId);
+    if (!preset) {
+        emit message(tr("Template not found."));
+        return false;
+    }
+
+    // Build the sequence from the template
+    Project &project = document->project();
+    const std::optional<Sequence> sequence = TemplateBuilder::fromTemplate(preset->spec, project.data().settings.frameRate);
+    if (!sequence) {
+        emit message(tr("Failed to create project from template."));
+        return false;
+    }
+
+    // Replace the main sequence with the template sequence
+    ProjectMutator mutator(project);
+    const SequenceId oldMainId = project.data().mainSequenceId;
+    mutator.removeSequence(oldMainId);
+    mutator.insertSequence(0, *sequence);
+
+    // Set the project name from the template
+    mutator.setName(preset->name.text());
+
     m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper);
     m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
     emit editorChanged();

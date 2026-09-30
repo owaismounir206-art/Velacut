@@ -66,6 +66,8 @@ public:
 
     // "New project": opens the editor at once, no questions (SPEC 0bis rule 1).
     Q_INVOKABLE bool newProject();
+    // Creates a project from a template (SPEC §5.13): the sequence has placeholder clips ready to be filled.
+    Q_INVOKABLE bool newProjectFromTemplate(const QString &templateId);
     Q_INVOKABLE bool recordScreen();
     Q_INVOKABLE bool openDraft(const QString &draftId);
     // Back to the home screen (everything is already saved; this writes the last changes).
