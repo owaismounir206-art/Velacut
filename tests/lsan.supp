@@ -11,3 +11,6 @@ leak:/usr/lib/mlt-7/
 leak:libSDL3.so
 leak:libglib-2.0.so
 leak:ld-linux-x86-64.so
+# Qt 6.11: QFreetypeFace::cleanup(), run by QCoreApplicationPrivate::cleanupThreadData() when the application is
+# destroyed, leaves one 48-byte allocation (seen at the end of tst_ui; the stack has no vedit frame).
+leak:QFreetypeFace::cleanup
