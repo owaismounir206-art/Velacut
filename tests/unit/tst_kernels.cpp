@@ -640,6 +640,10 @@ private slots:
         check(library.filters(), library.filterCategories());
         check(library.transitions(), library.transitionCategories());
         check(library.textStyles(), library.textStyleCategories());
+        check(library.templates(), library.templateCategories());
+        // Templates (SPEC §5.13): at least 8 templates in 8 categories.
+        QVERIFY2(library.templates().size() >= 8, qPrintable(QString::number(library.templates().size())));
+        QVERIFY2(library.templateCategories().size() >= 8, qPrintable(QString::number(library.templateCategories().size())));
         // Video effects (SPEC §5.11: at least 80): each a kernel that exists, or an effect on the beat; every kernel used.
         QVERIFY2(library.videoEffects().size() >= 80, qPrintable(QString::number(library.videoEffects().size())));
         check(library.videoEffects(), library.videoEffectCategories());
