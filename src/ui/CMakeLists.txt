@@ -18,6 +18,7 @@ qt_add_qml_module(vedit_ui
         models/AudioLibraryModel.h models/AudioLibraryModel.cpp
         models/AssetLibraryModel.h models/AssetLibraryModel.cpp
         models/DraftsModel.h models/DraftsModel.cpp
+        models/Preferences.h models/Preferences.cpp
         models/MediaPoolModel.h models/MediaPoolModel.cpp
         models/TimelineModel.h models/TimelineModel.cpp
         controllers/EngineTypes.h
