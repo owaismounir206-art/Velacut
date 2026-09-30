@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=vedit
+GenericName=Video Editor
+Comment=Editor video desktop per Linux, completamente offline
+Icon=vedit
+Exec=vedit %F
+Terminal=false
+Categories=AudioVideo;Video;VideoEditing;Qt;
+MimeType=video/mp4;video/x-matroska;video/quicktime;video/webm;video/mpeg;video/x-msvideo;application/x-vedit-project;
+Keywords=video;editor;editing;montaggio;timeline;
+StartupWMClass=vedit
+StartupNotify=true
