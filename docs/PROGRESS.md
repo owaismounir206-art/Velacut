@@ -1,10 +1,10 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-09-30 (Fase 5 in corso: P5.1–P5.4 completati; corretto il blocco della timeline)
+Ultimo aggiornamento: 2026-10-01 (Fase 5 in corso: P5.1–P5.6 completati; iniziato P5.7 con template e placeholder)
 
 ## Fase corrente
-**Fase 5 — Libreria creativa: in corso (P5.1–P5.4 completati; restano effetti video, elementi grafici animati,
-template con segnaposto, slideshow, kit del marchio e copertina, gestore asset, percorso GPU delle transizioni).**
+**Fase 5 — Libreria creativa: in corso (P5.1–P5.6 completati; P5.7 iniziato con template e placeholder; restano 
+slideshow, kit del marchio e copertina, gestore asset, percorso GPU delle transizioni).**
 
 ### Sessione 2026-09-30
 - **Bug "l'app crasha quando metto qualcosa nella timeline"** (segnalato dall'utente): era un **blocco**, non un crash.
@@ -79,6 +79,18 @@ template con segnaposto, slideshow, kit del marchio e copertina, gestore asset, 
    all'azione, più titoli), con il testo d'esempio in italiano e inglese (prima era solo italiano). Test:
    `tst_kernels::graphicElements`, `coreLibraryLoads` (≥ 40 stili, ≥ 50 template bilingui),
    `tst_projection::graphicElementsInProjection`, `tst_serialization`, `tst_ui::animatedElements`.
+
+7. **P5.7 — Template di progetto con segnaposto (iniziato)**: 
+   - `templates.json` nel pacchetto core con 8 template pronti in 8 categorie (vlog, travel, party, business, sport, 
+     memories, social, cinematic).
+   - Ogni template ha slot (placeholder) con etichette localizzate, tipo richiesto (video/photo/any), durate, 
+     transizioni, filtri, testi e sticker.
+   - `TemplateBuilder` (`core/project/TemplateBuilder.h`/`.cpp`) costruisce una sequenza da un manifest di template.
+   - Supporto placeholder già presente nel core (`Clip::placeholder`, serializzazione in `ProjectJson`) e nell'editor
+     (`TimelineEditor::insertPlaceholder`, `replaceClipMedia` per sostituire con media reali).
+   - `fx::Library` carica i template con categorie e preset localizzati.
+   - **Ancora da fare**: interfaccia per applicare i template (scheda Template, anteprima, "Usa questo template"), 
+     "Sostituisci" con Alt+trascina, "Salva come template", slideshow dalle foto.
 
 ### Criterio di completamento della Fase 4 (SPEC §8)
 | Requisito | Esito | Verifica |
@@ -268,8 +280,9 @@ template con segnaposto, slideshow, kit del marchio e copertina, gestore asset, 
      - 100% CTest passati (25/25) con zero compiler warnings (`-Wall -Wextra -Wpedantic -Werror`).
 
 ### Prossimi passi (Fase 5 — Libreria creativa)
-3. P5.7: template di progetto con segnaposto, "Sostituisci" (anche Alt+trascina), salva come template; slideshow
-   dalle foto.
+3. P5.7 (continua): interfaccia per i template (scheda Template con anteprima, "Usa questo template" che crea un
+   progetto con placeholder), "Sostituisci" anche con Alt+trascina nella timeline, "Salva come template", slideshow
+   dalle foto con Ken Burns e transizioni.
 4. P5.8: kit del marchio (più kit: palette, font, loghi, stili, intro/outro, watermark, musiche; colori del kit primi nei
    selettori) e copertina (fotogramma o immagine + testi/sticker, export JPG/PNG, incorporata nell'MP4).
 5. P5.9: gestore asset (installa/rimuovi pacchetti da cartelle o .zip).
