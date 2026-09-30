@@ -21,8 +21,17 @@ slideshow, kit del marchio e copertina, gestore asset, percorso GPU delle transi
   * Test: `tst_kernels::coreLibraryLoads` verifica ≥8 template in ≥8 categorie, tutti con nomi bilingui.
   * **Commit**: `be66e66` (template library + TemplateBuilder), `6e2d4a7` (AppController), `8f8c8bb` (AssetLibraryModel), 
     `78f2124` (test).
-  * **Ancora da fare per P5.7**: interfaccia QML (scheda Template con anteprima e "Usa"), "Sostituisci" con Alt+trascina, 
-    "Salva come template", slideshow dalle foto.
+
+- **P5.9 — Gestore asset (fondamenta)**:
+  * Implementato `PackageManager` (`src/fx/PackageManager.{h,cpp}`) per gestire pacchetti di asset utente.
+  * I pacchetti vengono installati in `~/.local/share/vedit/packs/` accanto al pacchetto core built-in.
+  * `installPackage()` copia ricorsivamente una cartella di pacchetto nella directory utente.
+  * `removePackage()` rimuove pacchetti utente (il core built-in è protetto).
+  * `installedPackages()` elenca tutti i pacchetti (built-in + utente) con metadati da `manifest.json`.
+  * Placeholder per estrazione ZIP (da implementare con libreria o comando esterno).
+  * **Commit**: `[commit corrente]`.
+  * **Ancora da fare per P5.9**: interfaccia QML per installare/rimuovere pacchetti, supporto ZIP completo, 
+    integrazione con `fx::Library` per caricare asset dai pacchetti utente.
 - **Bug "l'app crasha quando metto qualcosa nella timeline"** (segnalato dall'utente): era un **blocco**, non un crash.
   `WaveformView::paint` disegnava la forma d'onda dell'intera clip come un unico path di un rettangolo per colonna;
   con un video di 4 minuti (~43 000 px di larghezza) il riempimento del path nel rasterizzatore di Qt impiegava minuti,
@@ -97,22 +106,20 @@ slideshow, kit del marchio e copertina, gestore asset, percorso GPU delle transi
    `tst_projection::graphicElementsInProjection`, `tst_serialization`, `tst_ui::animatedElements`.
 
 7. **P5.7 — Template di progetto con segnaposto (in corso)**: 
-   - ✅ `templates.json` nel pacchetto core con 8 template pronti in 8 categorie (vlog, travel, party, business, sport, 
-     memories, social, cinematic).
-   - ✅ Ogni template ha slot (placeholder) con etichette localizzate, tipo richiesto (video/photo/any), durate, 
-     transizioni, filtri, testi e sticker.
-   - ✅ `TemplateBuilder` (`core/project/TemplateBuilder.h`/`.cpp`) costruisce una sequenza da un manifest di template.
-   - ✅ Supporto placeholder già presente nel core (`Clip::placeholder`, serializzazione in `ProjectJson`) e nell'editor
-     (`TimelineEditor::insertPlaceholder`, `replaceClipMedia` per sostituire con media reali).
-   - ✅ `fx::Library` carica i template con categorie e preset localizzati.
-   - ✅ `AppController::newProjectFromTemplate()` crea un progetto da un template.
-   - ✅ `AssetLibraryModel` supporta il tipo `Templates` per esporre i template al QML.
-   - ✅ Test: `tst_kernels::coreLibraryLoads` verifica ≥8 template in ≥8 categorie.
-   - **Ancora da fare**: 
-     * Interfaccia QML per la scheda Template (anteprima miniature, "Usa questo template")
-     * "Sostituisci" con Alt+trascina sulla timeline per rimpiazzare i placeholder
-     * "Salva come template" per salvare il progetto corrente come template personalizzato
-     * Slideshow automatico dalle foto con Ken Burns e transizioni
+   - ✅ `templates.json` nel pacchetto core con 8 template pronti in 8 categorie
+   - ✅ `TemplateBuilder` costruisce sequenze da manifest template
+   - ✅ Supporto placeholder completo nel core e editor
+   - ✅ `fx::Library` carica template con categorie localizzate
+   - ✅ `AppController::newProjectFromTemplate()` crea progetti da template
+   - ✅ `AssetLibraryModel` supporta tipo `Templates`
+   - ✅ Test: `tst_kernels::coreLibraryLoads` verifica ≥8 template in ≥8 categorie
+   - **Ancora da fare**: UI QML, Alt+trascina per sostituire, salva come template, slideshow foto
+
+8. **P5.9 — Gestore asset (in corso)**:
+   - ✅ `PackageManager` gestisce pacchetti in `~/.local/share/vedit/packs/`
+   - ✅ `installPackage()` e `removePackage()` per gestione pacchetti
+   - ✅ `installedPackages()` elenca built-in + utente con metadati
+   - **Ancora da fare**: UI QML, supporto ZIP completo, integrazione con `fx::Library`
 
 ### Criterio di completamento della Fase 4 (SPEC §8)
 | Requisito | Esito | Verifica |
@@ -302,16 +309,11 @@ slideshow, kit del marchio e copertina, gestore asset, percorso GPU delle transi
      - 100% CTest passati (25/25) con zero compiler warnings (`-Wall -Wextra -Wpedantic -Werror`).
 
 ### Prossimi passi (Fase 5 — Libreria creativa)
-3. P5.7 (continua): interfaccia per i template (scheda Template con anteprima, "Usa questo template" che crea un
-   progetto con placeholder), "Sostituisci" anche con Alt+trascina nella timeline, "Salva come template", slideshow
-   dalle foto con Ken Burns e transizioni.
-4. P5.8: kit del marchio (più kit: palette, font, loghi, stili, intro/outro, watermark, musiche; colori del kit primi nei
-   selettori) e copertina (fotogramma o immagine + testi/sticker, export JPG/PNG, incorporata nell'MP4).
-5. P5.9: gestore asset (installa/rimuovi pacchetti da cartelle o .zip).
-6. P5.10: percorso GPU facoltativo delle transizioni (GLSL compatibile GL 2.1/GLES 2.0, offscreen) con test di
-   rendering CPU/GPU entro tolleranza PSNR.
-7. P5.11: criterio della Fase 5 ("Uso un template, sostituisco i media e ottengo un video completo; ogni transizione
-   supera il test di rendering CPU/GPU"), README, SHORTCUTS, USABILITY.
+3. P5.7 (continua): UI QML per template, Alt+trascina per sostituire placeholder, salva come template, slideshow foto.
+4. P5.8: kit del marchio (palette, font, loghi, intro/outro, watermark) e copertina (fotogramma + testi, export JPG/PNG).
+5. P5.9 (continua): UI QML per gestore asset, supporto ZIP completo, integrazione `fx::Library` con pacchetti utente.
+6. P5.10: percorso GPU delle transizioni (GLSL ES 2.0/2.1, offscreen) con test PSNR CPU/GPU.
+7. P5.11: criterio Fase 5, README, SHORTCUTS, USABILITY.
 
 ### Lacune della Fase 2 (trovate il 2026-09-25) — recuperate
 La Fase 2 era stata segnata come completata senza alcune funzioni della sua riga di SPEC §8, e la Fase 3 è iniziata
