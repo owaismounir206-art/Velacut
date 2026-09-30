@@ -55,24 +55,44 @@ Item {
              : clip.kind === "text" ? Theme.color.primaryContainer : Theme.color.secondaryContainer
         clip: true
 
-        MediaThumbnail {
-            anchors.fill: parent
-            visible: clip.kind === "video" || clip.kind === "image"
-            editor: clip.view.editor
-            mediaId: clip.mediaId
-            tiled: true
-            sourceIn: clip.sourceIn + (clip.mode === "trimStart" ? clip.editStart - clip.start : 0)
-            sourceDuration: clip.shownDuration
-        }
-        WaveformView {
-            anchors.fill: parent
-            anchors.margins: Theme.space.xs
-            visible: clip.kind === "audio"
-            editor: clip.view.editor
-            mediaId: clip.mediaId
-            sourceIn: clip.sourceIn + (clip.mode === "trimStart" ? clip.editStart - clip.start : 0)
-            sourceDuration: clip.shownDuration
-            color: Theme.color.onTertiaryContainer
+        // Only the part of the clip in view (in whole chunks, one chunk of margin) has pictures: a clip minutes long is
+        // tens of thousands of pixels wide, and painting it whole froze the interface.
+        Item {
+            id: shown
+            readonly property real chunk: Theme.editor.paintChunk
+            readonly property real from: Math.max(0, (Math.floor((clip.view.viewportLeft - clip.x) / chunk) - 1) * chunk)
+            readonly property real to: Math.min(clip.width, (Math.ceil((clip.view.viewportRight - clip.x) / chunk) + 1) * chunk)
+            x: from
+            width: Math.max(0, to - from)
+            height: parent.height
+
+            MediaThumbnail {
+                visible: clip.kind === "video" || clip.kind === "image"
+                width: visible ? parent.width : 0
+                height: parent.height
+                editor: clip.view.editor
+                mediaId: clip.mediaId
+                tiled: true
+                fullWidth: clip.width
+                offset: shown.from
+                sourceIn: clip.sourceIn + (clip.mode === "trimStart" ? clip.editStart - clip.start : 0)
+                sourceDuration: clip.shownDuration
+            }
+            WaveformView {
+                readonly property real margin: Theme.space.xs
+                visible: clip.kind === "audio"
+                x: Math.max(0, margin - shown.from)
+                y: margin
+                width: visible ? Math.max(0, Math.min(shown.width, clip.width - margin - shown.from) - x) : 0
+                height: parent.height - 2 * margin
+                editor: clip.view.editor
+                mediaId: clip.mediaId
+                fullWidth: clip.width - 2 * margin
+                offset: shown.from + x - margin
+                sourceIn: clip.sourceIn + (clip.mode === "trimStart" ? clip.editStart - clip.start : 0)
+                sourceDuration: clip.shownDuration
+                color: Theme.color.onTertiaryContainer
+            }
         }
         Rectangle {
             x: Theme.space.xs

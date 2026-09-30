@@ -164,6 +164,8 @@ class ThemeEditor : public QObject
     Q_PROPERTY(qreal zoomMinimum MEMBER m_zoomMinimum CONSTANT FINAL)
     Q_PROPERTY(qreal zoomMaximum MEMBER m_zoomMaximum CONSTANT FINAL)
     Q_PROPERTY(qreal zoomStep MEMBER m_zoomStep CONSTANT FINAL)
+    // The pictures of a clip (frames, waveform) are painted only around the view, in steps of this width
+    Q_PROPERTY(qreal paintChunk MEMBER m_paintChunk CONSTANT FINAL)
     // Timeline padding after the last clip, as a share of the view
     Q_PROPERTY(qreal tailRatio MEMBER m_tailRatio CONSTANT FINAL)
 
@@ -215,6 +217,7 @@ private:
     qreal m_zoomMinimum = 0.02;
     qreal m_zoomMaximum = 24;
     qreal m_zoomStep = 1.25;
+    qreal m_paintChunk = 512;
     qreal m_tailRatio = 0.5;
 };
 

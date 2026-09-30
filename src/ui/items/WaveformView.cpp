@@ -5,7 +5,6 @@
 #include "engine/analysis/MediaAnalysis.h"
 
 #include <QPainter>
-#include <QPainterPath>
 
 #include <cmath>
 
@@ -74,6 +73,24 @@ void WaveformView::setColor(const QColor &color)
     }
 }
 
+void WaveformView::setFullWidth(qreal width)
+{
+    if (width != m_fullWidth) {
+        m_fullWidth = width;
+        emit spanChanged();
+        update();
+    }
+}
+
+void WaveformView::setOffset(qreal offset)
+{
+    if (offset != m_offset) {
+        m_offset = offset;
+        emit spanChanged();
+        update();
+    }
+}
+
 void WaveformView::reload()
 {
     const Media *media = m_editor ? m_editor->findMedia(m_mediaId) : nullptr;
@@ -90,11 +107,16 @@ void WaveformView::paint(QPainter *painter)
     const int buckets = m_waveform->bucketCount();
     const double bucketsPerFrame = m_waveform->bucketsPerSecond / m_editor->frameRate();
     const double middle = height() / 2.0;
+    const double full = m_fullWidth > 0 ? m_fullWidth : width();
     const int columns = static_cast<int>(std::ceil(width()));
-    QPainterPath path;
+    // One rectangle per pixel column, filled one by one: a single path of thousands of rectangles costs the raster
+    // engine far more than the rectangles themselves (a four-minute clip used to freeze the interface for minutes).
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(m_color);
     for (int x = 0; x < columns; ++x) {
-        const double from = (m_sourceIn + m_sourceDuration * x / width()) * bucketsPerFrame;
-        const double to = (m_sourceIn + m_sourceDuration * (x + 1) / width()) * bucketsPerFrame;
+        const double column = m_offset + x;
+        const double from = (m_sourceIn + m_sourceDuration * column / full) * bucketsPerFrame;
+        const double to = (m_sourceIn + m_sourceDuration * (column + 1) / full) * bucketsPerFrame;
         int low = 0;
         int high = 0;
         for (int b = static_cast<int>(from); b < std::max(static_cast<int>(from) + 1, static_cast<int>(to)) && b < buckets; ++b) {
@@ -106,9 +128,8 @@ void WaveformView::paint(QPainter *painter)
         // At least one pixel, so silence still shows as a line.
         const double top = middle - std::max(0.5, high / 127.0 * middle);
         const double bottom = middle + std::max(0.5, -low / 127.0 * middle);
-        path.addRect(QRectF(x, top, 1.0, bottom - top));
+        painter->drawRect(QRectF(x, top, 1.0, bottom - top));
     }
-    painter->fillPath(path, m_color);
 }
 
 } // namespace vedit::ui

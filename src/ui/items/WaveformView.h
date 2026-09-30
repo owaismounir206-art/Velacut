@@ -18,6 +18,8 @@ class EditorController;
 
 // The waveform of a clip's audio (min/max peaks of the cached waveform, D-16), for the source range
 // sourceIn…sourceIn+sourceDuration (project frames), painted on the CPU.
+// A clip minutes long is tens of thousands of pixels wide: the item then covers only the part in view, `offset`
+// pixels from the clip's start, and `fullWidth` is the width of the whole clip (0: the item is the whole clip).
 class WaveformView : public QQuickPaintedItem
 {
     Q_OBJECT
@@ -27,6 +29,8 @@ class WaveformView : public QQuickPaintedItem
     Q_PROPERTY(int sourceIn READ sourceIn WRITE setSourceIn NOTIFY sourceChanged FINAL)
     Q_PROPERTY(int sourceDuration READ sourceDuration WRITE setSourceDuration NOTIFY sourceChanged FINAL)
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged FINAL)
+    Q_PROPERTY(qreal fullWidth READ fullWidth WRITE setFullWidth NOTIFY spanChanged FINAL)
+    Q_PROPERTY(qreal offset READ offset WRITE setOffset NOTIFY spanChanged FINAL)
 
 public:
     explicit WaveformView(QQuickItem *parent = nullptr);
@@ -43,6 +47,11 @@ public:
     QColor color() const { return m_color; }
     void setColor(const QColor &color);
 
+    qreal fullWidth() const { return m_fullWidth; }
+    void setFullWidth(qreal width);
+    qreal offset() const { return m_offset; }
+    void setOffset(qreal offset);
+
     void paint(QPainter *painter) override;
 
 signals:
@@ -50,6 +59,7 @@ signals:
     void mediaIdChanged();
     void sourceChanged();
     void colorChanged();
+    void spanChanged();
 
 private:
     void reload();
@@ -60,6 +70,8 @@ private:
     int m_sourceIn = 0;
     int m_sourceDuration = 0;
     QColor m_color;
+    qreal m_fullWidth = 0.0;
+    qreal m_offset = 0.0;
     std::shared_ptr<const engine::Waveform> m_waveform;
 };
 

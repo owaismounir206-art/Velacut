@@ -20,6 +20,9 @@ Rectangle {
     readonly property var tracks: model.tracks
     readonly property int rows: tracks.length
     property real zoom: Theme.editor.zoomDefault // pixels per frame
+    // The visible part of the tracks, in timeline pixels.
+    readonly property real viewportLeft: flick.contentX
+    readonly property real viewportRight: flick.contentX + flick.width
     readonly property int snapFrames: Math.max(1, Math.round(Theme.editor.snapThreshold / zoom))
     // Frame where a drag snapped (a guide line is drawn there), -1 when none.
     property int snapGuide: -1

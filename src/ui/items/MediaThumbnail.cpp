@@ -98,6 +98,24 @@ void MediaThumbnail::reload()
     update();
 }
 
+void MediaThumbnail::setFullWidth(qreal width)
+{
+    if (width != m_fullWidth) {
+        m_fullWidth = width;
+        emit spanChanged();
+        update();
+    }
+}
+
+void MediaThumbnail::setOffset(qreal offset)
+{
+    if (offset != m_offset) {
+        m_offset = offset;
+        emit spanChanged();
+        update();
+    }
+}
+
 void MediaThumbnail::paint(QPainter *painter)
 {
     if (m_strip.isNull() || m_count < 1 || width() <= 0 || height() <= 0) {
@@ -120,15 +138,17 @@ void MediaThumbnail::paint(QPainter *painter)
         return;
     }
     // Timeline: tiles as high as the item, each with the frame of the source time at its centre.
+    // Tiles are laid out from the clip's start (x in clip coordinates), so they stay put while the view scrolls.
     const double tileWidth = frame.width() * height() / frame.height();
     const double rate = m_editor ? m_editor->frameRate() : 30.0;
-    for (double x = 0; x < width(); x += tileWidth) {
+    const double full = m_fullWidth > 0 ? m_fullWidth : width();
+    for (double x = std::floor(m_offset / tileWidth) * tileWidth; x < m_offset + width(); x += tileWidth) {
         int index = 0;
         if (m_mediaSeconds > 0 && m_sourceDuration > 0) {
-            const double frames = m_sourceIn + (x + tileWidth / 2) / width() * m_sourceDuration;
+            const double frames = m_sourceIn + (x + tileWidth / 2) / full * m_sourceDuration;
             index = static_cast<int>(std::floor(frames / rate / m_mediaSeconds * m_count));
         }
-        painter->drawImage(QRectF(x, 0, tileWidth, height()), m_strip, source(index));
+        painter->drawImage(QRectF(x - m_offset, 0, tileWidth, height()), m_strip, source(index));
     }
 }
 

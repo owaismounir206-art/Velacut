@@ -5,6 +5,7 @@
 #include "TestMedia.h"
 
 #include "document/Document.h"
+#include "engine/analysis/MediaAnalysis.h"
 #include "engine/mlt/MltRuntime.h"
 #include "engine/timeline/MediaProducerCache.h"
 #include "engine/timeline/TimelineProjection.h"
@@ -16,6 +17,7 @@
 #include "ui/controllers/RecordController.h"
 #include "ui/models/TimelineModel.h"
 
+#include <QElapsedTimer>
 #include <QPainter>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
@@ -879,6 +881,45 @@ private slots:
         // 3. Close
         recorder->close();
         QTRY_VERIFY(!recorder->isActive());
+    }
+
+    // Regression: a clip minutes long had its waveform painted whole (tens of thousands of pixels, as one path) and
+    // the interface froze for minutes as soon as it was on the timeline, which looked like a crash.
+    void longClipIsPaintedOnlyInView()
+    {
+        const QString song = m_dir.filePath(u"media/long.wav"_s);
+        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s, u"sine=frequency=220:sample_rate=8000:duration=300"_s,
+                           u"-ac"_s, u"1"_s, song}));
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        editor()->importAndInsert({QUrl::fromLocalFile(song)}, 0, editor()->timeline()->mainRow());
+        const auto audioClips = [this] {
+            size_t count = 0;
+            for (const Track &track : editor()->data().mainSequence()->audioTracks) {
+                count += track.clips.size();
+            }
+            return count;
+        };
+        QTRY_COMPARE_WITH_TIMEOUT(audioClips(), size_t(1), 20000);
+        const Media &media = editor()->data().media.front();
+        QTRY_VERIFY_WITH_TIMEOUT(editor()->analysis().waveform(media), 20000);
+        QQuickItem *waveform = nullptr;
+        QTRY_VERIFY((waveform = findItem(m_window->contentItem(), [](QQuickItem *item) {
+                         return QByteArray(item->metaObject()->className()).startsWith("vedit::ui::WaveformView");
+                     })));
+        const double clipWidth = waveform->property("fullWidth").toDouble();
+        QVERIFY2(clipWidth > 20000, qPrintable(u"clip width %1"_s.arg(clipWidth)));
+        const double chunk = m_theme->property("editor").value<QObject *>()->property("paintChunk").toDouble();
+        QVERIFY(chunk > 0);
+        QVERIFY2(waveform->width() <= m_window->width() + 4 * chunk,
+                 qPrintable(u"waveform painted %1 px wide"_s.arg(waveform->width())));
+        QElapsedTimer frame;
+        frame.start();
+        m_window->grabWindow();
+        QVERIFY2(frame.elapsed() < 5000, qPrintable(u"one frame took %1 ms"_s.arg(frame.elapsed())));
+        editor()->undo();
+        QTRY_COMPARE(audioClips(), size_t(0));
     }
 
     void noQmlWarnings()
