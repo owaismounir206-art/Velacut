@@ -18,6 +18,9 @@ add_library(vedit_core STATIC
     project/ChangeSet.h
     project/Project.h
     project/ProjectMutator.h project/ProjectMutator.cpp
+
+    subtitle/SubtitleFormat.h subtitle/SubtitleFormat.cpp
+
     commands/Edit.h commands/Edit.cpp
     commands/EditCommand.h commands/EditCommand.cpp
     edit/SequenceDiff.h edit/SequenceDiff.cpp
