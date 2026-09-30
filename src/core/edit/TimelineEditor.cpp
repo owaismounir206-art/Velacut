@@ -2,6 +2,7 @@
 #include "TimelineEditor.h"
 
 #include "core/edit/SequenceDiff.h"
+#include "core/project/ClipTime.h"
 #include "core/project/SpeedCurve.h"
 
 #include <QCoreApplication>
@@ -725,6 +726,33 @@ EditResult TimelineEditor::insertText(const RationalTime &position, TextClipData
     Track &track = overlayTrackFor(modified, TrackKind::Text, clip.range());
     insertSorted(track, std::move(clip));
     return finish(std::move(modified), tr("Add text"), clipId);
+}
+
+EditResult TimelineEditor::insertSticker(const RationalTime &position, StickerClipData sticker, const RationalTime &duration)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Clip clip;
+    clip.id = ClipId::create();
+    clip.start = position.rescaled(m_rate, Rounding::NearestEven);
+    if (clip.start.isNegative()) {
+        clip.start = RationalTime(0, m_rate);
+    }
+    clip.duration = duration.rescaled(m_rate, Rounding::NearestEven);
+    if (clip.duration.value() <= 0) {
+        clip.duration = RationalTime::fromSeconds(Rational(kDefaultStickerSeconds), m_rate, Rounding::NearestEven);
+    }
+    // A picture sticker starts at a third of the canvas, in the middle (a visualizer spans the canvas).
+    if (!sticker.visualizer) {
+        clip.transform.scale = Param(Vec2{kDefaultStickerScale, kDefaultStickerScale});
+    }
+    clip.payload = std::move(sticker);
+    const ClipId clipId = clip.id;
+    Sequence modified = *m_sequence;
+    Track &track = overlayTrackFor(modified, TrackKind::Sticker, clip.range());
+    insertSorted(track, std::move(clip));
+    return finish(std::move(modified), tr("Add sticker"), clipId);
 }
 
 EditResult TimelineEditor::updateClips(const std::vector<ClipId> &clipIds, const std::function<void(Clip &)> &change,
@@ -1457,6 +1485,42 @@ EditResult TimelineEditor::updateClipMarker(const ClipId &clipId, const Marker &
     std::sort(clip.markers.begin(), clip.markers.end(),
               [](const Marker &a, const Marker &b) { return a.time < b.time; });
     return finish(std::move(modified), tr("Edit clip marker"), clipId);
+}
+
+EditResult TimelineEditor::setBeatMarkers(const ClipId &clipId, const std::vector<double> &beatSeconds)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (ref->track->locked) {
+        return fail(tr("The track is locked."));
+    }
+    Clip &clip = ref->clip();
+    // Beats are times of the source (keyframe time, D-44): only those of the part the clip plays are kept.
+    const RationalTime a = keyframeTime(clip, RationalTime(0, m_rate));
+    const RationalTime b = keyframeTime(clip, clip.duration);
+    const RationalTime low = std::min(a, b);
+    const RationalTime high = std::max(a, b);
+    std::erase_if(clip.markers, [](const Marker &marker) { return marker.kind == MarkerKind::Beat; });
+    for (const double seconds : beatSeconds) {
+        // Analysis results are seconds: converted once, to the nearest frame.
+        const RationalTime time(std::llround(seconds * m_rate.toDouble()), m_rate);
+        if (time < low || time > high) {
+            continue;
+        }
+        Marker marker;
+        marker.id = MarkerId::create();
+        marker.time = time;
+        marker.kind = MarkerKind::Beat;
+        clip.markers.push_back(std::move(marker));
+    }
+    std::sort(clip.markers.begin(), clip.markers.end(), [](const Marker &x, const Marker &y) { return x.time < y.time; });
+    return finish(std::move(modified), tr("Beats"), clipId);
 }
 
 EditResult TimelineEditor::setClipAnimations(const ClipId &clipId, const ClipAnimations &animations)

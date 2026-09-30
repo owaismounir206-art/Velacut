@@ -36,6 +36,9 @@ QString kindOf(const Clip &clip, const ProjectData &project)
     if (clip.text()) {
         return u"text"_s;
     }
+    if (clip.sticker()) {
+        return u"sticker"_s;
+    }
     return u"other"_s;
 }
 
@@ -155,6 +158,10 @@ void TimelineModel::rebuild()
                     }
                 } else if (const TextClipData *text = clip.text(); text && clip.name.isEmpty()) {
                     entry.name = text->text.section(u'\n', 0, 0); // what the text says
+                } else if (const StickerClipData *sticker = clip.sticker(); sticker && clip.name.isEmpty()) {
+                    const fx::StickerPreset *preset = sticker->source ? fx::Library::core().sticker(sticker->source->id) : nullptr;
+                    const Media *item = sticker->mediaId.isNull() ? nullptr : project.findMedia(sticker->mediaId);
+                    entry.name = preset ? preset->name.text() : item ? item->name : tr("Sticker");
                 } else if (const CompoundClipData *compound = clip.compound()) {
                     const QString base = clip.name.isEmpty() ? tr("Multicam") : clip.name;
                     entry.name = QStringLiteral("%1 [Cam %2]").arg(base).arg(compound->activeAngle + 1);

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 300" width="512" height="300">
+  <!-- Hand-drawn rough circle/oval highlighter loop -->
+  <path d="M 120 70 C 260 40 440 60 460 140 C 480 220 340 260 210 260 C 90 260 40 200 60 120 C 75 60 210 50 310 55" stroke="#FF0055" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.88"/>
+</svg>

@@ -11,6 +11,7 @@
 #include "engine/timeline/TimelineProjection.h"
 #include "theme/SystemAppearance.h"
 #include "theme/ThemeManager.h"
+#include "ui/controllers/ActionRegistry.h"
 #include "ui/controllers/AppController.h"
 #include "ui/controllers/ClipInspector.h"
 #include "ui/controllers/EditorController.h"
@@ -881,6 +882,63 @@ private slots:
         // 3. Close
         recorder->close();
         QTRY_VERIFY(!recorder->isActive());
+    }
+
+    // Stickers tab (P5.4): "+" adds the sticker at the playhead on its own track; a visualizer has its own page; "Beat"
+    // marks the beats of the music.
+    void stickersAndBeat()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        click(byText(u"Stickers"_s));
+        QTRY_VERIFY(byName(u"asset_stickers/shapes/star"_s));
+        // Scrolled to it, as with the wheel.
+        QQuickItem *grid = byName(u"assetGrid"_s);
+        grid->setProperty("contentY", byName(u"asset_stickers/shapes/star"_s)->y());
+        QTest::qWait(50);
+        click(byName(u"asset_stickers/shapes/star"_s));
+        const auto stickerClips = [this] {
+            std::vector<ClipId> ids;
+            for (const Track &track : editor()->data().mainSequence()->visualTracks) {
+                for (const Clip &clip : track.clips) {
+                    if (clip.sticker()) {
+                        ids.push_back(clip.id);
+                    }
+                }
+            }
+            return ids;
+        };
+        QTRY_COMPARE(stickerClips().size(), size_t(1));
+        QCOMPARE(editor()->inspector()->kind(), int(ui::ClipInspector::Sticker));
+        QVERIFY(editor()->inspector()->sections().contains(u"sticker"_s));
+        shot(u"13-sticker"_s);
+
+        // A visualizer: its page shows the styles; picking one changes the clip.
+        QVERIFY(editor()->addSticker(u"visualizers/bars_neon"_s));
+        QTRY_COMPARE(stickerClips().size(), size_t(2));
+        editor()->propertiesRequested(u"sticker"_s);
+        QTRY_VERIFY(byName(u"visualizerStyle"_s));
+        QTest::qWait(300); // the page just opened is still being laid out
+        shot(u"14-visualizer"_s);
+        click(byText(u"Circle"_s));
+        QTRY_COMPARE(editor()->inspector()->values().value(u"sticker.style"_s).toInt(), 3);
+
+        // Beat on a clip with sound (clicks every half second): its beat markers appear (in background).
+        const QString clicks = m_dir.filePath(u"media/clicks.wav"_s);
+        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s,
+                           u"aevalsrc='if(lt(mod(t\\,0.5)\\,0.03)\\,0.8*sin(2*PI*150*t)\\,0)':s=44100:d=4"_s, clicks}));
+        editor()->importAndInsert({QUrl::fromLocalFile(clicks)}, 0, editor()->timeline()->mainRow());
+        const auto music = [this]() -> const Clip * {
+            const auto &tracks = editor()->data().mainSequence()->audioTracks;
+            return tracks.empty() || tracks.front().clips.empty() ? nullptr : &tracks.front().clips.front();
+        };
+        QTRY_VERIFY_WITH_TIMEOUT(music(), 20000);
+        editor()->select(music()->id.toString(), false);
+        QTRY_VERIFY(editor()->actions()->isEnabled(u"beat"_s));
+        QVERIFY(editor()->actions()->trigger(u"beat"_s));
+        QTRY_VERIFY_WITH_TIMEOUT(music()->markers.size() >= 6, 20000);
+        QCOMPARE(music()->markers.front().kind, MarkerKind::Beat);
     }
 
     // Regression: a clip minutes long had its waveform painted whole (tens of thousands of pixels, as one path) and

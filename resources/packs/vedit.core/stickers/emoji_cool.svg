@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="coolFaceGrad" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FFF066"/>
+      <stop offset="60%" stop-color="#FFCC00"/>
+      <stop offset="100%" stop-color="#E69900"/>
+    </radialGradient>
+    <linearGradient id="lensShine" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#333333"/>
+      <stop offset="40%" stop-color="#111111"/>
+      <stop offset="42%" stop-color="#666666"/>
+      <stop offset="50%" stop-color="#111111"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="236" fill="url(#coolFaceGrad)" stroke="#CC8800" stroke-width="8"/>
+  <!-- Sunglasses Frame & Bridge -->
+  <path d="M 90 200 C 130 195 230 195 256 215 C 282 195 382 195 422 200 L 416 230 C 370 220 286 220 256 235 C 226 220 142 220 96 230 Z" fill="#111111"/>
+  <!-- Left Lens -->
+  <path d="M 100 205 C 170 205 235 210 240 245 C 245 285 220 310 170 310 C 115 310 95 280 95 245 Z" fill="url(#lensShine)" stroke="#000000" stroke-width="6"/>
+  <!-- Right Lens -->
+  <path d="M 412 205 C 342 205 277 210 272 245 C 267 285 292 310 342 310 C 397 310 417 280 417 245 Z" fill="url(#lensShine)" stroke="#000000" stroke-width="6"/>
+  <!-- Confident Smirk -->
+  <path d="M 210 370 Q 280 420 360 360" stroke="#3B1500" stroke-width="12" fill="none" stroke-linecap="round"/>
+</svg>

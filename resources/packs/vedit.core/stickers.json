@@ -1,0 +1,1069 @@
+{
+    "categories": [
+        {
+            "id": "emoji",
+            "name": {
+                "en": "Emoji",
+                "it": "Emoji"
+            }
+        },
+        {
+            "id": "arrows",
+            "name": {
+                "en": "Arrows",
+                "it": "Frecce"
+            }
+        },
+        {
+            "id": "social",
+            "name": {
+                "en": "Social & Buttons",
+                "it": "Social e pulsanti"
+            }
+        },
+        {
+            "id": "badges",
+            "name": {
+                "en": "Badges",
+                "it": "Badge"
+            }
+        },
+        {
+            "id": "shapes",
+            "name": {
+                "en": "Shapes",
+                "it": "Forme"
+            }
+        },
+        {
+            "id": "visualizers",
+            "name": {
+                "en": "Audio Visualizers",
+                "it": "Visualizzatori audio"
+            }
+        }
+    ],
+    "items": [
+        {
+            "id": "stickers/emoji/smile",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Smile",
+                "it": "Sorriso"
+            },
+            "path": "stickers/emoji_smile.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/heart_eyes",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Heart Eyes",
+                "it": "Occhi a cuore"
+            },
+            "path": "stickers/emoji_heart.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/fire",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Fire",
+                "it": "Fuoco"
+            },
+            "path": "stickers/emoji_fire.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/cool",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Cool",
+                "it": "Occhiali da sole"
+            },
+            "path": "stickers/emoji_cool.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/party",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Party",
+                "it": "Festa"
+            },
+            "path": "stickers/emoji_party.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/sparkles",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Sparkles",
+                "it": "Scintille"
+            },
+            "path": "stickers/emoji_sparkles.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/thumbs_up",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Thumbs Up",
+                "it": "Pollice in su"
+            },
+            "path": "stickers/emoji_thumbs_up.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/heart_pulse",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Pulsing Heart",
+                "it": "Cuore pulsante"
+            },
+            "path": "stickers/heart_pulse.gif",
+            "animated": true,
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/arrows/right",
+            "version": 1,
+            "category": "arrows",
+            "name": {
+                "en": "Arrow Right",
+                "it": "Freccia destra"
+            },
+            "path": "stickers/arrow_right.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/arrows/curved",
+            "version": 1,
+            "category": "arrows",
+            "name": {
+                "en": "Curved Arrow",
+                "it": "Freccia curva"
+            },
+            "path": "stickers/arrow_curved.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/arrows/down",
+            "version": 1,
+            "category": "arrows",
+            "name": {
+                "en": "Arrow Down",
+                "it": "Freccia giù"
+            },
+            "path": "stickers/arrow_down.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/arrows/sketch",
+            "version": 1,
+            "category": "arrows",
+            "name": {
+                "en": "Sketch Arrow",
+                "it": "Freccia schizzo"
+            },
+            "path": "stickers/arrow_sketch.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/social/subscribe",
+            "version": 1,
+            "category": "social",
+            "name": {
+                "en": "Subscribe",
+                "it": "Iscriviti"
+            },
+            "path": "stickers/social_subscribe.svg",
+            "defaultDuration": 4.0
+        },
+        {
+            "id": "stickers/social/like",
+            "version": 1,
+            "category": "social",
+            "name": {
+                "en": "Like",
+                "it": "Mi piace"
+            },
+            "path": "stickers/social_like.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/social/bell",
+            "version": 1,
+            "category": "social",
+            "name": {
+                "en": "Notification Bell",
+                "it": "Campanella"
+            },
+            "path": "stickers/social_bell.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/badges/verified",
+            "version": 1,
+            "category": "badges",
+            "name": {
+                "en": "Verified",
+                "it": "Verificato"
+            },
+            "path": "stickers/badge_verified.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/badges/hot",
+            "version": 1,
+            "category": "badges",
+            "name": {
+                "en": "Hot",
+                "it": "In tendenza"
+            },
+            "path": "stickers/badge_hot.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/badges/sale",
+            "version": 1,
+            "category": "badges",
+            "name": {
+                "en": "Sale",
+                "it": "Saldi"
+            },
+            "path": "stickers/badge_sale.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/shapes/heart",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Heart",
+                "it": "Cuore"
+            },
+            "path": "stickers/shape_heart.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/shapes/star",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Star",
+                "it": "Stella"
+            },
+            "path": "stickers/shape_star.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/shapes/lightning",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Lightning",
+                "it": "Fulmine"
+            },
+            "path": "stickers/shape_lightning.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/shapes/burst",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Comic Burst",
+                "it": "Esplosione comic"
+            },
+            "path": "stickers/shape_burst.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/shapes/highlight",
+            "version": 1,
+            "category": "shapes",
+            "name": {
+                "en": "Highlight Loop",
+                "it": "Cerchio evidenziatore"
+            },
+            "path": "stickers/shape_highlight.svg",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "visualizers/bars_neon",
+            "version": 1,
+            "category": "visualizers",
+            "name": {
+                "en": "Neon Bars",
+                "it": "Barre neon"
+            },
+            "defaultDuration": 5.0,
+            "visualizer": {
+                "style": "bars",
+                "barCount": 32,
+                "primaryColor": "#00DCFF",
+                "secondaryColor": "#FF55AA",
+                "sensitivity": 1.2,
+                "smoothing": 0.65,
+                "roundness": 0.5
+            }
+        },
+        {
+            "id": "visualizers/spectrum_wave",
+            "version": 1,
+            "category": "visualizers",
+            "name": {
+                "en": "Spectrum Glow",
+                "it": "Spettro luminoso"
+            },
+            "defaultDuration": 5.0,
+            "visualizer": {
+                "style": "spectrum",
+                "barCount": 48,
+                "primaryColor": "#00FF88",
+                "secondaryColor": "#0066FF",
+                "sensitivity": 1.1,
+                "smoothing": 0.8,
+                "thickness": 3.0
+            }
+        },
+        {
+            "id": "visualizers/waveform_glow",
+            "version": 1,
+            "category": "visualizers",
+            "name": {
+                "en": "Voice Wave",
+                "it": "Onda vocale"
+            },
+            "defaultDuration": 5.0,
+            "visualizer": {
+                "style": "waveform",
+                "barCount": 64,
+                "primaryColor": "#FFAA00",
+                "secondaryColor": "#FF0055",
+                "sensitivity": 1.0,
+                "thickness": 4.0
+            }
+        },
+        {
+            "id": "visualizers/circle_pulse",
+            "version": 1,
+            "category": "visualizers",
+            "name": {
+                "en": "Pulsing Circle",
+                "it": "Cerchio pulsante"
+            },
+            "defaultDuration": 5.0,
+            "visualizer": {
+                "style": "circle",
+                "barCount": 36,
+                "primaryColor": "#9933FF",
+                "secondaryColor": "#FF3399",
+                "sensitivity": 1.3,
+                "smoothing": 0.7
+            }
+        },
+        {
+            "id": "stickers/emoji/grinning",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Grinning face",
+                "it": "Sorriso aperto"
+            },
+            "emoji": "😀",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/joy",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Tears of joy",
+                "it": "Lacrime di gioia"
+            },
+            "emoji": "😂",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/rofl",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Rolling on the floor",
+                "it": "Rotola dal ridere"
+            },
+            "emoji": "🤣",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/blush",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Smiling eyes",
+                "it": "Sorriso dolce"
+            },
+            "emoji": "😊",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/heart-eyes-emoji",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Heart eyes",
+                "it": "Innamorato"
+            },
+            "emoji": "😍",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/hearts",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Smiling with hearts",
+                "it": "Affettuoso"
+            },
+            "emoji": "🥰",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/kiss",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Blowing a kiss",
+                "it": "Bacio"
+            },
+            "emoji": "😘",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/sunglasses",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Cool",
+                "it": "Figo"
+            },
+            "emoji": "😎",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/star-struck",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Star-struck",
+                "it": "Stupito"
+            },
+            "emoji": "🤩",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/party-face",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Party face",
+                "it": "Festeggia"
+            },
+            "emoji": "🥳",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/wink",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Wink",
+                "it": "Occhiolino"
+            },
+            "emoji": "😉",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/thinking",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Thinking",
+                "it": "Pensieroso"
+            },
+            "emoji": "🤔",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/mind-blown",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Mind blown",
+                "it": "Mente esplosa"
+            },
+            "emoji": "🤯",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/scream",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Screaming",
+                "it": "Urlo"
+            },
+            "emoji": "😱",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/sob",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Crying loudly",
+                "it": "Pianto"
+            },
+            "emoji": "😭",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/angry",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Angry",
+                "it": "Arrabbiato"
+            },
+            "emoji": "😡",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/eye-roll",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Eye roll",
+                "it": "Occhi al cielo"
+            },
+            "emoji": "🙄",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/sleeping",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Sleeping",
+                "it": "Dorme"
+            },
+            "emoji": "😴",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/shush",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Shushing",
+                "it": "Silenzio"
+            },
+            "emoji": "🤫",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/clown",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Clown",
+                "it": "Pagliaccio"
+            },
+            "emoji": "🤡",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/ghost",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Ghost",
+                "it": "Fantasma"
+            },
+            "emoji": "👻",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/skull",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Skull",
+                "it": "Teschio"
+            },
+            "emoji": "💀",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/eyes",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Eyes",
+                "it": "Occhi"
+            },
+            "emoji": "👀",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/thumbs-up-emoji",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Thumbs up",
+                "it": "Pollice su"
+            },
+            "emoji": "👍",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/thumbs-down",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Thumbs down",
+                "it": "Pollice giù"
+            },
+            "emoji": "👎",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/clap",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Clapping",
+                "it": "Applausi"
+            },
+            "emoji": "👏",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/raised-hands",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Raised hands",
+                "it": "Mani alzate"
+            },
+            "emoji": "🙌",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/pray",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Folded hands",
+                "it": "Grazie"
+            },
+            "emoji": "🙏",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/muscle",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Flexed biceps",
+                "it": "Forza"
+            },
+            "emoji": "💪",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/victory",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Victory",
+                "it": "Pace"
+            },
+            "emoji": "✌️",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/wave",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Waving hand",
+                "it": "Ciao"
+            },
+            "emoji": "👋",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/point-right",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Pointing right",
+                "it": "Indica a destra"
+            },
+            "emoji": "👉",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/point-down",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Pointing down",
+                "it": "Indica in basso"
+            },
+            "emoji": "👇",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/handshake",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Handshake",
+                "it": "Stretta di mano"
+            },
+            "emoji": "🤝",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/red-heart",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Red heart",
+                "it": "Cuore rosso"
+            },
+            "emoji": "❤️",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/broken-heart",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Broken heart",
+                "it": "Cuore spezzato"
+            },
+            "emoji": "💔",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/hundred",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Hundred points",
+                "it": "Cento"
+            },
+            "emoji": "💯",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/fire-emoji",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Flame",
+                "it": "Fiamma"
+            },
+            "emoji": "🔥",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/sparkles-emoji",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Glitter",
+                "it": "Brillantini"
+            },
+            "emoji": "✨",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/star",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Star",
+                "it": "Stella"
+            },
+            "emoji": "⭐",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/zap",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "High voltage",
+                "it": "Scarica"
+            },
+            "emoji": "⚡",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/boom",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Collision",
+                "it": "Boom"
+            },
+            "emoji": "💥",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/tada",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Party popper",
+                "it": "Coriandoli"
+            },
+            "emoji": "🎉",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/gift",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Gift",
+                "it": "Regalo"
+            },
+            "emoji": "🎁",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/cake",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Birthday cake",
+                "it": "Torta"
+            },
+            "emoji": "🎂",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/trophy",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Trophy",
+                "it": "Trofeo"
+            },
+            "emoji": "🏆",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/gold",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Gold medal",
+                "it": "Medaglia d'oro"
+            },
+            "emoji": "🥇",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/rocket",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Rocket",
+                "it": "Razzo"
+            },
+            "emoji": "🚀",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/bulb",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Light bulb",
+                "it": "Idea"
+            },
+            "emoji": "💡",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/pin",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Pushpin",
+                "it": "Puntina"
+            },
+            "emoji": "📌",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/location",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Location pin",
+                "it": "Posizione"
+            },
+            "emoji": "📍",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/music",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Musical note",
+                "it": "Nota musicale"
+            },
+            "emoji": "🎵",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/camera",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Camera with flash",
+                "it": "Fotocamera"
+            },
+            "emoji": "📸",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/clapper",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Clapper board",
+                "it": "Ciak"
+            },
+            "emoji": "🎬",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/sun",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Sun",
+                "it": "Sole"
+            },
+            "emoji": "☀️",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/rainbow",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Rainbow",
+                "it": "Arcobaleno"
+            },
+            "emoji": "🌈",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/wave-water",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Water wave",
+                "it": "Onda"
+            },
+            "emoji": "🌊",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/pizza",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Pizza",
+                "it": "Pizza"
+            },
+            "emoji": "🍕",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/coffee",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Coffee",
+                "it": "Caffè"
+            },
+            "emoji": "☕",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/check",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Check mark",
+                "it": "Fatto"
+            },
+            "emoji": "✅",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/cross",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Cross mark",
+                "it": "No"
+            },
+            "emoji": "❌",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/question",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Question mark",
+                "it": "Domanda"
+            },
+            "emoji": "❓",
+            "defaultDuration": 3.0
+        },
+        {
+            "id": "stickers/emoji/exclamation",
+            "version": 1,
+            "category": "emoji",
+            "name": {
+                "en": "Exclamation mark",
+                "it": "Attenzione"
+            },
+            "emoji": "❗",
+            "defaultDuration": 3.0
+        }
+    ]
+}

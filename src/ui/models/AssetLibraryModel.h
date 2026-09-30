@@ -29,6 +29,7 @@ public:
         Transitions,
         TextStyles,
         Animations,
+        Stickers,
     };
     Q_ENUM(Kind)
 
@@ -37,6 +38,8 @@ public:
         AssetIdRole = Qt::UserRole + 1,
         NameRole,
         CategoryRole,
+        PathRole,
+        AnimatedRole,
     };
 
     explicit AssetLibraryModel(QObject *parent = nullptr);
@@ -70,6 +73,8 @@ private:
         QString nameEn;
         QString nameIt;
         QString category;
+        QString path;
+        bool animated = false;
     };
     std::vector<Item> itemsOfKind() const;
     void refresh();

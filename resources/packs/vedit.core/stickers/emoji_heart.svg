@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="heartFaceGrad" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FFF066"/>
+      <stop offset="60%" stop-color="#FFCC00"/>
+      <stop offset="100%" stop-color="#E69900"/>
+    </radialGradient>
+    <linearGradient id="heartRed" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF3355"/>
+      <stop offset="100%" stop-color="#D9002C"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="236" fill="url(#heartFaceGrad)" stroke="#CC8800" stroke-width="8"/>
+  <!-- Heart Eyes -->
+  <g transform="translate(165, 195) scale(1.15)">
+    <path d="M 0 0 C -25 -35 -65 -30 -65 10 C -65 45 0 75 0 95 C 0 75 65 45 65 10 C 65 -30 25 -35 0 0 Z" fill="url(#heartRed)"/>
+  </g>
+  <g transform="translate(345, 195) scale(1.15)">
+    <path d="M 0 0 C -25 -35 -65 -30 -65 10 C -65 45 0 75 0 95 C 0 75 65 45 65 10 C 65 -30 25 -35 0 0 Z" fill="url(#heartRed)"/>
+  </g>
+  <!-- Smile -->
+  <path d="M 160 320 Q 256 420 352 320 C 330 380 280 400 256 400 C 232 400 182 380 160 320 Z" fill="#3B1500"/>
+  <ellipse cx="256" cy="385" rx="36" ry="18" fill="#FF5577"/>
+</svg>

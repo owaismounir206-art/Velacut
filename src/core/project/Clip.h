@@ -374,7 +374,47 @@ struct AdjustmentClipData
     friend bool operator==(const AdjustmentClipData &, const AdjustmentClipData &) = default;
 };
 
-// Payload of clip kinds whose editing features arrive in later phases (subtitle, sticker,
+// Audio visualizer drawn by a sticker clip (SPEC §5.9): it reacts to the audio of the timeline under it.
+enum class VisualizerStyle
+{
+    Bars,
+    Spectrum,
+    Waveform,
+    PulsingCircle,
+};
+
+struct AudioVisualizerSettings
+{
+    VisualizerStyle style = VisualizerStyle::Bars;
+    int barCount = 32;
+    Color primaryColor{0, 220, 255, 255};
+    Color secondaryColor{255, 100, 200, 255};
+    double sensitivity = 1.0; // gain on the audio levels
+    double smoothing = 0.5;   // 0 = every frame's levels, 1 = averaged over the last 0.25 s
+    bool mirror = false;
+    double roundness = 0.5;
+    double thickness = 3.0; // lines, pixels at 1080p
+
+    friend bool operator==(const AudioVisualizerSettings &, const AudioVisualizerSettings &) = default;
+};
+
+// A sticker (docs/FILE_FORMAT.md §5.5): exactly one of a library item (`source`), an image of the project's media
+// (`mediaId`: PNG, SVG, WebP, animated GIF…), an emoji drawn with the system's colour emoji font, or a visualizer.
+struct StickerClipData
+{
+    std::optional<AssetRef> source;
+    MediaId mediaId;
+    QString emoji;
+    std::optional<AudioVisualizerSettings> visualizer;
+    bool loop = true;   // animated stickers: start again at the end (otherwise hold the last frame)
+    double speed = 1.0; // animated stickers
+    Color tint{0, 0, 0, 0}; // alpha 0 = no tint
+    QJsonObject fields; // unknown keys, kept verbatim
+
+    friend bool operator==(const StickerClipData &, const StickerClipData &) = default;
+};
+
+// Payload of clip kinds whose editing features arrive in later phases (subtitle,
 // effect): the kind-specific JSON fields are kept verbatim and written back unchanged,
 // so no data is ever lost (docs/FILE_FORMAT.md §1). Each kind gets a typed struct when implemented.
 struct PreservedClipData
@@ -385,7 +425,7 @@ struct PreservedClipData
     friend bool operator==(const PreservedClipData &, const PreservedClipData &) = default;
 };
 
-using ClipPayload = std::variant<MediaClipData, ColorClipData, CompoundClipData, TextClipData, AdjustmentClipData, PreservedClipData>;
+using ClipPayload = std::variant<MediaClipData, ColorClipData, CompoundClipData, TextClipData, AdjustmentClipData, StickerClipData, PreservedClipData>;
 
 struct Clip
 {
@@ -420,6 +460,8 @@ struct Clip
     AdjustmentClipData *adjustment() { return std::get_if<AdjustmentClipData>(&payload); }
     const CompoundClipData *compound() const { return std::get_if<CompoundClipData>(&payload); }
     CompoundClipData *compound() { return std::get_if<CompoundClipData>(&payload); }
+    const StickerClipData *sticker() const { return std::get_if<StickerClipData>(&payload); }
+    StickerClipData *sticker() { return std::get_if<StickerClipData>(&payload); }
 
     friend bool operator==(const Clip &, const Clip &) = default;
 };

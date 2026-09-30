@@ -40,8 +40,11 @@ Rectangle {
             list.push({ text: qsTr("Transition"), page: "transition" })
         if (sections.includes("text"))
             list.push({ text: qsTr("Text"), page: "text" })
+        if (sections.includes("sticker"))
+            list.push({ text: values["sticker.visualizer"] ? qsTr("Visualizer") : qsTr("Sticker"), page: "sticker" })
         if (sections.includes("video"))
-            list.push({ text: inspector.kind === Inspector.Text ? qsTr("Position") : qsTr("Video"), page: "video" })
+            list.push({ text: inspector.kind === Inspector.Text || inspector.kind === Inspector.Sticker ? qsTr("Position")
+                                                                                                       : qsTr("Video"), page: "video" })
         if (sections.includes("audio"))
             list.push({ text: qsTr("Audio"), page: "audio" })
         if (sections.includes("speed"))
@@ -690,6 +693,128 @@ Rectangle {
                     }
                 }
 
+                // ---- Sticker ---------------------------------------------------------------------------------
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: panel.page === "sticker"
+                    spacing: Theme.space.md
+
+                    PropertySection {
+                        inspector: panel.inspector
+                        section: "sticker"
+                        title: panel.values["sticker.visualizer"] ? qsTr("Visualizer") : qsTr("Colour")
+
+                        // Visualizer: the shape, its colours and how it reacts to the music.
+                        SegmentedButton {
+                            objectName: "visualizerStyle"
+                            Layout.fillWidth: true
+                            visible: panel.values["sticker.visualizer"] ?? false
+                            model: [{ text: qsTr("Bars") }, { text: qsTr("Spectrum") }, { text: qsTr("Wave") },
+                                    { text: qsTr("Circle") }]
+                            currentIndex: panel.values["sticker.style"] ?? 0
+                            onActivated: (index) => panel.inspector.set("sticker.style", index)
+                        }
+                        ColorSwatches {
+                            Layout.fillWidth: true
+                            visible: panel.values["sticker.visualizer"] ?? false
+                            inspector: panel.inspector
+                            label: qsTr("Main colour")
+                            current: panel.values["sticker.primaryColor"] ?? "white"
+                            onPicked: (value) => panel.inspector.set("sticker.primaryColor", value)
+                        }
+                        ColorSwatches {
+                            Layout.fillWidth: true
+                            visible: panel.values["sticker.visualizer"] ?? false
+                            inspector: panel.inspector
+                            label: qsTr("Second colour")
+                            current: panel.values["sticker.secondaryColor"] ?? "white"
+                            onPicked: (value) => panel.inspector.set("sticker.secondaryColor", value)
+                        }
+                        PropertySlider {
+                            visible: panel.values["sticker.visualizer"] ?? false
+                            inspector: panel.inspector
+                            key: "sticker.sensitivity"
+                            label: qsTr("Sensitivity")
+                            from: 0.2
+                            to: 4
+                            neutral: 1
+                            stepSize: 0.1
+                            format: v => "×" + v.toLocaleString(Qt.locale(), "f", 1)
+                        }
+                        PropertySlider {
+                            visible: panel.values["sticker.visualizer"] ?? false
+                            inspector: panel.inspector
+                            key: "sticker.smoothing"
+                            label: qsTr("Smoothness")
+                            neutral: 0.5
+                            format: v => Math.round(v * 100) + " %"
+                        }
+                        PropertySlider {
+                            visible: panel.values["sticker.visualizer"] ?? false
+                            inspector: panel.inspector
+                            key: "sticker.barCount"
+                            label: qsTr("Bars")
+                            from: 8
+                            to: 96
+                            neutral: 32
+                            stepSize: 1
+                            format: v => Math.round(v).toLocaleString(Qt.locale(), "f", 0)
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: panel.values["sticker.visualizer"] ?? false
+                            Label { Layout.fillWidth: true; text: qsTr("Mirrored"); role: "bodyMedium" }
+                            Switch {
+                                checked: panel.values["sticker.mirror"] ?? false
+                                Accessible.name: qsTr("Mirrored")
+                                onToggled: panel.inspector.set("sticker.mirror", checked)
+                            }
+                        }
+
+                        // Picture: an optional colour over it, and the speed of an animated one.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: !(panel.values["sticker.visualizer"] ?? false)
+                            Label { Layout.fillWidth: true; text: qsTr("Recolour"); role: "bodyMedium" }
+                            Switch {
+                                objectName: "stickerTinted"
+                                checked: panel.values["sticker.tinted"] ?? false
+                                Accessible.name: qsTr("Recolour")
+                                onToggled: panel.inspector.set("sticker.tinted", checked)
+                            }
+                        }
+                        ColorSwatches {
+                            Layout.fillWidth: true
+                            visible: !(panel.values["sticker.visualizer"] ?? false) && (panel.values["sticker.tinted"] ?? false)
+                            inspector: panel.inspector
+                            label: qsTr("Colour")
+                            current: panel.values["sticker.tint"] ?? "white"
+                            onPicked: (value) => panel.inspector.set("sticker.tint", value)
+                        }
+                        PropertySlider {
+                            visible: panel.values["sticker.animated"] ?? false
+                            inspector: panel.inspector
+                            key: "sticker.speed"
+                            label: qsTr("Animation speed")
+                            from: 0.25
+                            to: 4
+                            neutral: 1
+                            logarithmic: true
+                            format: v => "×" + v.toLocaleString(Qt.locale(), "f", 2)
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: panel.values["sticker.animated"] ?? false
+                            Label { Layout.fillWidth: true; text: qsTr("Repeat"); role: "bodyMedium" }
+                            Switch {
+                                checked: panel.values["sticker.loop"] ?? true
+                                Accessible.name: qsTr("Repeat the animation")
+                                onToggled: panel.inspector.set("sticker.loop", checked)
+                            }
+                        }
+                    }
+                }
+
                 // ---- Audio -----------------------------------------------------------------------------------
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -904,7 +1029,7 @@ Rectangle {
 
                         SegmentedButton {
                             Layout.fillWidth: true
-                            model: [{ text: qsTr("Costante") }, { text: qsTr("Curva") }]
+                            model: [{ text: qsTr("Constant") }, { text: qsTr("Curve") }]
                             currentIndex: (panel.values["speed.isCurve"] ?? false) ? 1 : 0
                             onActivated: (index) => panel.inspector.set("speed.isCurve", index === 1)
                         }
@@ -951,7 +1076,7 @@ Rectangle {
                             spacing: Theme.space.sm
 
                             Label {
-                                text: qsTr("Predefiniti di velocità")
+                                text: qsTr("Speed presets")
                                 role: "bodySmall"
                                 color: Theme.color.onSurfaceVariant
                             }
@@ -982,7 +1107,7 @@ Rectangle {
 
                             Label {
                                 Layout.fillWidth: true
-                                text: qsTr("Trascina i punti per regolare la velocità. Doppio clic per aggiungere un punto. Clic destro per rimuovere.")
+                                text: qsTr("Drag the points to change the speed. Double click to add a point, right click to remove one.")
                                 role: "bodySmall"
                                 color: Theme.color.outline
                                 wrapMode: Text.WordWrap
@@ -1004,7 +1129,7 @@ Rectangle {
                             visible: panel.values["speed.motionBlur"] ?? false
                             inspector: panel.inspector
                             key: "speed.motionBlurIntensity"
-                            label: qsTr("Intensità motion blur")
+                            label: qsTr("Motion blur amount")
                             from: 0.0
                             to: 1.0
                             format: v => Math.round(v * 100) + " %"

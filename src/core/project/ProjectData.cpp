@@ -25,6 +25,8 @@ ClipKind Clip::kind() const
                 return ClipKind::Text;
             } else if constexpr (std::is_same_v<T, AdjustmentClipData>) {
                 return ClipKind::Adjustment;
+            } else if constexpr (std::is_same_v<T, StickerClipData>) {
+                return ClipKind::Sticker;
             } else {
                 return data.kind;
             }

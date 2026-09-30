@@ -112,6 +112,13 @@ public:
                              const QString &note = QString(), MarkerKind kind = MarkerKind::User);
     EditResult removeClipMarker(const ClipId &clipId, const MarkerId &markerId);
     EditResult updateClipMarker(const ClipId &clipId, const Marker &marker);
+
+    // ---- Phase 5 ----
+    // A sticker on a sticker track (created when needed), `duration` long from `position`.
+    EditResult insertSticker(const RationalTime &position, StickerClipData sticker, const RationalTime &duration = {});
+    // Replaces the clip's beat markers with the beats of its source (seconds of the source, e.g. detected in its
+    // audio) that the clip plays.
+    EditResult setBeatMarkers(const ClipId &clipId, const std::vector<double> &beatSeconds);
     EditResult setClipAnimations(const ClipId &clipId, const ClipAnimations &animations);
 
     // ---- Phase 4 ----
@@ -128,6 +135,10 @@ public:
 
     // Duration of an image when inserted (SPEC 0bis, rule 6).
     static constexpr int kDefaultImageSeconds = 3;
+
+    // Duration and size (share of the canvas) of a new sticker.
+    static constexpr int kDefaultStickerSeconds = 3;
+    static constexpr double kDefaultStickerScale = 0.35;
 
 private:
     EditResult fail(const QString &message) const;

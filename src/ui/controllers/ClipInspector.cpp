@@ -567,6 +567,23 @@ int ClipInspector::selectedCount() const
     return static_cast<int>(m_editor.selectedClips().size());
 }
 
+namespace {
+
+// The visualizer settings of a sticker as its library item defines them (none for a picture sticker).
+std::optional<AudioVisualizerSettings> presetVisualizer(const StickerClipData &sticker)
+{
+    if (!sticker.visualizer) {
+        return std::nullopt;
+    }
+    const fx::StickerPreset *preset = sticker.source ? fx::Library::core().sticker(sticker.source->id) : nullptr;
+    if (!preset || preset->visualizer.isEmpty()) {
+        return AudioVisualizerSettings{};
+    }
+    return projectjson::visualizerFromJson(preset->visualizer);
+}
+
+} // namespace
+
 int ClipInspector::kind() const
 {
     const Clip *clip = focus();
@@ -578,6 +595,9 @@ int ClipInspector::kind() const
     }
     if (clip->adjustment()) {
         return Adjustment;
+    }
+    if (clip->sticker()) {
+        return Sticker;
     }
     if (clip->compound()) {
         return Video;
@@ -624,6 +644,9 @@ bool ClipInspector::supports(const Clip &clip, const QString &section) const
     if (section == u"text"_s || section == u"textAnimation"_s) {
         return clip.text() != nullptr;
     }
+    if (section == u"sticker"_s) {
+        return clip.sticker() != nullptr;
+    }
     if (section == u"animation"_s) {
         return !audioOnly;
     }
@@ -643,7 +666,7 @@ QStringList ClipInspector::sections() const
         }
         return result;
     }
-    for (const QString &section : {u"text"_s, u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s, u"cutout"_s,
+    for (const QString &section : {u"text"_s, u"sticker"_s, u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s, u"cutout"_s,
                                    u"filter"_s, u"adjust"_s}) {
         if (supports(*clip, section)) {
             result << section;
@@ -693,6 +716,11 @@ QStringList ClipInspector::modifiedSections() const
     if (findEffect(*clip, kGradeType) || findEffect(*clip, kLutType) || findEffect(*clip, kDeflickerType)) {
         if (!result.contains(u"adjust"_s)) {
             result << u"adjust"_s;
+        }
+    }
+    if (const StickerClipData *sticker = clip->sticker()) {
+        if (sticker->tint.a > 0 || sticker->speed != 1.0 || !sticker->loop || sticker->visualizer != presetVisualizer(*sticker)) {
+            result << u"sticker"_s;
         }
     }
     if (const TextClipData *text = clip->text()) {
@@ -1015,6 +1043,26 @@ QVariantMap ClipInspector::values() const
         map[u"grade.curve."_s + ch] = curvePoints;
     }
 
+    if (const StickerClipData *sticker = clip->sticker()) {
+        map[u"sticker.visualizer"_s] = sticker->visualizer.has_value();
+        const AudioVisualizerSettings visualizer = sticker->visualizer.value_or(AudioVisualizerSettings{});
+        map[u"sticker.style"_s] = static_cast<int>(visualizer.style);
+        map[u"sticker.barCount"_s] = visualizer.barCount;
+        map[u"sticker.primaryColor"_s] = toQColor(visualizer.primaryColor);
+        map[u"sticker.secondaryColor"_s] = toQColor(visualizer.secondaryColor);
+        map[u"sticker.sensitivity"_s] = visualizer.sensitivity;
+        map[u"sticker.smoothing"_s] = visualizer.smoothing;
+        map[u"sticker.mirror"_s] = visualizer.mirror;
+        map[u"sticker.tinted"_s] = sticker->tint.a > 0;
+        map[u"sticker.tint"_s] = toQColor(sticker->tint.a > 0 ? sticker->tint : Color{255, 255, 255, 255});
+        const fx::StickerPreset *preset = sticker->source ? fx::Library::core().sticker(sticker->source->id) : nullptr;
+        const Media *media = sticker->mediaId.isNull() ? nullptr : m_editor.data().findMedia(sticker->mediaId);
+        map[u"sticker.animated"_s] = (preset && preset->animated) ||
+                                     (media && media->path.endsWith(u".gif"_s, Qt::CaseInsensitive)) ||
+                                     (media && media->path.endsWith(u".webp"_s, Qt::CaseInsensitive));
+        map[u"sticker.speed"_s] = sticker->speed;
+        map[u"sticker.loop"_s] = sticker->loop;
+    }
     if (const TextClipData *text = clip->text()) {
         const TextStyle &style = text->style;
         map[u"text.content"_s] = text->text;
@@ -1534,6 +1582,41 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
         }, tr("Grade colour"), mergeTarget);
     }
 
+    // Sticker
+    if (key.startsWith(u"sticker."_s)) {
+        const QString field = key.mid(8);
+        return update(clips, [&](Clip &c) {
+            StickerClipData &sticker = *c.sticker();
+            if (field == u"tinted"_s) {
+                sticker.tint = flag ? Color{255, 64, 129, 255} : Color{0, 0, 0, 0};
+            } else if (field == u"tint"_s) {
+                sticker.tint = toColor(value);
+                sticker.tint.a = 255;
+            } else if (field == u"speed"_s) {
+                sticker.speed = std::clamp(number, 0.1, 10.0);
+            } else if (field == u"loop"_s) {
+                sticker.loop = flag;
+            } else if (sticker.visualizer) {
+                AudioVisualizerSettings &v = *sticker.visualizer;
+                if (field == u"style"_s) {
+                    v.style = static_cast<VisualizerStyle>(std::clamp(value.toInt(), 0, 3));
+                } else if (field == u"barCount"_s) {
+                    v.barCount = std::clamp(value.toInt(), 4, 128);
+                } else if (field == u"primaryColor"_s) {
+                    v.primaryColor = toColor(value);
+                } else if (field == u"secondaryColor"_s) {
+                    v.secondaryColor = toColor(value);
+                } else if (field == u"sensitivity"_s) {
+                    v.sensitivity = std::clamp(number, 0.1, 10.0);
+                } else if (field == u"smoothing"_s) {
+                    v.smoothing = std::clamp(number, 0.0, 1.0);
+                } else if (field == u"mirror"_s) {
+                    v.mirror = flag;
+                }
+            }
+        }, tr("Edit sticker"), mergeTarget);
+    }
+
     // Text
     if (key == u"text.preset"_s) {
         return applyTextStyle(value.toString());
@@ -1654,6 +1737,14 @@ bool ClipInspector::reset(const QString &section)
         }, tr("Reset position and size"), {});
     } else if (section == u"background"_s) {
         done = update(clips, [](Clip &c) { c.background.reset(); }, tr("Reset background"), {});
+    } else if (section == u"sticker"_s) {
+        done = update(clips, [](Clip &c) {
+            StickerClipData &sticker = *c.sticker();
+            sticker.tint = Color{0, 0, 0, 0};
+            sticker.speed = 1.0;
+            sticker.loop = true;
+            sticker.visualizer = presetVisualizer(sticker);
+        }, tr("Reset sticker"), {});
     } else if (section == u"audio"_s) {
         done = update(clips, [](Clip &c) {
             if (c.media()) {
@@ -1832,6 +1923,16 @@ bool ClipInspector::applyToAll(const QString &section)
                 c.text()->animation = source.text()->animation;
             };
             text = tr("Apply text animation to all");
+        } else if (section == u"sticker"_s) {
+            // The look (tint, and a visualizer's settings on the other visualizers), not the picture.
+            change = [&source](Clip &c) {
+                StickerClipData &sticker = *c.sticker();
+                sticker.tint = source.sticker()->tint;
+                if (sticker.visualizer && source.sticker()->visualizer) {
+                    sticker.visualizer = source.sticker()->visualizer;
+                }
+            };
+            text = tr("Apply sticker look to all");
         }
         if (!change) {
             return false;

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="sparkleGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="40%" stop-color="#FFE600"/>
+      <stop offset="100%" stop-color="#FF9900"/>
+    </radialGradient>
+  </defs>
+  <!-- Big 4-point star -->
+  <path d="M 230 40 Q 230 210 60 210 Q 230 210 230 380 Q 230 210 400 210 Q 230 210 230 40 Z" fill="url(#sparkleGrad)" filter="drop-shadow(0 0 12px #FFCC00)"/>
+  <!-- Small Star Top Right -->
+  <path d="M 380 90 Q 380 160 310 160 Q 380 160 380 230 Q 380 160 450 160 Q 380 160 380 90 Z" fill="url(#sparkleGrad)" transform="scale(0.7) translate(160, -30)"/>
+  <!-- Small Star Bottom Left -->
+  <path d="M 120 320 Q 120 370 70 370 Q 120 370 120 420 Q 120 370 170 370 Q 120 370 120 320 Z" fill="url(#sparkleGrad)"/>
+</svg>

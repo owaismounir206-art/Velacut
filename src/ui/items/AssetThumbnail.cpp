@@ -4,8 +4,10 @@
 #include "controllers/EditorController.h"
 #include "core/serialization/ProjectJson.h"
 #include "engine/analysis/MediaAnalysis.h"
+#include "engine/mlt/Services.h"
 #include "engine/text/TextRenderer.h"
 #include "fx/Animation.h"
+#include "fx/AudioVisualizer.h"
 #include "fx/Color.h"
 #include "fx/Library.h"
 #include "fx/Transition.h"
@@ -164,7 +166,8 @@ void AssetThumbnail::request()
     QString sampleKey;
     const QImage frame = sample(&sampleKey);
     // Transitions and animations are drawn at a few steps of progress: smooth enough for the hover animation, cached.
-    const bool animated = m_kind == AssetLibraryModel::Transitions || m_kind == AssetLibraryModel::Animations;
+    const bool animated = m_kind == AssetLibraryModel::Transitions || m_kind == AssetLibraryModel::Animations ||
+                          m_kind == AssetLibraryModel::Stickers;
     const double progress = animated ? std::round(m_progress * 24) / 24 : 0.0;
     const QString key = u"%1|%2|%3|%4|%5x%6"_s.arg(m_kind).arg(m_assetId, sampleKey).arg(progress).arg(size.width()).arg(size.height());
     if (const QImage *cached = cache().object(key)) {
@@ -250,6 +253,35 @@ QImage AssetThumbnail::render(int kind, const QString &assetId, double progress,
                              target.width() * std::max(0.0, 1.0 - cropL - cropR), target.height() * std::max(0.0, 1.0 - cropT - cropB));
         painter.setClipRect(visible, Qt::IntersectClip);
         painter.drawImage(target, card);
+        return image;
+    }
+    if (kind == AssetLibraryModel::Stickers) {
+        // On the neutral grey of the text styles; animated pictures and visualizers move with `progress`.
+        QImage image(size, QImage::Format_RGBA8888);
+        image.fill(QColor(0x5F, 0x63, 0x68));
+        const fx::StickerPreset *preset = library.sticker(assetId);
+        if (!preset) {
+            return image;
+        }
+        QPainter painter(&image);
+        painter.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+        if (!preset->visualizer.isEmpty()) {
+            const fx::VisualizerSettings settings = engine::visualizerSettings(projectjson::visualizerFromJson(preset->visualizer));
+            painter.drawImage(0, 0, fx::renderAudioVisualizer(settings, fx::exampleVisualizerFrame(progress * 2.0, settings.barCount), size));
+            return image;
+        }
+        const int side = std::min(size.width(), size.height()) * 4 / 5;
+        const engine::StickerPicture picture = !preset->path.isEmpty() ? engine::loadStickerPicture(preset->path, side * 2)
+                                                                       : engine::renderEmoji(preset->emoji, side * 2);
+        if (picture.frames.empty()) {
+            return image;
+        }
+        const size_t index = std::min(picture.frames.size() - 1, static_cast<size_t>(progress * static_cast<double>(picture.frames.size())));
+        const QImage &frame = picture.frames[index];
+        const QSize fitted = frame.size().scaled(side, side, Qt::KeepAspectRatio);
+        painter.drawImage(QRect((size.width() - fitted.width()) / 2, (size.height() - fitted.height()) / 2, fitted.width(),
+                                fitted.height()),
+                          frame);
         return image;
     }
     // Text style: a word in the style, large enough to see it, on a neutral grey that shows light and dark styles.

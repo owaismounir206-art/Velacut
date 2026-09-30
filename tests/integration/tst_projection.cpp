@@ -985,6 +985,86 @@ private slots:
         QVERIFY(qRed(p) > 180 && qGreen(p) > 180 && qBlue(p) > 180);
     }
 
+    // Stickers (P5.4): a picture of the library at a third of the canvas, an emoji of the system font, a tint.
+    void stickersInProjection()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const QImage plain = renderFresh1(session.data(), 10);
+        StickerClipData star;
+        star.source = AssetRef{u"vedit.core"_s, u"stickers/shapes/star"_s, 1};
+        QVERIFY(session.apply(session.editor().insertSticker(frames(0), star, frames(30))));
+        const Track &stickers = session.sequence().visualTracks.back();
+        QCOMPARE(stickers.kind, TrackKind::Sticker);
+        const ClipId starId = stickers.clips.front().id;
+        const QImage withStar = renderFresh1(session.data(), 10);
+        QVERIFY(pixel(withStar, 160, 90) != pixel(plain, 160, 90));
+        QCOMPARE(pixel(withStar, 4, 4), pixel(plain, 4, 4));
+        QCOMPARE(pixel(withStar, 315, 175), pixel(plain, 315, 175));
+
+        // Recoloured blue: the centre turns blue.
+        QVERIFY(session.apply(session.editor().updateClips({starId}, [](Clip &c) { c.sticker()->tint = Color{0, 0, 255, 255}; },
+                                                           u"tint"_s)));
+        const QRgb blue = renderFresh1(session.data(), 10).pixel(160, 90);
+        QVERIFY2(qBlue(blue) > qRed(blue) + 40 && qBlue(blue) > qGreen(blue) + 40, qPrintable(QString::number(blue, 16)));
+
+        // An emoji (colour emoji font of the system).
+        StickerClipData fire;
+        fire.emoji = u"🔥"_s;
+        QVERIFY(session.apply(session.editor().insertSticker(frames(60), fire, frames(30))));
+        const QImage plainLater = renderFresh1(ProjectData(baseProjectWithClip()), 70);
+        const QImage withFire = renderFresh1(session.data(), 70);
+        QVERIFY(pixel(withFire, 160, 90) != pixel(plainLater, 160, 90));
+        QCOMPARE(pixel(withFire, 4, 4), pixel(plainLater, 4, 4));
+    }
+
+    // An audio visualizer draws the spectrum of the music under it: nearly nothing before the music starts.
+    void visualizerFollowsTheMusic()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_music.id, frames(60))));
+        StickerClipData visualizer;
+        visualizer.visualizer = AudioVisualizerSettings{};
+        QVERIFY(session.apply(session.editor().insertSticker(frames(0), visualizer, frames(200))));
+        const auto lit = [](const QImage &image) {
+            int count = 0;
+            for (int y = 0; y < image.height(); ++y) {
+                for (int x = 0; x < image.width(); ++x) {
+                    count += qGray(image.pixel(x, y)) > 40 ? 1 : 0;
+                }
+            }
+            return count;
+        };
+        const int silent = lit(renderFresh1(session.data(), 30));
+        const int playing = lit(renderFresh1(session.data(), 120));
+        QVERIFY2(playing > silent + 200, qPrintable(u"%1 lit pixels in silence, %2 with music"_s.arg(silent).arg(playing)));
+    }
+
+    // Beat flash: the picture flashes on the beats of the music (its beat markers), not between them.
+    void beatFlashOnTheBeats()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        QVERIFY(session.apply(session.editor().insertMedia(m_music.id, frames(0))));
+        const ClipId video = session.mainTrack().clips.front().id;
+        const ClipId music = session.sequence().audioTracks.front().clips.front().id;
+        QVERIFY(session.apply(session.editor().setBeatMarkers(music, {1.0, 2.0, 99.0})));
+        QCOMPARE(session.data().findClip(music)->markers.size(), size_t(2)); // 99 s is beyond the song
+        const QImage onBeatPlain = renderFresh1(session.data(), 30);
+        const QImage betweenPlain = renderFresh1(session.data(), 45);
+        QVERIFY(session.apply(session.editor().updateClips({video}, [](Clip &c) {
+            Effect flash;
+            flash.id = EffectId::create();
+            flash.type = u"vedit.beat.flash"_s;
+            flash.params[u"amount"_s] = Param(1.0);
+            c.effects.push_back(flash);
+        }, u"flash"_s)));
+        const QImage onBeat = renderFresh1(session.data(), 30);
+        QVERIFY2(qGray(onBeat.pixel(60, 120)) > qGray(onBeatPlain.pixel(60, 120)) + 60,
+                 qPrintable(u"%1 → %2"_s.arg(qGray(onBeatPlain.pixel(60, 120))).arg(qGray(onBeat.pixel(60, 120)))));
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 45)), rgbHash(betweenPlain));
+    }
+
     void cleanupTestCase() { MltRuntime::shutdown(); }
 };
 

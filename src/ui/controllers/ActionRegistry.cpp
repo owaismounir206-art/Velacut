@@ -73,6 +73,7 @@ ActionRegistry::ActionRegistry(EditorController &editor)
         };
     };
     const int videoLike = Video | Image;
+    const int placed = videoLike | Sticker; // pictures placed on the canvas
 
     // The contextual toolbar, in order (SPEC 0bis rule 3). Features of later phases get their entry with them.
     add({u"split"_s, tr("Split"), u"content_cut"_s, u"S"_s, AnyClip | Nothing, [this] { return m_editor.canSplit(); },
@@ -90,15 +91,20 @@ ActionRegistry::ActionRegistry(EditorController &editor)
     add({u"speed"_s, tr("Speed"), u"speed"_s, {}, Video | Audio, clip, properties(u"speed"_s)});
     add({u"volume"_s, tr("Volume"), u"volume_up"_s, {}, Video | Audio, clip, properties(u"audio"_s)});
     add({u"fades"_s, tr("Fades"), u"graphic_eq"_s, {}, Audio, clip, properties(u"audio"_s)});
-    add({u"animation"_s, tr("Animation"), u"animation"_s, {}, videoLike | Text, clip, library(u"animations"_s)});
+    add({u"animation"_s, tr("Animation"), u"animation"_s, {}, placed | Text, clip, library(u"animations"_s)});
+    add({u"stickerEdit"_s, tr("Edit sticker"), u"tune"_s, {}, Sticker, clip, properties(u"sticker"_s)});
+    add({u"beat"_s, tr("Beat"), u"graphic_eq"_s, {}, Audio, clip, [this] {
+             m_editor.detectBeats();
+             return true;
+         }});
     add({u"freeze"_s, tr("Freeze"), u"ac_unit"_s, {}, Video | Nothing, always, [this] { return m_editor.freezeFrame(); }});
     add({u"reverse"_s, tr("Reverse"), u"swap_horiz"_s, {}, Video, clip, [inspector] {
              return inspector->set(u"reversed"_s, !inspector->values().value(u"reversed"_s).toBool());
          }});
-    add({u"mirror"_s, tr("Mirror"), u"flip"_s, {}, videoLike, clip, [inspector] {
+    add({u"mirror"_s, tr("Mirror"), u"flip"_s, {}, placed, clip, [inspector] {
              return inspector->set(u"flipH"_s, !inspector->values().value(u"flipH"_s).toBool());
          }});
-    add({u"rotate"_s, tr("Rotate"), u"rotate_right"_s, {}, videoLike | Text, clip, [inspector] {
+    add({u"rotate"_s, tr("Rotate"), u"rotate_right"_s, {}, placed | Text, clip, [inspector] {
              const double rotation = inspector->values().value(u"rotation"_s).toDouble() + 90.0;
              const bool done = inspector->set(u"rotation"_s, rotation > 180.0 ? rotation - 360.0 : rotation);
              inspector->endGesture();
@@ -112,6 +118,7 @@ ActionRegistry::ActionRegistry(EditorController &editor)
          [inspector] { return inspector->applyToAll(u"transition"_s); }});
     add({u"addText"_s, tr("Add text"), u"title"_s, {}, Nothing, always, [this] { return m_editor.addText(); }});
     add({u"addAudio"_s, tr("Add audio"), u"music_note"_s, {}, Nothing, always, library(u"audio"_s)});
+    add({u"addSticker"_s, tr("Add a sticker"), u"add_reaction"_s, {}, 0, always, library(u"stickers"_s)});
 
     // Found by the search (and, some, in the right-click menu of the timeline).
     add({u"copyAttributes"_s, tr("Copy attributes"), u"format_paint"_s, tr("Ctrl+Alt+C"), 0, clip, [inspector] {
@@ -217,6 +224,8 @@ int ActionRegistry::currentContext() const
         return Text;
     case ClipInspector::Adjustment:
         return AdjustmentLayer;
+    case ClipInspector::Sticker:
+        return Sticker;
     default:
         return Image; // other visual clips (colour, compound…): what applies to pictures
     }
@@ -305,6 +314,10 @@ QVariantList ActionRegistry::search(const QString &text, int limit) const
         consider(score(needle, {preset.name.en, preset.name.it, tr("Text")}) * 10, u"text"_s, preset.id,
                  preset.name.text(), tr("Text style"), u"title"_s, true);
     }
+    for (const fx::StickerPreset &preset : library.stickers()) {
+        consider(score(needle, {preset.name.en, preset.name.it, tr("Sticker")}) * 10, u"sticker"_s, preset.id,
+                 preset.name.text(), tr("Sticker"), u"add_reaction"_s, true);
+    }
     for (const fx::AnimationPreset &preset : library.animations()) {
         const QString detail = preset.category == u"in"_s    ? tr("Entry animation")
                                : preset.category == u"out"_s ? tr("Exit animation")
@@ -356,6 +369,10 @@ bool ActionRegistry::activate(const QString &kind, const QString &id)
     if (kind == u"animation"_s) {
         emit m_editor.libraryRequested(u"animations"_s);
         return inspector->toggleAnimation(id);
+    }
+    if (kind == u"sticker"_s) {
+        emit m_editor.libraryRequested(u"stickers"_s);
+        return m_editor.addSticker(id);
     }
     if (kind == u"music"_s) {
         return m_music && m_editor.addFromLibrary(m_music, id.toInt());

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="partyFaceGrad" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FFF066"/>
+      <stop offset="60%" stop-color="#FFCC00"/>
+      <stop offset="100%" stop-color="#E69900"/>
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="270" r="210" fill="url(#partyFaceGrad)" stroke="#CC8800" stroke-width="8"/>
+  <!-- Party Hat -->
+  <polygon points="120,180 200,30 290,140" fill="#9933FF" stroke="#6600CC" stroke-width="6"/>
+  <circle cx="200" cy="30" r="16" fill="#FFCC00"/>
+  <!-- Happy Eyes (curved arches) -->
+  <path d="M 170 240 Q 200 200 230 240" stroke="#3B1500" stroke-width="12" fill="none" stroke-linecap="round"/>
+  <path d="M 310 240 Q 340 200 370 240" stroke="#3B1500" stroke-width="12" fill="none" stroke-linecap="round"/>
+  <!-- Open mouth whistle/horn -->
+  <ellipse cx="256" cy="370" rx="35" ry="45" fill="#3B1500"/>
+  <ellipse cx="256" cy="385" rx="25" ry="20" fill="#FF5577"/>
+  <!-- Confetti bits -->
+  <circle cx="90" cy="210" r="10" fill="#FF3366"/>
+  <circle cx="410" cy="180" r="12" fill="#33CCFF"/>
+  <rect x="380" y="320" width="16" height="16" fill="#33FF66" transform="rotate(25, 388, 328)"/>
+  <rect x="80" y="350" width="14" height="14" fill="#FFCC00" transform="rotate(45, 87, 357)"/>
+  <polygon points="350,110 360,130 340,135" fill="#FF6600"/>
+</svg>

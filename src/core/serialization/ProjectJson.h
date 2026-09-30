@@ -37,6 +37,9 @@ QJsonObject textStyleToJson(const TextStyle &style);
 TextStyle textStyleFromJson(const QJsonObject &json);
 QJsonObject textAnimationToJson(const TextAnimation &animation);
 std::optional<TextAnimation> textAnimationFromJson(const QJsonObject &json);
+// The settings of an audio visualizer (sticker clips, library presets).
+AudioVisualizerSettings visualizerFromJson(const QJsonObject &json);
+QJsonObject visualizerToJson(const AudioVisualizerSettings &settings);
 // One media item (the probe process sends them to the editor in this form).
 QJsonObject mediaToJson(const Media &media);
 std::optional<Media> mediaFromJson(const QJsonObject &json, QString *error = nullptr);

@@ -90,6 +90,21 @@ struct EffectSpec
     std::vector<ParamSpec> params;
 };
 
+// A sticker of the library (docs/EFFECT_FORMAT.md §6): a picture of the pack (`path`, resolved in the pack's folder),
+// an emoji drawn with the system's colour emoji font, or an audio visualizer (`visualizer`: its settings).
+struct StickerPreset
+{
+    QString id;
+    int version = 1;
+    QString category;
+    LocalizedText name;
+    QString path; // absolute (":/vedit/packs/…" for the built-in pack); empty for emoji and visualizers
+    QString emoji;
+    bool animated = false;
+    double defaultDuration = 3.0;
+    QJsonObject visualizer;
+};
+
 // The assets of a pack (docs/EFFECT_FORMAT.md): the core pack is built into the application (:/vedit/packs/…).
 class Library
 {
@@ -116,6 +131,9 @@ public:
     const std::vector<Category> &animationCategories() const { return m_animationCategories; }
     const std::vector<AnimationPreset> &animations() const { return m_animations; }
     const AnimationPreset *animation(const QString &id) const;
+    const std::vector<Category> &stickerCategories() const { return m_stickerCategories; }
+    const std::vector<StickerPreset> &stickers() const { return m_stickers; }
+    const StickerPreset *sticker(const QString &id) const;
     const EffectSpec *effect(const QString &id) const;
 
     // The "look" JSON of a filter manifest / the params of a "vedit.adjust.basic" effect, as colour adjustments.
@@ -132,6 +150,8 @@ private:
     std::vector<TextStylePreset> m_textStyles;
     std::vector<Category> m_animationCategories;
     std::vector<AnimationPreset> m_animations;
+    std::vector<Category> m_stickerCategories;
+    std::vector<StickerPreset> m_stickers;
     std::vector<EffectSpec> m_effects;
 };
 

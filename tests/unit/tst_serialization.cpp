@@ -160,6 +160,33 @@ ProjectData richProject()
     compound.payload = CompoundClipData{nested.id, frames(0)};
     overlay.clips.push_back(compound);
     sequence.visualTracks.push_back(overlay);
+
+    // Stickers: a library picture recoloured and slowed, an emoji, a visualizer.
+    Track stickers;
+    stickers.id = TrackId::create();
+    stickers.kind = TrackKind::Sticker;
+    const auto sticker = [](int start, StickerClipData data) {
+        Clip clip;
+        clip.id = ClipId::create();
+        clip.start = frames(start);
+        clip.duration = frames(30);
+        clip.payload = std::move(data);
+        return clip;
+    };
+    StickerClipData star;
+    star.source = AssetRef{u"vedit.core"_s, u"stickers/shapes/star"_s, 1};
+    star.tint = Color{0, 128, 255, 255};
+    star.loop = false;
+    star.speed = 0.5;
+    stickers.clips.push_back(sticker(0, star));
+    StickerClipData fire;
+    fire.emoji = u"🔥"_s;
+    stickers.clips.push_back(sticker(40, fire));
+    StickerClipData bars;
+    bars.visualizer = AudioVisualizerSettings{VisualizerStyle::PulsingCircle, 48, Color{1, 2, 3, 255}, Color{4, 5, 6, 255},
+                                              1.5, 0.25, true, 0.75, 6.0};
+    stickers.clips.push_back(sticker(80, bars));
+    sequence.visualTracks.push_back(stickers);
     // Last: this push_back invalidates the `sequence` reference.
     data.sequences.push_back(nested);
 

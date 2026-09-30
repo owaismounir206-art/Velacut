@@ -88,6 +88,7 @@ public:
         Other,
         Transition,
         Adjustment, // an adjustment layer: its filter and adjustments act on everything under it
+        Sticker,    // a sticker or an audio visualizer
     };
     Q_ENUM(Kind)
 

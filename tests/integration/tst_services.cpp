@@ -2,6 +2,8 @@
 // vedit's own MLT services on real frames: transform, adjust, gain, transition, text (docs/ARCHITECTURE.md §5.2).
 #include "TestMedia.h"
 
+#include "engine/analysis/BeatDetection.h"
+#include "engine/analysis/Spectrum.h"
 #include "engine/mlt/MltRuntime.h"
 #include "engine/mlt/Services.h"
 #include "engine/playback/AudioMeters.h"
@@ -508,6 +510,54 @@ private slots:
         QVERIFY(imgData != nullptr);
         QCOMPARE(width, 320);
         QCOMPARE(height, 180);
+    }
+
+    // The spectrum puts a sine in the band of its frequency, near 0 dBFS, and the other bands far below.
+    void spectrumOfASine()
+    {
+        const QString sine = m_dir.filePath(u"sine1k.wav"_s);
+        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s, u"sine=frequency=1000:sample_rate=44100:duration=2"_s, sine}));
+        const std::optional<Spectrum> spectrum = extractSpectrum(sine);
+        QVERIFY(spectrum);
+        QCOMPARE(spectrum->framesPerSecond, 30);
+        QVERIFY(std::abs(spectrum->seconds() - 2.0) < 0.1);
+        std::vector<float> levels;
+        spectrum->levelsAt(1.0, levels);
+        QCOMPARE(levels.size(), size_t(32));
+        const auto loudest = std::max_element(levels.begin(), levels.end()) - levels.begin();
+        const double low = Spectrum::kLowHz * std::pow(Spectrum::kHighHz / Spectrum::kLowHz, loudest / 32.0);
+        const double high = Spectrum::kLowHz * std::pow(Spectrum::kHighHz / Spectrum::kLowHz, (loudest + 1) / 32.0);
+        QVERIFY2(low <= 1000 * 1.05 && high >= 1000 / 1.05, qPrintable(u"band %1–%2 Hz"_s.arg(low).arg(high)));
+        // The sine is at -1/8 amplitude by default in FFmpeg: about -18 dBFS, well above the floor.
+        QVERIFY2(levels[static_cast<size_t>(loudest)] > 0.6, qPrintable(QString::number(levels[static_cast<size_t>(loudest)])));
+        QVERIFY(levels[0] < 0.2 && levels[31] < 0.2);
+        QCOMPARE(spectrum->levelAt(5.0), 0.0); // after the end
+        // Disk format round trip.
+        const std::optional<Spectrum> decoded = decodeSpectrum(encodeSpectrum(*spectrum));
+        QVERIFY(decoded);
+        QCOMPARE(decoded->levels, spectrum->levels);
+        QVERIFY(!decodeSpectrum("VSPC"));
+    }
+
+    // Clicks every half second: the beats are found there, and none in a steady tone.
+    void beatsOfAClickTrack()
+    {
+        const QString clicks = m_dir.filePath(u"clicks.wav"_s);
+        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s,
+                           u"aevalsrc='if(lt(mod(t\\,0.5)\\,0.03)\\,0.8*sin(2*PI*150*t)\\,0)':s=44100:d=4"_s, clicks}));
+        const std::optional<Spectrum> spectrum = extractSpectrum(clicks);
+        QVERIFY(spectrum);
+        const std::vector<double> beats = detectBeats(*spectrum);
+        QVERIFY2(beats.size() >= 6 && beats.size() <= 9, qPrintable(QString::number(beats.size())));
+        for (const double beat : beats) {
+            const double offset = std::fmod(beat + 0.25, 0.5) - 0.25; // distance from the nearest click
+            QVERIFY2(std::abs(offset) < 0.06, qPrintable(QString::number(beat)));
+        }
+        const QString tone = m_dir.filePath(u"tone.wav"_s);
+        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s, u"sine=frequency=440:duration=3"_s, tone}));
+        const std::optional<Spectrum> steady = extractSpectrum(tone);
+        QVERIFY(steady);
+        QVERIFY(detectBeats(*steady).size() <= 1); // at most the onset of the tone
     }
 
     void cleanupTestCase() { MltRuntime::shutdown(); }

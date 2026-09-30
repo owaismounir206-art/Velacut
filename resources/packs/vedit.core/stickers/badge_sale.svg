@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 256" width="512" height="256">
+  <defs>
+    <linearGradient id="saleGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00CC44"/>
+      <stop offset="100%" stop-color="#009922"/>
+    </linearGradient>
+  </defs>
+  <rect x="20" y="32" width="472" height="192" rx="40" fill="url(#saleGrad)" stroke="#FFFFFF" stroke-width="12" filter="drop-shadow(0 8px 16px rgba(0,0,0,0.35))"/>
+  <text x="256" y="166" font-family="sans-serif" font-size="105" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="6">SALE</text>
+</svg>

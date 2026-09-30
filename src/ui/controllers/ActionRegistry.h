@@ -38,7 +38,8 @@ public:
         Text = 1 << 4,
         TransitionSelected = 1 << 5,
         AdjustmentLayer = 1 << 6,
-        AnyClip = Video | Image | Audio | Text | AdjustmentLayer,
+        Sticker = 1 << 7,
+        AnyClip = Video | Image | Audio | Text | AdjustmentLayer | Sticker,
     };
 
     explicit ActionRegistry(EditorController &editor);
@@ -47,7 +48,7 @@ public:
     Q_INVOKABLE bool trigger(const QString &id);
     Q_INVOKABLE bool isEnabled(const QString &id) const;
 
-    // Results of the universal search, best first: [{kind ("action", "filter", "transition", "text", "animation",
+    // Results of the universal search, best first: [{kind ("action", "filter", "transition", "text", "sticker", "animation",
     // "music", "media"), id, text, detail, icon, enabled}]. An empty text lists the actions of the selection.
     Q_INVOKABLE QVariantList search(const QString &text, int limit = 40) const;
     // Applies or opens a result of search().

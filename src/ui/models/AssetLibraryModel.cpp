@@ -48,6 +48,7 @@ QVariantList AssetLibraryModel::categories() const
     const std::vector<fx::Category> &list = m_kind == Filters       ? library.filterCategories()
                                             : m_kind == Transitions ? library.transitionCategories()
                                             : m_kind == Animations  ? library.animationCategories()
+                                            : m_kind == Stickers    ? library.stickerCategories()
                                                                     : library.textStyleCategories();
     QVariantList result;
     for (const fx::Category &category : list) {
@@ -61,7 +62,7 @@ std::vector<AssetLibraryModel::Item> AssetLibraryModel::itemsOfKind() const
     const fx::Library &library = fx::Library::core();
     std::vector<Item> items;
     const auto add = [&items](const auto &preset) {
-        items.push_back(Item{preset.id, preset.name.text(), preset.name.en, preset.name.it, preset.category});
+        items.push_back(Item{preset.id, preset.name.text(), preset.name.en, preset.name.it, preset.category, {}, false});
     };
     switch (m_kind) {
     case Filters:
@@ -82,6 +83,11 @@ std::vector<AssetLibraryModel::Item> AssetLibraryModel::itemsOfKind() const
     case Animations:
         for (const fx::AnimationPreset &preset : library.animations()) {
             add(preset);
+        }
+        break;
+    case Stickers:
+        for (const fx::StickerPreset &preset : library.stickers()) {
+            items.push_back(Item{preset.id, preset.name.text(), preset.name.en, preset.name.it, preset.category, preset.path, preset.animated});
         }
         break;
     }
@@ -130,6 +136,10 @@ QVariant AssetLibraryModel::data(const QModelIndex &index, int role) const
         return item.name;
     case CategoryRole:
         return item.category;
+    case PathRole:
+        return item.path;
+    case AnimatedRole:
+        return item.animated;
     default:
         return {};
     }
@@ -137,7 +147,13 @@ QVariant AssetLibraryModel::data(const QModelIndex &index, int role) const
 
 QHash<int, QByteArray> AssetLibraryModel::roleNames() const
 {
-    return {{AssetIdRole, "assetId"}, {NameRole, "name"}, {CategoryRole, "category"}};
+    return {
+        {AssetIdRole, "assetId"},
+        {NameRole, "name"},
+        {CategoryRole, "category"},
+        {PathRole, "path"},
+        {AnimatedRole, "animated"},
+    };
 }
 
 QString AssetLibraryModel::nameOf(const QString &assetId) const

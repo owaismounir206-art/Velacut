@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="downGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00EEFF"/>
+      <stop offset="100%" stop-color="#0066FF"/>
+    </linearGradient>
+  </defs>
+  <path d="M 216 60 L 296 60 L 296 280 L 392 280 L 256 452 L 120 280 L 216 280 Z" fill="url(#downGrad)" stroke="#FFFFFF" stroke-width="14" stroke-linejoin="round" filter="drop-shadow(0 8px 16px rgba(0,0,0,0.35))"/>
+</svg>

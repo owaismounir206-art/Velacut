@@ -12,6 +12,8 @@ resources/packs/vedit.core/
 ├── effects.json       # effetti con parametri (pannello "Regola")
 ├── filters.json       # filtri (look di colore)
 ├── transitions.json   # transizioni
+├── stickers.json      # sticker ed emoji, visualizzatori audio
+├── stickers/          # immagini degli sticker (SVG, PNG, GIF)
 └── text-styles.json   # stili di testo
 ```
 Ogni file di elementi è `{ "categories": [ { "id", "name" } ], "items": [ … ] }`. I nomi sono oggetti
@@ -68,3 +70,21 @@ Applicare uno stile copia `style` nella clip (il progetto resta autosufficiente)
 32 filtri in 7 categorie, 18 transizioni in 3 categorie, 24 stili di testo in 5 categorie. La specifica chiede alla
 fine almeno 60 filtri, 100 transizioni e 40 stili: le librerie crescono nelle fasi successive (transizioni 3D e
 distorsioni con la Fase 5, effetti testo con la Fase 3).
+
+## 7. Sticker (`stickers.json`, Fase 5)
+```json
+{ "id": "stickers/shapes/star", "version": 1, "category": "shapes", "name": { … }, "path": "stickers/shape_star.svg",
+  "animated": false, "defaultDuration": 3.0 }
+{ "id": "stickers/emoji/fire-emoji", "version": 1, "category": "emoji", "name": { … }, "emoji": "🔥" }
+{ "id": "visualizers/bars_neon", "version": 1, "category": "visualizers", "name": { … },
+  "visualizer": { "style": "bars", "barCount": 32, "primaryColor": "#00DCFF", "secondaryColor": "#FF55AA", … } }
+```
+`path` è relativo alla cartella del pacchetto (SVG disegnato alla risoluzione del canvas; PNG/WebP; GIF/WebP animati
+con `"animated": true`). `emoji` usa il font emoji a colori del sistema. `visualizer` ha lo schema di FILE_FORMAT §5.5 e
+viene copiato nella clip, dove resta modificabile. Il pacchetto `vedit.core` ha 90 sticker in 6 categorie (23 immagini,
+63 emoji, 4 visualizzatori).
+
+## 8. Effetti a ritmo (`effects.json`, categoria `rhythm`)
+`vedit.beat.flash` (`amount` 0–1 verso il bianco), `vedit.beat.zoom` (`amount`: ingrandimento in più sul beat),
+`vedit.beat.shake` (`amount`: pixel a 1080p); `decay` = secondi in cui l'impulso si spegne. I beat vengono dai marker
+"Beat" (ARCHITECTURE D-51).

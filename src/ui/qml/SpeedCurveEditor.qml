@@ -90,7 +90,7 @@ Item {
     onWidthChanged: canvas.requestPaint()
     onHeightChanged: canvas.requestPaint()
     Accessible.role: Accessible.Graphic
-    Accessible.name: qsTr("Curva di velocità")
+    Accessible.name: qsTr("Speed curve")
 
     Rectangle {
         anchors.fill: parent

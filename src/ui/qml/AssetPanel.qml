@@ -1,8 +1,10 @@
-// A library of the core pack (Text, Transitions, Filters): category chips, search, and items that show on the player
-// while the pointer is over them and apply with a click; a click on the one applied removes it (SPEC 0bis rules 4, 5).
+// A library of the core pack (Text, Stickers, Transitions, Filters, Animations): category chips, search, and items that
+// show on the player while the pointer is over them and apply with a click; a click on the one applied removes it
+// (SPEC 0bis rules 4, 5). A sticker is added at the playhead with a click; "Import" adds the user's own pictures.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import Vedit.Components
 import Vedit.Theme
@@ -19,14 +21,18 @@ Rectangle {
     readonly property bool transitions: kind === AssetLibraryModel.Transitions
     readonly property bool texts: kind === AssetLibraryModel.TextStyles
     readonly property bool animations: kind === AssetLibraryModel.Animations
+    readonly property bool stickers: kind === AssetLibraryModel.Stickers
     // The item applied to what the library acts on (marked in the grid).
     readonly property var current: filters ? [inspector.values["filter"] ?? ""]
                                  : transitions ? [inspector.values["transition.type"] ?? ""]
                                  : animations ? [inspector.values["animation.in"] ?? "", inspector.values["animation.out"] ?? "",
                                                  inspector.values["animation.loop"] ?? ""]
+                                 : stickers ? []
                                  : [inspector.values["text.preset"] ?? ""]
 
     function preview(assetId) {
+        if (stickers)
+            return
         if (filters) {
             inspector.previewFilter(assetId)
         } else if (texts) {
@@ -51,7 +57,9 @@ Rectangle {
     }
     function apply(assetId) {
         endPreview()
-        if (filters)
+        if (stickers)
+            editor.addSticker(assetId)
+        else if (filters)
             inspector.toggleFilter(assetId)
         else if (transitions)
             inspector.toggleTransition(assetId)
@@ -93,6 +101,14 @@ Rectangle {
         kind: panel.kind
     }
 
+    FileDialog {
+        id: stickerDialog
+        title: qsTr("Import stickers")
+        fileMode: FileDialog.OpenFiles
+        nameFilters: [qsTr("Pictures (%1)").arg("*.png *.webp *.gif *.jpg *.jpeg"), qsTr("All files (*)")]
+        onAccepted: panel.editor.importStickers(selectedFiles)
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Theme.space.md
@@ -104,6 +120,14 @@ Rectangle {
                 Layout.fillWidth: true
                 role: "titleMedium"
                 text: panel.title
+            }
+            Button {
+                objectName: "importStickers"
+                visible: panel.stickers
+                variant: "tonal"
+                iconName: "upload"
+                text: qsTr("Import")
+                onClicked: stickerDialog.open()
             }
             Button {
                 objectName: "addDefaultText"
@@ -241,7 +265,7 @@ Rectangle {
                             // Transitions play while the pointer is over them.
                             progress: 0.5
                             NumberAnimation on progress {
-                                running: (panel.transitions || panel.animations) && mouse.containsMouse
+                                running: (panel.transitions || panel.animations || panel.stickers) && mouse.containsMouse
                                 from: 0
                                 to: 1
                                 duration: Theme.motion.long4 * 2
@@ -255,7 +279,8 @@ Rectangle {
                             visible: mouse.containsMouse
                             variant: "filled"
                             iconName: "add"
-                            label: panel.texts ? qsTr("New text in this style") : qsTr("Apply")
+                            label: panel.texts ? qsTr("New text in this style")
+                                 : panel.stickers ? qsTr("Add at the playhead") : qsTr("Apply")
                             onClicked: panel.add(tile.assetId)
                         }
                     }

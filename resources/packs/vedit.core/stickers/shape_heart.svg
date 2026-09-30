@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="heartGlow" cx="40%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#FF5588"/>
+      <stop offset="50%" stop-color="#FF0044"/>
+      <stop offset="100%" stop-color="#AA0022"/>
+    </radialGradient>
+  </defs>
+  <path d="M 256 120 C 210 50 110 50 70 120 C 20 200 80 300 256 430 C 432 300 492 200 442 120 C 402 50 302 50 256 120 Z" fill="url(#heartGlow)" stroke="#FFFFFF" stroke-width="12" stroke-linejoin="round" filter="drop-shadow(0 12px 24px rgba(255, 0, 68, 0.45))"/>
+</svg>

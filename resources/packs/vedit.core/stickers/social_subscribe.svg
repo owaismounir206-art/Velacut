@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 200" width="512" height="200">
+  <defs>
+    <linearGradient id="subRed" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FF1A1A"/>
+      <stop offset="100%" stop-color="#CC0000"/>
+    </linearGradient>
+  </defs>
+  <!-- Button pill -->
+  <rect x="16" y="24" width="480" height="152" rx="76" fill="url(#subRed)" stroke="#FFFFFF" stroke-width="8" filter="drop-shadow(0 8px 16px rgba(0,0,0,0.4))"/>
+  <!-- Bell Icon -->
+  <g transform="translate(68, 60) scale(1.6)">
+    <path d="M 20 6 C 20 6 22 2 24 2 C 26 2 28 6 28 6 C 36 8 40 16 40 28 L 44 36 L 4 36 L 8 28 C 8 16 12 8 20 6 Z" fill="#FFFFFF"/>
+    <circle cx="24" cy="40" r="4" fill="#FFFFFF"/>
+  </g>
+  <!-- SUBSCRIBE Text -->
+  <text x="160" y="122" font-family="sans-serif" font-size="48" font-weight="900" fill="#FFFFFF" letter-spacing="4">SUBSCRIBE</text>
+</svg>

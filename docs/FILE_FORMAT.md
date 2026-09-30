@@ -335,7 +335,23 @@ traccia, sovrascrivibile riga per riga con `styleOverride`), più le parole temp
 La traccia `captions` aggiunge `captionStyle` (stesso schema di `style` + `preset`, `maxWordsPerLine`, `position`,
 `highlight`).
 
-**`sticker`**: `{ "source": AssetRef }` oppure `{ "mediaId": "…" }` (immagine importata dall'utente).
+**`sticker`** (tracce `sticker`): esattamente una sorgente fra
+- `"source": AssetRef` — uno sticker della libreria (immagine SVG/PNG/GIF del pacchetto, o emoji);
+- `"mediaId": "…"` — un'immagine del progetto importata dall'utente (PNG, WebP, JPEG, GIF animata);
+- `"emoji": "🔥"` — un'emoji disegnata con il font emoji a colori del sistema;
+- `"visualizer": { … }` — un visualizzatore audio (insieme a `source` se viene dalla libreria), che reagisce all'audio
+  della timeline sotto di esso: `style` (`"bars"`, `"spectrum"`, `"waveform"`, `"circle"`), `barCount` (4–128),
+  `primaryColor`, `secondaryColor`, `sensitivity` (0,1–10), `smoothing` (0–1: media sugli ultimi 0,25 s), `mirror`,
+  `roundness` (0–1), `thickness` (pixel a 1080p).
+
+Facoltativi: `tint` (colore che ricolora l'immagine mantenendone le ombre; assente = nessuno), `loop` (default `true`:
+uno sticker animato ricomincia; `false` = resta sull'ultimo fotogramma), `speed` (0,1–10, default 1). Le chiavi
+sconosciute sono conservate. Lo sticker è un livello grande quanto il canvas con l'immagine centrata: posizione e
+dimensione sono quelle di `transform` (inserito al 35% del canvas; un visualizzatore al 100%).
+```json
+{ "kind": "sticker", "source": { "pack": "vedit.core", "id": "stickers/shapes/star", "version": 1 },
+  "tint": "#0080ffff", "loop": false, "speed": 0.5 }
+```
 
 **`color`**: `{ "color": Param colore }`.
 

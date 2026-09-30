@@ -12,6 +12,7 @@
 #include "core/serialization/ProjectJson.h"
 #include "document/Document.h"
 #include "engine/analysis/AudioSync.h"
+#include "engine/analysis/BeatDetection.h"
 #include "engine/analysis/Decoding.h"
 #include "engine/analysis/Fingerprint.h"
 #include "engine/analysis/MediaAnalysis.h"
@@ -24,11 +25,14 @@
 #include "ui/models/MediaPoolModel.h"
 #include "ui/models/TimelineModel.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QLocale>
 #include <QFileInfo>
 #include <QLoggingCategory>
+#include <QPointer>
 #include <QRegularExpression>
+#include <QThreadPool>
 #include <QUuid>
 
 #include <cmath>
@@ -584,7 +588,19 @@ void EditorController::onImported(const Media &imported)
         return;
     }
     const int row = pending->trackRow;
+    const bool asSticker = pending->sticker;
     m_pendingInserts.erase(pending);
+    if (asSticker) {
+        if (imported.kind != MediaKind::Image) {
+            emit message(tr("Only pictures can become stickers."), false);
+            return;
+        }
+        StickerClipData sticker;
+        sticker.mediaId = mediaId;
+        apply(TimelineEditor(data(), data().mainSequenceId)
+                  .insertSticker(RationalTime(playhead(), data().settings.frameRate), std::move(sticker)));
+        return;
+    }
     const bool audio = imported.kind == MediaKind::Audio;
     if (const std::optional<ClipId> clip = insertAtRow(mediaId, audio ? m_insertStart : m_insertCursor, row)) {
         if (!audio) {
@@ -685,6 +701,75 @@ bool EditorController::addText(const QString &styleId)
     const Rational rate = data().settings.frameRate;
     return apply(TimelineEditor(data(), data().mainSequenceId)
                      .insertText(RationalTime(playhead(), rate), std::move(text), RationalTime(0, rate))); // default length
+}
+
+bool EditorController::addSticker(const QString &assetId)
+{
+    const fx::StickerPreset *preset = fx::Library::core().sticker(assetId);
+    if (!preset) {
+        return false;
+    }
+    StickerClipData sticker;
+    sticker.source = AssetRef{QString::fromLatin1(fx::Library::kCorePack), preset->id, preset->version};
+    const Rational rate = data().settings.frameRate;
+    RationalTime duration = RationalTime::fromSeconds(Rational(std::max(1, static_cast<int>(std::lround(preset->defaultDuration)))),
+                                                      rate, Rounding::NearestEven);
+    if (!preset->visualizer.isEmpty()) {
+        sticker.visualizer = projectjson::visualizerFromJson(preset->visualizer);
+        // A visualizer follows the music: it lasts until the end of the video.
+        const int remaining = m_timeline->duration() - playhead();
+        if (remaining > duration.value()) {
+            duration = RationalTime(remaining, rate);
+        }
+    }
+    return apply(TimelineEditor(data(), data().mainSequenceId).insertSticker(RationalTime(playhead(), rate), std::move(sticker), duration));
+}
+
+void EditorController::importStickers(const QList<QUrl> &urls)
+{
+    QStringList paths;
+    for (const QUrl &url : urls) {
+        if (url.isLocalFile()) {
+            paths << url.toLocalFile();
+            m_pendingInserts.append(PendingInsert{QFileInfo(url.toLocalFile()).absoluteFilePath(), 0, true});
+        }
+    }
+    importPaths(paths);
+}
+
+void EditorController::detectBeats()
+{
+    const std::optional<ClipId> id = focusClip();
+    const Clip *clip = id ? data().findClip(*id) : nullptr;
+    const MediaClipData *media = clip ? clip->media() : nullptr;
+    const Media *source = media ? data().findMedia(media->mediaId) : nullptr;
+    if (!source || !source->info.audio || media->streams == Streams::VideoOnly) {
+        emit message(tr("Select a music or video clip with sound to find its beats."), false);
+        return;
+    }
+    emit message(tr("Finding the beats…"), false);
+    QPointer<EditorController> self(this);
+    QThreadPool::globalInstance()->start([self, clipId = *id, media = *source] {
+        const std::optional<engine::Spectrum> spectrum = engine::cachedSpectrum(media);
+        const std::vector<double> beats = spectrum ? engine::detectBeats(*spectrum) : std::vector<double>{};
+        QMetaObject::invokeMethod(qApp, [self, clipId, beats] {
+            if (!self || !self->data().findClip(clipId)) {
+                return;
+            }
+            if (beats.empty()) {
+                emit self->message(tr("No beats found in this audio."), false);
+                return;
+            }
+            EditResult result = TimelineEditor(self->data(), self->data().mainSequenceId).setBeatMarkers(clipId, beats);
+            if (self->apply(std::move(result), false)) {
+                const Clip *clip = self->data().findClip(clipId);
+                const auto count = clip ? std::count_if(clip->markers.begin(), clip->markers.end(),
+                                                        [](const Marker &m) { return m.kind == MarkerKind::Beat; })
+                                        : 0;
+                emit self->message(tr("%n beat(s) marked on the clip", nullptr, static_cast<int>(count)), true);
+            }
+        });
+    });
 }
 
 bool EditorController::setTrackVolume(const QString &trackId, double gainDb)

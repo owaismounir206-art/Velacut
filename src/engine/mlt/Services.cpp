@@ -7,6 +7,8 @@
 #include "engine/timeline/ClipPlacement.h"
 #include "fx/Animation.h"
 #include "fx/Audio.h"
+#include "fx/AudioVisualizer.h"
+#include "fx/BeatEffects.h"
 #include "fx/ChromaKey.h"
 #include "fx/Composite.h"
 #include "fx/Mask.h"
@@ -14,10 +16,14 @@
 
 #include <QCryptographicHash>
 #include <QDataStream>
+#include <QFont>
+#include <QImageReader>
 #include <QIODevice>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QMutex>
+#include <QPainter>
+#include <QSvgRenderer>
 #include <QtGlobal>
 
 #include <mlt++/Mlt.h>
@@ -765,6 +771,252 @@ void *createTransitionService(mlt_profile, mlt_service_type, const char *, const
     return transition;
 }
 
+// ---- vedit.sticker --------------------------------------------------------------------------------------------
+
+// The pictures are decoded on the projection's thread (makeStickerProducer); MLT's threads only scale and copy.
+struct StickerState
+{
+    StickerPicture picture;
+    bool loop = true;
+    double speed = 1.0;
+    double fps = 30.0;
+    QMutex mutex;
+    QImage scaled; // the last frame asked for, fitted in the last size asked for
+    int scaledIndex = -1;
+};
+
+int stickerFrameIndex(const StickerState &state, int position)
+{
+    const int count = static_cast<int>(state.picture.frames.size());
+    if (count <= 1) {
+        return 0;
+    }
+    int total = 0;
+    for (int i = 0; i < count; ++i) {
+        total += state.picture.delayOf(i);
+    }
+    auto ms = static_cast<std::int64_t>(std::llround(position / state.fps * state.speed * 1000.0));
+    ms = state.loop ? ((ms % total) + total) % total : std::clamp<std::int64_t>(ms, 0, total - 1);
+    for (int i = 0; i < count; ++i) {
+        ms -= state.picture.delayOf(i);
+        if (ms < 0) {
+            return i;
+        }
+    }
+    return count - 1;
+}
+
+// A canvas-sized layer (w × h) with the picture fitted inside and centred, like a text layer.
+void fitCentred(const QImage &picture, QImage &layer, int w, int h)
+{
+    layer = QImage(w, h, QImage::Format_RGBA8888);
+    layer.fill(Qt::transparent);
+    if (picture.isNull()) {
+        return;
+    }
+    const QSize size = picture.size().scaled(w, h, Qt::KeepAspectRatio);
+    QPainter painter(&layer);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
+    painter.drawImage(QRect((w - size.width()) / 2, (h - size.height()) / 2, size.width(), size.height()), picture);
+}
+
+void setTransparent(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int w, int h)
+{
+    const int size = w * h * 4;
+    auto *buffer = static_cast<uint8_t *>(mlt_pool_alloc(size));
+    std::memset(buffer, 0, static_cast<size_t>(size));
+    mlt_frame_set_image(frame, buffer, size, mlt_pool_release);
+    *image = buffer;
+    *width = w;
+    *height = h;
+    *format = mlt_image_rgba;
+}
+
+void setLayer(mlt_frame frame, const QImage &layer, uint8_t **image, mlt_image_format *format, int *width, int *height)
+{
+    const int w = layer.width();
+    const int h = layer.height();
+    const int size = w * h * 4;
+    auto *buffer = static_cast<uint8_t *>(mlt_pool_alloc(size));
+    for (int y = 0; y < h; ++y) {
+        std::memcpy(buffer + static_cast<std::ptrdiff_t>(y) * w * 4, layer.constScanLine(y), static_cast<size_t>(w) * 4);
+    }
+    mlt_frame_set_image(frame, buffer, size, mlt_pool_release);
+    *image = buffer;
+    *width = w;
+    *height = h;
+    *format = mlt_image_rgba;
+}
+
+int stickerGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
+{
+    auto producer = static_cast<mlt_producer>(mlt_frame_pop_service(frame));
+    const int position = mlt_frame_pop_service_int(frame);
+    auto *state = static_cast<StickerState *>(mlt_properties_get_data(MLT_PRODUCER_PROPERTIES(producer), kSettings, nullptr));
+    int w = *width;
+    int h = *height;
+    profileSize(MLT_PRODUCER_SERVICE(producer), w, h);
+    if (!state || state->picture.frames.empty()) {
+        setTransparent(frame, image, format, width, height, w, h);
+        return 0;
+    }
+    const int index = stickerFrameIndex(*state, position);
+    QImage layer;
+    {
+        QMutexLocker lock(&state->mutex);
+        if (state->scaledIndex != index || state->scaled.size() != QSize(w, h)) {
+            fitCentred(state->picture.frames[static_cast<size_t>(index)], state->scaled, w, h);
+            state->scaledIndex = index;
+        }
+        layer = state->scaled;
+    }
+    setLayer(frame, layer, image, format, width, height);
+    return 0;
+}
+
+// Producers drawing a layer from their own position (stickers, visualizers): no sound.
+template<int (*GetImage)(mlt_frame, uint8_t **, mlt_image_format *, int *, int *, int)>
+int layerGetFrame(mlt_producer producer, mlt_frame_ptr frame, int)
+{
+    *frame = mlt_frame_init(MLT_PRODUCER_SERVICE(producer));
+    if (*frame) {
+        mlt_properties properties = MLT_FRAME_PROPERTIES(*frame);
+        const int pos = static_cast<int>(mlt_producer_position(producer));
+        mlt_frame_set_position(*frame, pos);
+        mlt_properties_set_int(properties, "progressive", 1);
+        mlt_properties_set_int(properties, "test_audio", 1);
+        mlt_frame_push_service_int(*frame, pos);
+        mlt_frame_push_service(*frame, producer);
+        mlt_frame_push_get_image(*frame, GetImage);
+    }
+    mlt_producer_prepare_next(producer);
+    return 0;
+}
+
+template<int (*GetImage)(mlt_frame, uint8_t **, mlt_image_format *, int *, int *, int)>
+void *createLayerProducer(mlt_profile profile, mlt_service_type, const char *, const void *)
+{
+    mlt_producer producer = mlt_producer_new(profile);
+    if (producer) {
+        producer->get_frame = layerGetFrame<GetImage>;
+        mlt_properties properties = MLT_PRODUCER_PROPERTIES(producer);
+        mlt_properties_set_position(properties, "length", 0x7fffffff);
+        mlt_properties_set_position(properties, "out", 0x7ffffffe);
+    }
+    return producer;
+}
+
+// ---- vedit.visualizer -----------------------------------------------------------------------------------------
+
+struct VisualizerState
+{
+    VisualizerRender render;
+    double fps = 30.0;
+};
+
+// Band levels at `frame` of the clip: the loudest of the audio playing then, averaged over the smoothing window.
+void visualizerLevels(const VisualizerState &state, int frame, std::vector<float> &levels)
+{
+    const VisualizerRender &render = state.render;
+    const int window = std::max(1, static_cast<int>(std::lround(render.smoothing * 0.25 * state.fps)) + 1);
+    std::vector<float> sample;
+    int bands = 0;
+    for (const VisualizerAudio &audio : render.audio) {
+        if (audio.spectrum) {
+            bands = std::max(bands, audio.spectrum->bands);
+        }
+    }
+    levels.assign(static_cast<size_t>(bands), 0.0f);
+    if (bands == 0) {
+        return;
+    }
+    for (int step = 0; step < window; ++step) {
+        const int f = frame - step;
+        std::vector<float> loudest(static_cast<size_t>(bands), 0.0f);
+        for (const VisualizerAudio &audio : render.audio) {
+            if (!audio.spectrum || f < audio.startFrame || f >= audio.endFrame) {
+                continue;
+            }
+            const double seconds = audio.sourceSeconds + (f - audio.startFrame) / state.fps * audio.speed;
+            audio.spectrum->levelsAt(seconds, sample);
+            for (size_t b = 0; b < sample.size() && b < loudest.size(); ++b) {
+                loudest[b] = std::max(loudest[b], sample[b]);
+            }
+        }
+        for (size_t b = 0; b < levels.size(); ++b) {
+            levels[b] += loudest[b] / static_cast<float>(window);
+        }
+    }
+}
+
+int visualizerGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
+{
+    auto producer = static_cast<mlt_producer>(mlt_frame_pop_service(frame));
+    const int position = mlt_frame_pop_service_int(frame);
+    const auto *state = static_cast<const VisualizerState *>(
+        mlt_properties_get_data(MLT_PRODUCER_PROPERTIES(producer), kSettings, nullptr));
+    int w = *width;
+    int h = *height;
+    profileSize(MLT_PRODUCER_SERVICE(producer), w, h);
+    if (!state) {
+        setTransparent(frame, image, format, width, height, w, h);
+        return 0;
+    }
+    std::vector<float> levels;
+    visualizerLevels(*state, position, levels);
+    const fx::VisualizerFrameData data =
+        fx::visualizerFrame(levels, state->render.settings.barCount, state->render.settings.sensitivity);
+    setLayer(frame, fx::renderAudioVisualizer(state->render.settings, data, QSize(w, h)), image, format, width, height);
+    return 0;
+}
+
+// ---- vedit.beat -----------------------------------------------------------------------------------------------
+
+int beatGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
+{
+    auto filter = static_cast<mlt_filter>(mlt_frame_pop_service(frame));
+    const int position = mlt_frame_pop_service_int(frame);
+    *format = mlt_image_rgba;
+    const int error = mlt_frame_get_image(frame, image, format, width, height, 1);
+    const auto *s = settingsOf<BeatEffectSettings>(MLT_FILTER_PROPERTIES(filter));
+    if (error || !s || *format != mlt_image_rgba || !*image) {
+        return error;
+    }
+    const double rate = s->frameRate.toDouble() > 0 ? s->frameRate.toDouble() : 30.0;
+    const double seconds = (position - s->firstFrame) / rate;
+    const double pulse = fx::computeBeatPulse(seconds, s->beats, s->decay);
+    if (pulse <= 0.001) {
+        return 0;
+    }
+    const int w = *width;
+    const int h = *height;
+    switch (s->kind) {
+    case BeatEffectSettings::Kind::Flash:
+        fx::applyBeatFlash(*image, w, h, pulse, s->amount);
+        break;
+    case BeatEffectSettings::Kind::Zoom:
+    case BeatEffectSettings::Kind::Shake: {
+        const std::vector<uint8_t> source(*image, *image + static_cast<std::ptrdiff_t>(w) * h * 4);
+        if (s->kind == BeatEffectSettings::Kind::Zoom) {
+            fx::applyBeatZoom(*image, source.data(), w, h, pulse, s->amount);
+        } else {
+            // The amplitude is given in pixels at 1080p.
+            fx::applyBeatShake(*image, source.data(), w, h, pulse, seconds, s->amount * h / 1080.0);
+        }
+        break;
+    }
+    }
+    return 0;
+}
+
+mlt_frame beatProcess(mlt_filter filter, mlt_frame frame)
+{
+    mlt_frame_push_service_int(frame, static_cast<int>(mlt_frame_get_position(frame)));
+    mlt_frame_push_service(frame, filter);
+    mlt_frame_push_get_image(frame, beatGetImage);
+    return frame;
+}
+
 void appendDouble(QDataStream &stream, double value)
 {
     stream << value;
@@ -787,6 +1039,9 @@ void registerServices(Mlt::Repository *repository)
     repository->register_service(mlt_service_transition_type, "vedit.transition", createTransitionService);
     repository->register_service(mlt_service_producer_type, "vedit.text", createText);
     repository->register_service(mlt_service_producer_type, "vedit.speed_ramp", createSpeedRamp);
+    repository->register_service(mlt_service_producer_type, "vedit.sticker", createLayerProducer<stickerGetImage>);
+    repository->register_service(mlt_service_producer_type, "vedit.visualizer", createLayerProducer<visualizerGetImage>);
+    repository->register_service(mlt_service_filter_type, "vedit.beat", createFilter<beatProcess>);
 }
 
 // ---- settings -----------------------------------------------------------------------------------------------------
@@ -1087,6 +1342,143 @@ std::unique_ptr<Mlt::Producer> makeSpeedRampProducer(Mlt::Profile &profile,
     producer->set("out", length - 1);
     producer->set(kSettings, state, 0, [](void *p) { delete static_cast<SpeedRampState *>(p); });
     return producer;
+}
+
+int StickerPicture::delayOf(int index) const
+{
+    const int delay = index >= 0 && index < static_cast<int>(delaysMs.size()) ? delaysMs[static_cast<size_t>(index)] : 0;
+    return delay > 0 ? delay : 100; // GIFs without a delay play at 10 fps, as browsers do
+}
+
+StickerPicture loadStickerPicture(const QString &path, int maxSide)
+{
+    StickerPicture picture;
+    if (path.endsWith(QStringLiteral(".svg"), Qt::CaseInsensitive) || path.endsWith(QStringLiteral(".svgz"), Qt::CaseInsensitive)) {
+        QSvgRenderer renderer(path);
+        if (!renderer.isValid()) {
+            return picture;
+        }
+        const QSize natural = renderer.defaultSize().isValid() ? renderer.defaultSize() : QSize(maxSide, maxSide);
+        QImage image(natural.scaled(maxSide, maxSide, Qt::KeepAspectRatio), QImage::Format_RGBA8888);
+        image.fill(Qt::transparent);
+        QPainter painter(&image);
+        renderer.render(&painter);
+        painter.end();
+        picture.frames.push_back(std::move(image));
+        return picture;
+    }
+    QImageReader reader(path);
+    reader.setDecideFormatFromContent(true);
+    const bool animated = reader.supportsAnimation() && reader.imageCount() != 1;
+    do {
+        const int delay = reader.nextImageDelay();
+        QImage frame = reader.read();
+        if (frame.isNull()) {
+            break;
+        }
+        if (std::max(frame.width(), frame.height()) > maxSide) {
+            frame = frame.scaled(maxSide, maxSide, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        }
+        picture.frames.push_back(frame.convertToFormat(QImage::Format_RGBA8888));
+        picture.delaysMs.push_back(delay);
+    } while (animated && reader.canRead());
+    return picture;
+}
+
+StickerPicture renderEmoji(const QString &emoji, int size)
+{
+    StickerPicture picture;
+    QImage image(size, size, QImage::Format_RGBA8888);
+    image.fill(Qt::transparent);
+    // The family is a hint: without it fontconfig falls back to any colour emoji font it has.
+    QFont font(QStringLiteral("Noto Color Emoji"));
+    font.setPixelSize(static_cast<int>(size * 0.8));
+    QPainter painter(&image);
+    painter.setFont(font);
+    painter.drawText(QRect(0, 0, size, size), Qt::AlignCenter, emoji);
+    painter.end();
+    picture.frames.push_back(std::move(image));
+    return picture;
+}
+
+void tintPicture(StickerPicture &picture, const Color &tint)
+{
+    if (tint.a == 0) {
+        return;
+    }
+    // Recoloured towards the tint, keeping the shading (luminance) and the alpha.
+    const double amount = tint.a / 255.0;
+    for (QImage &frame : picture.frames) {
+        for (int y = 0; y < frame.height(); ++y) {
+            auto *p = frame.scanLine(y);
+            for (int x = 0; x < frame.width(); ++x, p += 4) {
+                const double luma = (0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2]) / 255.0;
+                const auto mix = [&](uint8_t value, int target) {
+                    return static_cast<uint8_t>(std::lround(value * (1.0 - amount) + target * luma * amount));
+                };
+                p[0] = mix(p[0], tint.r);
+                p[1] = mix(p[1], tint.g);
+                p[2] = mix(p[2], tint.b);
+            }
+        }
+    }
+}
+
+std::unique_ptr<Mlt::Producer> makeStickerProducer(Mlt::Profile &profile, StickerPicture picture, bool loop, double speed)
+{
+    auto producer = std::make_unique<Mlt::Producer>(profile, "vedit.sticker");
+    auto *state = new StickerState;
+    state->picture = std::move(picture);
+    state->loop = loop;
+    state->speed = std::clamp(speed, 0.1, 10.0);
+    state->fps = profile.fps() > 0 ? profile.fps() : 30.0;
+    producer->set(kSettings, state, 0, [](void *p) { delete static_cast<StickerState *>(p); });
+    return producer;
+}
+
+std::unique_ptr<Mlt::Producer> makeVisualizerProducer(Mlt::Profile &profile, VisualizerRender render)
+{
+    auto producer = std::make_unique<Mlt::Producer>(profile, "vedit.visualizer");
+    auto *state = new VisualizerState;
+    state->render = std::move(render);
+    state->fps = profile.fps() > 0 ? profile.fps() : 30.0;
+    producer->set(kSettings, state, 0, [](void *p) { delete static_cast<VisualizerState *>(p); });
+    return producer;
+}
+
+fx::VisualizerSettings visualizerSettings(const AudioVisualizerSettings &settings)
+{
+    const auto color = [](const Color &c) { return QColor(c.r, c.g, c.b, c.a); };
+    fx::VisualizerSettings result;
+    result.style = static_cast<fx::VisualizerStyle>(settings.style);
+    result.barCount = settings.barCount;
+    result.primary = color(settings.primaryColor);
+    result.secondary = color(settings.secondaryColor);
+    result.sensitivity = settings.sensitivity;
+    result.mirror = settings.mirror;
+    result.roundness = settings.roundness;
+    result.thickness = settings.thickness;
+    return result;
+}
+
+QByteArray BeatEffectSettings::key() const
+{
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream << static_cast<int>(kind) << amount << decay << firstFrame << static_cast<qint64>(frameRate.num())
+           << static_cast<qint64>(frameRate.den())
+           << static_cast<quint32>(beats.size());
+    for (const double beat : beats) {
+        stream << beat;
+    }
+    return bytes;
+}
+
+std::unique_ptr<Mlt::Filter> makeBeatFilter(Mlt::Profile &profile, const BeatEffectSettings &settings)
+{
+    auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.beat");
+    attachSettings(*filter, settings);
+    return filter;
 }
 
 } // namespace vedit::engine

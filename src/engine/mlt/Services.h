@@ -7,11 +7,15 @@
 #include "fx/Grade.h"
 #include "fx/Composite.h"
 #include "fx/MotionBlur.h"
+#include "fx/AudioVisualizer.h"
 #include "fx/Transition.h"
+#include "engine/analysis/Spectrum.h"
 
 #include <QByteArray>
+#include <QImage>
 
 #include <memory>
+#include <vector>
 
 namespace Mlt {
 class Filter;
@@ -32,7 +36,10 @@ namespace vedit::engine {
 //  - filter "vedit.chroma_key": green/blue screen removal with UV color distance, feather and spill suppression;
 //  - filter "vedit.gain": volume, fades, pan, level meters (clips, tracks, master);
 //  - transition "vedit.transition": the transitions of the library between two clips;
-//  - producer "vedit.text": a text clip as a canvas-sized layer.
+//  - producer "vedit.text": a text clip as a canvas-sized layer;
+//  - producer "vedit.sticker": a sticker (picture, animated picture, emoji) fitted in a canvas-sized layer;
+//  - producer "vedit.visualizer": an audio visualizer drawn from the spectrum of the audio under it;
+//  - filter "vedit.beat": flash, zoom or shake on the beats.
 // Called by MltRuntime right after Mlt::Factory::init().
 void registerServices(Mlt::Repository *repository);
 
@@ -194,5 +201,60 @@ std::unique_ptr<Mlt::Producer> makeSpeedRampProducer(Mlt::Profile &profile,
                                                      int sourceIn,
                                                      int length,
                                                      bool reversed);
+// ---- stickers, visualizers and beat effects (Phase 5, docs/ARCHITECTURE.md D-49…D-51) ------------------------------
+
+// The frames of a sticker's picture (one for a still picture), decoded on the calling thread (the projection's:
+// fonts and SVG are never used in MLT's threads, D-39).
+struct StickerPicture
+{
+    std::vector<QImage> frames; // RGBA8888
+    std::vector<int> delaysMs;  // of every frame of an animated picture
+
+    int delayOf(int index) const;
+};
+// SVG (rendered at `maxSide`), PNG/JPEG/WebP, or every frame of an animated GIF/WebP (at most `maxSide`).
+StickerPicture loadStickerPicture(const QString &path, int maxSide);
+// An emoji drawn with the system's colour emoji font, `size` pixels square.
+StickerPicture renderEmoji(const QString &emoji, int size);
+void tintPicture(StickerPicture &picture, const Color &tint);
+std::unique_ptr<Mlt::Producer> makeStickerProducer(Mlt::Profile &profile, StickerPicture picture, bool loop, double speed);
+
+// Audio playing under a visualizer: from `startFrame` to `endFrame` (frames of the visualizer clip, profile rate), the
+// source `sourceSeconds` on, at `speed`.
+struct VisualizerAudio
+{
+    int startFrame = 0;
+    int endFrame = 0;
+    double sourceSeconds = 0.0;
+    double speed = 1.0;
+    std::shared_ptr<const Spectrum> spectrum;
+};
+struct VisualizerRender
+{
+    fx::VisualizerSettings settings;
+    double smoothing = 0.5;
+    std::vector<VisualizerAudio> audio;
+};
+std::unique_ptr<Mlt::Producer> makeVisualizerProducer(Mlt::Profile &profile, VisualizerRender render);
+fx::VisualizerSettings visualizerSettings(const AudioVisualizerSettings &settings);
+
+struct BeatEffectSettings
+{
+    enum class Kind
+    {
+        Flash, // amount: 0–1 towards white
+        Zoom,  // amount: extra scale at the beat (0.15 = +15 %)
+        Shake, // amount: pixels at 1080p
+    };
+    Kind kind = Kind::Flash;
+    double amount = 0.7;
+    double decay = 0.18;       // seconds for the pulse to fade
+    std::vector<double> beats; // seconds from `firstFrame`, ascending
+    int firstFrame = 0;        // position of the clip's first frame for the filter
+    Rational frameRate{30, 1};
+
+    QByteArray key() const;
+};
+std::unique_ptr<Mlt::Filter> makeBeatFilter(Mlt::Profile &profile, const BeatEffectSettings &settings);
 
 } // namespace vedit::engine

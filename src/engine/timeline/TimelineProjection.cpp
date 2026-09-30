@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "TimelineProjection.h"
 
+#include "core/project/ClipTime.h"
 #include "engine/timeline/ClipPlacement.h"
 #include "engine/timeline/MediaProducerCache.h"
 #include "fx/Library.h"
@@ -15,6 +16,7 @@
 
 #include <mlt++/Mlt.h>
 
+#include <algorithm>
 #include <cmath>
 #include <numeric>
 
@@ -310,6 +312,12 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
                         m_tractor->attach(*filter);
                         m_adjustmentFilters.push_back(std::move(filter));
                     }
+                    for (const BeatEffectSettings &beat : render->beats) {
+                        auto filter = makeBeatFilter(m_profile, beat);
+                        filter->set_in_and_out(in, out);
+                        m_tractor->attach(*filter);
+                        m_adjustmentFilters.push_back(std::move(filter));
+                    }
                 }
             }
         }
@@ -336,6 +344,11 @@ void TimelineProjection::fillSlot(TrackSlot &slot, const Track &track, const Pro
     }
     slot.playlist->set("hide", hideFlags(track, slot.audio, anySolo));
     updateTrackGain(slot, track);
+    slot.followsTimeline = std::any_of(track.clips.begin(), track.clips.end(), [](const Clip &clip) {
+        return (clip.sticker() && clip.sticker()->visualizer) ||
+               std::any_of(clip.effects.begin(), clip.effects.end(),
+                           [](const Effect &effect) { return effect.type.startsWith(u"vedit.beat."_s); });
+    });
     patch(slot, clipEntries(slot, track, project));
 }
 
@@ -380,6 +393,159 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::textProducer(const TextClipDa
     }
     std::shared_ptr<Mlt::Producer> producer = makeTextProducer(m_profile, staticText(text));
     m_texts.insert(key, producer);
+    return producer;
+}
+
+std::vector<double> TimelineProjection::beatsUnder(const ProjectData &project, const Clip &clip) const
+{
+    std::vector<double> beats;
+    const Sequence *sequence = sequenceOf(project, m_sequenceId);
+    if (!sequence) {
+        return beats;
+    }
+    const RationalTime start = clip.start;
+    const RationalTime end = clip.end();
+    const auto add = [&](const RationalTime &time) {
+        if (time >= start && time < end) {
+            beats.push_back((time - start).toSecondsDouble());
+        }
+    };
+    for (const Marker &marker : sequence->markers) {
+        if (marker.kind == MarkerKind::Beat) {
+            add(marker.time);
+        }
+    }
+    const auto clipBeats = [&](const std::vector<Track> &tracks) {
+        for (const Track &track : tracks) {
+            for (const Clip &other : track.clips) {
+                // The part of the content the clip shows: its markers outside it are not heard.
+                const RationalTime a = keyframeTime(other, RationalTime(0, other.duration.rate()));
+                const RationalTime b = keyframeTime(other, other.duration);
+                const RationalTime low = std::min(a, b);
+                const RationalTime high = std::max(a, b);
+                for (const Marker &marker : other.markers) {
+                    if (marker.kind == MarkerKind::Beat && marker.time >= low && marker.time <= high) {
+                        add(other.start + offsetOfKeyframeTime(other, marker.time));
+                    }
+                }
+            }
+        }
+    };
+    clipBeats(sequence->visualTracks);
+    clipBeats(sequence->audioTracks);
+    std::sort(beats.begin(), beats.end());
+    beats.erase(std::unique(beats.begin(), beats.end()), beats.end());
+    return beats;
+}
+
+std::shared_ptr<Mlt::Producer> TimelineProjection::visualizerProducer(const ProjectData &project, const Clip &clip,
+                                                                      const AudioVisualizerSettings &settings,
+                                                                      QSet<MediaId> &usedMedia)
+{
+    VisualizerRender render;
+    render.settings = visualizerSettings(settings);
+    render.smoothing = settings.smoothing;
+
+    QByteArray key;
+    QDataStream stream(&key, QIODevice::WriteOnly);
+    stream << static_cast<int>(settings.style) << settings.barCount << settings.primaryColor.toString()
+           << settings.secondaryColor.toString() << settings.sensitivity << settings.smoothing << settings.mirror
+           << settings.roundness << settings.thickness;
+
+    const Sequence *sequence = sequenceOf(project, m_sequenceId);
+    const std::int64_t clipStart = toFrames(clip.start);
+    const std::int64_t clipEnd = toFrames(clip.end());
+    const auto collect = [&](const std::vector<Track> &tracks) {
+        for (const Track &track : tracks) {
+            if (track.muted || track.hidden) {
+                continue;
+            }
+            for (const Clip &other : track.clips) {
+                const MediaClipData *data = other.media();
+                if (!data || !other.enabled || data->audio.muted || data->streams == Streams::VideoOnly || data->curve) {
+                    continue;
+                }
+                const Media *media = project.findMedia(data->mediaId);
+                const std::int64_t from = std::max(clipStart, toFrames(other.start));
+                const std::int64_t to = std::min(clipEnd, toFrames(other.end()));
+                if (!media || !media->info.audio || from >= to) {
+                    continue;
+                }
+                usedMedia.insert(media->id);
+                std::shared_ptr<const Spectrum> spectrum = m_loading == MediaLoading::Wait
+                                                               ? m_cache.spectrum(*media)
+                                                               : m_cache.spectrumOrRequest(*media);
+                if (!spectrum) {
+                    continue;
+                }
+                VisualizerAudio audio;
+                audio.startFrame = static_cast<int>(from - clipStart);
+                audio.endFrame = static_cast<int>(to - clipStart);
+                audio.speed = data->reversed ? -data->speed : data->speed;
+                const double offset = (toFrames(other.start) < clipStart ? static_cast<double>(clipStart - toFrames(other.start)) : 0.0) /
+                                      m_rate.toDouble();
+                audio.sourceSeconds = data->reversed
+                                          ? (data->sourceIn.toSecondsDouble() + other.duration.toSecondsDouble() * data->speed) -
+                                                offset * data->speed
+                                          : data->sourceIn.toSecondsDouble() + offset * data->speed;
+                audio.spectrum = spectrum;
+                stream << audio.startFrame << audio.endFrame << audio.sourceSeconds << audio.speed
+                       << reinterpret_cast<quintptr>(spectrum.get());
+                render.audio.push_back(std::move(audio));
+            }
+        }
+    };
+    if (sequence) {
+        collect(sequence->audioTracks);
+        collect(sequence->visualTracks);
+    }
+    if (auto existing = m_visualizers.value(key)) {
+        return existing;
+    }
+    std::shared_ptr<Mlt::Producer> producer = makeVisualizerProducer(m_profile, std::move(render));
+    m_visualizers.insert(key, producer);
+    return producer;
+}
+
+std::shared_ptr<Mlt::Producer> TimelineProjection::stickerProducer(const ProjectData &project, const StickerClipData &sticker,
+                                                                   QSet<MediaId> &usedMedia)
+{
+    const int side = std::max(m_profile.width(), m_profile.height());
+    QString path;
+    QString emoji = sticker.emoji;
+    if (sticker.source) {
+        const fx::StickerPreset *preset = sticker.source->pack == QLatin1StringView(fx::Library::kCorePack)
+                                              ? fx::Library::core().sticker(sticker.source->id)
+                                              : nullptr;
+        if (!preset) {
+            m_warnings << u"sticker %1 is not installed"_s.arg(sticker.source->id);
+        } else {
+            path = preset->path;
+            if (emoji.isEmpty()) {
+                emoji = preset->emoji;
+            }
+        }
+    } else if (!sticker.mediaId.isNull()) {
+        usedMedia.insert(sticker.mediaId);
+        if (const Media *media = project.findMedia(sticker.mediaId)) {
+            path = media->path;
+        }
+    }
+    QByteArray key;
+    QDataStream stream(&key, QIODevice::WriteOnly);
+    stream << path << emoji << side << sticker.tint.toString() << sticker.loop << sticker.speed;
+    if (auto existing = m_stickers.value(key)) {
+        return existing;
+    }
+    StickerPicture picture = !path.isEmpty() ? loadStickerPicture(path, side)
+                             : !emoji.isEmpty() ? renderEmoji(emoji, std::min(side, 1024))
+                                                : StickerPicture{};
+    if (picture.frames.empty() && !path.isEmpty()) {
+        m_warnings << u"sticker %1 cannot be read"_s.arg(path);
+    }
+    tintPicture(picture, sticker.tint);
+    std::shared_ptr<Mlt::Producer> producer = makeStickerProducer(m_profile, std::move(picture), sticker.loop, sticker.speed);
+    m_stickers.insert(key, producer);
     return producer;
 }
 
@@ -607,6 +773,28 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
                     audioEffects->compressorRatio = std::clamp(numberOf(it->second, 3.0), 1.0, 20.0);
                 }
                 continue;
+            } else if (effect.type == u"vedit.beat.flash"_s || effect.type == u"vedit.beat.zoom"_s ||
+                       effect.type == u"vedit.beat.shake"_s) {
+                BeatEffectSettings beat;
+                double defaultAmount = 0.7;
+                if (effect.type == u"vedit.beat.zoom"_s) {
+                    beat.kind = BeatEffectSettings::Kind::Zoom;
+                    defaultAmount = 0.15;
+                } else if (effect.type == u"vedit.beat.shake"_s) {
+                    beat.kind = BeatEffectSettings::Kind::Shake;
+                    defaultAmount = 12.0;
+                }
+                const auto paramOr = [&effect](const QString &name, double fallback) {
+                    const auto it = effect.params.find(name);
+                    return it != effect.params.end() ? numberOf(it->second, fallback) : fallback;
+                };
+                beat.amount = paramOr(u"amount"_s, defaultAmount) * numberOf(effect.intensity, 1.0);
+                beat.decay = std::clamp(paramOr(u"decay"_s, 0.18), 0.05, 1.0);
+                beat.beats = beatsUnder(project, clip);
+                beat.firstFrame = in;
+                beat.frameRate = m_rate;
+                render->beats.push_back(std::move(beat));
+                continue;
             } else {
                 m_warnings << u"clip %1: effect %2 is rendered from a later phase"_s.arg(clip.id.toString(), effect.type);
                 continue;
@@ -721,6 +909,10 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
     if (render->motionBlur) {
         stream << render->motionBlur->intensity << render->motionBlur->angle << render->motionBlur->samples;
     }
+    stream << static_cast<quint32>(render->beats.size());
+    for (const BeatEffectSettings &beat : render->beats) {
+        stream << beat.key();
+    }
     stream << render->transform.has_value() << (render->transform ? render->transform->key() : QByteArray());
     stream << render->gain.has_value() << (render->gain ? render->gain->key() : QByteArray());
     stream << render->audioEffects.has_value() << (render->audioEffects ? render->audioEffects->key() : QByteArray());
@@ -797,6 +989,15 @@ std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &
     }
     if (const TextClipData *text = clip.text()) {
         placed.producer = textProducer(*text);
+        placed.render = renderOf(clip, track, project, nullptr, false, 0, placed.length);
+        return placed;
+    }
+    if (const StickerClipData *sticker = clip.sticker()) {
+        if (sticker->visualizer) {
+            placed.producer = visualizerProducer(project, clip, *sticker->visualizer, usedMedia);
+        } else {
+            placed.producer = stickerProducer(project, *sticker, usedMedia);
+        }
         placed.render = renderOf(clip, track, project, nullptr, false, 0, placed.length);
         return placed;
     }
@@ -1054,6 +1255,14 @@ void TimelineProjection::attachFilters(Mlt::Producer &cut, const ClipRender &ren
         auto filter = makeDeflickerFilter(m_profile, *render.deflicker);
         cut.attach(*filter);
     }
+    if (render.motionBlur) {
+        auto filter = makeMotionBlurFilter(m_profile, *render.motionBlur);
+        cut.attach(*filter);
+    }
+    for (const BeatEffectSettings &beat : render.beats) {
+        auto filter = makeBeatFilter(m_profile, beat);
+        cut.attach(*filter);
+    }
     if (render.transform) {
         auto filter = makeTransformFilter(m_profile, *render.transform);
         cut.attach(*filter);
@@ -1298,7 +1507,8 @@ bool TimelineProjection::update(const ProjectData &project, const ChangeSet &cha
         }
         const bool previewed = (m_preview.clip && track->findClip(m_preview.clip->id)) ||
                                (m_preview.transition && m_preview.transitionTrack == slot.id);
-        if (changes.tracks.contains(slot.id) || usesChangedMedia || previewed) {
+        const bool dependsOnChanges = slot.followsTimeline && !changes.tracks.isEmpty();
+        if (changes.tracks.contains(slot.id) || usesChangedMedia || previewed || dependsOnChanges) {
             fillSlot(slot, *track, project, anySolo);
         } else if (slot.kind == SlotKind::Clips) {
             // Mute/solo of another track may change this one's audio.

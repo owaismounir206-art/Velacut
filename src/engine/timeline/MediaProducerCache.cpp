@@ -142,4 +142,62 @@ void MediaProducerCache::clear()
     m_errors.clear();
 }
 
+std::shared_ptr<const Spectrum> MediaProducerCache::spectrum(const Media &media)
+{
+    if (!media.info.audio || !media.fingerprint.isValid()) {
+        return nullptr;
+    }
+    const QString key = media.fingerprint.value;
+    {
+        QMutexLocker lock(&m_mutex);
+        if (auto cached = m_spectra.value(key)) {
+            return cached;
+        }
+        if (m_noSpectrum.contains(key)) {
+            return nullptr;
+        }
+    }
+    std::shared_ptr<const Spectrum> result;
+    if (std::optional<Spectrum> loaded = cachedSpectrum(media)) {
+        result = std::make_shared<const Spectrum>(std::move(*loaded));
+    }
+    QMutexLocker lock(&m_mutex);
+    if (result) {
+        m_spectra.insert(key, result);
+    } else {
+        m_noSpectrum.insert(key);
+    }
+    return result;
+}
+
+std::shared_ptr<const Spectrum> MediaProducerCache::spectrumOrRequest(const Media &media)
+{
+    if (!media.info.audio || !media.fingerprint.isValid()) {
+        return nullptr;
+    }
+    const QString key = media.fingerprint.value;
+    const QString pending = QStringLiteral("spectrum:") + key;
+    {
+        QMutexLocker lock(&m_mutex);
+        if (auto cached = m_spectra.value(key)) {
+            return cached;
+        }
+        if (m_noSpectrum.contains(key) || m_pending.contains(pending)) {
+            return nullptr;
+        }
+        m_pending.insert(pending);
+    }
+    m_pool.start([this, media, pending] {
+        spectrum(media);
+        QMetaObject::invokeMethod(this, [this, pending, id = media.id] {
+            {
+                QMutexLocker lock(&m_mutex);
+                m_pending.remove(pending);
+            }
+            emit ready(id);
+        });
+    });
+    return nullptr;
+}
+
 } // namespace vedit::engine

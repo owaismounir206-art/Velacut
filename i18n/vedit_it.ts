@@ -4,7 +4,27 @@
 <context>
     <name>AssetPanel</name>
     <message>
-        <location filename="../src/ui/qml/AssetPanel.qml" line="+113"/>
+        <location filename="../src/ui/qml/AssetPanel.qml" line="+106"/>
+        <source>Import stickers</source>
+        <translation>Importa sticker</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Pictures (%1)</source>
+        <translation>Immagini (%1)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>All files (*)</source>
+        <translation>Tutti i file (*)</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Import</source>
+        <translation>Importa</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Default text</source>
         <translation>Testo predefinito</translation>
     </message>
@@ -49,9 +69,14 @@
         <translation>Nuovo testo con questo stile</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="+1"/>
         <source>Apply</source>
         <translation>Applica</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Add at the playhead</source>
+        <translation>Aggiungi al cursore</translation>
     </message>
 </context>
 <context>
@@ -96,11 +121,52 @@
     </message>
 </context>
 <context>
+    <name>ColorCurvesEditor</name>
+    <message>
+        <location filename="../src/ui/qml/ColorCurvesEditor.qml" line="+31"/>
+        <source>RGB</source>
+        <translation>RGB</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Red</source>
+        <translation>Rosso</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Green</source>
+        <translation>Verde</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Blue</source>
+        <translation>Blu</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Reset curve</source>
+        <translation>Ripristina curva</translation>
+    </message>
+</context>
+<context>
     <name>ColorSwatches</name>
     <message>
         <location filename="../src/ui/qml/ColorSwatches.qml" line="+46"/>
         <source>Other colour</source>
         <translation>Altro colore</translation>
+    </message>
+</context>
+<context>
+    <name>ColorWheel</name>
+    <message>
+        <location filename="../src/ui/qml/ColorWheel.qml" line="+34"/>
+        <source>Reset wheel</source>
+        <translation>Ripristina ruota</translation>
+    </message>
+    <message>
+        <location line="+117"/>
+        <source>Level</source>
+        <translation>Livello</translation>
     </message>
 </context>
 <context>
@@ -191,7 +257,7 @@
         <translation>Video esportato</translation>
     </message>
     <message>
-        <location line="+58"/>
+        <location line="+69"/>
         <source>Media</source>
         <translation>Media</translation>
     </message>
@@ -202,25 +268,31 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+22"/>
+        <location line="+23"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-21"/>
-        <location line="+26"/>
+        <location line="-22"/>
+        <location line="+27"/>
+        <source>Stickers</source>
+        <translation>Sticker</translation>
+    </message>
+    <message>
+        <location line="-26"/>
+        <location line="+31"/>
         <source>Transitions</source>
         <translation>Transizioni</translation>
     </message>
     <message>
-        <location line="-25"/>
-        <location line="+30"/>
+        <location line="-30"/>
+        <location line="+35"/>
         <source>Filters</source>
         <translation>Filtri</translation>
     </message>
     <message>
-        <location line="-29"/>
-        <location line="+34"/>
+        <location line="-34"/>
+        <location line="+39"/>
         <source>Animations</source>
         <translation>Animazioni</translation>
     </message>
@@ -327,12 +399,12 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+95"/>
+        <location line="+101"/>
         <source>Export</source>
         <translation>Esporta</translation>
     </message>
     <message>
-        <location line="-75"/>
+        <location line="-81"/>
         <source>Choose where to save the video</source>
         <translation>Scegli dove salvare il video</translation>
     </message>
@@ -377,7 +449,12 @@
         <translation>Alta</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+12"/>
+        <source>Normalize loudness to −14 LUFS (EBU R128)</source>
+        <translation>Normalizza il volume a −14 LUFS (EBU R128)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>MP4 video (H.264 and AAC): plays everywhere.</source>
         <translation>Video MP4 (H.264 e AAC): si riproduce ovunque.</translation>
     </message>
@@ -895,7 +972,12 @@
         <translation>Aggiungi video, foto e musica, taglia ed esporta. Tutto si salva da solo.</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+15"/>
+        <source>Record screen</source>
+        <translation>Registra schermo</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>Drafts</source>
         <translation>Bozze</translation>
     </message>
@@ -1015,7 +1097,37 @@
         <translation>Importa video, foto e musica (Ctrl+I)</translation>
     </message>
     <message>
-        <location line="+44"/>
+        <location line="+8"/>
+        <source>Record</source>
+        <translation>Registra</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Record voiceover, screen or webcam</source>
+        <translation>Registra voce, schermo o webcam</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Voiceover</source>
+        <translation>Voce fuori campo</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Screen</source>
+        <translation>Schermo</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Webcam</source>
+        <translation>Webcam</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Screen &amp; Webcam</source>
+        <translation>Schermo e webcam</translation>
+    </message>
+    <message>
+        <location line="+47"/>
         <source>Import videos, photos and music</source>
         <translation>Importa video, foto e musica</translation>
     </message>
@@ -1041,12 +1153,12 @@
 <context>
     <name>PreviewPanel</name>
     <message>
-        <location filename="../src/ui/qml/PreviewPanel.qml" line="+56"/>
+        <location filename="../src/ui/qml/PreviewPanel.qml" line="+57"/>
         <source>Add a video or a photo to the timeline: the preview appears here.</source>
         <translation>Aggiungi un video o una foto alla timeline: l&apos;anteprima compare qui.</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+28"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
@@ -1081,6 +1193,11 @@
         <translation>Fine</translation>
     </message>
     <message>
+        <location line="+10"/>
+        <source>Video scopes (histogram, waveform, vectorscope)</source>
+        <translation>Scope video (istogramma, forma d&apos;onda, vettorscopio)</translation>
+    </message>
+    <message>
         <location line="+16"/>
         <source>%1× · %2</source>
         <translation>%1× · %2</translation>
@@ -1094,18 +1211,29 @@
 <context>
     <name>PropertiesPanel</name>
     <message>
-        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+25"/>
-        <location line="+137"/>
+        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+42"/>
+        <location line="+140"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-135"/>
+        <location line="-138"/>
+        <location line="+661"/>
+        <source>Visualizer</source>
+        <translation>Visualizzatore</translation>
+    </message>
+    <message>
+        <location line="-661"/>
+        <source>Sticker</source>
+        <translation>Sticker</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="+1"/>
         <source>Video</source>
         <translation>Video</translation>
     </message>
@@ -1116,13 +1244,13 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+548"/>
-        <location line="+6"/>
+        <location line="+976"/>
+        <location line="+19"/>
         <source>Speed</source>
         <translation>Velocità</translation>
     </message>
     <message>
-        <location line="-552"/>
+        <location line="-993"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -1133,12 +1261,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+851"/>
+        <location line="+1443"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
     <message>
-        <location line="-815"/>
+        <location line="-1407"/>
         <source>Select a clip on the timeline to change it here.</source>
         <translation>Seleziona una clip sulla timeline per modificarla qui.</translation>
     </message>
@@ -1152,11 +1280,12 @@
     </message>
     <message>
         <location line="+31"/>
+        <location line="+322"/>
         <source>Duration</source>
         <translation>Durata</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="-311"/>
         <source>Apply to all cuts</source>
         <translation>Applica a tutti i tagli</translation>
     </message>
@@ -1217,19 +1346,21 @@
     </message>
     <message>
         <location line="+15"/>
-        <location line="+177"/>
+        <location line="+330"/>
         <source>Size</source>
         <translation>Dimensione</translation>
     </message>
     <message>
-        <location line="-171"/>
-        <location line="+222"/>
+        <location line="-324"/>
+        <location line="+375"/>
         <location line="+43"/>
+        <location line="+32"/>
+        <location line="+85"/>
         <source>Colour</source>
         <translation>Colore</translation>
     </message>
     <message>
-        <location line="-261"/>
+        <location line="-531"/>
         <source>Text colour</source>
         <translation>Colore del testo</translation>
     </message>
@@ -1252,25 +1383,127 @@
     </message>
     <message>
         <location line="+6"/>
-        <location line="+216"/>
+        <location line="+369"/>
         <source>Background</source>
         <translation>Sfondo</translation>
     </message>
     <message>
-        <location line="-213"/>
+        <location line="-366"/>
         <source>Text background</source>
         <translation>Sfondo del testo</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+225"/>
+        <location line="+378"/>
         <source>Background colour</source>
         <translation>Colore dello sfondo</translation>
     </message>
     <message>
-        <location line="-215"/>
+        <location line="-372"/>
+        <source>Shape</source>
+        <translation>Forma</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Speech (Round)</source>
+        <translation>Fumetto (tondo)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Speech (Square)</source>
+        <translation>Fumetto (squadrato)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Thought Cloud</source>
+        <translation>Nuvola di pensiero</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Comic Shout</source>
+        <translation>Urlo a fumetto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Callout HUD</source>
+        <translation>Richiamo HUD</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lower Third Bar</source>
+        <translation>Terzo inferiore a barra</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lower Third Two-Tone</source>
+        <translation>Terzo inferiore bicolore</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Badge / Pill</source>
+        <translation>Badge / pillola</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Bubble shape</source>
+        <translation>Forma della nuvoletta</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <location line="+18"/>
+        <source>Tail position</source>
+        <translation>Posizione della coda</translation>
+    </message>
+    <message>
+        <location line="-10"/>
+        <source>Bottom Left</source>
+        <translation>In basso a sinistra</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bottom Centre</source>
+        <translation>In basso al centro</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bottom Right</source>
+        <translation>In basso a destra</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Top Left</source>
+        <translation>In alto a sinistra</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Top Right</source>
+        <translation>In alto a destra</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Left</source>
+        <translation>Sinistra</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Right</source>
+        <translation>Destra</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+7"/>
+        <source>Accent colour</source>
+        <translation>Colore d&apos;accento</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>Outline thickness</source>
         <translation>Spessore del contorno</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Tail size</source>
+        <translation>Dimensione della coda</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -1283,7 +1516,100 @@
         <translation>Interlinea</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+11"/>
+        <source>Text animation</source>
+        <translation>Animazione del testo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Apply animation to all texts</source>
+        <translation>Applica l&apos;animazione a tutti i testi</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+4"/>
+        <source>Enable animation</source>
+        <translation>Attiva animazione</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Type</source>
+        <translation>Tipo</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Typewriter</source>
+        <translation>Macchina da scrivere</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Slide up</source>
+        <translation>Scorri in su</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Slide down</source>
+        <translation>Scorri in giù</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Bounce</source>
+        <translation>Rimbalzo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pop in</source>
+        <translation>Comparsa</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+270"/>
+        <source>Wave</source>
+        <translation>Onda</translation>
+    </message>
+    <message>
+        <location line="-269"/>
+        <source>Glitch</source>
+        <translation>Glitch</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Animation type</source>
+        <translation>Tipo di animazione</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Scope</source>
+        <translation>Ambito</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Character</source>
+        <translation>Lettera</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Word</source>
+        <translation>Parola</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>All</source>
+        <translation>Tutto</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Animation scope</source>
+        <translation>Ambito dell&apos;animazione</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <location line="+3"/>
+        <source>Blinking cursor</source>
+        <translation>Cursore lampeggiante</translation>
+    </message>
+    <message>
+        <location line="+17"/>
         <source>Position and size</source>
         <translation>Posizione e dimensione</translation>
     </message>
@@ -1362,12 +1688,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+330"/>
+        <location line="+686"/>
         <source>Rotation</source>
         <translation>Rotazione</translation>
     </message>
     <message>
-        <location line="-320"/>
+        <location line="-676"/>
         <source>Opacity</source>
         <translation>Opacità</translation>
     </message>
@@ -1448,16 +1774,18 @@
     </message>
     <message>
         <location line="+0"/>
+        <location line="+979"/>
         <source>Hue</source>
         <translation>Tonalità</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-979"/>
+        <location line="+988"/>
         <source>Saturation</source>
         <translation>Saturazione</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-986"/>
         <source>Blend mode</source>
         <translation>Modalità di fusione</translation>
     </message>
@@ -1487,54 +1815,210 @@
         <translation>Riempie il canvas dove la clip non arriva.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+363"/>
+        <source>Constant</source>
+        <translation>Costante</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Curve</source>
+        <translation>Curva</translation>
+    </message>
+    <message>
+        <location line="+47"/>
+        <source>Speed presets</source>
+        <translation>Velocità predefinite</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>Drag the points to change the speed. Double click to add a point, right click to remove one.</source>
+        <translation>Trascina i punti per cambiare la velocità. Doppio clic per aggiungere un punto, clic destro per toglierlo.</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Motion blur amount</source>
+        <translation>Intensità della sfocatura di movimento</translation>
+    </message>
+    <message>
+        <location line="+309"/>
+        <source>Filter and LUT</source>
+        <translation>Filtro e LUT</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Filter intensity</source>
+        <translation>Intensità del filtro</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>LUT: %1</source>
+        <translation>LUT: %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>3D LUT (.cube)</source>
+        <translation>LUT 3D (.cube)</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Change…</source>
+        <translation>Cambia…</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Import…</source>
+        <translation>Importa…</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Remove LUT</source>
+        <translation>Rimuovi LUT</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>LUT intensity</source>
+        <translation>Intensità della LUT</translation>
+    </message>
+    <message>
+        <location line="+44"/>
+        <source>Color wheels</source>
+        <translation>Ruote colore</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Shadows</source>
+        <translation>Ombre</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Midtones</source>
+        <translation>Mezzitoni</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Highlights</source>
+        <translation>Alte luci</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Shadows (Lift)</source>
+        <translation>Ombre (lift)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Midtones (Gamma)</source>
+        <translation>Mezzitoni (gamma)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Highlights (Gain)</source>
+        <translation>Alte luci (gain)</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>HSL (8 ranges)</source>
+        <translation>HSL (8 gamme)</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Red</source>
+        <translation>Rosso</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Orange</source>
+        <translation>Arancione</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Yellow</source>
+        <translation>Giallo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Green</source>
+        <translation>Verde</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Aqua</source>
+        <translation>Acqua</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Blue</source>
+        <translation>Blu</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Purple</source>
+        <translation>Viola</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Magenta</source>
+        <translation>Magenta</translation>
+    </message>
+    <message>
+        <location line="+49"/>
+        <source>Lightness</source>
+        <translation>Luminosità</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Color curves</source>
+        <translation>Curve colore</translation>
+    </message>
+    <message>
+        <location line="-1195"/>
+        <location line="+229"/>
         <location line="+16"/>
         <source>Blur</source>
         <translation>Sfocatura</translation>
     </message>
     <message>
-        <location line="+16"/>
-        <location line="+5"/>
+        <location line="+138"/>
+        <location line="+6"/>
         <source>Volume</source>
         <translation>Volume</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="-396"/>
+        <location line="+405"/>
         <source>Fade in</source>
         <translation>Dissolvenza in entrata</translation>
     </message>
     <message>
-        <location line="-412"/>
-        <location line="+415"/>
+        <location line="-688"/>
+        <location line="+691"/>
         <location line="+8"/>
-        <location line="+137"/>
+        <location line="+370"/>
         <source>%1 s</source>
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-671"/>
+        <location line="-1183"/>
         <source>Transition</source>
         <translation>Transizione</translation>
     </message>
     <message>
-        <location line="+531"/>
+        <location line="+810"/>
         <source>Fade out</source>
         <translation>Dissolvenza in uscita</translation>
     </message>
     <message>
-        <location line="+11"/>
-        <location line="+289"/>
+        <location line="+537"/>
         <source>Auto enhance</source>
         <translation>Migliora automaticamente</translation>
     </message>
     <message>
-        <location line="-264"/>
+        <location line="-336"/>
         <location line="+9"/>
         <source>%1×</source>
         <translation>%1×</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+80"/>
         <location line="+3"/>
         <source>Keep the voice natural</source>
         <translation>Mantieni la voce naturale</translation>
@@ -1606,12 +2090,16 @@
         <translation>Maschera</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="-906"/>
+        <location line="+95"/>
+        <location line="+476"/>
+        <location line="+342"/>
         <source>None</source>
         <translation>Nessuna</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-794"/>
+        <location line="+794"/>
         <source>Line</source>
         <translation>Linea</translation>
     </message>
@@ -1621,17 +2109,202 @@
         <translation>Fascia</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-541"/>
+        <location line="+541"/>
         <source>Circle</source>
         <translation>Cerchio</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-1234"/>
+        <source>Choose 3D LUT (.cube)</source>
+        <translation>Scegli una LUT 3D (.cube)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Cube LUT (*.cube)</source>
+        <translation>LUT Cube (*.cube)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>All files (*)</source>
+        <translation>Tutti i file (*)</translation>
+    </message>
+    <message>
+        <location line="+294"/>
+        <location line="+939"/>
         <source>Rectangle</source>
         <translation>Rettangolo</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-543"/>
+        <location line="+44"/>
+        <source>Bars</source>
+        <translation>Barre</translation>
+    </message>
+    <message>
+        <location line="-44"/>
+        <source>Spectrum</source>
+        <translation>Spettro</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Main colour</source>
+        <translation>Colore principale</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Second colour</source>
+        <translation>Secondo colore</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Sensitivity</source>
+        <translation>Sensibilità</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Smoothness</source>
+        <translation>Morbidezza</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <location line="+3"/>
+        <source>Mirrored</source>
+        <translation>Specchiato</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+4"/>
+        <source>Recolour</source>
+        <translation>Ricolora</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Animation speed</source>
+        <translation>Velocità dell&apos;animazione</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Repeat</source>
+        <translation>Ripeti</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Repeat the animation</source>
+        <translation>Ripeti l&apos;animazione</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>Normalize (-14 LUFS)</source>
+        <translation>Normalizza (-14 LUFS)</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Auto ducking</source>
+        <translation>Ducking automatico</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Voice &amp; Noise</source>
+        <translation>Voce e rumore</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+4"/>
+        <source>Noise reduction</source>
+        <translation>Riduzione rumore</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Noise reduction amount</source>
+        <translation>Intensità della riduzione rumore</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <location line="+22"/>
+        <source>Voice effect</source>
+        <translation>Effetto voce</translation>
+    </message>
+    <message>
+        <location line="-17"/>
+        <location line="+27"/>
+        <source>Enhance voice</source>
+        <translation>Migliora voce</translation>
+    </message>
+    <message>
+        <location line="-26"/>
+        <source>Deep voice</source>
+        <translation>Voce profonda</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Chipmunk</source>
+        <translation>Scoiattolo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Robot</source>
+        <translation>Robot</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Radio</source>
+        <translation>Radio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Megaphone</source>
+        <translation>Megafono</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Echo</source>
+        <translation>Eco</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <source>Equalizer &amp; Dynamics</source>
+        <translation>Equalizzatore e dinamica</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Bass (100 Hz)</source>
+        <translation>Bassi (100 Hz)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Mids (1 kHz)</source>
+        <translation>Medi (1 kHz)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Treble (10 kHz)</source>
+        <translation>Alti (10 kHz)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <location line="+4"/>
+        <source>Compressor</source>
+        <translation>Compressore</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Threshold</source>
+        <translation>Soglia</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Ratio</source>
+        <translation>Rapporto</translation>
+    </message>
+    <message>
+        <location line="+112"/>
+        <location line="+4"/>
+        <source>Motion blur</source>
+        <translation>Sfocatura di movimento</translation>
+    </message>
+    <message>
+        <location line="+131"/>
         <source>Heart</source>
         <translation>Cuore</translation>
     </message>
@@ -1702,29 +2375,44 @@
         <translation>Togli l&apos;alone colorato</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+25"/>
         <source>Corrects light, colour and volume: you can change the result below</source>
         <translation>Corregge luce, colore e volume: puoi modificare il risultato qui sotto</translation>
     </message>
     <message>
-        <location line="+7"/>
-        <source>Filter: %1</source>
-        <translation>Filtro: %1</translation>
+        <location line="+6"/>
+        <source>Auto white balance</source>
+        <translation>Bilanciamento del bianco automatico</translation>
     </message>
     <message>
-        <location line="+0"/>
-        <source>Filter</source>
-        <translation>Filtro</translation>
+        <location line="+6"/>
+        <source>Match colour</source>
+        <translation>Abbina colore</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Deflicker</source>
+        <translation>Rimuovi sfarfallio</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Remove flicker (artificial lights &amp; timelapse)</source>
+        <translation>Rimuovi lo sfarfallio (luci artificiali e timelapse)</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Window size (frames)</source>
+        <translation>Finestra (fotogrammi)</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Filter: %1</source>
+        <translation>Filtro: %1</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Choose a filter in the Filters library on the left: hover to preview, click to apply.</source>
         <translation>Scegli un filtro nella libreria Filtri a sinistra: passa sopra per l&apos;anteprima, clic per applicarlo.</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>Intensity</source>
-        <translation>Intensità</translation>
     </message>
 </context>
 <context>
@@ -1743,6 +2431,107 @@
         <location line="+14"/>
         <source>Advanced</source>
         <translation>Avanzate</translation>
+    </message>
+</context>
+<context>
+    <name>RecordDialog</name>
+    <message>
+        <location filename="../src/ui/qml/RecordDialog.qml" line="+44"/>
+        <source>Record voiceover</source>
+        <translation>Registra voce fuori campo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Record screen</source>
+        <translation>Registra schermo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Record webcam</source>
+        <translation>Registra webcam</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Record screen &amp; webcam</source>
+        <translation>Registra schermo e webcam</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Record</source>
+        <translation>Registra</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Cancel</source>
+        <translation>Annulla</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Voiceover</source>
+        <translation>Voce fuori campo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Screen</source>
+        <translation>Schermo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Webcam</source>
+        <translation>Webcam</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Screen &amp; Cam</source>
+        <translation>Schermo e cam</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <source>Teleprompter</source>
+        <translation>Teleprompter</translation>
+    </message>
+    <message>
+        <location line="+49"/>
+        <source>Discard recording</source>
+        <translation>Scarta la registrazione</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Resume</source>
+        <translation>Riprendi</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Pause</source>
+        <translation>Pausa</translation>
+    </message>
+</context>
+<context>
+    <name>ScopePanel</name>
+    <message>
+        <location filename="../src/ui/qml/ScopePanel.qml" line="+32"/>
+        <source>Scopes</source>
+        <translation>Scope</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Histogram</source>
+        <translation>Istogramma</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waveform</source>
+        <translation>Forma d&apos;onda</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Vectorscope</source>
+        <translation>Vettorscopio</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Close scopes</source>
+        <translation>Chiudi gli scope</translation>
     </message>
 </context>
 <context>
@@ -1772,6 +2561,67 @@
     </message>
 </context>
 <context>
+    <name>SpeedCurveEditor</name>
+    <message>
+        <location filename="../src/ui/qml/SpeedCurveEditor.qml" line="+93"/>
+        <source>Speed curve</source>
+        <translation>Curva di velocità</translation>
+    </message>
+</context>
+<context>
+    <name>Teleprompter</name>
+    <message>
+        <location filename="../src/ui/qml/Teleprompter.qml" line="+34"/>
+        <source>Teleprompter</source>
+        <translation>Teleprompter</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>View prompter</source>
+        <translation>Mostra il testo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Edit script</source>
+        <translation>Modifica il testo</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Mirror horizontally</source>
+        <translation>Specchia in orizzontale</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Rewind to start</source>
+        <translation>Torna all&apos;inizio</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Pause scroll</source>
+        <translation>Ferma lo scorrimento</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Start scroll</source>
+        <translation>Avvia lo scorrimento</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Speed</source>
+        <translation>Velocità</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>Paste or type your script here…</source>
+        <translation>Incolla o scrivi qui il tuo testo…</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>No script loaded. Click edit above.</source>
+        <translation>Nessun testo. Fai clic su &quot;Modifica&quot; qui sopra.</translation>
+    </message>
+</context>
+<context>
     <name>TimelineClip</name>
     <message>
         <location filename="../src/ui/qml/TimelineClip.qml" line="+47"/>
@@ -1779,7 +2629,7 @@
         <translation>Clip %1</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+154"/>
         <source>Group into a compound clip</source>
         <translation>Raggruppa in una clip composta</translation>
     </message>
@@ -1787,6 +2637,16 @@
         <location line="+1"/>
         <source>Ungroup the compound clip</source>
         <translation>Separa la clip composta</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Create multicam clip</source>
+        <translation>Crea clip multicamera</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Synchronize audio</source>
+        <translation>Sincronizza l&apos;audio</translation>
     </message>
     <message>
         <location line="+20"/>
@@ -1812,7 +2672,7 @@
 <context>
     <name>TimelineView</name>
     <message>
-        <location filename="../src/ui/qml/TimelineView.qml" line="+202"/>
+        <location filename="../src/ui/qml/TimelineView.qml" line="+205"/>
         <location line="+47"/>
         <source>Audio track</source>
         <translation>Traccia audio</translation>
@@ -1932,17 +2792,19 @@
 <context>
     <name>vedit::TimelineEditor</name>
     <message>
-        <location filename="../src/core/edit/TimelineEditor.cpp" line="+304"/>
+        <location filename="../src/core/edit/TimelineEditor.cpp" line="+306"/>
         <location line="+71"/>
         <location line="+58"/>
         <location line="+80"/>
-        <location line="+57"/>
+        <location line="+59"/>
         <location line="+33"/>
         <location line="+45"/>
         <location line="+59"/>
-        <location line="+24"/>
+        <location line="+23"/>
+        <location line="+28"/>
         <location line="+31"/>
-        <location line="+44"/>
+        <location line="+43"/>
+        <location line="+50"/>
         <location line="+80"/>
         <location line="+40"/>
         <location line="+25"/>
@@ -1959,11 +2821,16 @@
         <location line="+19"/>
         <location line="+30"/>
         <location line="+23"/>
+        <location line="+26"/>
+        <location line="+42"/>
+        <location line="+90"/>
+        <location line="+121"/>
+        <location line="+21"/>
         <source>The sequence does not exist.</source>
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-1079"/>
+        <location line="-1457"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -2003,61 +2870,66 @@
         <location line="+12"/>
         <location line="+58"/>
         <location line="+80"/>
-        <location line="+61"/>
+        <location line="+63"/>
         <location line="+34"/>
         <location line="+40"/>
-        <location line="+87"/>
+        <location line="+114"/>
         <location line="+27"/>
-        <location line="+44"/>
+        <location line="+43"/>
+        <location line="+50"/>
         <location line="+80"/>
         <location line="+286"/>
         <location line="+162"/>
         <location line="+30"/>
         <location line="+23"/>
+        <location line="+26"/>
         <source>The clip does not exist.</source>
         <translation>La clip non esiste.</translation>
     </message>
     <message>
-        <location line="-1009"/>
+        <location line="-1113"/>
         <location line="+10"/>
         <location line="+49"/>
         <location line="+80"/>
-        <location line="+60"/>
+        <location line="+62"/>
         <location line="+34"/>
         <location line="+40"/>
-        <location line="+87"/>
+        <location line="+114"/>
         <location line="+27"/>
-        <location line="+44"/>
+        <location line="+43"/>
+        <location line="+50"/>
         <location line="+81"/>
         <location line="+82"/>
         <location line="+203"/>
         <location line="+162"/>
         <location line="+30"/>
         <location line="+23"/>
+        <location line="+26"/>
+        <location line="+278"/>
         <source>The track is locked.</source>
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-1005"/>
-        <location line="+583"/>
+        <location line="-1387"/>
+        <location line="+661"/>
         <location line="+47"/>
         <location line="+14"/>
         <source>The track does not exist.</source>
         <translation>La traccia non esiste.</translation>
     </message>
     <message>
-        <location line="-638"/>
+        <location line="-716"/>
         <source>This clip cannot be placed on that track.</source>
         <translation>Questa clip non può andare su quella traccia.</translation>
     </message>
     <message>
         <location line="+31"/>
-        <location line="+250"/>
+        <location line="+252"/>
         <source>Move clip</source>
         <translation>Sposta clip</translation>
     </message>
     <message>
-        <location line="-170"/>
+        <location line="-172"/>
         <source>Trim clip</source>
         <translation>Accorcia clip</translation>
     </message>
@@ -2067,7 +2939,7 @@
         <translation>Porta la testina dentro la clip per dividerla.</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+39"/>
         <source>Split clip</source>
         <translation>Dividi clip</translation>
     </message>
@@ -2097,22 +2969,33 @@
         <translation>Aggiungi testo</translation>
     </message>
     <message>
+        <location line="+27"/>
+        <source>Add sticker</source>
+        <translation>Aggiungi sticker</translation>
+    </message>
+    <message>
         <location line="+10"/>
         <source>Select a clip first.</source>
         <translation>Seleziona prima una clip.</translation>
     </message>
     <message>
         <location line="+42"/>
+        <location line="+43"/>
         <source>The speed can be changed only on video and audio clips.</source>
         <translation>La velocità si può cambiare solo sulle clip video e audio.</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="-20"/>
         <source>Change speed</source>
         <translation>Cambia velocità</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+44"/>
+        <source>Apply speed curve</source>
+        <translation>Applica curva di velocità</translation>
+    </message>
+    <message>
+        <location line="+25"/>
         <source>Move the playhead over a video clip to freeze a frame.</source>
         <translation>Porta il playhead su una clip video per congelare un fotogramma.</translation>
     </message>
@@ -2262,9 +3145,93 @@
         <translation>Modifica marker della clip</translation>
     </message>
     <message>
+        <location line="+36"/>
+        <source>Beats</source>
+        <translation>Beat</translation>
+    </message>
+    <message>
         <location line="+5"/>
         <source>Animation</source>
         <translation>Animazione</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>No alignment algorithm provided.</source>
+        <translation>Nessun algoritmo di allineamento.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Reference clip not found.</source>
+        <translation>Clip di riferimento non trovata.</translation>
+    </message>
+    <message>
+        <location line="+37"/>
+        <source>No clips could be aligned.</source>
+        <translation>Nessuna clip è stata allineata.</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Align clips by audio</source>
+        <translation>Allinea le clip con l&apos;audio</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Select at least 2 clips for multicam.</source>
+        <translation>Seleziona almeno 2 clip per la multicamera.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Clips not found for multicam.</source>
+        <translation>Clip per la multicamera non trovate.</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>Multicam Clip</source>
+        <translation>Clip multicamera</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Angle %1</source>
+        <translation>Angolo %1</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Audio (Angle 1)</source>
+        <translation>Audio (angolo 1)</translation>
+    </message>
+    <message>
+        <location line="+42"/>
+        <source>Create multicam clip</source>
+        <translation>Crea clip multicamera</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <location line="+21"/>
+        <source>Invalid angle.</source>
+        <translation>Angolo non valido.</translation>
+    </message>
+    <message>
+        <location line="-16"/>
+        <location line="+21"/>
+        <source>Clip not found.</source>
+        <translation>Clip non trovata.</translation>
+    </message>
+    <message>
+        <location line="-17"/>
+        <location line="+66"/>
+        <source>Clip is not a multicam or compound clip.</source>
+        <translation>La clip non è multicamera né composta.</translation>
+    </message>
+    <message>
+        <location line="-63"/>
+        <location line="+66"/>
+        <source>Set camera angle</source>
+        <translation>Scegli l&apos;angolo di ripresa</translation>
+    </message>
+    <message>
+        <location line="-8"/>
+        <source>Cut and switch camera angle</source>
+        <translation>Taglia e cambia angolo</translation>
     </message>
 </context>
 <context>
@@ -2375,7 +3342,7 @@
 <context>
     <name>vedit::engine::RenderJob</name>
     <message>
-        <location filename="../src/engine/render/RenderJob.cpp" line="+54"/>
+        <location filename="../src/engine/render/RenderJob.cpp" line="+71"/>
         <source>The video engine could not be started.</source>
         <translation>Impossibile avviare il motore video.</translation>
     </message>
@@ -2469,12 +3436,12 @@
 <context>
     <name>vedit::projectjson</name>
     <message>
-        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1371"/>
+        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1543"/>
         <source>The project file is damaged (%1).</source>
         <translation>Il file del progetto è danneggiato (%1).</translation>
     </message>
     <message>
-        <location line="+73"/>
+        <location line="+95"/>
         <source>This file is not a vedit project.</source>
         <translation>Questo file non è un progetto vedit.</translation>
     </message>
@@ -2482,7 +3449,7 @@
 <context>
     <name>vedit::ui::ActionRegistry</name>
     <message>
-        <location filename="../src/ui/controllers/ActionRegistry.cpp" line="+78"/>
+        <location filename="../src/ui/controllers/ActionRegistry.cpp" line="+79"/>
         <source>Split</source>
         <translation>Dividi</translation>
     </message>
@@ -2493,12 +3460,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+219"/>
+        <location line="+233"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-218"/>
+        <location line="-232"/>
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
@@ -2534,6 +3501,16 @@
     </message>
     <message>
         <location line="+2"/>
+        <source>Edit sticker</source>
+        <translation>Modifica sticker</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Beat</source>
+        <translation>Beat</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Freeze</source>
         <translation>Congela</translation>
     </message>
@@ -2583,6 +3560,11 @@
         <translation>Aggiungi audio</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Add a sticker</source>
+        <translation>Aggiungi uno sticker</translation>
+    </message>
+    <message>
         <location line="+3"/>
         <source>Copy attributes</source>
         <translation>Copia attributi</translation>
@@ -2614,6 +3596,16 @@
     </message>
     <message>
         <location line="+7"/>
+        <source>Create multicam clip</source>
+        <translation>Crea clip multicamera</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Synchronize audio</source>
+        <translation>Sincronizza l&apos;audio</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>Add an adjustment layer</source>
         <translation>Aggiungi un livello di regolazione</translation>
     </message>
@@ -2703,7 +3695,7 @@
         <translation>Formato 4:5 (post Instagram)</translation>
     </message>
     <message>
-        <location line="+124"/>
+        <location line="+126"/>
         <location line="+1"/>
         <source>Filter</source>
         <translation>Filtro</translation>
@@ -2721,6 +3713,12 @@
     </message>
     <message>
         <location line="+4"/>
+        <location line="+1"/>
+        <source>Sticker</source>
+        <translation>Sticker</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>Entry animation</source>
         <translation>Animazione di entrata</translation>
     </message>
@@ -2735,8 +3733,8 @@
         <translation>Animazione in ciclo</translation>
     </message>
     <message>
-        <location line="-212"/>
-        <location line="+213"/>
+        <location line="-230"/>
+        <location line="+231"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -2755,7 +3753,7 @@
 <context>
     <name>vedit::ui::AppController</name>
     <message>
-        <location filename="../src/ui/controllers/AppController.cpp" line="+128"/>
+        <location filename="../src/ui/controllers/AppController.cpp" line="+143"/>
         <source>Project recovered: vedit did not close properly last time. Your latest changes are here.</source>
         <translation>Progetto recuperato: l&apos;ultima volta vedit non si è chiuso correttamente. Le tue ultime modifiche sono qui.</translation>
     </message>
@@ -2768,7 +3766,7 @@
 <context>
     <name>vedit::ui::AssetThumbnail</name>
     <message>
-        <location filename="../src/ui/items/AssetThumbnail.cpp" line="+260"/>
+        <location filename="../src/ui/items/AssetThumbnail.cpp" line="+292"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
@@ -2776,14 +3774,14 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message>
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+346"/>
-        <location line="+668"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+361"/>
+        <location line="+893"/>
         <location line="+26"/>
         <source>Change mask</source>
         <translation>Modifica maschera</translation>
     </message>
     <message>
-        <location line="-668"/>
+        <location line="-893"/>
         <source>Click on the clip to pick the colour to remove.</source>
         <translation>Fai clic sulla clip per scegliere il colore da rimuovere.</translation>
     </message>
@@ -2798,7 +3796,7 @@
         <translation>Rimuovi un colore</translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+61"/>
         <source>Remove keyframe</source>
         <translation>Rimuovi keyframe</translation>
     </message>
@@ -2808,17 +3806,17 @@
         <translation>Aggiungi keyframe</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+31"/>
         <source>Change keyframe easing</source>
         <translation>Cambia l&apos;andamento del keyframe</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+27"/>
         <source>Change keyframe curve</source>
         <translation>Cambia la curva del keyframe</translation>
     </message>
     <message>
-        <location line="+431"/>
+        <location line="+642"/>
         <source>Change transition duration</source>
         <translation>Cambia durata della transizione</translation>
     </message>
@@ -2888,9 +3886,44 @@
         <translation>Cambia sfondo</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+11"/>
         <source>Change volume</source>
         <translation>Cambia volume</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Toggle noise reduction</source>
+        <translation>Riduzione rumore</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Change noise reduction amount</source>
+        <translation>Cambia la riduzione rumore</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Change voice effect</source>
+        <translation>Cambia effetto voce</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Enhance voice</source>
+        <translation>Migliora voce</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Change equalizer</source>
+        <translation>Cambia equalizzatore</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Toggle compressor</source>
+        <translation>Compressore</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Change compressor</source>
+        <translation>Cambia compressore</translation>
     </message>
     <message>
         <location line="+11"/>
@@ -2918,6 +3951,16 @@
         <translation>Cambia intonazione</translation>
     </message>
     <message>
+        <location line="+64"/>
+        <source>Toggle motion blur</source>
+        <translation>Sfocatura di movimento</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Change motion blur intensity</source>
+        <translation>Cambia la sfocatura di movimento</translation>
+    </message>
+    <message>
         <location line="+12"/>
         <source>Change animation length</source>
         <translation>Cambia durata dell&apos;animazione</translation>
@@ -2933,18 +3976,58 @@
         <translation>Regola colore</translation>
     </message>
     <message>
-        <location line="+48"/>
+        <location line="+10"/>
+        <source>Change LUT</source>
+        <translation>Cambia LUT</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Change LUT intensity</source>
+        <translation>Cambia intensità della LUT</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Toggle deflicker</source>
+        <translation>Rimozione sfarfallio</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Change deflicker size</source>
+        <translation>Cambia finestra anti-sfarfallio</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Change deflicker mode</source>
+        <translation>Cambia modalità anti-sfarfallio</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Change color curve</source>
+        <translation>Cambia curva colore</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Grade colour</source>
+        <translation>Correggi il colore</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Edit sticker</source>
+        <translation>Modifica sticker</translation>
+    </message>
+    <message>
+        <location line="+100"/>
         <source>Edit text</source>
         <translation>Modifica testo</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+231"/>
+        <location line="+312"/>
         <source>Change text style</source>
         <translation>Cambia stile del testo</translation>
     </message>
     <message>
-        <location line="-211"/>
+        <location line="-292"/>
         <source>Reset position and size</source>
         <translation>Ripristina posizione e dimensione</translation>
     </message>
@@ -2954,13 +4037,93 @@
         <translation>Ripristina sfondo</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Reset volume</source>
-        <translation>Ripristina volume</translation>
+        <location line="+8"/>
+        <source>Reset sticker</source>
+        <translation>Ripristina sticker</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+10"/>
+        <source>Reset volume and audio effects</source>
+        <translation>Ripristina volume ed effetti audio</translation>
+    </message>
+    <message>
+        <location line="+137"/>
+        <source>Apply audio to all</source>
+        <translation>Applica l&apos;audio a tutte</translation>
+    </message>
+    <message>
+        <location line="+537"/>
+        <source>Auto white balance</source>
+        <translation>Bilanciamento del bianco automatico</translation>
+    </message>
+    <message>
         <location line="+3"/>
+        <source>White balance adjusted</source>
+        <translation>Bilanciamento del bianco corretto</translation>
+    </message>
+    <message>
+        <location line="+46"/>
+        <source>No reference clip found to match</source>
+        <translation>Nessuna clip di riferimento da abbinare</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Clips are still being analysed: try again in a moment.</source>
+        <translation>Le clip sono ancora in analisi: riprova tra un momento.</translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <source>Match colour</source>
+        <translation>Abbina colore</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Color matched to reference clip</source>
+        <translation>Colore abbinato alla clip di riferimento</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Select an audio or video clip first.</source>
+        <translation>Seleziona prima una clip audio o video.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The selected clip does not have audio.</source>
+        <translation>La clip selezionata non ha audio.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Could not measure loudness of the audio.</source>
+        <translation>Impossibile misurare il volume dell&apos;audio.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Loudness normalized to %1 LUFS (%2 dB)</source>
+        <translation>Volume normalizzato a %1 LUFS (%2 dB)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Select an audio clip to duck.</source>
+        <translation>Seleziona una clip audio da abbassare.</translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>No overlapping audio found to duck against.</source>
+        <translation>Nessun audio sovrapposto per cui abbassare.</translation>
+    </message>
+    <message>
+        <location line="+62"/>
+        <source>Auto-duck audio</source>
+        <translation>Abbassa l&apos;audio automaticamente</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Auto-ducking applied</source>
+        <translation>Ducking automatico applicato</translation>
+    </message>
+    <message>
+        <location line="-908"/>
+        <location line="+6"/>
         <source>Reset speed</source>
         <translation>Ripristina velocità</translation>
     </message>
@@ -2976,23 +4139,43 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+146"/>
+        <location line="+198"/>
         <source>Remove filter</source>
         <translation>Rimuovi filtro</translation>
     </message>
     <message>
-        <location line="-144"/>
+        <location line="-191"/>
         <source>Reset adjustments</source>
         <translation>Ripristina regolazioni</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Reset color grade</source>
+        <translation>Ripristina correzione colore</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Remove LUT</source>
+        <translation>Rimuovi LUT</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Reset deflicker</source>
+        <translation>Ripristina anti-sfarfallio</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Reset text style</source>
         <translation>Ripristina stile del testo</translation>
     </message>
+    <message>
+        <location line="+4"/>
+        <source>Reset text animation</source>
+        <translation>Ripristina animazione del testo</translation>
+    </message>
     <message numerus="yes">
         <location line="+25"/>
-        <location line="+316"/>
+        <location line="+362"/>
         <source>Transition on %n cut(s)</source>
         <translation>
             <numerusform>Transizione su %n taglio</numerusform>
@@ -3000,7 +4183,7 @@
         </translation>
     </message>
     <message>
-        <location line="-276"/>
+        <location line="-322"/>
         <location line="+4"/>
         <source>Apply background to all</source>
         <translation>Applica lo sfondo a tutte</translation>
@@ -3011,24 +4194,44 @@
         <translation>Applica posizione e dimensione a tutte</translation>
     </message>
     <message>
-        <location line="+3"/>
-        <source>Apply volume to all</source>
-        <translation>Applica il volume a tutte</translation>
-    </message>
-    <message>
-        <location line="+3"/>
+        <location line="+14"/>
         <source>Apply filter to all</source>
         <translation>Applica il filtro a tutte</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+8"/>
         <source>Apply adjustments to all</source>
         <translation>Applica le regolazioni a tutte</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Apply grade to all</source>
+        <translation>Applica la correzione a tutte</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Apply LUT to all</source>
+        <translation>Applica la LUT a tutte</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Apply deflicker to all</source>
+        <translation>Applica l&apos;anti-sfarfallio a tutte</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Apply text style to all</source>
         <translation>Applica lo stile a tutti i testi</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Apply text animation to all</source>
+        <translation>Applica l&apos;animazione del testo a tutti</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Apply sticker look to all</source>
+        <translation>Applica l&apos;aspetto dello sticker a tutti</translation>
     </message>
     <message numerus="yes">
         <location line="+10"/>
@@ -3049,7 +4252,7 @@
         <translation>Applica filtro</translation>
     </message>
     <message>
-        <location line="+102"/>
+        <location line="+111"/>
         <source>Put two clips next to each other first: the transition goes between them.</source>
         <translation>Metti prima due clip una accanto all&apos;altra: la transizione va tra le due.</translation>
     </message>
@@ -3084,7 +4287,7 @@
         <translation>Attributi copiati</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+38"/>
         <source>Paste attributes</source>
         <translation>Incolla attributi</translation>
     </message>
@@ -3096,11 +4299,12 @@
     <message>
         <location line="+12"/>
         <location line="+36"/>
+        <location line="+29"/>
         <source>The clip is still being analysed: try again in a moment.</source>
         <translation>La clip è ancora in analisi: riprova tra un attimo.</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="-18"/>
         <source>Auto enhance</source>
         <translation>Migliora automaticamente</translation>
     </message>
@@ -3126,7 +4330,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+191"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+198"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
@@ -3136,7 +4340,12 @@
         <translation>Importa media</translation>
     </message>
     <message>
-        <location line="+74"/>
+        <location line="+14"/>
+        <source>Only pictures can become stickers.</source>
+        <translation>Solo le immagini possono diventare sticker.</translation>
+    </message>
+    <message>
+        <location line="+72"/>
         <location line="+13"/>
         <source>Add music</source>
         <translation>Aggiungi musica</translation>
@@ -3147,7 +4356,30 @@
         <translation>Il tuo testo</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+58"/>
+        <source>Select a music or video clip with sound to find its beats.</source>
+        <translation>Seleziona una musica o un video con audio per trovarne i beat.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Finding the beats…</source>
+        <translation>Ricerca dei beat…</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>No beats found in this audio.</source>
+        <translation>Nessun beat trovato in questo audio.</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+9"/>
+        <source>%n beat(s) marked on the clip</source>
+        <translation>
+            <numerusform>%n beat segnato sulla clip</numerusform>
+            <numerusform>%n beat segnati sulla clip</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Change track volume</source>
         <translation>Cambia volume della traccia</translation>
     </message>
@@ -3225,6 +4457,39 @@
         <location line="+1"/>
         <source>%1 × %2 · %3 · about %4</source>
         <translation>%1 × %2 · %3 · circa %4</translation>
+    </message>
+    <message>
+        <location line="+293"/>
+        <source>Select at least 2 clips to synchronize by audio.</source>
+        <translation>Seleziona almeno 2 clip da sincronizzare con l&apos;audio.</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>Select at least 2 clips to create a multicam clip.</source>
+        <translation>Seleziona almeno 2 clip per creare una clip multicamera.</translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ui::ScopeView</name>
+    <message>
+        <location filename="../src/ui/items/ScopeView.cpp" line="+79"/>
+        <location line="+60"/>
+        <location line="+67"/>
+        <source>No frame</source>
+        <translation>Nessun fotogramma</translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ui::TimelineModel</name>
+    <message>
+        <location filename="../src/ui/models/TimelineModel.cpp" line="+164"/>
+        <source>Sticker</source>
+        <translation>Sticker</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Multicam</source>
+        <translation>Multicamera</translation>
     </message>
 </context>
 </TS>

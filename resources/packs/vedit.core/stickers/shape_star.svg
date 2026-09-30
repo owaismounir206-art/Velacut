@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="starGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFEE55"/>
+      <stop offset="50%" stop-color="#FFCC00"/>
+      <stop offset="100%" stop-color="#FF9900"/>
+    </linearGradient>
+  </defs>
+  <polygon points="256,30 324,178 486,198 366,310 398,470 256,390 114,470 146,310 26,198 188,178" fill="url(#starGrad)" stroke="#FFFFFF" stroke-width="12" stroke-linejoin="round" filter="drop-shadow(0 10px 20px rgba(255, 180, 0, 0.4))"/>
+</svg>

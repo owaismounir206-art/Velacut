@@ -712,6 +712,46 @@ private slots:
         QVERIFY(session.data().findClip(a)->animations.isEmpty());
     }
 
+    void stickersAndBeats()
+    {
+        ClipId a;
+        auto owner = threeClips(&a);
+        Session &session = *owner;
+        // A picture sticker: on its own sticker track, a third of the canvas; a visualizer spans the canvas.
+        StickerClipData star;
+        star.source = AssetRef{u"vedit.core"_s, u"stickers/shapes/star"_s, 1};
+        QVERIFY(session.apply(session.editor().insertSticker(frames(15), star)));
+        const Track &top = session.sequence().visualTracks.back();
+        QCOMPARE(top.kind, TrackKind::Sticker);
+        QCOMPARE(top.clips.front().duration, frames(TimelineEditor::kDefaultStickerSeconds * 30));
+        QCOMPARE(std::get<Vec2>(top.clips.front().transform.scale.staticValue()).x, TimelineEditor::kDefaultStickerScale);
+        StickerClipData bars;
+        bars.visualizer = AudioVisualizerSettings{};
+        QVERIFY(session.apply(session.editor().insertSticker(frames(15), bars, frames(60))));
+        const Clip *visualizer = nullptr;
+        for (const Track &track : session.sequence().visualTracks) {
+            for (const Clip &clip : track.clips) {
+                if (clip.sticker() && clip.sticker()->visualizer) {
+                    visualizer = &clip;
+                }
+            }
+        }
+        QVERIFY(visualizer);
+        QCOMPARE(std::get<Vec2>(visualizer->transform.scale.staticValue()).x, 1.0);
+
+        // Beats are source times: only those the clip plays are kept, and "Beat" again replaces them.
+        QVERIFY(session.apply(session.editor().trimClip(a, ClipEdge::Start, frames(30)))); // plays the source from 1 s
+        QCOMPARE(session.data().findClip(a)->media()->sourceIn, frames(30));
+        QVERIFY(session.apply(session.editor().setBeatMarkers(a, {0.5, 2.0, 3.0, 12.0})));
+        const std::vector<Marker> &beats = session.data().findClip(a)->markers;
+        QCOMPARE(beats.size(), size_t(2)); // 0.5 s is cut away, 12 s is beyond the source
+        QCOMPARE(beats.front().kind, MarkerKind::Beat);
+        QCOMPARE(beats.front().time, frames(60));
+        QVERIFY(session.apply(session.editor().setBeatMarkers(a, {4.0})));
+        QCOMPARE(session.data().findClip(a)->markers.size(), size_t(1));
+        QCOMPARE(session.data().findClip(a)->markers.front().time, frames(120));
+    }
+
     void multicamEditingAndAudioSync()
     {
         ClipId a, b;

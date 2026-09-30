@@ -4,7 +4,7 @@
 <context>
     <name>HomeScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/HomeScreen.qml" line="+110"/>
+        <location filename="../src/ui/qml/HomeScreen.qml" line="+124"/>
         <source>%n project(s)</source>
         <translation>
             <numerusform>%n project</numerusform>
@@ -15,7 +15,7 @@
 <context>
     <name>PropertiesPanel</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+98"/>
+        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+118"/>
         <source>%n clip(s) selected: changes apply to all of them.</source>
         <translation>
             <numerusform>%n clip selected: changes apply to it.</numerusform>
@@ -23,7 +23,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+242"/>
+        <location line="+395"/>
         <source>%n keyframe(s)</source>
         <translation>
             <numerusform>%n keyframe</numerusform>
@@ -34,8 +34,8 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+1276"/>
-        <location line="+316"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+1828"/>
+        <location line="+362"/>
         <source>Transition on %n cut(s)</source>
         <translation>
             <numerusform>Transition on %n cut</numerusform>
@@ -43,7 +43,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="-236"/>
+        <location line="-245"/>
         <source>Applied to %n clip(s)</source>
         <translation>
             <numerusform>Applied to %n clip</numerusform>
@@ -54,7 +54,15 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+910"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+769"/>
+        <source>%n beat(s) marked on the clip</source>
+        <translation>
+            <numerusform>%n beat marked on the clip</numerusform>
+            <numerusform>%n beats marked on the clip</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+235"/>
         <source>%n clips deleted</source>
         <translation>
             <numerusform>%n clip deleted</numerusform>

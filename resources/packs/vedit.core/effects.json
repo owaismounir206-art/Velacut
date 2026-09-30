@@ -4,35 +4,304 @@
             "kind": "effect",
             "id": "vedit.adjust.basic",
             "version": 1,
-            "name": { "en": "Adjust", "it": "Regola" },
+            "name": {
+                "en": "Adjust",
+                "it": "Regola"
+            },
             "params": [
-                { "name": "exposure", "min": -3, "max": 3, "default": 0, "label": { "en": "Exposure", "it": "Esposizione" } },
-                { "name": "brightness", "min": -1, "max": 1, "default": 0, "label": { "en": "Brightness", "it": "Luminosità" } },
-                { "name": "contrast", "min": -1, "max": 1, "default": 0, "label": { "en": "Contrast", "it": "Contrasto" } },
-                { "name": "saturation", "min": -1, "max": 1, "default": 0, "label": { "en": "Saturation", "it": "Saturazione" } },
-                { "name": "temperature", "min": -1, "max": 1, "default": 0, "label": { "en": "Temperature", "it": "Temperatura" } },
-                { "name": "tint", "min": -1, "max": 1, "default": 0, "label": { "en": "Tint", "it": "Tinta" } },
-                { "name": "highlights", "min": -1, "max": 1, "default": 0, "label": { "en": "Highlights", "it": "Alte luci" } },
-                { "name": "shadows", "min": -1, "max": 1, "default": 0, "label": { "en": "Shadows", "it": "Ombre" } },
-                { "name": "whites", "min": -1, "max": 1, "default": 0, "label": { "en": "Whites", "it": "Bianchi" }, "advanced": true },
-                { "name": "blacks", "min": -1, "max": 1, "default": 0, "label": { "en": "Blacks", "it": "Neri" }, "advanced": true },
-                { "name": "vibrance", "min": -1, "max": 1, "default": 0, "label": { "en": "Vibrance", "it": "Vividezza" }, "advanced": true },
-                { "name": "fade", "min": 0, "max": 1, "default": 0, "label": { "en": "Fade", "it": "Sbiadito" }, "advanced": true },
-                { "name": "sharpness", "min": 0, "max": 1, "default": 0, "label": { "en": "Sharpness", "it": "Nitidezza" } },
-                { "name": "vignette", "min": -1, "max": 1, "default": 0, "label": { "en": "Vignette", "it": "Vignettatura" } },
-                { "name": "grain", "min": 0, "max": 1, "default": 0, "label": { "en": "Grain", "it": "Grana" }, "advanced": true }
+                {
+                    "name": "exposure",
+                    "min": -3,
+                    "max": 3,
+                    "default": 0,
+                    "label": {
+                        "en": "Exposure",
+                        "it": "Esposizione"
+                    }
+                },
+                {
+                    "name": "brightness",
+                    "min": -1,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Brightness",
+                        "it": "Luminosità"
+                    }
+                },
+                {
+                    "name": "contrast",
+                    "min": -1,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Contrast",
+                        "it": "Contrasto"
+                    }
+                },
+                {
+                    "name": "saturation",
+                    "min": -1,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Saturation",
+                        "it": "Saturazione"
+                    }
+                },
+                {
+                    "name": "temperature",
+                    "min": -1,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Temperature",
+                        "it": "Temperatura"
+                    }
+                },
+                {
+                    "name": "tint",
+                    "min": -1,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Tint",
+                        "it": "Tinta"
+                    }
+                },
+                {
+                    "name": "highlights",
+                    "min": -1,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Highlights",
+                        "it": "Alte luci"
+                    }
+                },
+                {
+                    "name": "shadows",
+                    "min": -1,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Shadows",
+                        "it": "Ombre"
+                    }
+                },
+                {
+                    "name": "whites",
+                    "min": -1,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Whites",
+                        "it": "Bianchi"
+                    },
+                    "advanced": true
+                },
+                {
+                    "name": "blacks",
+                    "min": -1,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Blacks",
+                        "it": "Neri"
+                    },
+                    "advanced": true
+                },
+                {
+                    "name": "vibrance",
+                    "min": -1,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Vibrance",
+                        "it": "Vividezza"
+                    },
+                    "advanced": true
+                },
+                {
+                    "name": "fade",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Fade",
+                        "it": "Sbiadito"
+                    },
+                    "advanced": true
+                },
+                {
+                    "name": "sharpness",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Sharpness",
+                        "it": "Nitidezza"
+                    }
+                },
+                {
+                    "name": "vignette",
+                    "min": -1,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Vignette",
+                        "it": "Vignettatura"
+                    }
+                },
+                {
+                    "name": "grain",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0,
+                    "label": {
+                        "en": "Grain",
+                        "it": "Grana"
+                    },
+                    "advanced": true
+                }
             ]
         },
         {
             "kind": "effect",
             "id": "vedit.chroma_key",
             "version": 1,
-            "name": { "en": "Chroma Key", "it": "Chroma key" },
+            "name": {
+                "en": "Chroma Key",
+                "it": "Chroma key"
+            },
             "params": [
-                { "name": "similarity", "min": 0, "max": 1, "default": 0.4, "label": { "en": "Intensity", "it": "Intensità" } },
-                { "name": "smoothness", "min": 0, "max": 1, "default": 0.1, "label": { "en": "Edges", "it": "Bordo" } },
-                { "name": "spill", "min": 0, "max": 1, "default": 0.5, "label": { "en": "Spill Removal", "it": "Rimuovi spill" } }
+                {
+                    "name": "similarity",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.4,
+                    "label": {
+                        "en": "Intensity",
+                        "it": "Intensità"
+                    }
+                },
+                {
+                    "name": "smoothness",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1,
+                    "label": {
+                        "en": "Edges",
+                        "it": "Bordo"
+                    }
+                },
+                {
+                    "name": "spill",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.5,
+                    "label": {
+                        "en": "Spill Removal",
+                        "it": "Rimuovi spill"
+                    }
+                }
             ]
+        },
+        {
+            "kind": "effect",
+            "id": "vedit.beat.flash",
+            "version": 1,
+            "name": {
+                "en": "Beat Flash",
+                "it": "Flash a tempo"
+            },
+            "params": [
+                {
+                    "name": "amount",
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.7,
+                    "label": {
+                        "en": "Intensity",
+                        "it": "Intensità"
+                    }
+                },
+                {
+                    "name": "decay",
+                    "min": 0.05,
+                    "max": 0.5,
+                    "default": 0.18,
+                    "label": {
+                        "en": "Duration",
+                        "it": "Durata"
+                    }
+                }
+            ],
+            "category": "rhythm"
+        },
+        {
+            "kind": "effect",
+            "id": "vedit.beat.zoom",
+            "version": 1,
+            "name": {
+                "en": "Beat Zoom",
+                "it": "Zoom a tempo"
+            },
+            "params": [
+                {
+                    "name": "amount",
+                    "min": 0,
+                    "max": 0.5,
+                    "default": 0.15,
+                    "label": {
+                        "en": "Zoom Amount",
+                        "it": "Intensità zoom"
+                    }
+                },
+                {
+                    "name": "decay",
+                    "min": 0.05,
+                    "max": 0.5,
+                    "default": 0.2,
+                    "label": {
+                        "en": "Duration",
+                        "it": "Durata"
+                    }
+                }
+            ],
+            "category": "rhythm"
+        },
+        {
+            "kind": "effect",
+            "id": "vedit.beat.shake",
+            "version": 1,
+            "name": {
+                "en": "Beat Shake",
+                "it": "Scossa a tempo"
+            },
+            "params": [
+                {
+                    "name": "amount",
+                    "min": 0,
+                    "max": 30,
+                    "default": 12,
+                    "label": {
+                        "en": "Shake Pixels",
+                        "it": "Ampiezza scossa"
+                    }
+                },
+                {
+                    "name": "decay",
+                    "min": 0.05,
+                    "max": 0.5,
+                    "default": 0.18,
+                    "label": {
+                        "en": "Duration",
+                        "it": "Durata"
+                    }
+                }
+            ],
+            "category": "rhythm"
         }
     ]
 }

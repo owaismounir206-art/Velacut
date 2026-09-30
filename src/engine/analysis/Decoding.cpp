@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "Decoding.h"
+#include "Spectrum.h"
 
 #include <QFile>
 #include <QTransform>
@@ -8,6 +9,8 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/display.h>
+#include <libavutil/mem.h>
+#include <libavutil/tx.h>
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
 }
@@ -303,6 +306,150 @@ std::optional<Waveform> extractWaveform(const QString &path, int bucketsPerSecon
         push();
     }
     return waveform;
+}
+
+std::optional<Spectrum> extractSpectrum(const QString &path, int framesPerSecond, int bands, const std::atomic<bool> *cancel)
+{
+    if (framesPerSecond <= 0 || bands <= 0) {
+        return std::nullopt;
+    }
+    Input input = openInput(path);
+    if (!input) {
+        return std::nullopt;
+    }
+    const int streamIndex = av_find_best_stream(input.get(), AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    if (streamIndex < 0) {
+        return std::nullopt;
+    }
+    Codec codec = openDecoder(input->streams[streamIndex]);
+    if (!codec || codec->sample_rate <= 0) {
+        return std::nullopt;
+    }
+    SwrContext *rawResampler = nullptr;
+    AVChannelLayout mono = AV_CHANNEL_LAYOUT_MONO;
+    if (swr_alloc_set_opts2(&rawResampler, &mono, AV_SAMPLE_FMT_FLT, Spectrum::kSampleRate, &codec->ch_layout,
+                            codec->sample_fmt, codec->sample_rate, 0, nullptr) < 0) {
+        return std::nullopt;
+    }
+    std::unique_ptr<SwrContext, SwrDeleter> resampler(rawResampler);
+    if (swr_init(resampler.get()) < 0) {
+        return std::nullopt;
+    }
+
+    constexpr int n = Spectrum::kWindow;
+    AVTXContext *rawTx = nullptr;
+    av_tx_fn transform = nullptr;
+    const float scale = 1.0f;
+    if (av_tx_init(&rawTx, &transform, AV_TX_FLOAT_RDFT, 0, n, &scale, 0) < 0) {
+        return std::nullopt;
+    }
+    const std::unique_ptr<AVTXContext, void (*)(AVTXContext *)> tx(rawTx, [](AVTXContext *c) { av_tx_uninit(&c); });
+    const auto freeBuffer = [](void *p) { av_free(p); };
+    const std::unique_ptr<float, decltype(freeBuffer)> window(static_cast<float *>(av_malloc(n * sizeof(float))), freeBuffer);
+    const std::unique_ptr<AVComplexFloat, decltype(freeBuffer)> bins(
+        static_cast<AVComplexFloat *>(av_malloc((n / 2 + 1) * sizeof(AVComplexFloat))), freeBuffer);
+    if (!window || !bins) {
+        return std::nullopt;
+    }
+    std::vector<float> hann(n);
+    for (int i = 0; i < n; ++i) {
+        hann[static_cast<size_t>(i)] = 0.5f - 0.5f * std::cos(2.0f * static_cast<float>(M_PI) * i / (n - 1));
+    }
+    // Band edges in FFT bins, log-spaced from kLowHz to kHighHz; a band narrower than a bin still gets one bin.
+    std::vector<int> edges(static_cast<size_t>(bands) + 1);
+    for (int b = 0; b <= bands; ++b) {
+        const double hz = Spectrum::kLowHz * std::pow(Spectrum::kHighHz / Spectrum::kLowHz, static_cast<double>(b) / bands);
+        edges[static_cast<size_t>(b)] = std::clamp(static_cast<int>(std::lround(hz * n / Spectrum::kSampleRate)), 1, n / 2);
+    }
+    // A full-scale sine through the Hann window peaks at n/4 in one bin: 0 dBFS.
+    const double reference = std::pow(n / 4.0, 2.0);
+
+    Spectrum spectrum;
+    spectrum.framesPerSecond = framesPerSecond;
+    spectrum.bands = bands;
+    const double hop = static_cast<double>(Spectrum::kSampleRate) / framesPerSecond;
+    // Frame f is centred on sample f × hop: its window starts at f × hop − n / 2 (zeros before the start).
+    std::vector<float> samples; // samples from `base` on
+    std::int64_t base = 0;
+    std::int64_t total = 0;
+    int frame = 0;
+    const auto analyse = [&](bool flush) {
+        for (;;) {
+            const auto start = static_cast<std::int64_t>(std::llround(frame * hop)) - n / 2;
+            if (!flush && start + n > total) {
+                break;
+            }
+            if (flush && start >= total) {
+                break;
+            }
+            for (int i = 0; i < n; ++i) {
+                const std::int64_t index = start + i - base;
+                const float value = index >= 0 && index < static_cast<std::int64_t>(samples.size())
+                                        ? samples[static_cast<size_t>(index)] : 0.0f;
+                window.get()[i] = value * hann[static_cast<size_t>(i)];
+            }
+            transform(tx.get(), bins.get(), window.get(), sizeof(AVComplexFloat));
+            for (int b = 0; b < bands; ++b) {
+                const int from = edges[static_cast<size_t>(b)];
+                const int to = std::max(from + 1, edges[static_cast<size_t>(b) + 1]);
+                double power = 0.0;
+                for (int k = from; k < to && k <= n / 2; ++k) {
+                    const AVComplexFloat c = bins.get()[k];
+                    power = std::max(power, static_cast<double>(c.re) * c.re + static_cast<double>(c.im) * c.im);
+                }
+                const double db = power > 0.0 ? 10.0 * std::log10(power / reference) : Spectrum::kFloorDb;
+                const double level = std::clamp((db - Spectrum::kFloorDb) / -Spectrum::kFloorDb, 0.0, 1.0);
+                spectrum.levels.append(static_cast<char>(std::lround(level * 255.0)));
+            }
+            ++frame;
+            // Samples before the next window are no longer needed.
+            const std::int64_t keepFrom = static_cast<std::int64_t>(std::llround(frame * hop)) - n / 2;
+            if (keepFrom - base > 8 * n) {
+                const std::int64_t drop = keepFrom - base;
+                samples.erase(samples.begin(), samples.begin() + static_cast<std::ptrdiff_t>(drop));
+                base += drop;
+            }
+        }
+    };
+    std::vector<float> converted;
+    const auto consume = [&](const uint8_t *const *data, int count) {
+        converted.resize(static_cast<size_t>(std::max(0, swr_get_out_samples(resampler.get(), count))));
+        uint8_t *out[1] = {reinterpret_cast<uint8_t *>(converted.data())};
+        const int produced = swr_convert(resampler.get(), out, static_cast<int>(converted.size()), data, count);
+        if (produced > 0) {
+            samples.insert(samples.end(), converted.begin(), converted.begin() + produced);
+            total += produced;
+            analyse(false);
+        }
+    };
+
+    Packet packet(av_packet_alloc());
+    Frame decoded(av_frame_alloc());
+    bool ended = false;
+    while (!ended && !cancelled(cancel)) {
+        if (av_read_frame(input.get(), packet.get()) < 0) {
+            avcodec_send_packet(codec.get(), nullptr);
+            ended = true;
+        } else {
+            if (packet->stream_index == streamIndex) {
+                avcodec_send_packet(codec.get(), packet.get());
+            }
+            av_packet_unref(packet.get());
+        }
+        while (avcodec_receive_frame(codec.get(), decoded.get()) == 0) {
+            consume(decoded->extended_data, decoded->nb_samples);
+            av_frame_unref(decoded.get());
+        }
+    }
+    if (cancelled(cancel)) {
+        return std::nullopt;
+    }
+    consume(nullptr, 0);
+    analyse(true);
+    if (spectrum.levels.isEmpty()) {
+        return std::nullopt;
+    }
+    return spectrum;
 }
 
 std::optional<fx::LoudnessResult> extractLoudness(const QString &path, const std::atomic<bool> *cancel)

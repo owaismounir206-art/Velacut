@@ -5,6 +5,7 @@
 #include "core/project/Media.h"
 
 #include <QDir>
+#include <QCryptographicHash>
 #include <QFileInfo>
 #include <QImage>
 #include <QJsonArray>
@@ -125,7 +126,9 @@ inline Media testMedia(MediaKind kind, const QString &path, std::optional<Ration
     media.kind = kind;
     media.name = QFileInfo(path).fileName();
     media.path = path;
-    media.fingerprint = {QStringLiteral("sha256-sampled-v1"), QStringLiteral("00"), 1};
+    // One fingerprint per file: caches keyed by fingerprint (thumbnails, waveforms, spectra) never mix test files.
+    media.fingerprint = {QStringLiteral("sha256-sampled-v1"),
+                         QString::fromLatin1(QCryptographicHash::hash(path.toUtf8(), QCryptographicHash::Sha256).toHex()), 1};
     media.info.duration = duration;
     if (kind != MediaKind::Audio) {
         VideoStreamInfo video;

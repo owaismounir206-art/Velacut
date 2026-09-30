@@ -173,6 +173,26 @@ Library Library::load(const QString &folder)
         }
         library.m_effects.push_back(std::move(spec));
     }
+
+    const QJsonObject stickers = read(u"stickers.json"_s);
+    if (!stickers.isEmpty()) {
+        library.m_stickerCategories = categories(stickers);
+        for (const QJsonValue &value : stickers.value(u"items"_s).toArray()) {
+            const QJsonObject item = value.toObject();
+            StickerPreset preset;
+            preset.id = item.value(u"id"_s).toString();
+            preset.version = item.value(u"version"_s).toInt(1);
+            preset.category = item.value(u"category"_s).toString();
+            preset.name = localized(item.value(u"name"_s));
+            const QString path = item.value(u"path"_s).toString();
+            preset.path = path.isEmpty() ? QString() : folder + u"/"_s + path;
+            preset.emoji = item.value(u"emoji"_s).toString();
+            preset.animated = item.value(u"animated"_s).toBool(false);
+            preset.defaultDuration = item.value(u"defaultDuration"_s).toDouble(3.0);
+            preset.visualizer = item.value(u"visualizer"_s).toObject();
+            library.m_stickers.push_back(std::move(preset));
+        }
+    }
     return library;
 }
 
@@ -227,6 +247,16 @@ const EffectSpec *Library::effect(const QString &id) const
     for (const EffectSpec &spec : m_effects) {
         if (spec.id == id) {
             return &spec;
+        }
+    }
+    return nullptr;
+}
+
+const StickerPreset *Library::sticker(const QString &id) const
+{
+    for (const StickerPreset &preset : m_stickers) {
+        if (preset.id == id) {
+            return &preset;
         }
     }
     return nullptr;

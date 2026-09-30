@@ -6,9 +6,11 @@ pkg_check_modules(MLTPP REQUIRED IMPORTED_TARGET mlt++-7>=7.20)
 pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET libavformat libavcodec libavutil libswscale libswresample)
 add_library(vedit_engine STATIC
     analysis/AudioSync.h analysis/AudioSync.cpp
+    analysis/BeatDetection.h analysis/BeatDetection.cpp
     analysis/Decoding.h analysis/Decoding.cpp
     analysis/Fingerprint.h analysis/Fingerprint.cpp
     analysis/MediaAnalysis.h analysis/MediaAnalysis.cpp
+    analysis/Spectrum.h analysis/Spectrum.cpp
     analysis/MediaImporter.h analysis/MediaImporter.cpp
     analysis/MediaProbe.h analysis/MediaProbe.cpp
     analysis/ReverseProxy.h analysis/ReverseProxy.cpp
@@ -28,7 +30,7 @@ add_library(vedit_engine STATIC
     timeline/TimelineProjection.h timeline/TimelineProjection.cpp
 )
 target_include_directories(vedit_engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
-target_link_libraries(vedit_engine PUBLIC Qt6::Core Qt6::Gui vedit_core vedit_common PkgConfig::MLTPP PUBLIC vedit_fx PRIVATE PkgConfig::FFMPEG)
+target_link_libraries(vedit_engine PUBLIC Qt6::Core Qt6::Gui Qt6::Svg vedit_core vedit_common PkgConfig::MLTPP PUBLIC vedit_fx PRIVATE PkgConfig::FFMPEG)
 vedit_target_options(vedit_engine)
 
 # vedit-render: export in a separate process (docs/ARCHITECTURE.md §5.4).

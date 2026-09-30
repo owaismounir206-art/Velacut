@@ -2,6 +2,7 @@
 #pragma once
 
 #include "core/project/Media.h"
+#include "engine/analysis/Spectrum.h"
 
 #include <QHash>
 #include <QMutex>
@@ -46,6 +47,13 @@ public:
     // Forgets the producers of a media item (e.g. its backwards copy became ready).
     void forget(const MediaId &mediaId);
 
+    // Spectrum of a media item's audio (audio visualizers, beats), cached on disk by fingerprint next to the
+    // waveform (<cache>/media/<fingerprint>/). spectrum() reads or computes it now (export, tests);
+    // spectrumOrRequest() computes a missing one in background and emits ready() when done (preview).
+    // Null for media without audio.
+    std::shared_ptr<const Spectrum> spectrum(const Media &media);
+    std::shared_ptr<const Spectrum> spectrumOrRequest(const Media &media);
+
 signals:
     // Emitted in the owner's thread when a requested producer is ready (or failed: error() is set).
     void ready(const vedit::MediaId &mediaId);
@@ -59,6 +67,8 @@ private:
 
     QHash<QString, std::shared_ptr<Mlt::Producer>> m_producers; // by keyOf()
     QHash<MediaId, QString> m_errors;
+    QHash<QString, std::shared_ptr<const Spectrum>> m_spectra; // by fingerprint
+    QSet<QString> m_noSpectrum;                                // fingerprints without audio (or unreadable)
     QSet<QString> m_pending;
     bool m_useReverseProxies = false;
 };

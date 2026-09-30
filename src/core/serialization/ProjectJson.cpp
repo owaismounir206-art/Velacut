@@ -78,6 +78,11 @@ constexpr EnumName<BackgroundType> kBackgroundTypes[] = {{BackgroundType::Color,
                                                          {BackgroundType::Blur, "blur"_L1},
                                                          {BackgroundType::Image, "image"_L1},
                                                          {BackgroundType::Pattern, "pattern"_L1}};
+constexpr EnumName<VisualizerStyle> kVisualizerStyles[] = {
+    {VisualizerStyle::Bars, "bars"_L1},
+    {VisualizerStyle::Spectrum, "spectrum"_L1},
+    {VisualizerStyle::Waveform, "waveform"_L1},
+    {VisualizerStyle::PulsingCircle, "circle"_L1}};
 constexpr EnumName<TextAlign> kTextAligns[] = {
     {TextAlign::Left, "left"_L1}, {TextAlign::Center, "center"_L1}, {TextAlign::Right, "right"_L1}};
 constexpr EnumName<BubbleShape> kBubbleShapes[] = {
@@ -159,6 +164,7 @@ const QSet<QString> kMediaClipKeys{u"mediaId"_s,       u"streams"_s,  u"sourceIn
                                    u"preservePitch"_s, u"reversed"_s, u"audio"_s};
 const QSet<QString> kColorClipKeys{u"color"_s};
 const QSet<QString> kCompoundClipKeys{u"sequenceId"_s, u"sourceIn"_s, u"activeAngle"_s};
+const QSet<QString> kStickerClipKeys{u"source"_s, u"mediaId"_s, u"emoji"_s, u"loop"_s, u"speed"_s, u"tint"_s, u"visualizer"_s};
 
 QJsonObject unknownKeys(const QJsonObject &object, const QSet<QString> &known,
                         const QSet<QString> &alsoKnown = {})
@@ -432,6 +438,20 @@ QJsonObject animationsJson(const ClipAnimations &anims)
     return object;
 }
 
+QJsonObject visualizerJson(const AudioVisualizerSettings &v)
+{
+    QJsonObject object{{u"style"_s, nameOf(kVisualizerStyles, v.style)},
+                       {u"barCount"_s, v.barCount},
+                       {u"primaryColor"_s, v.primaryColor.toString()},
+                       {u"secondaryColor"_s, v.secondaryColor.toString()},
+                       {u"sensitivity"_s, v.sensitivity},
+                       {u"smoothing"_s, v.smoothing},
+                       {u"mirror"_s, v.mirror},
+                       {u"roundness"_s, v.roundness},
+                       {u"thickness"_s, v.thickness}};
+    return object;
+}
+
 QJsonObject clipJson(const Clip &clip)
 {
     QJsonObject object{{u"id"_s, idValue(clip.id)},
@@ -498,6 +518,29 @@ QJsonObject clipJson(const Clip &clip)
                 mergeInto(object, data.fields);
             } else if constexpr (std::is_same_v<T, AdjustmentClipData>) {
                 // Effects are serialized at the clip level
+            } else if constexpr (std::is_same_v<T, StickerClipData>) {
+                if (data.source) {
+                    object.insert(u"source"_s, assetRefJson(*data.source));
+                }
+                if (!data.mediaId.isNull()) {
+                    object.insert(u"mediaId"_s, idValue(data.mediaId));
+                }
+                if (!data.emoji.isEmpty()) {
+                    object.insert(u"emoji"_s, data.emoji);
+                }
+                if (!data.loop) {
+                    object.insert(u"loop"_s, data.loop);
+                }
+                if (data.speed != 1.0) {
+                    object.insert(u"speed"_s, data.speed);
+                }
+                if (data.tint.a > 0) {
+                    object.insert(u"tint"_s, data.tint.toString());
+                }
+                if (data.visualizer) {
+                    object.insert(u"visualizer"_s, visualizerJson(*data.visualizer));
+                }
+                mergeInto(object, data.fields);
             } else {
                 mergeInto(object, data.fields);
             }
@@ -996,6 +1039,21 @@ public:
         return background;
     }
 
+    AudioVisualizerSettings visualizer(const QJsonObject &vObj, const QString &vPath)
+    {
+        AudioVisualizerSettings v;
+        v.style = enumeration(vObj, u"style"_s, vPath, kVisualizerStyles, VisualizerStyle::Bars);
+        v.barCount = integer(vObj, u"barCount"_s, vPath, 32, 4, 128);
+        v.primaryColor = colorValue(vObj.value(u"primaryColor"_s), join(vPath, u"primaryColor"_s), Color{0, 220, 255, 255});
+        v.secondaryColor = colorValue(vObj.value(u"secondaryColor"_s), join(vPath, u"secondaryColor"_s), Color{255, 100, 200, 255});
+        v.sensitivity = number(vObj, u"sensitivity"_s, vPath, 1.0, 0.1, 10.0);
+        v.smoothing = number(vObj, u"smoothing"_s, vPath, 0.5, 0.0, 1.0);
+        v.mirror = boolean(vObj, u"mirror"_s, vPath, false);
+        v.roundness = number(vObj, u"roundness"_s, vPath, 0.5, 0.0, 1.0);
+        v.thickness = number(vObj, u"thickness"_s, vPath, 3.0, 0.5, 30.0);
+        return v;
+    }
+
     TextClipData text(const QJsonObject &object, const QString &path)
     {
         TextClipData data;
@@ -1236,6 +1294,26 @@ public:
             clip.payload = AdjustmentClipData{clip.effects};
             clip.extras = unknownKeys(object, kClipCommonKeys);
             break;
+        case ClipKind::Sticker: {
+            StickerClipData data;
+            data.source = assetRef(object.value(u"source"_s), join(path, u"source"_s), false);
+            data.mediaId = id<MediaTag>(object, u"mediaId"_s, path, false);
+            data.emoji = string(object, u"emoji"_s, path, {});
+            data.loop = boolean(object, u"loop"_s, path, true);
+            data.speed = number(object, u"speed"_s, path, 1.0, 0.1, 10.0);
+            if (object.contains(u"tint"_s)) {
+                data.tint = colorValue(object.value(u"tint"_s), join(path, u"tint"_s), Color{0, 0, 0, 0});
+            }
+            if (object.contains(u"visualizer"_s)) {
+                data.visualizer = visualizer(this->object(object, u"visualizer"_s, path, false), join(path, u"visualizer"_s));
+            }
+            if (!data.source && data.mediaId.isNull() && data.emoji.isEmpty() && !data.visualizer) {
+                warn(path, u"sticker without source, mediaId, emoji or visualizer: it shows nothing"_s);
+            }
+            data.fields = unknownKeys(object, kClipCommonKeys, kStickerClipKeys);
+            clip.payload = std::move(data);
+            break;
+        }
         default:
             // Kinds implemented in later phases: every non-common field is kept verbatim.
             clip.payload = PreservedClipData{*kind, unknownKeys(object, kClipCommonKeys)};
@@ -1517,6 +1595,17 @@ std::optional<TextAnimation> textAnimationFromJson(const QJsonObject &json)
 {
     Reader reader;
     return reader.textAnimation(json, u"animation"_s);
+}
+
+AudioVisualizerSettings visualizerFromJson(const QJsonObject &json)
+{
+    Reader reader;
+    return reader.visualizer(json, u"visualizer"_s);
+}
+
+QJsonObject visualizerToJson(const AudioVisualizerSettings &settings)
+{
+    return visualizerJson(settings);
 }
 
 QJsonObject mediaToJson(const Media &media)

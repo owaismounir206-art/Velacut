@@ -4,6 +4,8 @@ add_library(vedit_fx STATIC
     Image.h
     Animation.h Animation.cpp
     Audio.h Audio.cpp
+    AudioVisualizer.h AudioVisualizer.cpp
+    BeatEffects.h BeatEffects.cpp
     ChromaKey.h ChromaKey.cpp
     Color.h Color.cpp
     Composite.h Composite.cpp
@@ -17,7 +19,7 @@ add_library(vedit_fx STATIC
     Transition.h Transition.cpp
 )
 target_include_directories(vedit_fx PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
-target_link_libraries(vedit_fx PUBLIC Qt6::Core)
+target_link_libraries(vedit_fx PUBLIC Qt6::Core Qt6::Gui)
 # The core pack is built in: the application works without any installed data file.
 set(core_pack "${CMAKE_SOURCE_DIR}/resources/packs/vedit.core")
 qt_add_resources(vedit_fx "vedit_core_pack"
@@ -28,7 +30,31 @@ qt_add_resources(vedit_fx "vedit_core_pack"
         "${core_pack}/animations.json"
         "${core_pack}/effects.json"
         "${core_pack}/filters.json"
+        "${core_pack}/stickers.json"
         "${core_pack}/text-styles.json"
         "${core_pack}/transitions.json"
+        "${core_pack}/stickers/arrow_curved.svg"
+        "${core_pack}/stickers/arrow_down.svg"
+        "${core_pack}/stickers/arrow_right.svg"
+        "${core_pack}/stickers/arrow_sketch.svg"
+        "${core_pack}/stickers/badge_hot.svg"
+        "${core_pack}/stickers/badge_sale.svg"
+        "${core_pack}/stickers/badge_verified.svg"
+        "${core_pack}/stickers/emoji_cool.svg"
+        "${core_pack}/stickers/emoji_fire.svg"
+        "${core_pack}/stickers/emoji_heart.svg"
+        "${core_pack}/stickers/emoji_party.svg"
+        "${core_pack}/stickers/emoji_smile.svg"
+        "${core_pack}/stickers/emoji_sparkles.svg"
+        "${core_pack}/stickers/emoji_thumbs_up.svg"
+        "${core_pack}/stickers/heart_pulse.gif"
+        "${core_pack}/stickers/shape_burst.svg"
+        "${core_pack}/stickers/shape_heart.svg"
+        "${core_pack}/stickers/shape_highlight.svg"
+        "${core_pack}/stickers/shape_lightning.svg"
+        "${core_pack}/stickers/shape_star.svg"
+        "${core_pack}/stickers/social_bell.svg"
+        "${core_pack}/stickers/social_like.svg"
+        "${core_pack}/stickers/social_subscribe.svg"
 )
 vedit_target_options(vedit_fx)

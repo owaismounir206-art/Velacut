@@ -167,6 +167,12 @@ public:
 
     // A text at the playhead with the default style, or a style of the library, selected for editing.
     Q_INVOKABLE bool addText(const QString &styleId = {});
+    // A sticker of the library at the playhead, on a sticker track (a visualizer lasts until the end of the video).
+    Q_INVOKABLE bool addSticker(const QString &assetId);
+    // The user's pictures (PNG, SVG, WebP, GIF…) imported and added as stickers at the playhead.
+    Q_INVOKABLE void importStickers(const QList<QUrl> &urls);
+    // "Beat" (SPEC 0bis rule 3): the beats of the focused clip's audio become its beat markers (in background).
+    Q_INVOKABLE void detectBeats();
 
     // Mixer (SPEC §5.9): the volume of a whole track in dB (a slider drag is one undo step until endTrackGesture()),
     // mute.
@@ -265,6 +271,7 @@ private:
     {
         QString path;
         int trackRow = 0;
+        bool sticker = false; // added as a sticker (importStickers)
     };
     QList<PendingInsert> m_pendingInserts;
     int m_insertStart = 0;  // where the files were dropped: music starts here, under the video

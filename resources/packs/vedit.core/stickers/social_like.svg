@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 200" width="512" height="200">
+  <defs>
+    <linearGradient id="likeBlue" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0088FF"/>
+      <stop offset="100%" stop-color="#0055DD"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="24" width="480" height="152" rx="76" fill="url(#likeBlue)" stroke="#FFFFFF" stroke-width="8" filter="drop-shadow(0 8px 16px rgba(0,0,0,0.4))"/>
+  <!-- Thumb Icon -->
+  <g transform="translate(68, 55) scale(1.4)">
+    <path d="M 6 16 L 6 36 L 12 36 L 12 16 Z M 16 16 L 16 36 L 32 36 C 35 36 37 34 37 31 C 37 29 38 27 38 25 C 39 23 38 20 37 19 C 38 18 38 16 37 15 L 26 15 C 27 12 27 6 24 4 C 22 2 20 4 19 6 L 16 16 Z" fill="#FFFFFF"/>
+  </g>
+  <text x="170" y="122" font-family="sans-serif" font-size="52" font-weight="900" fill="#FFFFFF" letter-spacing="4">LIKE</text>
+</svg>

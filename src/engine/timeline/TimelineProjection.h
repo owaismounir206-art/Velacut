@@ -112,6 +112,7 @@ private:
         std::vector<AdjustSettings> adjusts;
         std::optional<DeflickerSettings> deflicker;
         std::optional<fx::MotionBlurSettings> motionBlur;
+        std::vector<BeatEffectSettings> beats;
         std::optional<TransformSettings> transform;
         std::optional<GainSettings> gain;
         std::optional<AudioEffectsSettings> audioEffects;
@@ -148,6 +149,8 @@ private:
         std::unique_ptr<Mlt::Playlist> playlist;
         std::vector<Entry> entries; // what the playlist contains
         QSet<MediaId> media;
+        // Clips that depend on other tracks (visualizers, effects on the beat): re-projected on any change.
+        bool followsTimeline = false;
         std::unique_ptr<Mlt::Filter> gainFilter; // track volume and meter
         QByteArray gainKey;
         QHash<QByteArray, std::shared_ptr<Mlt::Producer>> transitions; // built transition tractors, by key
@@ -203,6 +206,14 @@ private:
     std::int64_t toFrames(const RationalTime &time) const;
 
     std::shared_ptr<const fx::CubeLut> cubeLut(const QString &path);
+    // Beats of the sequence during `clip`, in seconds from its start: the sequence's beat markers and those of every
+    // clip (the music's, placed by "Beat").
+    std::vector<double> beatsUnder(const ProjectData &project, const Clip &clip) const;
+    // The audio playing under a visualizer clip, with its spectrum (requested in background when missing).
+    std::shared_ptr<Mlt::Producer> visualizerProducer(const ProjectData &project, const Clip &clip,
+                                                      const AudioVisualizerSettings &settings, QSet<MediaId> &usedMedia);
+    std::shared_ptr<Mlt::Producer> stickerProducer(const ProjectData &project, const StickerClipData &sticker,
+                                                   QSet<MediaId> &usedMedia);
 
     Mlt::Profile &m_profile;
     Rational m_rate; // of the profile
@@ -220,6 +231,8 @@ private:
     QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_texts;  // text producers, by content
     QHash<QPair<SequenceId, int>, std::shared_ptr<TimelineProjection>> m_compounds;
     std::map<QString, std::pair<QDateTime, std::shared_ptr<const fx::CubeLut>>> m_cubeLuts;
+    QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_stickers;    // sticker producers, by content
+    QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_visualizers; // visualizer producers, by settings and audio
     Preview m_preview;
     int m_duration = 1;
     int m_backgroundLength = 0;

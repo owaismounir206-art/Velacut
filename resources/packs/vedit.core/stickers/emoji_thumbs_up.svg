@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="thumbGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFE600"/>
+      <stop offset="50%" stop-color="#FFB300"/>
+      <stop offset="100%" stop-color="#E68A00"/>
+    </linearGradient>
+  </defs>
+  <!-- Thumb Up Shape -->
+  <path d="M 170 200 L 170 420 L 90 420 C 73 420 60 407 60 390 L 60 230 C 60 213 73 200 90 200 Z" fill="#E68A00" stroke="#B36B00" stroke-width="6"/>
+  <path d="M 190 200 L 190 420 L 360 420 C 390 420 415 395 415 365 C 415 355 410 345 400 338 C 420 330 435 305 435 285 C 435 272 428 260 418 252 C 430 240 430 220 422 205 C 412 188 392 180 370 180 L 290 180 C 300 145 310 90 280 60 C 255 35 230 45 220 70 C 210 95 200 150 190 200 Z" fill="url(#thumbGrad)" stroke="#B36B00" stroke-width="8" stroke-linejoin="round"/>
+</svg>
