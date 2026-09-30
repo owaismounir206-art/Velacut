@@ -11,6 +11,7 @@ add_library(vedit_core STATIC
     project/Clip.h
     project/ClipTime.h project/ClipTime.cpp
     project/SpeedCurve.h project/SpeedCurve.cpp
+    project/TemplateBuilder.h project/TemplateBuilder.cpp
     project/Track.h
     project/Sequence.h
     project/ProjectData.h project/ProjectData.cpp

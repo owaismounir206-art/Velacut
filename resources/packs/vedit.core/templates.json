@@ -1,0 +1,673 @@
+{
+    "categories": [
+        {
+            "id": "vlog",
+            "name": {
+                "en": "Vlog",
+                "it": "Vlog"
+            }
+        },
+        {
+            "id": "travel",
+            "name": {
+                "en": "Travel",
+                "it": "Viaggi"
+            }
+        },
+        {
+            "id": "party",
+            "name": {
+                "en": "Parties",
+                "it": "Feste"
+            }
+        },
+        {
+            "id": "business",
+            "name": {
+                "en": "Business",
+                "it": "Lavoro"
+            }
+        },
+        {
+            "id": "sport",
+            "name": {
+                "en": "Sport",
+                "it": "Sport"
+            }
+        },
+        {
+            "id": "memories",
+            "name": {
+                "en": "Memories",
+                "it": "Ricordi"
+            }
+        },
+        {
+            "id": "social",
+            "name": {
+                "en": "Social",
+                "it": "Social"
+            }
+        },
+        {
+            "id": "cinematic",
+            "name": {
+                "en": "Cinematic",
+                "it": "Cinematografico"
+            }
+        }
+    ],
+    "items": [
+        {
+            "id": "templates/vlog-day",
+            "category": "vlog",
+            "name": {
+                "en": "A day with me",
+                "it": "Una giornata con me"
+            },
+            "canvas": "9:16",
+            "slots": [
+                {
+                    "label": {
+                        "en": "Morning",
+                        "it": "Mattina"
+                    },
+                    "seconds": 2.5,
+                    "kind": "video"
+                },
+                {
+                    "label": {
+                        "en": "Coffee",
+                        "it": "Caffè"
+                    },
+                    "seconds": 2,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "On the way",
+                        "it": "Per strada"
+                    },
+                    "seconds": 2,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "Best moment",
+                        "it": "Momento migliore"
+                    },
+                    "seconds": 3,
+                    "kind": "video"
+                },
+                {
+                    "label": {
+                        "en": "Evening",
+                        "it": "Sera"
+                    },
+                    "seconds": 2.5,
+                    "kind": "any"
+                }
+            ],
+            "transition": {
+                "preset": "transitions/dissolve",
+                "seconds": 0.5
+            },
+            "filter": "filters/honey",
+            "texts": [
+                {
+                    "style": "text/anim-typewriter-cinematic",
+                    "text": {
+                        "en": "A day with me",
+                        "it": "Una giornata con me"
+                    },
+                    "at": 0.2,
+                    "seconds": 2.3
+                }
+            ],
+            "stickers": [
+                {
+                    "id": "graphics/progress-bar",
+                    "at": 0,
+                    "seconds": 0
+                }
+            ],
+            "kind": "template",
+            "version": 1
+        },
+        {
+            "id": "templates/travel",
+            "category": "travel",
+            "name": {
+                "en": "Travel diary",
+                "it": "Diario di viaggio"
+            },
+            "canvas": "16:9",
+            "slots": [
+                {
+                    "label": {
+                        "en": "Arrival",
+                        "it": "Arrivo"
+                    },
+                    "seconds": 3,
+                    "kind": "video"
+                },
+                {
+                    "label": {
+                        "en": "Landscape",
+                        "it": "Paesaggio"
+                    },
+                    "seconds": 3,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "Food",
+                        "it": "Cibo"
+                    },
+                    "seconds": 2,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "Streets",
+                        "it": "Strade"
+                    },
+                    "seconds": 2,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "People",
+                        "it": "Persone"
+                    },
+                    "seconds": 2,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "Sunset",
+                        "it": "Tramonto"
+                    },
+                    "seconds": 3,
+                    "kind": "any"
+                }
+            ],
+            "transition": {
+                "preset": "transitions/cross-zoom",
+                "seconds": 0.6
+            },
+            "filter": "filters/teal-orange",
+            "texts": [
+                {
+                    "style": "text/place-pin",
+                    "text": {
+                        "en": "📍 Somewhere beautiful",
+                        "it": "📍 In un posto bellissimo"
+                    },
+                    "at": 0.3,
+                    "seconds": 2.5
+                },
+                {
+                    "style": "text/title-the-end",
+                    "text": {
+                        "en": "SEE YOU SOON",
+                        "it": "ALLA PROSSIMA"
+                    },
+                    "at": 12.5,
+                    "seconds": 2.5
+                }
+            ],
+            "kind": "template",
+            "version": 1
+        },
+        {
+            "id": "templates/birthday",
+            "category": "party",
+            "name": {
+                "en": "Happy birthday",
+                "it": "Buon compleanno"
+            },
+            "canvas": "9:16",
+            "slots": [
+                {
+                    "label": {
+                        "en": "The star",
+                        "it": "Il festeggiato"
+                    },
+                    "seconds": 2.5,
+                    "kind": "photo"
+                },
+                {
+                    "label": {
+                        "en": "Friends",
+                        "it": "Amici"
+                    },
+                    "seconds": 2,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "Cake",
+                        "it": "Torta"
+                    },
+                    "seconds": 2,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "Party",
+                        "it": "Festa"
+                    },
+                    "seconds": 2.5,
+                    "kind": "any"
+                }
+            ],
+            "transition": {
+                "preset": "transitions/zoom-in",
+                "seconds": 0.4
+            },
+            "filter": "filters/pop",
+            "effects": [
+                {
+                    "preset": "effects/sparkles-gold",
+                    "slot": 2
+                }
+            ],
+            "texts": [
+                {
+                    "style": "text/anim-bounce-pop",
+                    "text": {
+                        "en": "HAPPY BIRTHDAY!",
+                        "it": "BUON COMPLEANNO!"
+                    },
+                    "at": 0.2,
+                    "seconds": 2.5
+                }
+            ],
+            "stickers": [
+                {
+                    "id": "stickers/emoji/tada",
+                    "at": 0.3,
+                    "seconds": 2.2
+                },
+                {
+                    "id": "stickers/emoji/cake",
+                    "at": 4.6,
+                    "seconds": 2
+                }
+            ],
+            "kind": "template",
+            "version": 1
+        },
+        {
+            "id": "templates/product",
+            "category": "business",
+            "name": {
+                "en": "Product showcase",
+                "it": "Vetrina prodotto"
+            },
+            "canvas": "1:1",
+            "slots": [
+                {
+                    "label": {
+                        "en": "Product",
+                        "it": "Prodotto"
+                    },
+                    "seconds": 2.5,
+                    "kind": "photo"
+                },
+                {
+                    "label": {
+                        "en": "Detail",
+                        "it": "Dettaglio"
+                    },
+                    "seconds": 2,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "In use",
+                        "it": "In uso"
+                    },
+                    "seconds": 2.5,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "Logo",
+                        "it": "Logo"
+                    },
+                    "seconds": 2,
+                    "kind": "photo"
+                }
+            ],
+            "transition": {
+                "preset": "transitions/slide-left",
+                "seconds": 0.4
+            },
+            "filter": "filters/crisp",
+            "texts": [
+                {
+                    "style": "text/title-big-reveal",
+                    "text": {
+                        "en": "NEW",
+                        "it": "NOVITÀ"
+                    },
+                    "at": 0.2,
+                    "seconds": 2.3
+                },
+                {
+                    "style": "text/cta-shop-now",
+                    "text": {
+                        "en": "SHOP NOW",
+                        "it": "ACQUISTA ORA"
+                    },
+                    "at": 7.2,
+                    "seconds": 1.8
+                }
+            ],
+            "kind": "template",
+            "version": 1
+        },
+        {
+            "id": "templates/sport",
+            "category": "sport",
+            "name": {
+                "en": "Highlights",
+                "it": "Momenti salienti"
+            },
+            "canvas": "16:9",
+            "slots": [
+                {
+                    "label": {
+                        "en": "Warm-up",
+                        "it": "Riscaldamento"
+                    },
+                    "seconds": 1.5,
+                    "kind": "video"
+                },
+                {
+                    "label": {
+                        "en": "Action",
+                        "it": "Azione"
+                    },
+                    "seconds": 2,
+                    "kind": "video"
+                },
+                {
+                    "label": {
+                        "en": "Goal",
+                        "it": "Gol"
+                    },
+                    "seconds": 2,
+                    "kind": "video"
+                },
+                {
+                    "label": {
+                        "en": "Celebration",
+                        "it": "Esultanza"
+                    },
+                    "seconds": 2,
+                    "kind": "video"
+                }
+            ],
+            "transition": {
+                "preset": "transitions/whip-pan-left",
+                "seconds": 0.3
+            },
+            "filter": "filters/blockbuster",
+            "effects": [
+                {
+                    "preset": "effects/shake",
+                    "slot": 2
+                },
+                {
+                    "preset": "effects/zoom-pulse",
+                    "slot": 3
+                }
+            ],
+            "texts": [
+                {
+                    "style": "text/anim-glitch-cyber",
+                    "text": {
+                        "en": "GAME DAY",
+                        "it": "GIORNO DELLA PARTITA"
+                    },
+                    "at": 0.1,
+                    "seconds": 1.4
+                }
+            ],
+            "kind": "template",
+            "version": 1
+        },
+        {
+            "id": "templates/memories",
+            "category": "memories",
+            "name": {
+                "en": "Memories",
+                "it": "Ricordi"
+            },
+            "canvas": "16:9",
+            "slots": [
+                {
+                    "label": {
+                        "en": "Photo 1",
+                        "it": "Foto 1"
+                    },
+                    "seconds": 3,
+                    "kind": "photo"
+                },
+                {
+                    "label": {
+                        "en": "Photo 2",
+                        "it": "Foto 2"
+                    },
+                    "seconds": 3,
+                    "kind": "photo"
+                },
+                {
+                    "label": {
+                        "en": "Photo 3",
+                        "it": "Foto 3"
+                    },
+                    "seconds": 3,
+                    "kind": "photo"
+                },
+                {
+                    "label": {
+                        "en": "Photo 4",
+                        "it": "Foto 4"
+                    },
+                    "seconds": 3,
+                    "kind": "photo"
+                },
+                {
+                    "label": {
+                        "en": "Photo 5",
+                        "it": "Foto 5"
+                    },
+                    "seconds": 3,
+                    "kind": "photo"
+                }
+            ],
+            "transition": {
+                "preset": "transitions/dip-to-white",
+                "seconds": 0.8
+            },
+            "filter": "filters/polaroid",
+            "effects": [
+                {
+                    "preset": "effects/old-film-light",
+                    "slot": 0
+                }
+            ],
+            "texts": [
+                {
+                    "style": "text/quote-serif",
+                    "text": {
+                        "en": "Some moments stay forever",
+                        "it": "Certi momenti restano per sempre"
+                    },
+                    "at": 0.3,
+                    "seconds": 2.6
+                }
+            ],
+            "kind": "template",
+            "version": 1
+        },
+        {
+            "id": "templates/tiktok-hook",
+            "category": "social",
+            "name": {
+                "en": "Hook & reveal",
+                "it": "Aggancio e rivelazione"
+            },
+            "canvas": "9:16",
+            "slots": [
+                {
+                    "label": {
+                        "en": "Hook",
+                        "it": "Aggancio"
+                    },
+                    "seconds": 1.5,
+                    "kind": "video"
+                },
+                {
+                    "label": {
+                        "en": "Before",
+                        "it": "Prima"
+                    },
+                    "seconds": 2,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "After",
+                        "it": "Dopo"
+                    },
+                    "seconds": 2.5,
+                    "kind": "any"
+                },
+                {
+                    "label": {
+                        "en": "Reaction",
+                        "it": "Reazione"
+                    },
+                    "seconds": 2,
+                    "kind": "video"
+                }
+            ],
+            "transition": {
+                "preset": "transitions/glitch-rgb",
+                "seconds": 0.3
+            },
+            "effects": [
+                {
+                    "preset": "effects/zoom-pulse",
+                    "slot": 0
+                }
+            ],
+            "texts": [
+                {
+                    "style": "text/anim-pop-in-bold",
+                    "text": {
+                        "en": "WAIT FOR IT…",
+                        "it": "ASPETTA…"
+                    },
+                    "at": 0.0,
+                    "seconds": 1.5
+                },
+                {
+                    "style": "text/cta-link-bio",
+                    "text": {
+                        "en": "Link in bio 👆",
+                        "it": "Link in bio 👆"
+                    },
+                    "at": 6.0,
+                    "seconds": 2.0
+                }
+            ],
+            "kind": "template",
+            "version": 1
+        },
+        {
+            "id": "templates/cinematic",
+            "category": "cinematic",
+            "name": {
+                "en": "Cinematic trailer",
+                "it": "Trailer cinematografico"
+            },
+            "canvas": "16:9",
+            "slots": [
+                {
+                    "label": {
+                        "en": "Wide shot",
+                        "it": "Campo lungo"
+                    },
+                    "seconds": 3,
+                    "kind": "video"
+                },
+                {
+                    "label": {
+                        "en": "Close-up",
+                        "it": "Primo piano"
+                    },
+                    "seconds": 2.5,
+                    "kind": "video"
+                },
+                {
+                    "label": {
+                        "en": "Motion",
+                        "it": "Movimento"
+                    },
+                    "seconds": 2.5,
+                    "kind": "video"
+                },
+                {
+                    "label": {
+                        "en": "Final shot",
+                        "it": "Inquadratura finale"
+                    },
+                    "seconds": 3,
+                    "kind": "video"
+                }
+            ],
+            "transition": {
+                "preset": "transitions/dip-to-black",
+                "seconds": 0.7
+            },
+            "filter": "filters/noir-teal",
+            "effects": [
+                {
+                    "preset": "effects/cinema",
+                    "slot": 0
+                },
+                {
+                    "preset": "effects/cinema",
+                    "slot": 1
+                },
+                {
+                    "preset": "effects/cinema",
+                    "slot": 2
+                },
+                {
+                    "preset": "effects/cinema",
+                    "slot": 3
+                }
+            ],
+            "texts": [
+                {
+                    "style": "text/title-coming-soon",
+                    "text": {
+                        "en": "COMING SOON",
+                        "it": "PROSSIMAMENTE"
+                    },
+                    "at": 8.5,
+                    "seconds": 2.5
+                }
+            ],
+            "kind": "template",
+            "version": 1
+        }
+    ]
+}

@@ -5,6 +5,7 @@
 #include "fx/Transition.h"
 
 #include <QJsonObject>
+#include <QJsonValue>
 #include <QString>
 #include <QStringList>
 
@@ -19,6 +20,8 @@ struct LocalizedText
     QString en;
     QString it;
     QString text() const; // in the language of the interface
+    // {"en": …, "it": …}, or one string for both languages.
+    static LocalizedText fromJson(const QJsonValue &value);
 };
 
 struct Category
@@ -106,6 +109,17 @@ struct VideoEffectPreset
     QStringList controls;
 };
 
+// A project template of the library (docs/EFFECT_FORMAT.md §10): its slots, texts, stickers and look, kept as the
+// manifest's JSON (the editor builds the timeline from it).
+struct TemplatePreset
+{
+    QString id;
+    int version = 1;
+    QString category;
+    LocalizedText name;
+    QJsonObject spec;
+};
+
 // A sticker of the library (docs/EFFECT_FORMAT.md §6): a picture of the pack (`path`, resolved in the pack's folder),
 // an emoji drawn with the system's colour emoji font, an audio visualizer (`visualizer`: its settings) or an animated
 // graphic element (`graphic`).
@@ -155,6 +169,9 @@ public:
     const std::vector<Category> &videoEffectCategories() const { return m_videoEffectCategories; }
     const std::vector<VideoEffectPreset> &videoEffects() const { return m_videoEffects; }
     const VideoEffectPreset *videoEffect(const QString &id) const;
+    const std::vector<Category> &templateCategories() const { return m_templateCategories; }
+    const std::vector<TemplatePreset> &templates() const { return m_templates; }
+    const TemplatePreset *templatePreset(const QString &id) const;
     const EffectSpec *effect(const QString &id) const;
 
     // The "look" JSON of a filter manifest / the params of a "vedit.adjust.basic" effect, as colour adjustments.
@@ -175,6 +192,8 @@ private:
     std::vector<StickerPreset> m_stickers;
     std::vector<Category> m_videoEffectCategories;
     std::vector<VideoEffectPreset> m_videoEffects;
+    std::vector<Category> m_templateCategories;
+    std::vector<TemplatePreset> m_templates;
     std::vector<EffectSpec> m_effects;
 };
 

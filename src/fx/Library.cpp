@@ -28,6 +28,15 @@ LocalizedText sampleTextOf(const QJsonValue &value)
     return localized(value);
 }
 
+} // namespace
+
+LocalizedText LocalizedText::fromJson(const QJsonValue &value)
+{
+    return sampleTextOf(value);
+}
+
+namespace {
+
 std::vector<Category> categories(const QJsonObject &root)
 {
     std::vector<Category> result;
@@ -220,6 +229,14 @@ Library Library::load(const QString &folder)
         }
         library.m_videoEffects.push_back(std::move(preset));
     }
+
+    const QJsonObject templates = read(u"templates.json"_s);
+    library.m_templateCategories = categories(templates);
+    for (const QJsonValue &value : templates.value(u"items"_s).toArray()) {
+        const QJsonObject item = value.toObject();
+        library.m_templates.push_back({item.value(u"id"_s).toString(), item.value(u"version"_s).toInt(1),
+                                       item.value(u"category"_s).toString(), localized(item.value(u"name"_s)), item});
+    }
     return library;
 }
 
@@ -274,6 +291,16 @@ const EffectSpec *Library::effect(const QString &id) const
     for (const EffectSpec &spec : m_effects) {
         if (spec.id == id) {
             return &spec;
+        }
+    }
+    return nullptr;
+}
+
+const TemplatePreset *Library::templatePreset(const QString &id) const
+{
+    for (const TemplatePreset &preset : m_templates) {
+        if (preset.id == id) {
+            return &preset;
         }
     }
     return nullptr;
