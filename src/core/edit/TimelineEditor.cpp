@@ -299,6 +299,15 @@ EditResult TimelineEditor::finish(Sequence &&modified, const QString &text, cons
     return result;
 }
 
+ClipAnimation TimelineEditor::kenBurns()
+{
+    ClipAnimation animation;
+    animation.type = AssetRef{QStringLiteral("vedit.core"), QStringLiteral("animations/loop/ken_burns"), 1};
+    animation.duration = RationalTime(0, Rational(30));
+    animation.easing = Easing::preset(Easing::Preset::Linear);
+    return animation;
+}
+
 EditResult TimelineEditor::insertMedia(const MediaId &mediaId, const RationalTime &position,
                                        std::optional<TimeRange> sourceRange, Placement placement)
 {
@@ -344,6 +353,9 @@ EditResult TimelineEditor::insertMedia(const MediaId &mediaId, const RationalTim
     data.sourceIn = sourceIn;
     data.streams = audioOnly ? Streams::AudioOnly : (media->info.audio ? Streams::AudioVideo : Streams::VideoOnly);
     clip.payload = data;
+    if (media->kind == MediaKind::Image) {
+        clip.animations.loop = kenBurns();
+    }
     const ClipId clipId = clip.id;
 
     Sequence modified = *m_sequence;
@@ -1522,6 +1534,78 @@ EditResult TimelineEditor::setBeatMarkers(const ClipId &clipId, const std::vecto
     }
     std::sort(clip.markers.begin(), clip.markers.end(), [](const Marker &x, const Marker &y) { return x.time < y.time; });
     return finish(std::move(modified), tr("Beats"), clipId);
+}
+
+EditResult TimelineEditor::insertPlaceholder(const Placeholder &placeholder, const RationalTime &duration)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    Track &main = modified.visualTracks.front();
+    if (main.locked) {
+        return fail(tr("The main track is locked."));
+    }
+    Clip clip;
+    clip.id = ClipId::create();
+    clip.start = main.clips.empty() ? RationalTime(0, m_rate) : main.clips.back().end();
+    clip.duration = duration.rescaled(m_rate, Rounding::NearestEven);
+    if (clip.duration.value() <= 0) {
+        return fail(tr("The duration must be positive."));
+    }
+    clip.payload = ColorClipData{Param(Color{0x5f, 0x63, 0x68, 255})};
+    clip.placeholder = placeholder;
+    const ClipId clipId = clip.id;
+    main.clips.push_back(std::move(clip));
+    return finish(std::move(modified), tr("Add a slot"), clipId);
+}
+
+EditResult TimelineEditor::replaceClipMedia(const ClipId &clipId, const MediaId &mediaId)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    const Media *media = m_project.findMedia(mediaId);
+    if (!media || media->kind == MediaKind::Audio) {
+        return fail(tr("Only a video or a photo can replace a clip."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (ref->track->locked) {
+        return fail(tr("The track is locked."));
+    }
+    Clip &clip = ref->clip();
+    if (!clip.media() && !std::holds_alternative<ColorClipData>(clip.payload)) {
+        return fail(tr("This clip cannot be replaced."));
+    }
+    MediaClipData data;
+    data.mediaId = mediaId;
+    data.sourceIn = RationalTime(0, m_rate);
+    data.streams = media->info.audio ? Streams::AudioVideo : Streams::VideoOnly;
+    if (const MediaClipData *old = clip.media()) {
+        data.audio = old->audio; // volume and fades belong to the slot
+    }
+    if (media->kind != MediaKind::Image && media->info.duration) {
+        const RationalTime length = media->info.duration->rescaled(m_rate, Rounding::Floor);
+        if (length.value() <= 0) {
+            return fail(tr("The media is too short to be used."));
+        }
+        if (length < clip.duration) {
+            clip.duration = length;
+        }
+    }
+    clip.payload = data;
+    clip.placeholder.reset();
+    if (clip.name.isEmpty() || clip.name == media->name) {
+        clip.name.clear();
+    }
+    if (ref->track == &modified.visualTracks.front() && isMagneticMain(modified, modified.visualTracks.front())) {
+        pack(modified.visualTracks.front(), m_rate);
+    }
+    return finish(std::move(modified), tr("Replace clip"), clipId);
 }
 
 EditResult TimelineEditor::setClipAnimations(const ClipId &clipId, const ClipAnimations &animations)

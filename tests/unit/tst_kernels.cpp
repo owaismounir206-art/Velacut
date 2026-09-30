@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // CPU reference kernels of Phase 2 (SPEC 1bis rule 1): transform, colour, spatial filters, transitions, audio gain.
+#include "fx/Animation.h"
 #include "fx/Audio.h"
 #include "fx/ChromaKey.h"
 #include "fx/Color.h"
@@ -585,6 +586,22 @@ private slots:
             const int done = painted(renderGraphic(mark, 2.0, 3.0, canvas, {}));
             QVERIFY2(half > 0 && done > half, qPrintable(u"%1: %2 %3"_s.arg(int(type)).arg(half).arg(done)));
         }
+    }
+
+    // Ken Burns: a slow push-in over the whole clip, never back.
+    void kenBurns()
+    {
+        double x = 0, y = 0, sx = 1, sy = 1, rot = 0, op = 1;
+        applyLoopAnimation(u"animations/loop/ken_burns", 0.0, x, y, sx, sy, rot, op);
+        QCOMPARE(sx, 1.0);
+        double previous = sx;
+        for (const double t : {0.25, 0.5, 0.99}) {
+            x = 0, sx = 1, sy = 1;
+            applyLoopAnimation(u"animations/loop/ken_burns", t, x, y, sx, sy, rot, op);
+            QVERIFY(sx > previous && sx < 1.1);
+            previous = sx;
+        }
+        QVERIFY(Library::core().animation(u"animations/loop/ken_burns"_s));
     }
 
     void coreLibraryLoads()

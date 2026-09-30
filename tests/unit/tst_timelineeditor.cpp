@@ -752,6 +752,62 @@ private slots:
         QCOMPARE(session.data().findClip(a)->markers.front().time, frames(120));
     }
 
+    // Templates (P5.7): slots at the end of the main track; "Replace" keeps place, length and look; a shorter video
+    // shortens the clip and the rest follows. Photos get the slow zoom (Ken Burns) over the whole clip.
+    void placeholdersAndReplace()
+    {
+        Fixture fixture;
+        Session session(fixture.data);
+        QVERIFY(session.apply(session.editor().insertPlaceholder(Placeholder{u"Opening"_s, PlaceholderKind::Video}, frames(60))));
+        QVERIFY(session.apply(session.editor().insertPlaceholder(Placeholder{u"Middle"_s, PlaceholderKind::Any}, frames(200))));
+        QVERIFY(session.apply(session.editor().insertPlaceholder(Placeholder{u"End"_s, PlaceholderKind::Photo}, frames(90))));
+        const std::vector<Clip> &placed = session.mainTrack().clips;
+        QCOMPARE(placed.size(), size_t(3));
+        QCOMPARE(placed[1].start, frames(60));
+        QCOMPARE(placed[2].start, frames(260));
+        QCOMPARE(placed[0].placeholder->label, u"Opening"_s);
+        const ClipId first = placed[0].id;
+        const ClipId middle = placed[1].id;
+        const ClipId last = placed[2].id;
+        QVERIFY(session.apply(session.editor().updateClips({first}, [](Clip &c) { c.opacity = Param(0.5); }, u"look"_s)));
+        QVERIFY(session.apply(session.editor().addTransition(first, AssetRef{u"vedit.core"_s, u"transitions/dissolve"_s, 1}, frames(10))));
+
+        // A 10 s video in a 2 s slot: 2 s of it, the look and the transition kept.
+        QVERIFY(session.apply(session.editor().replaceClipMedia(first, fixture.video10s)));
+        const Clip *replaced = session.data().findClip(first);
+        QVERIFY(replaced->media());
+        QCOMPARE(replaced->media()->mediaId, fixture.video10s);
+        QCOMPARE(replaced->duration, frames(60));
+        QVERIFY(!replaced->placeholder);
+        QCOMPARE(std::get<double>(replaced->opacity.staticValue()), 0.5);
+        QCOMPARE(session.mainTrack().transitions.size(), size_t(1));
+        // A 4 s video in a ~6.7 s slot: the clip becomes 4 s long, the next one moves back.
+        QVERIFY(session.apply(session.editor().replaceClipMedia(middle, fixture.video4sMute)));
+        QCOMPARE(session.data().findClip(middle)->duration, frames(120));
+        QCOMPARE(session.data().findClip(last)->start, frames(180));
+        // A photo keeps the slot's length; audio cannot replace a picture.
+        QVERIFY(!session.editor().replaceClipMedia(last, fixture.music20s).ok());
+        QVERIFY(session.apply(session.editor().replaceClipMedia(last, fixture.photo)));
+        QCOMPARE(session.data().findClip(last)->duration, frames(90));
+        session.stack.undo(); // gives the slot back
+        QVERIFY(session.data().findClip(last)->placeholder);
+
+        // Photos inserted normally: Ken Burns over the whole clip.
+        QVERIFY(session.apply(session.editor().insertMedia(fixture.photo, frames(0), std::nullopt, Placement::Overlay)));
+        bool found = false;
+        for (const Track &track : session.sequence().visualTracks) {
+            for (const Clip &clip : track.clips) {
+                if (clip.media() && clip.media()->mediaId == fixture.photo && !clip.placeholder && clip.id != last) {
+                    QVERIFY(clip.animations.loop);
+                    QCOMPARE(clip.animations.loop->type.id, u"animations/loop/ken_burns"_s);
+                    QCOMPARE(clip.animations.loop->duration.value(), 0);
+                    found = true;
+                }
+            }
+        }
+        QVERIFY(found);
+    }
+
     void multicamEditingAndAudioSync()
     {
         ClipId a, b;

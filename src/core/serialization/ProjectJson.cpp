@@ -89,6 +89,8 @@ constexpr EnumName<GraphicKind> kGraphicKinds[] = {
     {GraphicKind::Arrow, "arrow"_L1},             {GraphicKind::Circle, "circle"_L1},
     {GraphicKind::Underline, "underline"_L1},     {GraphicKind::Highlighter, "highlighter"_L1},
     {GraphicKind::Check, "check"_L1},             {GraphicKind::Cross, "cross"_L1}};
+constexpr EnumName<PlaceholderKind> kPlaceholderKinds[] = {
+    {PlaceholderKind::Any, "any"_L1}, {PlaceholderKind::Video, "video"_L1}, {PlaceholderKind::Photo, "photo"_L1}};
 constexpr EnumName<TextAlign> kTextAligns[] = {
     {TextAlign::Left, "left"_L1}, {TextAlign::Center, "center"_L1}, {TextAlign::Right, "right"_L1}};
 constexpr EnumName<BubbleShape> kBubbleShapes[] = {
@@ -161,7 +163,7 @@ const QSet<QString> kTrackKeys{u"id"_s,     u"kind"_s,   u"name"_s,     u"locked
 const QSet<QString> kClipCommonKeys{u"id"_s,        u"kind"_s,        u"start"_s,      u"duration"_s,
                                     u"name"_s,      u"enabled"_s,     u"linkId"_s,     u"transform"_s,
                                     u"opacity"_s,   u"blendMode"_s,   u"effects"_s,    u"masks"_s,
-                                    u"animations"_s, u"markers"_s,    u"background"_s};
+                                    u"animations"_s, u"markers"_s,    u"background"_s, u"placeholder"_s};
 const QSet<QString> kTextClipKeys{u"text"_s, u"style"_s, u"stylePreset"_s, u"box"_s, u"animation"_s};
 const QSet<QString> kTextStyleKeys{u"font"_s,          u"size"_s,       u"color"_s, u"stroke"_s,   u"shadow"_s,
                                    u"background"_s,    u"letterSpacing"_s, u"lineHeight"_s, u"align"_s,
@@ -500,6 +502,10 @@ QJsonObject clipJson(const Clip &clip)
     }
     if (clip.background) {
         object.insert(u"background"_s, backgroundJson(clip.background));
+    }
+    if (clip.placeholder) {
+        object.insert(u"placeholder"_s, QJsonObject{{u"label"_s, clip.placeholder->label},
+                                                    {u"kind"_s, nameOf(kPlaceholderKinds, clip.placeholder->kind)}});
     }
     std::visit(
         [&object](const auto &data) {
@@ -1281,6 +1287,12 @@ public:
             clip.animations = animations(object.value(u"animations"_s).toObject(), join(path, u"animations"_s));
         }
         clip.markers = markers(object, path);
+        if (object.contains(u"placeholder"_s)) {
+            const QJsonObject slot = this->object(object, u"placeholder"_s, path, false);
+            const QString slotPath = join(path, u"placeholder"_s);
+            clip.placeholder = Placeholder{string(slot, u"label"_s, slotPath, {}),
+                                           enumeration(slot, u"kind"_s, slotPath, kPlaceholderKinds, PlaceholderKind::Any)};
+        }
 
         switch (*kind) {
         case ClipKind::Media: {

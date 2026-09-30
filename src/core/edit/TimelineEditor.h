@@ -120,6 +120,12 @@ public:
     // audio) that the clip plays.
     EditResult setBeatMarkers(const ClipId &clipId, const std::vector<double> &beatSeconds);
     EditResult setClipAnimations(const ClipId &clipId, const ClipAnimations &animations);
+    // A template slot at the end of the main track: a grey clip waiting for media (Clip::placeholder).
+    EditResult insertPlaceholder(const Placeholder &placeholder, const RationalTime &duration);
+    // "Replace" (SPEC §5.2): the clip shows `mediaId` from its start instead, keeping its place, length and look
+    // (transform, effects, masks, animations, transitions). A shorter video shortens the clip (on the main track the
+    // rest follows); a photo keeps the length. The clip is no longer a placeholder.
+    EditResult replaceClipMedia(const ClipId &clipId, const MediaId &mediaId);
 
     // ---- Phase 4 ----
     using AudioOffsetFn = std::function<std::optional<double>(const Clip &ref, const Clip &target)>;
@@ -133,8 +139,10 @@ public:
     // Duration of a new text and of a freeze frame (SPEC 0bis rule 6).
     static constexpr int kDefaultTextSeconds = 3;
 
-    // Duration of an image when inserted (SPEC 0bis, rule 6).
+    // Duration of an image when inserted, with a slow zoom over the whole clip (SPEC 0bis, rule 6): the "Ken Burns"
+    // loop animation of the core pack, without a duration (it spans the clip).
     static constexpr int kDefaultImageSeconds = 3;
+    static ClipAnimation kenBurns();
 
     // Duration and size (share of the canvas) of a new sticker.
     static constexpr int kDefaultStickerSeconds = 3;

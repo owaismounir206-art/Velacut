@@ -221,7 +221,12 @@ void applyLoopAnimation(QStringView id, double cycleT, double &posX, double &pos
         name = name.mid(16);
     }
     const double angle = cycleT * 2.0 * kPi;
-    if (name == u"pulse") {
+    if (name == u"ken_burns") {
+        // Over the whole clip (its cycle is the clip): a slow push-in with a slight drift, never back.
+        scX *= 1.0 + 0.08 * cycleT;
+        scY *= 1.0 + 0.08 * cycleT;
+        posX += 0.015 * cycleT;
+    } else if (name == u"pulse") {
         const double factor = 1.0 + 0.15 * std::sin(angle);
         scX *= factor;
         scY *= factor;

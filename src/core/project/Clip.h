@@ -461,6 +461,23 @@ struct PreservedClipData
 
 using ClipPayload = std::variant<MediaClipData, ColorClipData, CompoundClipData, TextClipData, AdjustmentClipData, StickerClipData, PreservedClipData>;
 
+// A slot of a template (docs/FILE_FORMAT.md §5.5): the clip is waiting for the user's media, which replaces it keeping
+// its place, length and look ("Replace").
+enum class PlaceholderKind
+{
+    Any,
+    Video,
+    Photo,
+};
+
+struct Placeholder
+{
+    QString label; // shown on the clip, e.g. "Your best shot"
+    PlaceholderKind kind = PlaceholderKind::Any;
+
+    friend bool operator==(const Placeholder &, const Placeholder &) = default;
+};
+
 struct Clip
 {
     ClipId id;
@@ -478,6 +495,7 @@ struct Clip
     std::vector<Mask> masks;
     ClipAnimations animations;
     std::vector<Marker> markers;
+    std::optional<Placeholder> placeholder;
     ClipPayload payload = MediaClipData{};
     // Common fields not yet interpreted by this version (transitionIn/Out…), preserved verbatim.
     QJsonObject extras;

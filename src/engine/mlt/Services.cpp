@@ -252,7 +252,10 @@ int transformGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format
 
         // 2. Loop animation ("loop")
         if (s->animations.loop && localFrame >= 0 && localFrame < clipLen) {
-            const double cycleSec = s->animations.loop->duration.toSecondsDouble() > 0.05 ? s->animations.loop->duration.toSecondsDouble() : 1.0;
+            // A loop without a duration spans the whole clip (Ken Burns).
+            const double cycleSec = s->animations.loop->duration.toSecondsDouble() > 0.05
+                                        ? s->animations.loop->duration.toSecondsDouble()
+                                        : std::max(1.0, static_cast<double>(clipLen)) / rate.toDouble();
             const double timeSec = localFrame / rate.toDouble();
             const double phase = std::fmod(timeSec, cycleSec) / cycleSec;
             const double cycleT = s->animations.loop->easing.apply(phase >= 0.0 ? phase : phase + 1.0);

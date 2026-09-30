@@ -69,6 +69,8 @@ Un parametro è **o** un valore letterale **o** un oggetto con `keyframes`:
 - `t`: `RationalTime`. Spazio del tempo:
   - clip **media** → tempo della **sorgente**, stesso spazio di `sourceIn` (l'animazione segue il contenuto);
   - clip **generate** (testo, sticker, colore, effetto, regolazione, sottotitolo, compound) → tempo dall'inizio della clip.
+- animazione in ciclo con `duration` zero: il ciclo è la clip intera (è il Ken Burns delle foto,
+  `animations/loop/ken_burns`, messo di default a ogni foto inserita).
 - `interp` descrive il segmento che **parte** da quel keyframe: `"linear"`, `"hold"` (costante fino al keyframe successivo),
   `"bezier"`.
 - `ease` (solo con `bezier`): nome di un preset (`"easeIn"`, `"easeOut"`, `"easeInOut"`, `"easeInBack"`, `"easeOutBack"`,
@@ -357,6 +359,11 @@ dimensione sono quelle di `transform` (inserito al 35% del canvas; un visualizza
 { "kind": "sticker", "source": { "pack": "vedit.core", "id": "stickers/shapes/star", "version": 1 },
   "tint": "#0080ffff", "loop": false, "speed": 0.5 }
 ```
+
+**Segnaposto** (qualsiasi clip visiva, chiave comune `placeholder`): la clip è uno spazio di un template in attesa dei
+media dell'utente, `{ "label": "Inquadratura d'apertura", "kind": "any" | "video" | "photo" }`. Nei template della
+libreria è una clip `color` grigia; "Sostituisci" la trasforma in una clip `media` con la stessa posizione, durata (un
+video più corto la accorcia) e aspetto (trasformazione, effetti, maschere, animazioni, transizioni), senza `placeholder`.
 
 **`color`**: `{ "color": Param colore }`.
 

@@ -1282,6 +1282,20 @@
             "params": {
                 "easing": "easeInOut"
             }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/ken_burns",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Slow zoom (Ken Burns)",
+                "it": "Zoom lento (Ken Burns)"
+            },
+            "defaultDuration": 0.0,
+            "params": {
+                "easing": "linear"
+            }
         }
     ]
 }
