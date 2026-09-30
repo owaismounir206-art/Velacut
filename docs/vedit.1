@@ -1,0 +1,112 @@
+.TH VEDIT 1 "October 2026" "vedit 0.9.0" "User Commands"
+.SH NAME
+vedit \- offline desktop video editor for Linux
+.SH SYNOPSIS
+.B vedit
+[\fIOPTIONS\fR] [\fIFILE\fR]
+.SH DESCRIPTION
+.B vedit
+is a desktop video editor for Linux, designed to be fast, simple, and completely local (no cloud, no account required).
+.PP
+Features include:
+.IP \(bu 2
+Timeline editing with magnetic tracks and automatic track creation
+.IP \(bu 2
+100+ transitions and 101 video effects
+.IP \(bu 2
+Text styles, animations, and keyframe support
+.IP \(bu 2
+Color correction with LUT, curves, and scopes
+.IP \(bu 2
+Audio mixing with LUFS normalization
+.IP \(bu 2
+Template projects with placeholders
+.IP \(bu 2
+Automatic saving (no "Save" button needed)
+.SH OPTIONS
+.TP
+.B \-\-safe\-mode
+Start in software rendering mode (no GPU acceleration). Use if the app crashes on startup due to GPU driver issues.
+.TP
+.B \-\-component\-gallery
+Show the Material 3 component gallery instead of the main application.
+.TP
+.B \-\-help
+Display help information and exit.
+.TP
+.B \-\-version
+Display version information and exit.
+.SH FILES
+.TP
+.I ~/.local/share/vedit/
+Application data directory containing drafts and user assets.
+.TP
+.I ~/.local/share/vedit/packs/
+User-installed asset packages (effects, transitions, templates).
+.TP
+.I ~/.cache/vedit/
+Cache directory for GPU probes, thumbnails, and render jobs.
+.TP
+.I ~/.config/vedit/
+Configuration files (graphics preferences, UI state).
+.SH EXAMPLES
+.TP
+.B vedit
+Start with the home screen showing existing drafts.
+.TP
+.B vedit video.mp4
+Create a new project and import the video file.
+.TP
+.B vedit --safe-mode
+Start in software rendering mode (fallback for GPU issues).
+.TP
+.B vedit project.vproj
+Open an existing project file.
+.SH PROJECT FORMAT
+Projects are saved as
+.I .vproj
+files (JSON UTF-8). Saving is automatic every ~2 seconds. The format is human-readable and git-friendly.
+.SH KEYBOARD SHORTCUTS
+.TP
+.B Space
+Play/Pause
+.TP
+.B S
+Split clip at playhead
+.TP
+.B Ctrl+Z
+Undo
+.TP
+.B Ctrl+Shift+Z
+Redo
+.TP
+.B Ctrl+K
+Universal search (effects, transitions, commands)
+.TP
+.B Ctrl+E
+Export video
+.PP
+See
+.I /usr/share/doc/vedit/SHORTCUTS.md
+for the complete list.
+.SH ENVIRONMENT
+.TP
+.B QT_QUICK_BACKEND=software
+Force Qt Quick software rendering (same as --safe-mode).
+.TP
+.B LIBGL_ALWAYS_SOFTWARE=1
+Force Mesa software rendering.
+.SH SEE ALSO
+.BR ffmpeg (1),
+.BR melt (1)
+.PP
+Full documentation:
+.I /usr/share/doc/vedit/
+.PP
+Project website: https://github.com/yourusername/vedit
+.SH BUGS
+Report bugs to the issue tracker: https://github.com/yourusername/vedit/issues
+.SH AUTHORS
+vedit team
+.SH LICENSE
+GPL-3.0-or-later
