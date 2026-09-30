@@ -11,3 +11,4 @@ target_compile_definitions(tst_gpu PRIVATE VEDIT_GPUPROBE_PATH="$<TARGET_FILE:ve
 vedit_add_test(tst_fx SOURCES tst_fx.cpp LIBRARIES vedit_fx)
 vedit_add_test(tst_projectformat SOURCES tst_projectformat.cpp LIBRARIES vedit_core)
 vedit_add_test(tst_kernels SOURCES tst_kernels.cpp LIBRARIES vedit_fx vedit_core)
+vedit_add_test(tst_transitions SOURCES tst_transitions.cpp LIBRARIES vedit_fx vedit_core)
