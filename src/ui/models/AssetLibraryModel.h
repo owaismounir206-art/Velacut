@@ -3,6 +3,7 @@
 
 #include <QAbstractListModel>
 #include <QVariantList>
+#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
 #include <vector>
@@ -42,6 +43,8 @@ public:
         CategoryRole,
         PathRole,
         AnimatedRole,
+        // Templates: {canvas ("9:16"…), seconds (total), slots ([seconds of each slot]), texts (count)}
+        DetailsRole,
     };
 
     explicit AssetLibraryModel(QObject *parent = nullptr);
@@ -77,6 +80,7 @@ private:
         QString category;
         QString path;
         bool animated = false;
+        QVariantMap details;
     };
     std::vector<Item> itemsOfKind() const;
     void refresh();

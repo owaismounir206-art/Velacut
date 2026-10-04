@@ -3,6 +3,9 @@
 
 #include "fx/Library.h"
 
+#include <QJsonArray>
+#include <QJsonObject>
+
 using namespace Qt::StringLiterals;
 
 namespace vedit::ui {
@@ -64,7 +67,7 @@ std::vector<AssetLibraryModel::Item> AssetLibraryModel::itemsOfKind() const
     const fx::Library &library = fx::Library::core();
     std::vector<Item> items;
     const auto add = [&items](const auto &preset) {
-        items.push_back(Item{preset.id, preset.name.text(), preset.name.en, preset.name.it, preset.category, {}, false});
+        items.push_back(Item{preset.id, preset.name.text(), preset.name.en, preset.name.it, preset.category, {}, false, {}});
     };
     switch (m_kind) {
     case Filters:
@@ -94,12 +97,23 @@ std::vector<AssetLibraryModel::Item> AssetLibraryModel::itemsOfKind() const
         break;
     case Stickers:
         for (const fx::StickerPreset &preset : library.stickers()) {
-            items.push_back(Item{preset.id, preset.name.text(), preset.name.en, preset.name.it, preset.category, preset.path, preset.animated});
+            items.push_back(Item{preset.id, preset.name.text(), preset.name.en, preset.name.it, preset.category, preset.path, preset.animated, {}});
         }
         break;
     case Templates:
         for (const fx::TemplatePreset &preset : library.templates()) {
             add(preset);
+            QVariantList slotLengths; // ("slots" is a Qt keyword)
+            double seconds = 0;
+            for (const QJsonValue &slot : preset.spec.value(u"slots"_s).toArray()) {
+                const double length = slot.toObject().value(u"seconds"_s).toDouble();
+                slotLengths.append(length);
+                seconds += length;
+            }
+            items.back().details = QVariantMap{{u"canvas"_s, preset.spec.value(u"canvas"_s).toString(u"16:9"_s)},
+                                               {u"seconds"_s, seconds},
+                                               {u"slots"_s, slotLengths},
+                                               {u"texts"_s, preset.spec.value(u"texts"_s).toArray().size()}};
         }
         break;
     }
@@ -152,6 +166,8 @@ QVariant AssetLibraryModel::data(const QModelIndex &index, int role) const
         return item.path;
     case AnimatedRole:
         return item.animated;
+    case DetailsRole:
+        return item.details;
     default:
         return {};
     }
@@ -165,6 +181,7 @@ QHash<int, QByteArray> AssetLibraryModel::roleNames() const
         {CategoryRole, "category"},
         {PathRole, "path"},
         {AnimatedRole, "animated"},
+        {DetailsRole, "details"},
     };
 }
 

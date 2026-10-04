@@ -69,6 +69,8 @@ public:
     // Creates a project from a template (SPEC §5.13): the sequence has placeholder clips ready to be filled.
     Q_INVOKABLE bool newProjectFromTemplate(const QString &templateId);
     Q_INVOKABLE bool recordScreen();
+    // Files dropped on the home screen: a new project with them on the timeline (canvas from the first one).
+    Q_INVOKABLE bool newProjectWithFiles(const QList<QUrl> &files);
     Q_INVOKABLE bool openDraft(const QString &draftId);
     // Back to the home screen (everything is already saved; this writes the last changes).
     Q_INVOKABLE void closeEditor();

@@ -22,7 +22,8 @@ Card {
 
     width: Theme.editor.draftCardWidth
     height: Theme.editor.draftThumbnailHeight + details.implicitHeight + 2 * Theme.space.md
-    variant: "outlined"
+    variant: "filled"
+    containerColor: Theme.color.panel
     interactive: !openElsewhere
     Accessible.name: qsTr("Open %1").arg(name)
     onClicked: openRequested(draftId)

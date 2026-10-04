@@ -211,6 +211,21 @@ bool AppController::recordScreen()
     return true;
 }
 
+bool AppController::newProjectWithFiles(const QList<QUrl> &files)
+{
+    QList<QUrl> local;
+    for (const QUrl &url : files) {
+        if (url.isLocalFile()) {
+            local.append(url);
+        }
+    }
+    if (local.isEmpty() || !newProject()) {
+        return false;
+    }
+    m_editor->importAndInsert(local, 0, m_editor->timeline()->mainRow());
+    return true;
+}
+
 bool AppController::openDraft(const QString &draftId)
 {
     const std::optional<ProjectId> id = ProjectId::fromString(draftId);

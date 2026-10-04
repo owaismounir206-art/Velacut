@@ -9,6 +9,10 @@ Item {
     property bool interactive: false
     default property alias content: contentArea.data
     property alias hovered: hover.hovered
+    // The surface of the card (the variant's by default).
+    property color containerColor: variant === "elevated" ? Theme.color.surfaceContainerLow
+                                 : variant === "outlined" ? Theme.color.surface
+                                 : Theme.color.surfaceContainerHighest
     signal clicked()
 
     implicitWidth: 160
@@ -20,9 +24,7 @@ Item {
         id: surface
         anchors.fill: parent
         radius: Theme.shape.medium
-        color: root.variant === "elevated" ? Theme.color.surfaceContainerLow
-             : root.variant === "outlined" ? Theme.color.surface
-             : Theme.color.surfaceContainerHighest
+        color: root.containerColor
         border.width: root.variant === "outlined" ? 1 : 0
         border.color: Theme.color.outlineVariant
         Shadow {
