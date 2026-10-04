@@ -16,6 +16,16 @@ using namespace Qt::StringLiterals;
 
 namespace vedit::engine {
 
+// MLT's loader and timewarp producers are not safe to construct concurrently: a test run under load once left a
+// worker spinning forever inside producer_timewarp_init (mlt_properties_get) while another producer was being built,
+// and the editor hung when it closed (waiting for that worker). The workers of every cache build their producers
+// one at a time; the interface thread never takes this lock (it would wait for a slow file).
+QMutex &MediaProducerCache::constructionMutex()
+{
+    static QMutex mutex;
+    return mutex;
+}
+
 MediaProducerCache::MediaProducerCache(Mlt::Profile &profile, QObject *parent)
     : QObject(parent)
     , m_profile(profile)
@@ -63,7 +73,10 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media, doub
         if (warp != 1.0) {
             resource = "timewarp:" + QByteArray::number(warp, 'g', 12) + ':' + resource;
         }
-        producer = std::make_shared<Mlt::Producer>(m_profile, resource.constData());
+        {
+            QMutexLocker construction(&constructionMutex());
+            producer = std::make_shared<Mlt::Producer>(m_profile, resource.constData());
+        }
         if (!producer->is_valid()) {
             producer.reset();
             error = QCoreApplication::translate("vedit::engine::MediaProducerCache",
