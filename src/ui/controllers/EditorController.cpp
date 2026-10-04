@@ -75,7 +75,7 @@ QString formatName(const Canvas &canvas)
 } // namespace
 
 EditorController::EditorController(std::unique_ptr<document::Document> document, engine::MediaAnalysis &analysis,
-                                   QString helperExecutable, QObject *parent)
+                                   QString helperExecutable, int previewLimit, QObject *parent)
     : QObject(parent)
     , m_document(std::move(document))
     , m_analysis(analysis)
@@ -88,6 +88,7 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     m_media = std::make_unique<MediaPoolModel>(project);
     m_timeline = std::make_unique<TimelineModel>(project, sequence);
     engine::MltRuntime::waitUntilReady(); // started at launch: normally ready long before a project opens
+    m_player->setPreviewLimit(previewLimit);
     m_player->setHelperExecutable(helperExecutable);
     m_player->setSequence(&project, sequence);
     // Back where the user left the project.

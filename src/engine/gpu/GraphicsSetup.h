@@ -50,6 +50,7 @@ struct GraphicsDecision
     bool hardwareDecoding = false;
     bool hardwareEncoding = false;
     bool lowVideoMemory = false; // <= 1 GB: smaller preview textures and GPU cache (SPEC 1bis rule 8)
+    bool integratedGpu = false; // no discrete GPU: shared-memory iGPU (Radeon 740M, Intel Arc 130V…)
     bool safeMode = false;
     QStringList reasons;
 };

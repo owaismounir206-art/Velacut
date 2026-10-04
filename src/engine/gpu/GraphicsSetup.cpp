@@ -216,14 +216,24 @@ GraphicsDecision decideGraphics(const DecisionInput &input)
     decision.hardwareEncoding = preferences.hardwareEncoding && !caps.video.encoders.isEmpty();
 
     qint64 videoMemory = caps.opengl.videoMemoryMB;
+    bool integrated = false;
+    bool discrete = false;
     for (const VulkanDevice &device : caps.vulkan.devices) {
         if (device.type == DeviceType::Discrete || device.type == DeviceType::Integrated) {
             videoMemory = std::max(videoMemory, device.deviceLocalMemoryMB);
         }
+        integrated = integrated || device.type == DeviceType::Integrated;
+        discrete = discrete || device.type == DeviceType::Discrete;
     }
     decision.lowVideoMemory = videoMemory > 0 && videoMemory <= 1024;
     if (decision.lowVideoMemory) {
         decision.reasons << u"low video memory (%1 MB): reduced preview textures and GPU cache"_s.arg(videoMemory);
+    }
+    // An iGPU without a discrete GPU in the machine shares the system memory: the preview is rendered at a
+    // reduced size (the export always stays at full size). Reported so Preferences can show why.
+    decision.integratedGpu = integrated && !discrete;
+    if (decision.integratedGpu) {
+        decision.reasons << u"integrated GPU: preview rendered at reduced size for smooth playback"_s;
     }
     return decision;
 }

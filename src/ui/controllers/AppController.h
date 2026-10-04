@@ -103,6 +103,7 @@ private:
     void makeEditor(std::unique_ptr<document::Document> document);
     QStringList hardwareEncoders() const;
     QString gpuDisplayName() const;
+    int previewLimit() const;
 };
 
 } // namespace vedit::ui

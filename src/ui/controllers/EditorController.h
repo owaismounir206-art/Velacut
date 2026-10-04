@@ -83,8 +83,9 @@ public:
     };
     Q_ENUM(SaveState)
 
+    // `previewLimit`: short side the preview frames are capped to (0 = canvas size); see TimelinePlayer.
     EditorController(std::unique_ptr<document::Document> document, engine::MediaAnalysis &analysis,
-                     QString helperExecutable, QObject *parent = nullptr);
+                     QString helperExecutable, int previewLimit = 0, QObject *parent = nullptr);
     ~EditorController() override;
 
     document::Document &document() { return *m_document; }

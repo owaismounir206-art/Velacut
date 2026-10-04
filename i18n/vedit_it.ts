@@ -399,7 +399,72 @@
 <context>
     <name>ExportDialog</name>
     <message>
-        <location filename="../src/ui/qml/ExportDialog.qml" line="+42"/>
+        <location filename="../src/ui/qml/ExportDialog.qml" line="+47"/>
+        <source>H.264 — plays everywhere</source>
+        <translation>H.264 — riproduce ovunque</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>H.265 — smaller file</source>
+        <translation>H.265 — file più piccolo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>AV1 — smallest file (new)</source>
+        <translation>AV1 — il file più piccolo (nuovo)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>No size limit</source>
+        <translation>Senza limite di dimensione</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Under 16 MB (e-mail)</source>
+        <translation>Sotto 16 MB (e-mail)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Under 25 MB (WhatsApp)</source>
+        <translation>Sotto 25 MB (WhatsApp)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Under 50 MB (Telegram)</source>
+        <translation>Sotto 50 MB (Telegram)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Under 100 MB (Discord)</source>
+        <translation>Sotto 100 MB (Discord)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>YouTube</source>
+        <translation>YouTube</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TikTok</source>
+        <translation>TikTok</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reels</source>
+        <translation>Reels</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shorts</source>
+        <translation>Shorts</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>X</source>
+        <translation>X</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Your video is ready</source>
         <translation>Il tuo video è pronto</translation>
     </message>
@@ -415,12 +480,12 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+101"/>
+        <location line="+184"/>
         <source>Export</source>
         <translation>Esporta</translation>
     </message>
     <message>
-        <location line="-81"/>
+        <location line="-164"/>
         <source>Choose where to save the video</source>
         <translation>Scegli dove salvare il video</translation>
     </message>
@@ -465,22 +530,57 @@
         <translation>Alta</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+32"/>
         <source>Normalize loudness to −14 LUFS (EBU R128)</source>
         <translation>Normalizza il volume a −14 LUFS (EBU R128)</translation>
     </message>
     <message>
+        <location line="+8"/>
+        <source>Advanced</source>
+        <translation>Avanzate</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Video codec</source>
+        <translation>Codec video</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Use hardware acceleration</source>
+        <translation>Usa l'accelerazione hardware</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>No GPU encoder was found on this computer: the export uses the processor.</source>
+        <translation>Nessun encoder GPU trovato su questo computer: l'export usa il processore.</translation>
+    </message>
+    <message>
         <location line="+9"/>
+        <source>Maximum file size</source>
+        <translation>Dimensione massima del file</translation>
+    </message>
+    <message>
+        <location line="+16"/>
         <source>MP4 video (H.264 and AAC): plays everywhere.</source>
         <translation>Video MP4 (H.264 e AAC): si riproduce ovunque.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+1"/>
+        <source>MP4 video (H.265 and AAC): smaller files, recent players.</source>
+        <translation>Video MP4 (H.265 e AAC): file più piccoli, lettori recenti.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>MP4 video (AV1 and AAC): the smallest files, newest players.</source>
+        <translation>Video MP4 (AV1 e AAC): i file più piccoli, i lettori più recenti.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Cancel</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+33"/>
         <source>%1% · about %2 s left</source>
         <translation>%1% · mancano circa %2 s</translation>
     </message>
@@ -2874,8 +2974,8 @@
 <context>
     <name>vedit::TimelineEditor</name>
     <message>
-        <location filename="../src/core/edit/TimelineEditor.cpp" line="+306"/>
-        <location line="+71"/>
+        <location filename="../src/core/edit/TimelineEditor.cpp" line="+315"/>
+        <location line="+74"/>
         <location line="+58"/>
         <location line="+80"/>
         <location line="+59"/>
@@ -2904,7 +3004,9 @@
         <location line="+30"/>
         <location line="+23"/>
         <location line="+26"/>
-        <location line="+42"/>
+        <location line="+36"/>
+        <location line="+24"/>
+        <location line="+54"/>
         <location line="+90"/>
         <location line="+121"/>
         <location line="+21"/>
@@ -2912,7 +3014,7 @@
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-1458"/>
+        <location line="-1533"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -2928,21 +3030,23 @@
     </message>
     <message>
         <location line="+3"/>
+        <location line="+1253"/>
         <source>The media is too short to be used.</source>
         <translation>Il file è troppo corto per essere usato.</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="-1230"/>
         <source>Add audio</source>
         <translation>Aggiungi audio</translation>
     </message>
     <message>
         <location line="+5"/>
+        <location line="+1178"/>
         <source>The main track is locked.</source>
         <translation>La traccia principale è bloccata.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-1173"/>
         <location line="+4"/>
         <location line="+4"/>
         <source>Add clip</source>
@@ -2965,11 +3069,12 @@
         <location line="+30"/>
         <location line="+23"/>
         <location line="+26"/>
+        <location line="+64"/>
         <source>The clip does not exist.</source>
         <translation>La clip non esiste.</translation>
     </message>
     <message>
-        <location line="-1114"/>
+        <location line="-1178"/>
         <location line="+10"/>
         <location line="+49"/>
         <location line="+80"/>
@@ -2987,12 +3092,13 @@
         <location line="+30"/>
         <location line="+23"/>
         <location line="+26"/>
-        <location line="+278"/>
+        <location line="+64"/>
+        <location line="+286"/>
         <source>The track is locked.</source>
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-1388"/>
+        <location line="-1460"/>
         <location line="+662"/>
         <location line="+47"/>
         <location line="+14"/>
@@ -3232,6 +3338,31 @@
         <translation>Beat</translation>
     </message>
     <message>
+        <location line="+18"/>
+        <source>The duration must be positive.</source>
+        <translation>La durata deve essere positiva.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Add a slot</source>
+        <translation>Aggiungi uno slot</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Only a video or a photo can replace a clip.</source>
+        <translation>Solo un video o una foto può sostituire una clip.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>This clip cannot be replaced.</source>
+        <translation>Questa clip non può essere sostituita.</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Replace clip</source>
+        <translation>Sostituisci clip</translation>
+    </message>
+    <message>
         <location line="+5"/>
         <source>Animation</source>
         <translation>Animazione</translation>
@@ -3424,7 +3555,7 @@
 <context>
     <name>vedit::engine::RenderJob</name>
     <message>
-        <location filename="../src/engine/render/RenderJob.cpp" line="+71"/>
+        <location filename="../src/engine/render/RenderJob.cpp" line="+72"/>
         <source>The video engine could not be started.</source>
         <translation>Impossibile avviare il motore video.</translation>
     </message>
@@ -3459,7 +3590,7 @@
         <translation>Non c&apos;è abbastanza spazio libero in questa cartella: servono circa %1 MB, ne restano %2 MB.</translation>
     </message>
     <message>
-        <location line="+119"/>
+        <location line="+122"/>
         <source>The export stopped unexpectedly.</source>
         <translation>L&apos;esportazione si è interrotta in modo imprevisto.</translation>
     </message>
@@ -3467,7 +3598,7 @@
 <context>
     <name>vedit::engine::TimelinePlayer</name>
     <message>
-        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+112"/>
+        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+127"/>
         <source>No audio output is available (SDL2).</source>
         <translation>Nessuna uscita audio disponibile (SDL2).</translation>
     </message>
@@ -3518,7 +3649,7 @@
 <context>
     <name>vedit::projectjson</name>
     <message>
-        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1591"/>
+        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1603"/>
         <source>The project file is damaged (%1).</source>
         <translation>Il file del progetto è danneggiato (%1).</translation>
     </message>
@@ -3846,7 +3977,22 @@
 <context>
     <name>vedit::ui::AppController</name>
     <message>
-        <location filename="../src/ui/controllers/AppController.cpp" line="+143"/>
+        <location filename="../src/ui/controllers/AppController.cpp" line="+119"/>
+        <source>GPU</source>
+        <translation>GPU</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Template not found.</source>
+        <translation>Modello non trovato.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Failed to create project from template.</source>
+        <translation>Creazione del progetto dal modello non riuscita.</translation>
+    </message>
+    <message>
+        <location line="+46"/>
         <source>Project recovered: vedit did not close properly last time. Your latest changes are here.</source>
         <translation>Progetto recuperato: l&apos;ultima volta vedit non si è chiuso correttamente. Le tue ultime modifiche sono qui.</translation>
     </message>
@@ -4474,7 +4620,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+198"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+199"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
@@ -4593,7 +4739,7 @@
         <translation>Cambia formato</translation>
     </message>
     <message>
-        <location line="+68"/>
+        <location line="+85"/>
         <source>%1 GB</source>
         <translation>%1 GB</translation>
     </message>
@@ -4608,7 +4754,7 @@
         <translation>%1 × %2 · %3 · circa %4</translation>
     </message>
     <message>
-        <location line="+293"/>
+        <location line="+303"/>
         <source>Select at least 2 clips to synchronize by audio.</source>
         <translation>Seleziona almeno 2 clip da sincronizzare con l&apos;audio.</translation>
     </message>

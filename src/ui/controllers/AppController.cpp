@@ -121,9 +121,23 @@ QString AppController::gpuDisplayName() const
 
 void AppController::makeEditor(std::unique_ptr<document::Document> document)
 {
-    m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper);
+    m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper, previewLimit());
     m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
     m_editor->setHardwareEncoding(hardwareEncoders(), gpuDisplayName());
+}
+
+// How big the preview frames may be (SPEC 1bis rules 8 and 9). The export always renders at full size; only the
+// frames on screen get smaller, and only when the machine pays for every pixel: a shared-memory iGPU
+// (Radeon 740M, Intel Arc 130V), very little video memory, or software rendering.
+int AppController::previewLimit() const
+{
+    if (m_decision.lowVideoMemory) {
+        return 540;
+    }
+    if (m_decision.integratedGpu || m_decision.ui == gpu::UiBackend::Software || m_decision.safeMode) {
+        return 1080;
+    }
+    return 0; // a discrete GPU renders the canvas as it is
 }
 
 bool AppController::newProject()

@@ -87,6 +87,11 @@ public:
     double reverseProgress() const;
     // vedit-render, for the backwards copies (default: next to the running executable).
     void setHelperExecutable(const QString &path);
+    // Preview rendered with at most this short side (0 = the canvas size). The frames get smaller, not the
+    // timeline (frame rate and positions are untouched); the export always renders at full size. For
+    // shared-memory iGPUs and software rendering, where every preview pixel costs real bandwidth (SPEC 1bis
+    // rules 8 and 9). Must be set before setSequence().
+    void setPreviewLimit(int shortSide) { m_previewLimit = shortSide; }
 
     Q_INVOKABLE void play();
     Q_INVOKABLE void pause();
@@ -157,6 +162,7 @@ private:
     double m_frameRate = 0.0;
     QSize m_canvasSize;
     double m_volume = 1.0;
+    int m_previewLimit = 0;
     QString m_error;
     QStringList m_warnings;
 };

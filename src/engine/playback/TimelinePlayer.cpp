@@ -10,6 +10,7 @@
 
 #include <QLoggingCategory>
 
+#include <algorithm>
 #include <cmath>
 
 Q_LOGGING_CATEGORY(lcTimelinePlayer, "vedit.engine.timelineplayer")
@@ -102,6 +103,20 @@ void TimelinePlayer::createGraph()
     ++m_generation;
     m_error.clear();
     m_profile = makeProfile(data, m_sequenceId);
+    // The preview frames get smaller, never the timeline: frame rate and positions are untouched, and the
+    // export always renders at the canvas size. On a shared-memory iGPU every preview pixel costs real
+    // bandwidth (Radeon 740M, Intel Arc 130V), and in software rendering every pixel costs CPU.
+    if (m_previewLimit > 0) {
+        const int shortSide = std::min(m_profile->width(), m_profile->height());
+        if (shortSide > m_previewLimit) {
+            const double scale = static_cast<double>(m_previewLimit) / shortSide;
+            const auto even = [](double value) { return std::max(2, static_cast<int>(std::lround(value / 2.0)) * 2); };
+            m_profile->set_width(even(m_profile->width() * scale));
+            m_profile->set_height(even(m_profile->height() * scale));
+            qCInfo(lcTimelinePlayer) << "preview limited to short side" << m_previewLimit << "px: frames are"
+                                     << m_profile->width() << u'×' << m_profile->height();
+        }
+    }
     m_cache = std::make_unique<MediaProducerCache>(*m_profile);
     m_cache->setUseReverseProxies(true);
     connect(m_cache.get(), &MediaProducerCache::ready, this, &TimelinePlayer::onMediaReady);

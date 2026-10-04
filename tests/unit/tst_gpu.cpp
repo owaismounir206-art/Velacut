@@ -139,6 +139,21 @@ private slots:
         QVERIFY(decide(caps).lowVideoMemory);
     }
 
+    // An iGPU alone (Radeon 740M, Intel Arc 130V) shares the system memory: the app knows and renders the
+    // preview at a reduced size. A discrete GPU next to it (hybrid laptop) means no limit.
+    void integratedGpuIsDetected()
+    {
+        GpuCapabilities caps = hardwareCaps();
+        caps.vulkan.devices.front().type = DeviceType::Integrated;
+        caps.vulkan.devices.front().name = u"AMD Radeon 740M Graphics (RADV PHOENIX2)"_s;
+        const GraphicsDecision igpu = decide(caps);
+        QVERIFY(igpu.integratedGpu);
+        QVERIFY(igpu.reasons.join(u' ').contains(u"integrated"_s));
+        caps.vulkan.devices.push_back(caps.vulkan.devices.front());
+        caps.vulkan.devices.front().type = DeviceType::Discrete;
+        QVERIFY(!decide(caps).integratedGpu);
+    }
+
     void environmentOverride()
     {
         qputenv("QT_QUICK_BACKEND", "software");
