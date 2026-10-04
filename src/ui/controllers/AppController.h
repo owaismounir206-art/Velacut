@@ -98,6 +98,11 @@ private:
     std::unique_ptr<DraftsModel> m_drafts;
     std::unique_ptr<AudioLibraryModel> m_audioLibrary;
     std::unique_ptr<EditorController> m_editor;
+
+    // Creates the editor for an open document and passes it what the machine can do (hardware encoders, GPU name).
+    void makeEditor(std::unique_ptr<document::Document> document);
+    QStringList hardwareEncoders() const;
+    QString gpuDisplayName() const;
 };
 
 } // namespace vedit::ui

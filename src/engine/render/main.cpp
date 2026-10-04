@@ -24,6 +24,7 @@
 #include <QCommandLineParser>
 #include <QGuiApplication>
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 
@@ -77,6 +78,10 @@ int run(const QString &jobPath)
     if (!sequenceId) {
         return fail(RenderError::SequenceMissing, job.value(u"sequence"_s).toString());
     }
+    QStringList hardwareEncoders;
+    for (const QJsonValue &encoder : job.value(u"encoders"_s).toObject().value(u"video"_s).toArray()) {
+        hardwareEncoders.append(encoder.toString());
+    }
     int lastReported = -1;
     const Renderer::Result result = Renderer::render(
         *loaded.project, *sequenceId, *settings,
@@ -86,7 +91,7 @@ int run(const QString &jobPath)
                 emitEvent({{u"event"_s, u"progress"_s}, {u"frame"_s, frame}, {u"total"_s, total}});
             }
         },
-        s_cancel);
+        s_cancel, hardwareEncoders);
     for (const QString &warning : result.warnings) {
         emitEvent({{u"event"_s, u"warning"_s}, {u"message"_s, warning}});
     }

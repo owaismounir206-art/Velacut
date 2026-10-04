@@ -57,7 +57,8 @@ QByteArray kbps(qint64 bitsPerSecond)
 } // namespace
 
 Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &sequenceId, const ExportSettings &settings,
-                                  const Progress &progress, const std::atomic<bool> &cancel)
+                                  const Progress &progress, const std::atomic<bool> &cancel,
+                                  const QStringList &hardwareEncoders)
 {
     if (!MltRuntime::waitUntilReady()) {
         return failure(RenderError::MltUnavailable);
@@ -83,7 +84,6 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
 
     Result result;
     int total = 0;
-    int reached = -1;
     bool cancelled = false;
     {
         auto profile = makeProfile(VideoFormat{settings.size, settings.frameRate});
@@ -93,67 +93,113 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
         result.warnings = projection.warnings();
         total = projection.duration();
 
-        const EncoderParameters encoder = encoderParameters(settings);
-        MltRuntime::clearLastError();
-        Mlt::Consumer consumer(*profile, "avformat", QFile::encodeName(partial).constData());
-        consumer.set("f", "mp4");
-        consumer.set("movflags", "+faststart");
-        consumer.set("vcodec", "libx264");
-        consumer.set("pix_fmt", "yuv420p");
-        consumer.set("crf", encoder.crf);
-        consumer.set("preset", encoder.preset.constData());
-        consumer.set("maxrate", kbps(encoder.videoMaxBitrate).constData());
-        consumer.set("bufsize", kbps(encoder.videoMaxBitrate * 2).constData());
-        // A keyframe every 2 s: quick seeking in players and editors.
-        consumer.set("g", std::max(1, static_cast<int>(std::lround(2.0 * settings.frameRate.toDouble()))));
-        consumer.set("acodec", "aac");
-        consumer.set("ab", kbps(encoder.audioBitrate).constData());
-        consumer.set("ar", 48000);
-        consumer.set("ac", 2);
-        consumer.set("threads", 0);
-        // Every frame is rendered (no dropping) by one read-ahead thread; see D-24 for why not worker threads.
-        consumer.set("real_time", -1);
-        consumer.set("terminate_on_pause", 1);
-        consumer.connect(*projection.tractor());
-        projection.tractor()->set_speed(1.0);
-        projection.tractor()->seek(0);
-        qCInfo(lcRender) << "exporting" << total << "frames" << settings.size << settings.frameRate.toString() << "to"
-                         << settings.outputPath;
-        consumer.start();
-        while (!consumer.is_stopped()) {
-            if (cancel.load()) {
-                cancelled = true;
-                consumer.stop();
-                break;
+        const RationalTime duration(total, settings.frameRate);
+        EncoderPlan plan = planEncoder(settings, hardwareEncoders, duration);
+        int reached = -1;
+        QString failureDetail;
+
+        // One encode attempt: builds the consumer from the plan and pumps it. On success the frames are all in
+        // `partial`; on failure the partial file is removed and `failureDetail` says where it stopped.
+        const auto attempt = [&](const EncoderPlan &planToRun) -> std::optional<RenderError> {
+            MltRuntime::clearLastError();
+            Mlt::Consumer consumer(*profile, "avformat", QFile::encodeName(partial).constData());
+            consumer.set("f", "mp4");
+            consumer.set("movflags", "+faststart");
+            consumer.set("vcodec", planToRun.vcodec.constData());
+            if (!planToRun.hardware) {
+                consumer.set("pix_fmt", "yuv420p");
+            }
+            consumer.set(planToRun.qualityOption.constData(), planToRun.qualityValue);
+            if (!planToRun.preset.isEmpty()) {
+                consumer.set("preset", planToRun.preset.constData());
+            }
+            if (planToRun.videoBitrate > 0) {
+                consumer.set("vb", kbps(planToRun.videoBitrate).constData());
+                if (planToRun.twoPass) {
+                    consumer.set("v2pass", 1);
+                }
+            }
+            consumer.set("maxrate", kbps(planToRun.videoMaxBitrate).constData());
+            consumer.set("bufsize", kbps(planToRun.videoMaxBitrate * 2).constData());
+            // A keyframe every 2 s: quick seeking in players and editors.
+            consumer.set("g", std::max(1, static_cast<int>(std::lround(2.0 * settings.frameRate.toDouble()))));
+            consumer.set("acodec", "aac");
+            consumer.set("ab", kbps(planToRun.audioBitrate).constData());
+            consumer.set("ar", 48000);
+            consumer.set("ac", 2);
+            consumer.set("threads", 0);
+            // Every frame is rendered (no dropping) by one read-ahead thread; see D-24 for why not worker threads.
+            consumer.set("real_time", -1);
+            consumer.set("terminate_on_pause", 1);
+            consumer.connect(*projection.tractor());
+            projection.tractor()->set_speed(1.0);
+            projection.tractor()->seek(0);
+            reached = -1;
+            qCInfo(lcRender) << "exporting" << total << "frames" << settings.size << settings.frameRate.toString()
+                             << "with" << planToRun.vcodec.constData() << "to" << settings.outputPath;
+            consumer.start();
+            while (!consumer.is_stopped()) {
+                if (cancel.load()) {
+                    cancelled = true;
+                    consumer.stop();
+                    break;
+                }
+                reached = std::max(reached, consumer.position());
+                if (progress) {
+                    progress(std::clamp(reached + 1, 0, total), total);
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             reached = std::max(reached, consumer.position());
-            if (progress) {
-                progress(std::clamp(reached + 1, 0, total), total);
+            consumer.stop();
+            const qint64 size = QFileInfo(partial).size();
+            if (size <= 0 || reached < total - 1) {
+                QFile::remove(partial);
+                const QString mltError = MltRuntime::lastError();
+                failureDetail = u"stopped at frame %1 of %2 with %3 (encoder %4)%5"_s.arg(reached + 1)
+                                    .arg(total)
+                                    .arg(size)
+                                    .arg(QLatin1StringView(planToRun.vcodec))
+                                    .arg(mltError.isEmpty() ? QString() : u": "_s + mltError);
+                return RenderError::EncoderFailed;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            return std::nullopt;
+            // The consumer, then the graph, then the producers are released here, before the profile.
+        };
+
+        if (attempt(plan)) {
+            if (cancelled) {
+                result.status = Status::Cancelled;
+                return result;
+            }
+            if (plan.hardware) {
+                // Runtime fallback (SPEC 1bis rule 4): a GPU encoder that fails never fails the export; restart
+                // in software and tell the user in the warnings.
+                qCWarning(lcRender) << "hardware encoder" << plan.vcodec.constData()
+                                    << "failed, falling back to software:" << failureDetail;
+                result.warnings << u"The GPU encoder stopped working: the video was exported with software encoding."_s;
+                ExportSettings softwareSettings = settings;
+                softwareSettings.hardwareEncoder = HardwareEncoder::Off;
+                plan = planEncoder(softwareSettings, {}, duration);
+                if (attempt(plan)) {
+                    if (cancelled) {
+                        result.status = Status::Cancelled;
+                        return result;
+                    }
+                    result.status = Status::Failed;
+                    result.error = RenderError::EncoderFailed;
+                    result.detail = failureDetail;
+                    return result;
+                }
+            } else {
+                result.status = Status::Failed;
+                result.error = RenderError::EncoderFailed;
+                result.detail = failureDetail;
+                return result;
+            }
         }
-        reached = std::max(reached, consumer.position());
-        consumer.stop();
-        // The consumer, then the graph, then the producers are released here, before the profile.
     }
 
-    if (cancelled) {
-        QFile::remove(partial);
-        result.status = Status::Cancelled;
-        return result;
-    }
-    const qint64 size = QFileInfo(partial).size();
-    if (size <= 0 || reached < total - 1) {
-        QFile::remove(partial);
-        const QString mltError = MltRuntime::lastError();
-        result.status = Status::Failed;
-        result.error = RenderError::EncoderFailed;
-        result.detail = u"stopped at frame %1 of %2, %3 bytes written%4"_s.arg(reached + 1)
-                            .arg(total)
-                            .arg(size)
-                            .arg(mltError.isEmpty() ? QString() : u": "_s + mltError);
-        return result;
-    }
     if (settings.normalizeLoudness) {
         const auto stats = extractLoudness(partial);
         if (stats && std::isfinite(stats->integratedLufs) && stats->integratedLufs > -70.0) {

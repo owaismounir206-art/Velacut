@@ -30,6 +30,9 @@ public:
 
     // Default: vedit-render next to the running executable.
     void setExecutable(const QString &path) { m_executable = path; }
+    // Hardware encoders verified by the GPU probe for this machine (GpuCapabilities::video.encoders): passed to
+    // vedit-render in the job, empty in software mode. Cleared when the user turns hardware encoding off.
+    void setHardwareEncoders(QStringList encoders) { m_hardwareEncoders = std::move(encoders); }
 
     // Starts the export; on a problem found before starting (no disk space, nothing to export…) emits failed()
     // and returns false.
@@ -65,6 +68,7 @@ private:
     QString m_executable;
     QProcess *m_process = nullptr;
     ExportSettings m_settings;
+    QStringList m_hardwareEncoders;
     QString m_frozenProject;
     QString m_jobFile;
     QByteArray m_buffer;

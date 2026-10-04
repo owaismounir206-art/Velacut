@@ -214,10 +214,15 @@ public:
 
     // Export (one screen, SPEC §5.15)
     Q_INVOKABLE QVariantMap exportDefaults() const;
-    Q_INVOKABLE QString exportEstimate(int shortSide, const QString &frameRate, int quality) const;
+    Q_INVOKABLE QString exportEstimate(int shortSide, const QString &frameRate, int quality, const QString &codec = QStringLiteral("h264"),
+                                       int maxFileSizeMB = 0) const;
     Q_INVOKABLE bool startExport(const QString &fileName, const QString &folder, int shortSide, const QString &frameRate,
-                                 int quality, bool normalizeLoudness = false, double targetLufs = -14.0);
+                                 int quality, bool normalizeLoudness = false, double targetLufs = -14.0,
+                                 const QString &codec = QStringLiteral("h264"), bool hardware = true,
+                                 int maxFileSizeMB = 0);
     Q_INVOKABLE QString folderPath(const QUrl &url) const;
+    // Hardware encoders verified by the probe and the name of the GPU that has them (shown in the export window).
+    void setHardwareEncoding(QStringList encoders, QString gpuName);
 
     // Saves at once (the window lost focus); saving is otherwise automatic.
     Q_INVOKABLE void saveNow();
@@ -262,6 +267,8 @@ private:
     std::unique_ptr<TimelineModel> m_timeline;
     std::unique_ptr<engine::MediaImporter> m_importer;
     std::unique_ptr<engine::RenderJob> m_exportJob;
+    QStringList m_hardwareEncoders;
+    QString m_gpuName;
     std::unique_ptr<RecordController> m_recorder;
     QSet<ClipId> m_selection;
     ClipId m_focus;

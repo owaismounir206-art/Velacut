@@ -1226,6 +1226,13 @@ void EditorController::setCanvasPreset(int preset)
 
 // ---- Export -------------------------------------------------------------------------------------------------------
 
+void EditorController::setHardwareEncoding(QStringList encoders, QString gpuName)
+{
+    m_hardwareEncoders = std::move(encoders);
+    m_gpuName = std::move(gpuName);
+    m_exportJob->setHardwareEncoders(m_hardwareEncoders);
+}
+
 QVariantMap EditorController::exportDefaults() const
 {
     const QJsonObject last = m_document->uiState().value(u"export"_s).toObject();
@@ -1266,16 +1273,24 @@ QVariantMap EditorController::exportDefaults() const
     // A file name the user recognizes: the project's, without characters file managers dislike.
     QString fileName = data().name;
     fileName.replace(QRegularExpression(u"[/\\\\:*?\"<>|]"_s), u"-"_s);
+    const QJsonObject saved = last.value(u"advanced"_s).toObject();
     return {{u"fileName"_s, fileName.trimmed().isEmpty() ? u"video"_s : fileName.trimmed()},
             {u"folder"_s, folder},
             {u"resolutions"_s, resolutions},
             {u"resolution"_s, resolution},
             {u"frameRates"_s, rates},
             {u"frameRate"_s, project.toString()},
-            {u"quality"_s, last.contains(u"quality"_s) ? last.value(u"quality"_s).toInt() : 1}};
+            {u"quality"_s, last.contains(u"quality"_s) ? last.value(u"quality"_s).toInt() : 1},
+            {u"codec"_s, saved.contains(u"codec"_s) ? saved.value(u"codec"_s).toString() : u"h264"_s},
+            {u"hardware"_s, saved.contains(u"hardware"_s) ? saved.value(u"hardware"_s).toBool() : true},
+            {u"maxFileSizeMB"_s, saved.contains(u"maxFileSizeMB"_s) ? saved.value(u"maxFileSizeMB"_s).toInt() : 0},
+            // What the machine can really do (SPEC §5.15): verified by the probe at startup.
+            {u"hardwareAvailable"_s, !m_hardwareEncoders.isEmpty()},
+            {u"gpuName"_s, m_gpuName}};
 }
 
-QString EditorController::exportEstimate(int shortSide, const QString &frameRate, int quality) const
+QString EditorController::exportEstimate(int shortSide, const QString &frameRate, int quality, const QString &codec,
+                                         int maxFileSizeMB) const
 {
     const Sequence *sequence = data().mainSequence();
     const std::optional<Rational> rate = Rational::fromString(frameRate);
@@ -1286,6 +1301,8 @@ QString EditorController::exportEstimate(int shortSide, const QString &frameRate
     settings.size = engine::scaledToShortSide(canvasSize(), shortSide);
     settings.frameRate = *rate;
     settings.quality = static_cast<engine::ExportQuality>(std::clamp(quality, 0, 2));
+    settings.videoCodec = engine::videoCodecFromName(codec).value_or(engine::VideoCodec::H264);
+    settings.maxFileSizeMB = maxFileSizeMB;
     const RationalTime duration = sequence->duration(data().settings.frameRate);
     const double megabytes = static_cast<double>(engine::estimatedFileSize(settings, duration)) / 1e6;
     const QString size = megabytes >= 1000 ? tr("%1 GB").arg(QLocale().toString(megabytes / 1000, 'f', 1))
@@ -1298,7 +1315,7 @@ QString EditorController::exportEstimate(int shortSide, const QString &frameRate
 
 bool EditorController::startExport(const QString &fileName, const QString &folder, int shortSide,
                                    const QString &frameRate, int quality, bool normalizeLoudness,
-                                   double targetLufs)
+                                   double targetLufs, const QString &codec, bool hardware, int maxFileSizeMB)
 {
     const std::optional<Rational> rate = Rational::fromString(frameRate);
     if (!rate || m_exportJob->running()) {
@@ -1321,10 +1338,20 @@ bool EditorController::startExport(const QString &fileName, const QString &folde
     settings.size = engine::scaledToShortSide(canvasSize(), shortSide);
     settings.frameRate = *rate;
     settings.quality = static_cast<engine::ExportQuality>(std::clamp(quality, 0, 2));
+    settings.videoCodec = engine::videoCodecFromName(codec).value_or(engine::VideoCodec::H264);
+    // The user can only turn hardware off (the "Auto" of SPEC §5.15): on a machine without verified GPU encoders
+    // the renderer silently stays on software, so an export can never fail for that.
+    settings.hardwareEncoder = (hardware && !m_hardwareEncoders.isEmpty()) ? engine::HardwareEncoder::Auto
+                                                                          : engine::HardwareEncoder::Off;
+    settings.maxFileSizeMB = std::max(0, maxFileSizeMB);
     settings.normalizeLoudness = normalizeLoudness;
     settings.targetLufs = targetLufs;
     QJsonObject state = m_document->uiState();
-    state.insert(u"export"_s, QJsonObject{{u"folder"_s, folder}, {u"quality"_s, quality}});
+    state.insert(u"export"_s, QJsonObject{{u"folder"_s, folder},
+                                         {u"quality"_s, quality},
+                                         {u"advanced"_s, QJsonObject{{u"codec"_s, engine::videoCodecName(settings.videoCodec)},
+                                                                     {u"hardware"_s, hardware},
+                                                                     {u"maxFileSizeMB"_s, settings.maxFileSizeMB}}}});
     m_document->setUiState(state);
     return m_exportJob->start(data(), data().mainSequenceId, settings);
 }

@@ -36,7 +36,8 @@ public:
     using Progress = std::function<void(int frame, int total)>;
 
     static Result render(const ProjectData &project, const SequenceId &sequenceId, const ExportSettings &settings,
-                         const Progress &progress, const std::atomic<bool> &cancel);
+                         const Progress &progress, const std::atomic<bool> &cancel,
+                         const QStringList &hardwareEncoders = {});
 
     // (vedit-render --backwards) The media file played backwards, for the preview of reversed clips (reading backwards a long-GOP file costs
     // ~12× more than forwards: 119 vs 10 ms per 1080p frame, measured): every frame a keyframe, at most 720 p high,

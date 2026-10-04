@@ -95,7 +95,35 @@ void AppController::updateGraphics(const gpu::GraphicsDecision &decision, const 
     m_decision = decision;
     m_decision.ui = ui;
     m_capabilities = capabilities;
+    if (m_editor) {
+        m_editor->setHardwareEncoding(hardwareEncoders(), gpuDisplayName());
+    }
     emit systemInformationChanged();
+}
+
+// The encoders the renderer may use: only those the probe verified, and only when the decision allows hardware.
+QStringList AppController::hardwareEncoders() const
+{
+    return m_decision.hardwareEncoding ? m_capabilities.video.encoders : QStringList{};
+}
+
+QString AppController::gpuDisplayName() const
+{
+    // The name shown next to "Use hardware acceleration" in the export window.
+    if (!m_capabilities.vulkan.devices.empty()) {
+        return m_capabilities.vulkan.devices.front().name;
+    }
+    if (!m_capabilities.opengl.renderer.isEmpty()) {
+        return m_capabilities.opengl.renderer;
+    }
+    return tr("GPU");
+}
+
+void AppController::makeEditor(std::unique_ptr<document::Document> document)
+{
+    m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper);
+    m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
+    m_editor->setHardwareEncoding(hardwareEncoders(), gpuDisplayName());
 }
 
 bool AppController::newProject()
@@ -107,8 +135,7 @@ bool AppController::newProject()
         emit message(error);
         return false;
     }
-    m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper);
-    m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
+    makeEditor(std::move(document));
     emit editorChanged();
     return true;
 }
@@ -148,8 +175,7 @@ bool AppController::newProjectFromTemplate(const QString &templateId)
     // Set the project name from the template
     mutator.setName(preset->name.text());
 
-    m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper);
-    m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
+    makeEditor(std::move(document));
     emit editorChanged();
     return true;
 }
@@ -179,8 +205,7 @@ bool AppController::openDraft(const QString &draftId)
         return false;
     }
     const bool recovered = document->recovered();
-    m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper);
-    m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
+    makeEditor(std::move(document));
     emit editorChanged();
     if (recovered) {
         emit message(tr("Project recovered: vedit did not close properly last time. Your latest changes are here."));

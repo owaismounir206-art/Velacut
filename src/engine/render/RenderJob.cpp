@@ -9,6 +9,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLoggingCategory>
@@ -125,9 +126,12 @@ bool RenderJob::start(const ProjectData &project, const SequenceId &sequenceId, 
         emit failed(errorMessage(RenderError::ProjectUnreadable), written.error);
         return false;
     }
+    QJsonObject encoders;
+    encoders.insert(u"video"_s, QJsonArray::fromStringList(m_hardwareEncoders));
     const QJsonObject job{{u"project"_s, m_frozenProject},
                           {u"sequence"_s, sequenceId.toString()},
-                          {u"settings"_s, settings.toJson()}};
+                          {u"settings"_s, settings.toJson()},
+                          {u"encoders"_s, encoders}};
     if (const auto written = projectfile::writeAtomically(m_jobFile, QJsonDocument(job).toJson()); !written) {
         QFile::remove(m_frozenProject);
         emit failed(errorMessage(RenderError::ProjectUnreadable), written.error);

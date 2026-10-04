@@ -317,13 +317,19 @@ private slots:
         settings.frameRate = Rational(30000, 1001);
         settings.quality = ExportQuality::High;
         QCOMPARE(ExportSettings::fromJson(settings.toJson()), settings);
+        settings.videoCodec = VideoCodec::AV1;
+        settings.hardwareEncoder = HardwareEncoder::Off;
+        settings.maxFileSizeMB = 25;
+        QCOMPARE(ExportSettings::fromJson(settings.toJson()), settings);
         QVERIFY(!ExportSettings::fromJson(QJsonObject{}));
         QCOMPARE(scaledToShortSide(QSize(1080, 1920), 720), QSize(720, 1280));
         QCOMPARE(scaledToShortSide(QSize(1920, 1080), 2160), QSize(3840, 2160));
         // Higher quality, bigger file; a minute of 1080p30 "Recommended" is tens of MB.
         const RationalTime minute(60, Rational(1));
+        settings = ExportSettings{};
         settings.size = QSize(1920, 1080);
         settings.frameRate = Rational(30);
+        settings.quality = ExportQuality::High;
         const qint64 high = estimatedFileSize(settings, minute);
         settings.quality = ExportQuality::Recommended;
         const qint64 recommended = estimatedFileSize(settings, minute);
@@ -331,7 +337,146 @@ private slots:
         const qint64 low = estimatedFileSize(settings, minute);
         QVERIFY(low < recommended && recommended < high);
         QVERIFY(recommended > 20'000'000 && recommended < 80'000'000);
+        // A size target is a promise: the estimate is that size; without one, HEVC and AV1 make smaller files than H.264.
+        settings.quality = ExportQuality::Recommended;
+        settings.maxFileSizeMB = 25;
+        QCOMPARE(estimatedFileSize(settings, minute), 25ll * 1024 * 1024);
+        settings.maxFileSizeMB = 0;
+        settings.videoCodec = VideoCodec::H264;
+        const qint64 h264Size = estimatedFileSize(settings, minute);
+        settings.videoCodec = VideoCodec::AV1;
+        QVERIFY(estimatedFileSize(settings, minute) < h264Size);
         QCOMPARE(renderErrorFromCode(renderErrorCode(RenderError::OutputNotWritable)), RenderError::OutputNotWritable);
+    }
+
+    // The encoder the machine will use, after the user's choice meets the verified GPU encoders (pure function).
+    void encoderPlanFollowsSettingsAndCapabilities()
+    {
+        const RationalTime minute(60, Rational(1));
+        const RationalTime halfMinute(30, Rational(1));
+        const QStringList noHardware;
+        const QStringList radeon740m{u"h264_vaapi"_s, u"hevc_vaapi"_s, u"av1_vaapi"_s};
+        const QStringList arc130v{u"h264_vaapi"_s, u"av1_vaapi"_s, u"av1_qsv"_s, u"h264_qsv"_s};
+
+        ExportSettings settings;
+        settings.size = QSize(1920, 1080);
+        settings.frameRate = Rational(30);
+
+        // Software: the classic H.264 path, constant quality capped.
+        EncoderPlan plan = planEncoder(settings, noHardware, minute);
+        QCOMPARE(plan.vcodec, "libx264");
+        QVERIFY(!plan.hardware);
+        QCOMPARE(plan.qualityOption, "crf");
+        QCOMPARE(plan.qualityValue, 21);
+        QVERIFY(!plan.preset.isEmpty());
+        QVERIFY(plan.videoBitrate == 0 && !plan.twoPass);
+
+        // A verified GPU encoder is preferred, with the hardware quality scale (VA-API, lower is better).
+        plan = planEncoder(settings, radeon740m, minute);
+        QCOMPARE(plan.vcodec, "h264_vaapi");
+        QVERIFY(plan.hardware);
+        QCOMPARE(plan.qualityOption, "quality");
+        QVERIFY(plan.preset.isEmpty());
+        settings.quality = ExportQuality::Low;
+        QCOMPARE(planEncoder(settings, radeon740m, minute).qualityValue, 28);
+        settings.quality = ExportQuality::High;
+        QCOMPARE(planEncoder(settings, radeon740m, minute).qualityValue, 8);
+        settings.quality = ExportQuality::Recommended;
+
+        // Every codec family maps to its own encoder, software and hardware; VA-API before the vendor ones.
+        settings.videoCodec = VideoCodec::HEVC;
+        QCOMPARE(planEncoder(settings, radeon740m, minute).vcodec, "hevc_vaapi");
+        QCOMPARE(planEncoder(settings, noHardware, minute).vcodec, "libx265");
+        settings.videoCodec = VideoCodec::AV1;
+        QCOMPARE(planEncoder(settings, radeon740m, minute).vcodec, "av1_vaapi");
+        QCOMPARE(planEncoder(settings, arc130v, minute).vcodec, "av1_vaapi");
+        QCOMPARE(planEncoder(settings, noHardware, minute).vcodec, "libsvtav1");
+        QVERIFY(planEncoder(settings, noHardware, minute).preset.isEmpty()); // SVT-AV1 has no named presets
+        settings.videoCodec = VideoCodec::H264;
+        settings.hardwareEncoder = HardwareEncoder::Auto;
+        QCOMPARE(planEncoder(settings, QStringList{u"h264_nvenc"_s}, minute).vcodec, "h264_nvenc");
+
+        // The user can turn hardware off; an empty verified list means software even in Auto.
+        settings.hardwareEncoder = HardwareEncoder::Off;
+        QCOMPARE(planEncoder(settings, radeon740m, minute).vcodec, "libx264");
+
+        // Size target: average bitrate everywhere; two passes in software only.
+        settings.hardwareEncoder = HardwareEncoder::Auto;
+        settings.maxFileSizeMB = 25;
+        plan = planEncoder(settings, noHardware, minute);
+        QVERIFY(plan.videoBitrate > 0);
+        QVERIFY(plan.twoPass);
+        plan = planEncoder(settings, radeon740m, minute);
+        QVERIFY(plan.videoBitrate > 0);
+        QVERIFY(!plan.twoPass); // hardware encoders have no two-pass: VBR with a ceiling (documented)
+        // The bitrate leaves room for audio and the container, and scales with the duration.
+        const qint64 minuteBitrate = plan.videoBitrate;
+        QVERIFY(planEncoder(settings, radeon740m, halfMinute).videoBitrate > minuteBitrate);
+        QVERIFY(minuteBitrate < 25ll * 1024 * 1024 * 8 / 60); // never more bits than the size has
+    }
+
+    // A HEVC export through the whole renderer (software encoder, as on a machine without GPU encoders).
+    void exportsHevcWhenAsked()
+    {
+        const ProjectData data = editedProject();
+        const QString path = outputPath(u"hevc.mp4"_s);
+        ExportSettings settings = settingsFor(data, path);
+        settings.videoCodec = VideoCodec::HEVC;
+        settings.hardwareEncoder = HardwareEncoder::Off;
+        std::atomic<bool> cancel{false};
+        const Renderer::Result result = Renderer::render(data, data.mainSequenceId, settings, {}, cancel);
+        QCOMPARE(result.status, Renderer::Status::Done);
+        const QJsonObject video = streamOfType(ffprobe(path), u"video"_s);
+        QCOMPARE(video.value(u"codec_name"_s).toString(), u"hevc"_s);
+        QCOMPARE(video.value(u"pix_fmt"_s).toString(), u"yuv420p"_s);
+        QCOMPARE(video.value(u"nb_read_frames"_s).toString().toInt(), 195);
+    }
+
+    // "Under N MB" (SPEC §5.15): the file must exist, be complete and be smaller than the target.
+    void exportRespectsMaximumSize()
+    {
+        const ProjectData data = editedProject();
+        const QString path = outputPath(u"small-size.mp4"_s);
+        ExportSettings settings = settingsFor(data, path);
+        settings.hardwareEncoder = HardwareEncoder::Off;
+        settings.maxFileSizeMB = 5;
+        std::atomic<bool> cancel{false};
+        const Renderer::Result result = Renderer::render(data, data.mainSequenceId, settings, {}, cancel);
+        QCOMPARE(result.status, Renderer::Status::Done);
+        QCOMPARE(streamOfType(ffprobe(path), u"video"_s).value(u"nb_read_frames"_s).toString().toInt(), 195);
+        QVERIFY2(QFileInfo(path).size() <= 5ll * 1024 * 1024,
+                 qPrintable(QString::number(QFileInfo(path).size())));
+    }
+
+    // The real GPU encoders when there are any: same export, same content, encoded by the machine's hardware
+    // (Radeon 740M: h264/hevc/av1 VA-API; Intel Arc 130V: the same plus QSV). Skipped where the probe finds none,
+    // so the suite stays green on machines without VA-API and in the software-only environment.
+    void exportsWithTheGpuEncoderWhenAvailable()
+    {
+        QProcess probe;
+        probe.start(QStringLiteral(VEDIT_GPUPROBE_EXECUTABLE), {u"--video"_s});
+        QVERIFY(probe.waitForFinished(30000));
+        const QJsonDocument report = QJsonDocument::fromJson(probe.readAllStandardOutput());
+        QStringList encoders;
+        for (const QJsonValue &encoder : report.object().value(u"video"_s).toObject().value(u"encoders"_s).toArray()) {
+            encoders.append(encoder.toString());
+        }
+        if (!encoders.contains(u"h264_vaapi"_s) && !encoders.contains(u"h264_qsv"_s) &&
+            !encoders.contains(u"h264_nvenc"_s)) {
+            QSKIP("no verified GPU encoder on this machine");
+        }
+        const ProjectData data = editedProject();
+        const QString path = outputPath(u"gpu.mp4"_s);
+        ExportSettings settings = settingsFor(data, path);
+        settings.hardwareEncoder = HardwareEncoder::Auto;
+        std::atomic<bool> cancel{false};
+        const Renderer::Result result = Renderer::render(data, data.mainSequenceId, settings, {}, cancel, encoders);
+        QCOMPARE(result.status, Renderer::Status::Done);
+        const QString encoder = QString::fromLatin1(planEncoder(settings, encoders, RationalTime(195, Rational(30))).vcodec);
+        qInfo() << "hardware encoder used:" << encoder;
+        const QJsonObject video = streamOfType(ffprobe(path), u"video"_s);
+        QCOMPARE(video.value(u"codec_name"_s).toString(), u"h264"_s);
+        QCOMPARE(video.value(u"nb_read_frames"_s).toString().toInt(), 195);
     }
 
     // No MltRuntime::shutdown(): see vedit-render's main() (FFmpeg/x264 globals reported by LeakSanitizer once
