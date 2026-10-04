@@ -10,5 +10,6 @@ qt_add_qml_module(vedit_components
         StateLayer.qml Shadow.qml Icon.qml TypeText.qml Divider.qml
         IconButton.qml Fab.qml SegmentedButton.qml Chip.qml Card.qml
         NavigationRail.qml NavigationRailItem.qml TopAppBar.qml Snackbar.qml Badge.qml SearchBar.qml Tabs.qml
+        Panel.qml
 )
 target_link_libraries(vedit_components PRIVATE Qt6::Quick Qt6::QuickTemplates2 vedit_theme)

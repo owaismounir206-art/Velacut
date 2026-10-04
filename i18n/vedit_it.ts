@@ -19,17 +19,17 @@
         <translation>Tutti i file (*)</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+20"/>
         <source>Import</source>
         <translation>Importa</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+10"/>
         <source>Default text</source>
         <translation>Testo predefinito</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Search</source>
         <translation>Cerca</translation>
     </message>
@@ -92,12 +92,12 @@
 <context>
     <name>AudioPanel</name>
     <message>
-        <location filename="../src/ui/qml/AudioPanel.qml" line="+28"/>
+        <location filename="../src/ui/qml/AudioPanel.qml" line="+26"/>
         <source>Music</source>
         <translation>Musica</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+8"/>
         <source>Look for new music</source>
         <translation>Cerca nuova musica</translation>
     </message>
@@ -183,11 +183,71 @@
     <name>ContextToolbar</name>
     <message>
         <location filename="../src/ui/qml/ContextToolbar.qml" line="+49"/>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
+        <source>Undo: %1</source>
+        <translation>Annulla: %1</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+0"/>
+        <source>Undo</source>
+        <translation>Annulla</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+Z</source>
+        <translation>Ctrl+Z</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Redo: %1</source>
+        <translation>Ripeti: %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Redo</source>
+        <translation>Ripeti</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+Shift+Z</source>
+        <translation>Ctrl+Maiusc+Z</translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>Magnetic main track (On)</source>
+        <translation>Traccia principale magnetica (attiva)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Magnetic main track (Off)</source>
+        <translation>Traccia principale magnetica (disattiva)</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Snapping (On)</source>
+        <translation>Aggancio (attivo)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Snapping (Off)</source>
+        <translation>Aggancio (disattivo)</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Preview axis (On): point at the timeline to see that frame</source>
+        <translation>Asse di anteprima (attivo): punta la timeline per vedere quel fotogramma</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Preview axis (Off)</source>
+        <translation>Asse di anteprima (disattivo)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Clear In/Out points</source>
+        <translation>Cancella i punti di entrata e uscita</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Zoom out</source>
         <translation>Riduci lo zoom</translation>
     </message>
@@ -212,6 +272,11 @@
         <source>Show the whole video</source>
         <translation>Mostra tutto il video</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+0</source>
+        <translation>Ctrl+0</translation>
+    </message>
 </context>
 <context>
     <name>CurveEditor</name>
@@ -224,7 +289,7 @@
 <context>
     <name>DraftCard</name>
     <message>
-        <location filename="../src/ui/qml/DraftCard.qml" line="+27"/>
+        <location filename="../src/ui/qml/DraftCard.qml" line="+28"/>
         <source>Open %1</source>
         <translation>Apri %1</translation>
     </message>
@@ -262,12 +327,22 @@
 <context>
     <name>EditorScreen</name>
     <message>
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+30"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+31"/>
         <source>Video exported</source>
         <translation>Video esportato</translation>
     </message>
     <message>
-        <location line="+69"/>
+        <location line="+9"/>
+        <source>Frame saved as %1</source>
+        <translation>Fotogramma salvato come %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>The frame could not be saved.</source>
+        <translation>Non è stato possibile salvare il fotogramma.</translation>
+    </message>
+    <message>
+        <location line="+154"/>
         <source>Media</source>
         <translation>Media</translation>
     </message>
@@ -278,37 +353,37 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+24"/>
+        <location line="+23"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-23"/>
-        <location line="+28"/>
+        <location line="-22"/>
+        <location line="+27"/>
         <source>Stickers</source>
         <translation>Sticker</translation>
     </message>
     <message>
-        <location line="-27"/>
-        <location line="+32"/>
+        <location line="-26"/>
+        <location line="+31"/>
         <source>Effects</source>
         <translation>Effetti</translation>
     </message>
     <message>
-        <location line="-31"/>
-        <location line="+36"/>
+        <location line="-30"/>
+        <location line="+35"/>
         <source>Transitions</source>
         <translation>Transizioni</translation>
     </message>
     <message>
-        <location line="-35"/>
-        <location line="+40"/>
+        <location line="-34"/>
+        <location line="+39"/>
         <source>Filters</source>
         <translation>Filtri</translation>
     </message>
     <message>
-        <location line="-39"/>
-        <location line="+44"/>
+        <location line="-38"/>
+        <location line="+43"/>
         <source>Animations</source>
         <translation>Animazioni</translation>
     </message>
@@ -316,17 +391,83 @@
 <context>
     <name>EditorTopBar</name>
     <message>
-        <location filename="../src/ui/qml/EditorTopBar.qml" line="+30"/>
+        <location filename="../src/ui/qml/EditorTopBar.qml" line="+36"/>
+        <location line="+60"/>
         <source>Back to projects</source>
         <translation>Torna ai progetti</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="-52"/>
+        <source>Menu</source>
+        <translation>Menu</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>New project</source>
+        <translation>Nuovo progetto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+N</source>
+        <translation>Ctrl+N</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Import media…</source>
+        <translation>Importa media…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+I</source>
+        <translation>Ctrl+I</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Export…</source>
+        <translation>Esporta…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+E</source>
+        <translation>Ctrl+E</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Save the current frame</source>
+        <translation>Salva il fotogramma corrente</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+Shift+E</source>
+        <translation>Ctrl+Maiusc+E</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Search…</source>
+        <translation>Cerca…</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Keyboard shortcuts</source>
+        <translation>Scorciatoie da tastiera</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>System information</source>
+        <translation>Informazioni di sistema</translation>
+    </message>
+    <message>
+        <location line="+30"/>
         <source>Project name</source>
         <translation>Nome del progetto</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+16"/>
+        <source>Click to rename the project</source>
+        <translation>Fai clic per rinominare il progetto</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Not saved: retrying</source>
         <translation>Non salvato: nuovo tentativo</translation>
     </message>
@@ -341,47 +482,23 @@
         <translation>Salvato</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+20"/>
         <source>Search commands, filters, transitions…</source>
         <translation>Cerca comandi, filtri, transizioni…</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+16"/>
+        <source>Search</source>
+        <translation>Cerca</translation>
+    </message>
+    <message>
+        <location line="-104"/>
+        <location line="+109"/>
         <source>Ctrl+K</source>
         <translation>Ctrl+K</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>Undo: %1</source>
-        <translation>Annulla: %1</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Undo</source>
-        <translation>Annulla</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Ctrl+Z</source>
-        <translation>Ctrl+Z</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>Redo: %1</source>
-        <translation>Ripeti: %1</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Redo</source>
-        <translation>Ripeti</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Ctrl+Shift+Z</source>
-        <translation>Ctrl+Maiusc+Z</translation>
-    </message>
-    <message>
-        <location line="+9"/>
+        <location line="+24"/>
         <source>Exporting %1%</source>
         <translation>Esportazione %1%</translation>
     </message>
@@ -480,12 +597,12 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+184"/>
+        <location line="+185"/>
         <source>Export</source>
         <translation>Esporta</translation>
     </message>
     <message>
-        <location line="-164"/>
+        <location line="-165"/>
         <source>Choose where to save the video</source>
         <translation>Scegli dove salvare il video</translation>
     </message>
@@ -530,7 +647,7 @@
         <translation>Alta</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+33"/>
         <source>Normalize loudness to −14 LUFS (EBU R128)</source>
         <translation>Normalizza il volume a −14 LUFS (EBU R128)</translation>
     </message>
@@ -677,6 +794,44 @@
         <location line="+1"/>
         <source>21:9 — Cinema</source>
         <translation>21:9 — Cinema</translation>
+    </message>
+</context>
+<context>
+    <name>FullScreenPreview</name>
+    <message>
+        <location filename="../src/ui/qml/FullScreenPreview.qml" line="+74"/>
+        <source>Position</source>
+        <translation>Posizione</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Pause</source>
+        <translation>Pausa</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Play</source>
+        <translation>Riproduci</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Space</source>
+        <translation>Spazio</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>%1 / %2</source>
+        <translation>%1 / %2</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Leave full screen</source>
+        <translation>Esci dallo schermo intero</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Esc</source>
+        <translation>Esc</translation>
     </message>
 </context>
 <context>
@@ -1072,15 +1227,20 @@
 <context>
     <name>HomeScreen</name>
     <message>
-        <location filename="../src/ui/qml/HomeScreen.qml" line="+27"/>
+        <location filename="../src/ui/qml/HomeScreen.qml" line="+59"/>
         <source>System information</source>
         <translation>Informazioni di sistema</translation>
     </message>
     <message>
-        <location line="+29"/>
-        <location line="+30"/>
+        <location line="+33"/>
+        <location line="+37"/>
         <source>New project</source>
         <translation>Nuovo progetto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Drop to start a project</source>
+        <translation>Rilascia per iniziare un progetto</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -1088,12 +1248,43 @@
         <translation>Aggiungi video, foto e musica, taglia ed esporta. Tutto si salva da solo.</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+8"/>
+        <source>Tip: drop files here to start with them.</source>
+        <translation>Suggerimento: trascina qui i file per iniziare con quelli.</translation>
+    </message>
+    <message>
+        <location line="+27"/>
         <source>Record screen</source>
         <translation>Registra schermo</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+1"/>
+        <source>Screen, webcam or both, with the teleprompter</source>
+        <translation>Schermo, webcam o entrambi, con il gobbo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+83"/>
+        <source>Templates</source>
+        <translation>Template</translation>
+    </message>
+    <message>
+        <location line="-82"/>
+        <source>Pick a ready-made video and put your own shots in it</source>
+        <translation>Scegli un video già pronto e mettici le tue riprese</translation>
+    </message>
+    <message>
+        <location line="+89"/>
+        <source>Choose one, then replace each shot with your videos and photos</source>
+        <translation>Scegline uno, poi sostituisci ogni ripresa con i tuoi video e le tue foto</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>All</source>
+        <translation>Tutti</translation>
+    </message>
+    <message>
+        <location line="+60"/>
         <source>Drafts</source>
         <translation>Bozze</translation>
     </message>
@@ -1106,12 +1297,12 @@
         </translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+27"/>
         <source>Your projects appear here, ready to continue exactly where you left them.</source>
         <translation>I tuoi progetti compaiono qui, pronti a ripartire esattamente da dove li hai lasciati.</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+41"/>
         <source>Rename project</source>
         <translation>Rinomina il progetto</translation>
     </message>
@@ -1147,7 +1338,7 @@
 <context>
     <name>LevelMeter</name>
     <message>
-        <location filename="../src/ui/qml/LevelMeter.qml" line="+19"/>
+        <location filename="../src/ui/qml/LevelMeter.qml" line="+22"/>
         <source>Audio level</source>
         <translation>Livello audio</translation>
     </message>
@@ -1160,17 +1351,17 @@
         <translation>%1 — vedit</translation>
     </message>
     <message>
-        <location line="+55"/>
+        <location line="+56"/>
         <source>System information</source>
         <translation>Informazioni di sistema</translation>
     </message>
     <message>
-        <location line="-42"/>
+        <location line="-43"/>
         <source>Undo</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="+68"/>
+        <location line="+69"/>
         <source>Copy system information</source>
         <translation>Copia informazioni di sistema</translation>
     </message>
@@ -1198,12 +1389,12 @@
         <translation>Tutti i file (*)</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+12"/>
         <source>Media</source>
         <translation>Media</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+8"/>
         <source>Import</source>
         <translation>Importa</translation>
     </message>
@@ -1213,12 +1404,7 @@
         <translation>Importa video, foto e musica (Ctrl+I)</translation>
     </message>
     <message>
-        <location line="+8"/>
-        <source>Record</source>
-        <translation>Registra</translation>
-    </message>
-    <message>
-        <location line="+2"/>
+        <location line="+12"/>
         <source>Record voiceover, screen or webcam</source>
         <translation>Registra voce, schermo o webcam</translation>
     </message>
@@ -1269,22 +1455,42 @@
 <context>
     <name>PreviewPanel</name>
     <message>
-        <location filename="../src/ui/qml/PreviewPanel.qml" line="+57"/>
+        <location filename="../src/ui/qml/PreviewPanel.qml" line="+41"/>
+        <source>Player</source>
+        <translation>Lettore</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Preparing the reversed clip… %1%</source>
+        <translation>Preparazione della clip al contrario… %1%</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 × %2 · %3 fps</source>
+        <translation>%1 × %2 · %3 fps</translation>
+    </message>
+    <message>
+        <location line="+39"/>
         <source>Add a video or a photo to the timeline: the preview appears here.</source>
         <translation>Aggiungi un video o una foto alla timeline: l&apos;anteprima compare qui.</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+33"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+13"/>
+        <source>%1 · %2×</source>
+        <translation>%1 · %2×</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Go to start</source>
         <translation>Vai all&apos;inizio</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+11"/>
         <source>Pause</source>
         <translation>Pausa</translation>
     </message>
@@ -1299,7 +1505,7 @@
         <translation>Spazio · J K L</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Go to end</source>
         <translation>Vai alla fine</translation>
     </message>
@@ -1309,32 +1515,27 @@
         <translation>Fine</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+15"/>
         <source>Video scopes (histogram, waveform, vectorscope)</source>
         <translation>Scope video (istogramma, forma d&apos;onda, vettorscopio)</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+8"/>
         <source>Save the current frame as an image</source>
         <translation>Salva il fotogramma corrente come immagine</translation>
     </message>
     <message>
-        <location line="+5"/>
-        <source>Frame saved as %1</source>
-        <translation>Fotogramma salvato come %1</translation>
+        <location line="+1"/>
+        <source>Ctrl+Shift+E</source>
+        <translation>Ctrl+Maiusc+E</translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>The frame could not be saved.</source>
-        <translation>Impossibile salvare il fotogramma.</translation>
+        <location line="+13"/>
+        <source>Full screen</source>
+        <translation>Schermo intero</translation>
     </message>
     <message>
-        <location line="+16"/>
-        <source>%1× · %2</source>
-        <translation>%1× · %2</translation>
-    </message>
-    <message>
-        <location line="+2"/>
+        <location line="-69"/>
         <source>Duration</source>
         <translation>Durata</translation>
     </message>
@@ -1343,29 +1544,29 @@
     <name>PropertiesPanel</name>
     <message>
         <location filename="../src/ui/qml/PropertiesPanel.qml" line="+42"/>
-        <location line="+143"/>
+        <location line="+207"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-141"/>
-        <location line="+665"/>
+        <location line="-205"/>
+        <location line="+729"/>
         <source>Visualizer</source>
         <translation>Visualizzatore</translation>
     </message>
     <message>
-        <location line="-664"/>
+        <location line="-728"/>
         <source>Sticker</source>
         <translation>Sticker</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+665"/>
+        <location line="+729"/>
         <source>Element</source>
         <translation>Elemento</translation>
     </message>
     <message>
-        <location line="-663"/>
+        <location line="-727"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
@@ -1381,13 +1582,13 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1153"/>
+        <location line="+1217"/>
         <location line="+19"/>
         <source>Speed</source>
         <translation>Velocità</translation>
     </message>
     <message>
-        <location line="-1170"/>
+        <location line="-1234"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -1403,17 +1604,17 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1618"/>
+        <location line="+1682"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
     <message>
-        <location line="-1582"/>
+        <location line="-1583"/>
         <source>Select a clip on the timeline to change it here.</source>
         <translation>Seleziona una clip sulla timeline per modificarla qui.</translation>
     </message>
     <message numerus="yes">
-        <location line="+25"/>
+        <location line="+26"/>
         <source>%n clip(s) selected: changes apply to all of them.</source>
         <translation>
             <numerusform>%n clip selezionata: le modifiche valgono per questa.</numerusform>
@@ -1421,7 +1622,8 @@
         </translation>
     </message>
     <message>
-        <location line="+31"/>
+        <location line="-83"/>
+        <location line="+114"/>
         <location line="+322"/>
         <source>Duration</source>
         <translation>Durata</translation>
@@ -1487,14 +1689,45 @@
         <translation>Allinea a destra</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="-201"/>
+        <location line="+216"/>
         <location line="+330"/>
         <location line="+206"/>
         <source>Size</source>
         <translation>Dimensione</translation>
     </message>
     <message>
-        <location line="-530"/>
+        <location line="-757"/>
+        <source>Project</source>
+        <translation>Progetto</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Name</source>
+        <translation>Nome</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 × %2</source>
+        <translation>%1 × %2</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Frame rate</source>
+        <translation>Fotogrammi al secondo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>%1 fps</source>
+        <translation>%1 fps</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>Format</source>
+        <translation>Formato</translation>
+    </message>
+    <message>
+        <location line="+196"/>
         <location line="+375"/>
         <location line="+43"/>
         <location line="+34"/>
@@ -2193,12 +2426,12 @@
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-1361"/>
+        <location line="-1425"/>
         <source>Transition</source>
         <translation>Transizione</translation>
     </message>
     <message>
-        <location line="+988"/>
+        <location line="+1052"/>
         <source>Fade out</source>
         <translation>Dissolvenza in uscita</translation>
     </message>
@@ -2311,7 +2544,7 @@
         <translation>Cerchio</translation>
     </message>
     <message>
-        <location line="-1412"/>
+        <location line="-1476"/>
         <source>Choose 3D LUT (.cube)</source>
         <translation>Scegli una LUT 3D (.cube)</translation>
     </message>
@@ -2326,7 +2559,7 @@
         <translation>Tutti i file (*)</translation>
     </message>
     <message>
-        <location line="+297"/>
+        <location line="+361"/>
         <location line="+1114"/>
         <source>Rectangle</source>
         <translation>Rettangolo</translation>
@@ -2734,7 +2967,7 @@
 <context>
     <name>SearchBar</name>
     <message>
-        <location filename="../src/ui/qml/components/SearchBar.qml" line="+44"/>
+        <location filename="../src/ui/qml/components/SearchBar.qml" line="+53"/>
         <source>Clear</source>
         <translation>Cancella</translation>
     </message>
@@ -2755,6 +2988,184 @@
         <location line="+75"/>
         <source>Nothing found</source>
         <translation>Nessun risultato</translation>
+    </message>
+</context>
+<context>
+    <name>ShortcutsDialog</name>
+    <message>
+        <location filename="../src/ui/qml/ShortcutsDialog.qml" line="+13"/>
+        <source>Keyboard shortcuts</source>
+        <translation>Scorciatoie da tastiera</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Playback</source>
+        <translation>Riproduzione</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Play / pause</source>
+        <translation>Riproduci / pausa</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Play backwards, pause, play forwards (press again: faster)</source>
+        <translation>Indietro, pausa, avanti (premi di nuovo: più veloce)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Previous / next frame</source>
+        <translation>Fotogramma precedente / successivo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>10 frames back / forward</source>
+        <translation>10 fotogrammi indietro / avanti</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Previous / next cut</source>
+        <translation>Taglio precedente / successivo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Go to the start / end</source>
+        <translation>Vai all&apos;inizio / alla fine</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Editing</source>
+        <translation>Montaggio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Split at the playhead</source>
+        <translation>Dividi alla testina</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete left / right of the playhead</source>
+        <translation>Elimina a sinistra / a destra della testina</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Trim the start / end of the clip to the playhead</source>
+        <translation>Accorcia l&apos;inizio / la fine della clip alla testina</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete the selection</source>
+        <translation>Elimina la selezione</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete and close the gap</source>
+        <translation>Elimina e chiudi lo spazio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Duplicate</source>
+        <translation>Duplica</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Select all</source>
+        <translation>Seleziona tutto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Deselect</source>
+        <translation>Deseleziona</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy / paste attributes</source>
+        <translation>Copia / incolla attributi</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add a text</source>
+        <translation>Aggiungi un testo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Undo / redo</source>
+        <translation>Annulla / ripeti</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Timeline</source>
+        <translation>Timeline</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add a marker</source>
+        <translation>Aggiungi un marcatore</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Set In / Out, clear them</source>
+        <translation>Imposta entrata / uscita, cancellale</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Magnetic main track on / off</source>
+        <translation>Traccia principale magnetica sì / no</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Snapping on / off</source>
+        <translation>Aggancio sì / no</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zoom in / out (also Ctrl+wheel)</source>
+        <translation>Ingrandisci / riduci (anche Ctrl+rotella)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Show the whole video</source>
+        <translation>Mostra tutto il video</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Switch camera (multicam clip)</source>
+        <translation>Cambia inquadratura (clip multicamera)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Project</source>
+        <translation>Progetto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>New project</source>
+        <translation>Nuovo progetto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Import media</source>
+        <translation>Importa media</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Export</source>
+        <translation>Esporta</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save the current frame as an image</source>
+        <translation>Salva il fotogramma corrente come immagine</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Search commands, effects, transitions, music</source>
+        <translation>Cerca comandi, effetti, transizioni, musica</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Full-screen preview</source>
+        <translation>Anteprima a schermo intero</translation>
     </message>
 </context>
 <context>
@@ -2819,6 +3230,22 @@
     </message>
 </context>
 <context>
+    <name>TemplateCard</name>
+    <message>
+        <location filename="../src/ui/qml/TemplateCard.qml" line="+38"/>
+        <source>New project from the template %1</source>
+        <translation>Nuovo progetto dal template %1</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+96"/>
+        <source>%1 · %n shot(s) · %2 s</source>
+        <translation>
+            <numerusform>%1 · %n ripresa · %2 s</numerusform>
+            <numerusform>%1 · %n riprese · %2 s</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>TimelineClip</name>
     <message>
         <location filename="../src/ui/qml/TimelineClip.qml" line="+47"/>
@@ -2826,7 +3253,7 @@
         <translation>Clip %1</translation>
     </message>
     <message>
-        <location line="+154"/>
+        <location line="+198"/>
         <source>Group into a compound clip</source>
         <translation>Raggruppa in una clip composta</translation>
     </message>
@@ -2865,30 +3292,31 @@
         <source>Ctrl+Alt+V</source>
         <translation>Ctrl+Alt+V</translation>
     </message>
+    <message>
+        <location line="+124"/>
+        <source>%1 · %2f</source>
+        <translation>%1 · %2 fot.</translation>
+    </message>
 </context>
 <context>
     <name>TimelineView</name>
     <message>
-        <location filename="../src/ui/qml/TimelineView.qml" line="+205"/>
-        <location line="+47"/>
+        <location filename="../src/ui/qml/TimelineView.qml" line="+567"/>
         <source>Audio track</source>
         <translation>Traccia audio</translation>
     </message>
     <message>
-        <location line="-46"/>
-        <location line="+47"/>
+        <location line="+1"/>
         <source>Main track</source>
         <translation>Traccia principale</translation>
     </message>
     <message>
-        <location line="-47"/>
-        <location line="+47"/>
+        <location line="+0"/>
         <source>Overlay track</source>
         <translation>Traccia sovrapposta</translation>
     </message>
     <message>
-        <location line="-33"/>
-        <location line="+51"/>
+        <location line="+18"/>
         <source>Track volume</source>
         <translation>Volume della traccia</translation>
     </message>
@@ -2898,23 +3326,138 @@
         <translation>%1 dB</translation>
     </message>
     <message>
+        <location line="-199"/>
+        <source>Audio track: volume and settings</source>
+        <translation>Traccia audio: volume e impostazioni</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Main track: volume and settings</source>
+        <translation>Traccia principale: volume e impostazioni</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Overlay track: volume and settings</source>
+        <translation>Traccia sovrapposta: volume e impostazioni</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Unlock the track</source>
+        <translation>Sblocca la traccia</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Lock the track</source>
+        <translation>Blocca la traccia</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Show the track</source>
+        <translation>Mostra la traccia</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Hide the track</source>
+        <translation>Nascondi la traccia</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Turn the sound on</source>
+        <translation>Riattiva l&apos;audio</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Mute the track</source>
+        <translation>Silenzia la traccia</translation>
+    </message>
+    <message>
+        <location line="+19"/>
         <location line="+18"/>
+        <source>Cover</source>
+        <translation>Copertina</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>Cover of the video: shown on the draft and in the exported file</source>
+        <translation>Copertina del video: si vede nella bozza e nel file esportato</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>Use the frame on screen</source>
+        <translation>Usa il fotogramma sullo schermo</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Choose a picture…</source>
+        <translation>Scegli un&apos;immagine…</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Save the cover (PNG)</source>
+        <translation>Salva la copertina (PNG)</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+9"/>
+        <source>Cover saved as %1</source>
+        <translation>Copertina salvata come %1</translation>
+    </message>
+    <message>
+        <location line="-9"/>
+        <location line="+9"/>
+        <source>The cover could not be saved.</source>
+        <translation>Non è stato possibile salvare la copertina.</translation>
+    </message>
+    <message>
+        <location line="-4"/>
+        <source>Save for YouTube (1280×720 JPG)</source>
+        <translation>Salva per YouTube (JPG 1280×720)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Remove the cover</source>
+        <translation>Rimuovi la copertina</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Choose a picture for the cover</source>
+        <translation>Scegli un&apos;immagine per la copertina</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Pictures (%1)</source>
+        <translation>Immagini (%1)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>All files (*)</source>
+        <translation>Tutti i file (*)</translation>
+    </message>
+    <message>
+        <location line="+49"/>
         <location line="+4"/>
         <source>Mute</source>
         <translation>Muto</translation>
     </message>
     <message>
-        <location line="+119"/>
-        <source>Drop videos and photos here</source>
-        <translation>Trascina qui video e foto</translation>
-    </message>
-    <message>
+        <location line="+6"/>
         <location line="+4"/>
-        <source>Import</source>
-        <translation>Importa</translation>
+        <source>Lock track</source>
+        <translation>Blocca traccia</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+7"/>
+        <location line="+4"/>
+        <source>Hide track</source>
+        <translation>Nascondi traccia</translation>
+    </message>
+    <message>
+        <location line="+137"/>
+        <source>Drop videos and photos here, or click to import</source>
+        <translation>Trascina qui video e foto, oppure fai clic per importarli</translation>
+    </message>
+    <message>
+        <location line="+32"/>
         <source>Transition %1</source>
         <translation>Transizione %1</translation>
     </message>
@@ -2993,8 +3536,10 @@
         <location line="+74"/>
         <location line="+58"/>
         <location line="+80"/>
+        <location line="+76"/>
         <location line="+59"/>
         <location line="+33"/>
+        <location line="+74"/>
         <location line="+45"/>
         <location line="+59"/>
         <location line="+23"/>
@@ -3009,6 +3554,7 @@
         <location line="+47"/>
         <location line="+14"/>
         <location line="+21"/>
+        <location line="+10"/>
         <location line="+10"/>
         <location line="+112"/>
         <location line="+81"/>
@@ -3029,7 +3575,7 @@
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-1533"/>
+        <location line="-1693"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -3045,23 +3591,23 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1253"/>
+        <location line="+1413"/>
         <source>The media is too short to be used.</source>
         <translation>Il file è troppo corto per essere usato.</translation>
     </message>
     <message>
-        <location line="-1230"/>
+        <location line="-1390"/>
         <source>Add audio</source>
         <translation>Aggiungi audio</translation>
     </message>
     <message>
         <location line="+5"/>
-        <location line="+1178"/>
+        <location line="+1338"/>
         <source>The main track is locked.</source>
         <translation>La traccia principale è bloccata.</translation>
     </message>
     <message>
-        <location line="-1173"/>
+        <location line="-1333"/>
         <location line="+4"/>
         <location line="+4"/>
         <source>Add clip</source>
@@ -3071,15 +3617,17 @@
         <location line="+12"/>
         <location line="+58"/>
         <location line="+80"/>
+        <location line="+76"/>
         <location line="+63"/>
         <location line="+34"/>
+        <location line="+74"/>
         <location line="+40"/>
         <location line="+115"/>
         <location line="+27"/>
         <location line="+43"/>
         <location line="+50"/>
         <location line="+80"/>
-        <location line="+286"/>
+        <location line="+296"/>
         <location line="+162"/>
         <location line="+30"/>
         <location line="+23"/>
@@ -3089,12 +3637,14 @@
         <translation>La clip non esiste.</translation>
     </message>
     <message>
-        <location line="-1178"/>
+        <location line="-1338"/>
         <location line="+10"/>
         <location line="+49"/>
         <location line="+80"/>
+        <location line="+76"/>
         <location line="+62"/>
         <location line="+34"/>
+        <location line="+74"/>
         <location line="+40"/>
         <location line="+115"/>
         <location line="+27"/>
@@ -3102,7 +3652,7 @@
         <location line="+50"/>
         <location line="+81"/>
         <location line="+82"/>
-        <location line="+203"/>
+        <location line="+213"/>
         <location line="+162"/>
         <location line="+30"/>
         <location line="+23"/>
@@ -3113,28 +3663,38 @@
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-1460"/>
-        <location line="+662"/>
+        <location line="-1620"/>
+        <location line="+812"/>
         <location line="+47"/>
         <location line="+14"/>
         <source>The track does not exist.</source>
         <translation>La traccia non esiste.</translation>
     </message>
     <message>
-        <location line="-717"/>
+        <location line="-867"/>
         <source>This clip cannot be placed on that track.</source>
         <translation>Questa clip non può andare su quella traccia.</translation>
     </message>
     <message>
         <location line="+31"/>
-        <location line="+252"/>
+        <location line="+402"/>
         <source>Move clip</source>
         <translation>Sposta clip</translation>
     </message>
     <message>
-        <location line="-172"/>
+        <location line="-322"/>
         <source>Trim clip</source>
         <translation>Accorcia clip</translation>
+    </message>
+    <message>
+        <location line="+76"/>
+        <source>Ripple trim start to playhead</source>
+        <translation>Elimina dall&apos;inizio alla testina</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ripple trim playhead to end</source>
+        <translation>Elimina dalla testina alla fine</translation>
     </message>
     <message>
         <location line="+20"/>
@@ -3155,6 +3715,16 @@
         <location line="+0"/>
         <source>Delete clips</source>
         <translation>Elimina clip</translation>
+    </message>
+    <message>
+        <location line="+74"/>
+        <source>Ripple delete clip</source>
+        <translation>Elimina la clip e chiudi lo spazio</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ripple delete clips</source>
+        <translation>Elimina le clip e chiudi lo spazio</translation>
     </message>
     <message>
         <location line="+45"/>
@@ -3253,6 +3823,16 @@
         <location line="+45"/>
         <source>Change background</source>
         <translation>Cambia sfondo</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Enable magnetic main track</source>
+        <translation>Attiva la traccia principale magnetica</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Disable magnetic main track</source>
+        <translation>Disattiva la traccia principale magnetica</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -3533,12 +4113,12 @@
 <context>
     <name>vedit::engine::MediaProducerCache</name>
     <message>
-        <location filename="../src/engine/timeline/MediaProducerCache.cpp" line="+52"/>
+        <location filename="../src/engine/timeline/MediaProducerCache.cpp" line="+62"/>
         <source>The file is missing: %1</source>
         <translation>Il file non c&apos;è più: %1</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+20"/>
         <source>This file cannot be opened: the format is not supported or the file is damaged.</source>
         <translation>Impossibile aprire questo file: il formato non è supportato o il file è danneggiato.</translation>
     </message>
@@ -3613,7 +4193,7 @@
 <context>
     <name>vedit::engine::TimelinePlayer</name>
     <message>
-        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+127"/>
+        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+128"/>
         <source>No audio output is available (SDL2).</source>
         <translation>Nessuna uscita audio disponibile (SDL2).</translation>
     </message>
@@ -3682,18 +4262,28 @@
         <translation>Dividi</translation>
     </message>
     <message>
+        <location line="+3"/>
+        <source>Delete left of the playhead</source>
+        <translation>Elimina a sinistra della testina</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Delete right of the playhead</source>
+        <translation>Elimina a destra della testina</translation>
+    </message>
+    <message>
         <location line="+2"/>
         <source>Edit text</source>
         <translation>Modifica testo</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+234"/>
+        <location line="+265"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-233"/>
+        <location line="-264"/>
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
@@ -3819,6 +4409,66 @@
     </message>
     <message>
         <location line="+3"/>
+        <source>Ripple delete</source>
+        <translation>Elimina e chiudi lo spazio</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Shift+Del</source>
+        <translation>Maiusc+Canc</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Next cut</source>
+        <translation>Taglio successivo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Down</source>
+        <translation>Giù</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Previous cut</source>
+        <translation>Taglio precedente</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Up</source>
+        <translation>Su</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Toggle magnetic track</source>
+        <translation>Traccia magnetica sì/no</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Toggle snapping</source>
+        <translation>Aggancio sì/no</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Set In point</source>
+        <translation>Imposta il punto di entrata</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Set Out point</source>
+        <translation>Imposta il punto di uscita</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Clear In/Out points</source>
+        <translation>Cancella i punti di entrata e uscita</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Alt+X</source>
+        <translation>Alt+X</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Group into a compound clip</source>
         <translation>Raggruppa in una clip composta</translation>
     </message>
@@ -3928,7 +4578,7 @@
         <translation>Formato 4:5 (post Instagram)</translation>
     </message>
     <message>
-        <location line="+126"/>
+        <location line="+128"/>
         <location line="+1"/>
         <source>Filter</source>
         <translation>Filtro</translation>
@@ -3972,8 +4622,8 @@
         <translation>Animazione in ciclo</translation>
     </message>
     <message>
-        <location line="-235"/>
-        <location line="+236"/>
+        <location line="-266"/>
+        <location line="+267"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -4007,7 +4657,7 @@
         <translation>Creazione del progetto dal modello non riuscita.</translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="+61"/>
         <source>Project recovered: vedit did not close properly last time. Your latest changes are here.</source>
         <translation>Progetto recuperato: l&apos;ultima volta vedit non si è chiuso correttamente. Le tue ultime modifiche sono qui.</translation>
     </message>
@@ -4635,12 +5285,12 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+199"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+202"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
     <message>
-        <location line="+383"/>
+        <location line="+384"/>
         <source>Import media</source>
         <translation>Importa media</translation>
     </message>
@@ -4704,6 +5354,36 @@
         <translation>Riattiva audio della traccia</translation>
     </message>
     <message>
+        <location line="+11"/>
+        <source>Lock track</source>
+        <translation>Blocca traccia</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Unlock track</source>
+        <translation>Sblocca traccia</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Hide track</source>
+        <translation>Nascondi traccia</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Show track</source>
+        <translation>Mostra traccia</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Solo track</source>
+        <translation>Traccia in solo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Unsolo track</source>
+        <translation>Togli il solo dalla traccia</translation>
+    </message>
+    <message>
         <location line="+13"/>
         <source>Move the playhead over a video clip to freeze a frame.</source>
         <translation>Porta il playhead su una clip video per congelare un fotogramma.</translation>
@@ -4736,7 +5416,25 @@
         <translation>Dividi clip</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+56"/>
+        <location line="+9"/>
+        <location line="+17"/>
+        <location line="+9"/>
+        <source>Move the playhead over a clip to ripple trim.</source>
+        <translation>Porta la testina sopra una clip per eliminare una parte.</translation>
+    </message>
+    <message>
+        <location line="-18"/>
+        <source>Trimmed start to playhead</source>
+        <translation>Eliminato dall&apos;inizio alla testina</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Trimmed playhead to end</source>
+        <translation>Eliminato dalla testina alla fine</translation>
+    </message>
+    <message>
+        <location line="+15"/>
         <source>Clip deleted</source>
         <translation>Clip eliminata</translation>
     </message>
@@ -4749,12 +5447,106 @@
         </translation>
     </message>
     <message>
-        <location line="+153"/>
+        <location line="+20"/>
+        <source>Ripple deleted clip</source>
+        <translation>Clip eliminata, spazio chiuso</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+0"/>
+        <source>%n clips ripple deleted</source>
+        <translation>
+            <numerusform>%n clip eliminata, spazio chiuso</numerusform>
+            <numerusform>%n clip eliminate, spazio chiuso</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+91"/>
+        <source>Snapping enabled</source>
+        <translation>Aggancio attivato</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Snapping disabled</source>
+        <translation>Aggancio disattivato</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Preview axis on: point at the timeline to see that frame</source>
+        <translation>Asse di anteprima attivo: punta la timeline per vedere quel fotogramma</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Preview axis off</source>
+        <translation>Asse di anteprima disattivato</translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>Magnetic main track enabled</source>
+        <translation>Traccia principale magnetica attivata</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Magnetic main track disabled</source>
+        <translation>Traccia principale magnetica disattivata</translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <source>In point set at %1</source>
+        <translation>Punto di entrata a %1</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Out point set at %1</source>
+        <translation>Punto di uscita a %1</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>In/Out points cleared</source>
+        <translation>Punti di entrata e uscita cancellati</translation>
+    </message>
+    <message>
+        <location line="+171"/>
         <source>Change format</source>
         <translation>Cambia formato</translation>
     </message>
     <message>
-        <location line="+109"/>
+        <location line="+84"/>
+        <source>The cover could not be saved.</source>
+        <translation>Non è stato possibile salvare la copertina.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>No video frame available to set as cover.</source>
+        <translation>Nessun fotogramma disponibile per la copertina.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Cover set from current frame.</source>
+        <translation>Copertina presa dal fotogramma corrente.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>This picture cannot be opened.</source>
+        <translation>Questa immagine non si può aprire.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Cover set from the picture.</source>
+        <translation>Copertina presa dall&apos;immagine.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Cover removed: the draft shows where you stopped editing.</source>
+        <translation>Copertina rimossa: la bozza mostra il punto in cui hai smesso di montare.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <location line="+19"/>
+        <source>cover</source>
+        <translation>copertina</translation>
+    </message>
+    <message>
+        <location line="+76"/>
         <source>%1 GB</source>
         <translation>%1 GB</translation>
     </message>
@@ -4792,7 +5584,7 @@
 <context>
     <name>vedit::ui::TimelineModel</name>
     <message>
-        <location filename="../src/ui/models/TimelineModel.cpp" line="+164"/>
+        <location filename="../src/ui/models/TimelineModel.cpp" line="+165"/>
         <source>Sticker</source>
         <translation>Sticker</translation>
     </message>

@@ -55,6 +55,7 @@ ApplicationWindow {
         EditorScreen {
             editor: App.editor
             onMessage: (text, undoable) => window.showMessage(text, undoable)
+            onInfoRequested: infoDialog.open()
         }
     }
 

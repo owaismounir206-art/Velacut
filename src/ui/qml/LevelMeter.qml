@@ -1,5 +1,6 @@
-// Audio level of a track or of the whole mix (SPEC §5.9): a bar on a −60…0 dB scale, red when the sound clips.
-// It reads the level while the video plays and until the peak has fallen back.
+// Audio level of a track or of the whole mix (SPEC §5.9): lit segments on a −60…0 dB scale (it reads as a meter,
+// not as a scroll bar), the loud ones (above −6 dB) in the tertiary colour, red when the sound clips. It reads the
+// level while the video plays and until the peak has fallen back.
 pragma ComponentBehavior: Bound
 import QtQuick
 import Vedit.Theme
@@ -13,6 +14,8 @@ Item {
     property real level: 0 // linear peak, 1 = full scale
 
     readonly property real fraction: level <= 0.001 ? 0 : Math.max(0, Math.min(1, (20 * Math.log10(level) + 60) / 60))
+    // One segment every ~3 dB, fewer on short meters.
+    readonly property int segments: Math.max(4, Math.min(20, Math.floor(height / (Theme.editor.meterWidth * 1.5))))
 
     implicitWidth: Theme.editor.meterWidth
     Accessible.role: Accessible.ProgressBar
@@ -24,17 +27,29 @@ Item {
         running: meter.visible && (meter.player.playing || meter.level > 0.001)
         onTriggered: meter.level = meter.player.audioLevel(meter.key)
     }
-    Rectangle {
+    Column {
         anchors.fill: parent
-        radius: width / 2
-        color: Theme.color.surfaceContainerHighest
+        spacing: Theme.editor.hairline
+        Repeater {
+            model: meter.segments
+            delegate: Rectangle {
+                required property int index
+                // From the top: the last segment is full scale.
+                readonly property real threshold: 1 - index / meter.segments
+                width: meter.width
+                height: (meter.height - (meter.segments - 1) * Theme.editor.hairline) / meter.segments
+                radius: Theme.editor.hairline
+                color: meter.fraction < threshold - 1 / meter.segments + 0.0001 ? Theme.color.surfaceContainerHighest
+                     : index === 0 && meter.level >= 1 ? Theme.color.error
+                     : threshold > 0.9 ? Theme.color.tertiary : Theme.color.primary
+            }
+        }
     }
-    Rectangle {
+    // The bar itself, for tests and screen readers: as tall as the level.
+    Item {
         objectName: "meterBar"
         anchors.bottom: parent.bottom
         width: parent.width
         height: parent.height * meter.fraction
-        radius: width / 2
-        color: meter.level >= 1 ? Theme.color.error : Theme.color.primary
     }
 }

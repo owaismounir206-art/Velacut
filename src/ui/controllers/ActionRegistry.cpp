@@ -78,6 +78,11 @@ ActionRegistry::ActionRegistry(EditorController &editor)
     // The contextual toolbar, in order (SPEC 0bis rule 3). Features of later phases get their entry with them.
     add({u"split"_s, tr("Split"), u"content_cut"_s, u"S"_s, AnyClip | Nothing, [this] { return m_editor.canSplit(); },
          [this] { return m_editor.split(); }});
+    // Q / W: everything of the clip before (after) the playhead goes, the gap closes (SPEC §5.2).
+    add({u"rippleTrimLeft"_s, tr("Delete left of the playhead"), u"keyboard_tab_rtl"_s, u"Q"_s, AnyClip | Nothing,
+         [this] { return m_editor.canRippleTrimLeft(); }, [this] { return m_editor.rippleTrimLeft(); }});
+    add({u"rippleTrimRight"_s, tr("Delete right of the playhead"), u"keyboard_tab"_s, u"W"_s, AnyClip | Nothing,
+         [this] { return m_editor.canRippleTrimRight(); }, [this] { return m_editor.rippleTrimRight(); }});
     add({u"textEdit"_s, tr("Edit text"), u"edit"_s, {}, Text, clip, properties(u"text"_s)});
     add({u"textStyle"_s, tr("Text style"), u"style"_s, {}, Text, always, library(u"text"_s)});
     add({u"delete"_s, tr("Delete"), u"delete"_s, tr("Del"), AnyClip | TransitionSelected,
@@ -129,10 +134,6 @@ ActionRegistry::ActionRegistry(EditorController &editor)
     add({u"pasteAttributes"_s, tr("Paste attributes"), u"content_paste"_s, tr("Ctrl+Alt+V"), 0,
          [this, inspector] { return inspector->canPaste() && !m_editor.selectedClips().empty(); },
          [inspector] { return inspector->pasteAttributes(); }});
-    add({u"rippleTrimLeft"_s, tr("Ripple trim start to playhead"), u"content_cut"_s, u"Q"_s, 0,
-         [this] { return m_editor.canRippleTrimLeft(); }, [this] { return m_editor.rippleTrimLeft(); }});
-    add({u"rippleTrimRight"_s, tr("Ripple trim playhead to end"), u"content_cut"_s, u"W"_s, 0,
-         [this] { return m_editor.canRippleTrimRight(); }, [this] { return m_editor.rippleTrimRight(); }});
     add({u"rippleDelete"_s, tr("Ripple delete"), u"backspace"_s, tr("Shift+Del"), 0, clip,
          [this] { return m_editor.rippleDeleteSelection(); }});
     add({u"nextCut"_s, tr("Next cut"), u"skip_next"_s, tr("Down"), 0, always, [this] {

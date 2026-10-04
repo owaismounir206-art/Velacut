@@ -47,10 +47,17 @@ Item {
     Accessible.name: qsTr("Clip %1").arg(name)
     Accessible.selected: selected
 
+    // Pictures run under a label strip; coloured clips (audio, text, stickers) carry their label on their colour.
+    readonly property bool pictured: kind === "video" || kind === "image"
+    readonly property color labelColor: kind === "audio" ? Theme.color.onTertiaryContainer
+                                      : kind === "text" ? Theme.color.onPrimaryContainer
+                                      : kind === "sticker" ? Theme.color.onSecondaryContainer
+                                      : pictured ? Theme.readableOn(Theme.color.scrim) : Theme.color.onSurface
+
     Rectangle {
         id: body
         anchors.fill: parent
-        radius: Theme.shape.small
+        radius: Theme.shape.extraSmall
         color: clip.kind === "audio" ? Theme.color.tertiaryContainer
              : clip.kind === "text" ? Theme.color.primaryContainer
              : clip.kind === "sticker" ? Theme.color.secondaryContainer
@@ -98,23 +105,45 @@ Item {
                 color: Theme.color.onTertiaryContainer
             }
         }
+        // Name and duration along the top of the clip.
         Rectangle {
-            x: Theme.space.xs
-            y: Theme.space.xs
-            visible: clip.width > Theme.space.xxxl
-            width: Math.min(nameLabel.implicitWidth + 2 * Theme.space.xs, parent.width - 2 * Theme.space.xs)
-            height: nameLabel.implicitHeight
-            radius: Theme.shape.extraSmall
-            color: Theme.color.inverseSurface
-            Label {
-                id: nameLabel
+            width: parent.width
+            height: Theme.editor.clipLabelHeight
+            visible: clip.width > Theme.space.xl
+            color: clip.pictured ? Theme.alpha(Theme.color.scrim, 0.45) : "transparent"
+            Row {
                 anchors.fill: parent
-                anchors.leftMargin: Theme.space.xs
-                anchors.rightMargin: Theme.space.xs
-                role: "labelSmall"
-                elide: Text.ElideRight
-                color: Theme.color.inverseOnSurface
-                text: clip.name
+                anchors.leftMargin: Theme.space.xs + (clip.selected ? Theme.editor.trimHandleWidth : 0)
+                anchors.rightMargin: Theme.space.xs + (clip.selected ? Theme.editor.trimHandleWidth : 0)
+                spacing: Theme.space.xs
+                clip: true
+                Icon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: clip.kind === "audio" ? "music_note" : clip.kind === "text" ? "title"
+                        : clip.kind === "sticker" ? "add_reaction" : clip.kind === "adjustment" ? "tune"
+                        : clip.kind === "compound" ? "stacks" : clip.kind === "image" ? "image" : "movie"
+                    size: Theme.editor.clipLabelHeight - Theme.space.xs
+                    color: clip.labelColor
+                }
+                Label {
+                    id: nameLabel
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.min(implicitWidth, parent.width - x - (durationText.visible ? durationText.width + Theme.space.xs : 0))
+                    role: "labelSmall"
+                    elide: Text.ElideRight
+                    color: clip.labelColor
+                    text: clip.name
+                }
+                Label {
+                    id: durationText
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: parent.width > nameLabel.implicitWidth + implicitWidth + Theme.space.xl
+                    role: "labelSmall"
+                    font.features: { "tnum": 1 }
+                    color: clip.labelColor
+                    opacity: 0.8
+                    text: clip.view.player.timecode(clip.shownDuration)
+                }
             }
         }
         // Keyframes of the selected clip: diamonds at the bottom; a click moves the playhead there.
@@ -172,17 +201,17 @@ Item {
             border.width: clip.selected ? Theme.editor.selectionBorder : Theme.editor.hairline
             border.color: clip.selected ? Theme.color.primary
                         : clip.kind === "adjustment" ? Theme.color.tertiary
-                        : Theme.color.outlineVariant
+                        : Theme.alpha(Theme.color.scrim, 0.5)
         }
         Icon {
             visible: clip.locked
             anchors.right: parent.right
-            anchors.top: parent.top
+            anchors.bottom: parent.bottom
             anchors.margins: Theme.space.xxs
             name: "lock"
-            size: 14
-            color: Theme.color.onSurfaceVariant
-            opacity: 0.7
+            size: Theme.editor.smallIconSize
+            color: clip.labelColor
+            opacity: 0.8
         }
     }
 
@@ -347,10 +376,10 @@ Item {
             id: trimTooltip
             visible: handle.pressed
             anchors.bottom: parent.top
-            anchors.bottomMargin: 4
+            anchors.bottomMargin: Theme.space.xs
             anchors.horizontalCenter: parent.horizontalCenter
-            width: trimLabel.implicitWidth + 12
-            height: 20
+            width: trimLabel.implicitWidth + Theme.space.md
+            height: Theme.editor.badgeHeight
             radius: Theme.shape.extraSmall
             color: Theme.color.inverseSurface
             z: 30
@@ -359,33 +388,27 @@ Item {
                 anchors.centerIn: parent
                 role: "labelSmall"
                 font.features: { "tnum": 1 }
-                font.bold: true
                 color: Theme.color.inverseOnSurface
-                property int delta: startEdge ? clip.start - clip.editStart : clip.editEnd - (clip.start + clip.duration)
-                text: (delta >= 0 ? "+" : "") + delta + "f (" + clip.view.player.timecode(clip.shownDuration) + ")"
+                property int delta: handle.startEdge ? clip.start - clip.editStart : clip.editEnd - (clip.start + clip.duration)
+                text: qsTr("%1 · %2f").arg(clip.view.player.timecode(clip.shownDuration)).arg((delta >= 0 ? "+" : "") + delta)
             }
         }
 
+        // Selected: solid handles on both edges, with a grip; pointed at: a lighter one.
         Rectangle {
             anchors.fill: parent
-            anchors.margins: Theme.space.xxs
-            radius: Theme.shape.extraSmall
             visible: handle.containsMouse || handle.pressed || clip.selected
-            color: handle.pressed ? Theme.color.primary : Theme.color.primaryContainer
-            opacity: handle.pressed ? 1.0 : handle.containsMouse ? 0.9 : 0.6
-            Column {
+            topLeftRadius: handle.startEdge ? Theme.shape.extraSmall : 0
+            bottomLeftRadius: handle.startEdge ? Theme.shape.extraSmall : 0
+            topRightRadius: handle.startEdge ? 0 : Theme.shape.extraSmall
+            bottomRightRadius: handle.startEdge ? 0 : Theme.shape.extraSmall
+            color: clip.selected || handle.pressed ? Theme.color.primary : Theme.alpha(Theme.color.primary, 0.6)
+            Rectangle {
                 anchors.centerIn: parent
-                spacing: 3
-                visible: parent.visible
-                Repeater {
-                    model: 2
-                    delegate: Rectangle {
-                        width: 2
-                        height: 2
-                        radius: 1
-                        color: handle.pressed ? Theme.color.onPrimary : Theme.color.onPrimaryContainer
-                    }
-                }
+                width: Theme.editor.gripSize
+                height: Math.min(parent.height / 3, Theme.space.lg)
+                radius: Theme.shape.full
+                color: Theme.color.onPrimary
             }
         }
     }

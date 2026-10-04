@@ -9,9 +9,10 @@ Item {
     property bool selected: false
     property bool focusIndicator: false
     property int badgeCount: -1
+    property bool compact: false
     signal clicked()
 
-    implicitHeight: 56
+    implicitHeight: compact ? 52 : 56
     implicitWidth: 80
 
     Accessible.role: Accessible.PageTab
@@ -52,13 +53,13 @@ Item {
     }
     TypeText {
         anchors.top: pill.bottom
-        anchors.topMargin: 4
+        anchors.topMargin: root.compact ? 2 : 4
         anchors.horizontalCenter: parent.horizontalCenter
-        width: parent.width - 8
+        width: parent.width - 4
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
         text: root.text
-        role: "labelMedium"
+        role: root.compact ? "labelSmall" : "labelMedium"
         color: root.selected ? Theme.color.onSurface : Theme.color.onSurfaceVariant
     }
     MouseArea {

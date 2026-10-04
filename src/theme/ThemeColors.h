@@ -62,6 +62,11 @@ class ThemeColors : public QObject
     Q_PROPERTY(QColor tertiaryFixedDim READ tertiaryFixedDim NOTIFY changed FINAL)
     Q_PROPERTY(QColor onTertiaryFixed READ onTertiaryFixed NOTIFY changed FINAL)
     Q_PROPERTY(QColor onTertiaryFixedVariant READ onTertiaryFixedVariant NOTIFY changed FINAL)
+    // Editor surfaces derived from the roles above (not M3 roles of their own): the backdrop of the editor window and
+    // the panels standing on it (library, player, properties, timeline). Dark: panels lighter than the backdrop;
+    // light: white panels on a tinted backdrop. Same tonal palette, so they follow the dynamic colour.
+    Q_PROPERTY(QColor backdrop READ backdrop NOTIFY changed FINAL)
+    Q_PROPERTY(QColor panel READ panel NOTIFY changed FINAL)
 
 public:
     using QObject::QObject;
@@ -125,6 +130,9 @@ public:
     QColor tertiaryFixedDim() const { return m_scheme[ColorRole::TertiaryFixedDim]; }
     QColor onTertiaryFixed() const { return m_scheme[ColorRole::OnTertiaryFixed]; }
     QColor onTertiaryFixedVariant() const { return m_scheme[ColorRole::OnTertiaryFixedVariant]; }
+    bool darkScheme() const { return surface().lightnessF() < 0.5; }
+    QColor backdrop() const { return darkScheme() ? surfaceContainerLowest() : surfaceContainerHigh(); }
+    QColor panel() const { return darkScheme() ? surfaceContainer() : surfaceContainerLowest(); }
 
 signals:
     void changed();

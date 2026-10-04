@@ -90,14 +90,14 @@ Rectangle {
         }
     }
 
-    color: Theme.color.surface
+    color: "transparent" // the library panel's surface
 
     Timer {
         id: loop
         property int first
         property int last
         property int frame
-        interval: Theme.motion.medium2 / 4
+        interval: Theme.editor.previewLoopInterval
         repeat: true
         onTriggered: {
             const step = Math.max(1, Math.round(panel.editor.frameRate * interval / 1000))
@@ -122,18 +122,17 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Theme.space.md
+        anchors.topMargin: 0
         spacing: Theme.space.sm
 
-        RowLayout {
+        LibraryHeader {
             Layout.fillWidth: true
-            Label {
-                Layout.fillWidth: true
-                role: "titleMedium"
-                text: panel.title
-            }
+            title: panel.title
             Button {
                 objectName: "importStickers"
+                anchors.verticalCenter: parent.verticalCenter
                 visible: panel.stickers
+                implicitHeight: Theme.editor.toolButtonSize
                 variant: "tonal"
                 iconName: "upload"
                 text: qsTr("Import")
@@ -141,8 +140,10 @@ Rectangle {
             }
             Button {
                 objectName: "addDefaultText"
+                anchors.verticalCenter: parent.verticalCenter
                 visible: panel.texts
-                variant: "tonal"
+                implicitHeight: Theme.editor.toolButtonSize
+                variant: "filled"
                 iconName: "add"
                 text: qsTr("Default text")
                 onClicked: panel.editor.addText()
@@ -150,6 +151,7 @@ Rectangle {
         }
         SearchBar {
             Layout.fillWidth: true
+            compact: true
             placeholderText: qsTr("Search")
             onTextChanged: library.search = text
         }

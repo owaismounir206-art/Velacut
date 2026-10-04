@@ -4,7 +4,7 @@
 <context>
     <name>HomeScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/HomeScreen.qml" line="+124"/>
+        <location filename="../src/ui/qml/HomeScreen.qml" line="+343"/>
         <source>%n project(s)</source>
         <translation>
             <numerusform>%n project</numerusform>
@@ -15,7 +15,7 @@
 <context>
     <name>PropertiesPanel</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+121"/>
+        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+185"/>
         <source>%n clip(s) selected: changes apply to all of them.</source>
         <translation>
             <numerusform>%n clip selected: changes apply to it.</numerusform>
@@ -28,6 +28,17 @@
         <translation>
             <numerusform>%n keyframe</numerusform>
             <numerusform>%n keyframes</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>TemplateCard</name>
+    <message numerus="yes">
+        <location filename="../src/ui/qml/TemplateCard.qml" line="+134"/>
+        <source>%1 · %n shot(s) · %2 s</source>
+        <translation>
+            <numerusform>%1 · %n shot · %2 s</numerusform>
+            <numerusform>%1 · %n shots · %2 s</numerusform>
         </translation>
     </message>
 </context>
@@ -54,7 +65,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+836"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+840"/>
         <source>%n beat(s) marked on the clip</source>
         <translation>
             <numerusform>%n beat marked on the clip</numerusform>
@@ -62,11 +73,19 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+235"/>
+        <location line="+357"/>
         <source>%n clips deleted</source>
         <translation>
             <numerusform>%n clip deleted</numerusform>
             <numerusform>%n clips deleted</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+20"/>
+        <source>%n clips ripple deleted</source>
+        <translation>
+            <numerusform>%n clip deleted, gap closed</numerusform>
+            <numerusform>%n clips deleted, gap closed</numerusform>
         </translation>
     </message>
 </context>

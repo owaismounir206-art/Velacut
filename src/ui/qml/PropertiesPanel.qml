@@ -74,26 +74,90 @@ Rectangle {
     readonly property bool maskEditing: page === "cutout" && (values["mask.shape"] ?? -1) >= 0
     onMaskEditingChanged: if (inspector.canvasMode !== "pick") inspector.canvasMode = maskEditing ? "mask" : ""
 
-    color: Theme.color.surfaceContainerLow
+    color: "transparent" // the properties panel's surface
 
-    // Nothing selected: say how to get here.
+    // Nothing selected: the project itself (as desktop editors show the draft's details), its format one click away
+    // (SPEC 0bis rule 1), and how to get to the properties of a clip.
     ColumnLayout {
-        anchors.centerIn: parent
-        width: parent.width - 2 * Theme.space.xl
+        objectName: "projectDetails"
+        anchors.fill: parent
+        anchors.margins: Theme.space.md
+        anchors.topMargin: 0
         visible: !panel.inspector.active
         spacing: Theme.space.sm
-        Icon {
-            Layout.alignment: Qt.AlignHCenter
-            name: "touch_app"
-            color: Theme.color.onSurfaceVariant
+
+        Item {
+            Layout.fillWidth: true
+            implicitHeight: Theme.editor.panelHeaderHeight
+            Label {
+                anchors.verticalCenter: parent.verticalCenter
+                role: "titleSmall"
+                text: qsTr("Project")
+            }
+        }
+        Repeater {
+            model: [{ label: qsTr("Name"), value: panel.editor.name },
+                    { label: qsTr("Size"), value: qsTr("%1 × %2").arg(panel.editor.canvasSize.width).arg(panel.editor.canvasSize.height) },
+                    { label: qsTr("Frame rate"), value: qsTr("%1 fps").arg(Math.round(panel.editor.frameRate * 100) / 100) },
+                    { label: qsTr("Duration"), value: panel.editor.player.timecode(panel.editor.timeline.duration) }]
+            delegate: RowLayout {
+                id: detail
+                required property var modelData
+                Layout.fillWidth: true
+                spacing: Theme.space.md
+                Label {
+                    Layout.preferredWidth: Theme.editor.valueWidth * 1.8
+                    role: "bodyMedium"
+                    color: Theme.color.onSurfaceVariant
+                    text: detail.modelData.label
+                }
+                Label {
+                    Layout.fillWidth: true
+                    role: "bodyMedium"
+                    elide: Text.ElideRight
+                    font.features: { "tnum": 1 }
+                    text: detail.modelData.value
+                }
+            }
         }
         Label {
+            Layout.topMargin: Theme.space.sm
+            role: "labelLarge"
+            text: qsTr("Format")
+        }
+        Flow {
             Layout.fillWidth: true
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.WordWrap
-            role: "bodyMedium"
-            color: Theme.color.onSurfaceVariant
-            text: qsTr("Select a clip on the timeline to change it here.")
+            spacing: Theme.space.xs
+            Repeater {
+                // Values of CanvasPreset (core/project/Sequence.h).
+                model: [{ text: "16:9", preset: 0 }, { text: "9:16", preset: 1 }, { text: "1:1", preset: 2 },
+                        { text: "4:5", preset: 3 }, { text: "3:4", preset: 5 }, { text: "21:9", preset: 4 }]
+                delegate: Chip {
+                    required property var modelData
+                    objectName: "projectFormat_" + modelData.preset
+                    text: modelData.text
+                    checkable: false
+                    checked: panel.editor.canvasPreset === modelData.preset
+                    onClicked: panel.editor.setCanvasPreset(modelData.preset)
+                }
+            }
+        }
+        Item { Layout.fillHeight: true }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.space.sm
+            Icon {
+                name: "touch_app"
+                size: Theme.editor.toolIconSize
+                color: Theme.color.onSurfaceVariant
+            }
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                role: "bodySmall"
+                color: Theme.color.onSurfaceVariant
+                text: qsTr("Select a clip on the timeline to change it here.")
+            }
         }
     }
 

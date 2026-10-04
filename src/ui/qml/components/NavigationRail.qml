@@ -1,4 +1,5 @@
-// Material 3 navigation rail (left library tabs). model: list of { text, iconName }.
+// Material 3 navigation rail (left library tabs). model: list of { text, iconName }. `compact` (dense desktop panels)
+// packs the destinations closer; when they do not fit in the height they scroll.
 import QtQuick
 import Vedit.Theme
 
@@ -7,6 +8,8 @@ FocusScope {
 
     property var model: []
     property int currentIndex: 0
+    property bool compact: false
+    property color color: Theme.color.surface
     // Optional item above the destinations (e.g. a FAB or a menu button).
     property alias header: headerSlot.data
     signal activated(int index)
@@ -22,32 +25,42 @@ FocusScope {
 
     Rectangle {
         anchors.fill: parent
-        color: Theme.color.surface
+        color: root.color
     }
 
-    Column {
-        id: column
-        width: parent.width
-        topPadding: 12
-        spacing: 12
+    Flickable {
+        anchors.fill: parent
+        contentHeight: column.implicitHeight
+        interactive: contentHeight > height
+        boundsBehavior: Flickable.StopAtBounds
+        clip: interactive
 
-        Item {
-            id: headerSlot
+        Column {
+            id: column
             width: parent.width
-            height: childrenRect.height
-        }
+            topPadding: root.compact ? Theme.space.sm : Theme.space.md
+            bottomPadding: topPadding
+            spacing: root.compact ? Theme.space.xxs : Theme.space.md
 
-        Repeater {
-            model: root.model
-            delegate: NavigationRailItem {
-                required property var modelData
-                required property int index
-                width: root.width
-                text: modelData.text
-                iconName: modelData.iconName
-                selected: index === root.currentIndex
-                focusIndicator: root.activeFocus && selected
-                onClicked: { root.currentIndex = index; root.forceActiveFocus(); root.activated(index) }
+            Item {
+                id: headerSlot
+                width: parent.width
+                height: childrenRect.height
+            }
+
+            Repeater {
+                model: root.model
+                delegate: NavigationRailItem {
+                    required property var modelData
+                    required property int index
+                    width: root.width
+                    text: modelData.text
+                    iconName: modelData.iconName
+                    compact: root.compact
+                    selected: index === root.currentIndex
+                    focusIndicator: root.activeFocus && selected
+                    onClicked: { root.currentIndex = index; root.forceActiveFocus(); root.activated(index) }
+                }
             }
         }
     }

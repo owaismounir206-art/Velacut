@@ -16,7 +16,7 @@ Rectangle {
 
     function importFiles() { fileDialog.open() }
 
-    color: Theme.color.surface
+    color: "transparent" // the library panel's surface
 
     FileDialog {
         id: fileDialog
@@ -30,59 +30,56 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Theme.space.md
-        spacing: Theme.space.md
+        anchors.topMargin: 0
+        spacing: Theme.space.sm
 
-        RowLayout {
+        LibraryHeader {
             Layout.fillWidth: true
-            Label {
-                Layout.fillWidth: true
-                role: "titleMedium"
-                text: qsTr("Media")
-            }
-            BusyIndicator {
-                Layout.preferredWidth: Theme.space.xl
-                Layout.preferredHeight: Theme.space.xl
-                running: panel.editor.importing
-                visible: running
-            }
+            title: qsTr("Media")
+            busy: panel.editor.importing
             Button {
-                variant: "tonal"
+                objectName: "importButton"
+                anchors.verticalCenter: parent.verticalCenter
+                implicitHeight: Theme.editor.toolButtonSize
+                variant: "filled"
                 iconName: "add"
                 text: qsTr("Import")
                 ToolTip.visible: hovered
                 ToolTip.text: qsTr("Import videos, photos and music (Ctrl+I)")
                 onClicked: panel.importFiles()
             }
-            Button {
+            IconButton {
                 id: recordButton
                 objectName: "recordButton"
+                anchors.verticalCenter: parent.verticalCenter
+                implicitWidth: Theme.editor.toolButtonSize
+                implicitHeight: Theme.editor.toolButtonSize
+                iconSize: Theme.editor.toolIconSize
                 variant: "tonal"
-                iconName: "fiber_manual_record"
-                text: qsTr("Record")
-                ToolTip.visible: hovered
-                ToolTip.text: qsTr("Record voiceover, screen or webcam")
-                onClicked: recordMenu.open()
+                iconName: "mic"
+                label: qsTr("Record voiceover, screen or webcam")
+                onClicked: recordMenu.popup(recordButton, 0, recordButton.height)
 
                 Menu {
                     id: recordMenu
                     MenuItem {
                         text: qsTr("Voiceover")
-                        icon.name: "mic"
+                        iconName: "mic"
                         onTriggered: panel.editor.startRecord(0)
                     }
                     MenuItem {
                         text: qsTr("Screen")
-                        icon.name: "screen_record"
+                        iconName: "screen_record"
                         onTriggered: panel.editor.startRecord(1)
                     }
                     MenuItem {
                         text: qsTr("Webcam")
-                        icon.name: "videocam"
+                        iconName: "videocam"
                         onTriggered: panel.editor.startRecord(2)
                     }
                     MenuItem {
                         text: qsTr("Screen & Webcam")
-                        icon.name: "picture_in_picture"
+                        iconName: "picture_in_picture"
                         onTriggered: panel.editor.startRecord(3)
                     }
                 }

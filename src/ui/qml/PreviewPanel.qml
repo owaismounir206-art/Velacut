@@ -1,4 +1,6 @@
-// Preview of the timeline with its transport: play/pause (Space, J/K/L), position and duration.
+// The player (SPEC §4, §5.3): a header, the preview with its handles on the canvas, and the transport: position and
+// duration on the left, play/pause (Space, J/K/L) in the middle, scopes, still frame, format and full screen on the
+// right.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
@@ -7,54 +9,88 @@ import Vedit.Components
 import Vedit.Theme
 import Vedit.UI
 
-Rectangle {
+Item {
     id: panel
 
     required property Editor editor
     readonly property TimelinePlayer player: editor.player
     property bool showScopes: false
+    signal fullScreenRequested()
+    signal frameRequested()
 
-    color: Theme.color.surfaceContainerLowest
+    component Tool: IconButton {
+        implicitWidth: Theme.editor.toolButtonSize
+        implicitHeight: Theme.editor.toolButtonSize
+        iconSize: Theme.editor.toolIconSize
+    }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: Theme.space.md
-        spacing: Theme.space.sm
+        spacing: 0
+
+        // Header: what this panel is, and the format of the video.
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Theme.editor.panelHeaderHeight
+            Layout.leftMargin: Theme.space.md
+            Layout.rightMargin: Theme.space.sm
+            spacing: Theme.space.sm
+            Label {
+                Layout.fillWidth: true
+                role: "titleSmall"
+                text: qsTr("Player")
+            }
+            Label {
+                visible: panel.player.preparingReverse
+                role: "labelSmall"
+                color: Theme.color.onSurfaceVariant
+                text: qsTr("Preparing the reversed clip… %1%").arg(Math.round(panel.player.reverseProgress * 100))
+            }
+            Label {
+                role: "labelSmall"
+                font.features: { "tnum": 1 }
+                color: Theme.color.onSurfaceVariant
+                text: qsTr("%1 × %2 · %3 fps").arg(panel.editor.canvasSize.width).arg(panel.editor.canvasSize.height)
+                          .arg(Math.round(panel.editor.frameRate * 100) / 100)
+            }
+        }
 
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.leftMargin: Theme.space.sm
+            Layout.rightMargin: Theme.space.sm
 
             VideoPreview {
+                id: video
                 anchors.fill: parent
-                anchors.rightMargin: Theme.editor.meterWidth + Theme.space.sm // room for the master meter
                 sink: panel.player.sink
-                backgroundColor: panel.color
+                backgroundColor: Theme.color.panel
             }
             CanvasHandles {
                 anchors.fill: parent
-                anchors.rightMargin: Theme.editor.meterWidth + Theme.space.sm
                 editor: panel.editor
             }
-            // Level of the whole mix (master).
-            LevelMeter {
-                objectName: "masterMeter"
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                player: panel.player
-                key: "master"
-            }
             // Before the first clip: say what to do, in the place where the result will appear.
-            Label {
+            ColumnLayout {
                 anchors.centerIn: parent
                 width: Math.min(parent.width - 2 * Theme.space.xl, Theme.editor.dialogWidth)
                 visible: panel.editor.timeline.duration === 0
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.WordWrap
-                role: "bodyLarge"
-                color: Theme.color.onSurfaceVariant
-                text: qsTr("Add a video or a photo to the timeline: the preview appears here.")
+                spacing: Theme.space.sm
+                Icon {
+                    Layout.alignment: Qt.AlignHCenter
+                    name: "smart_display"
+                    size: Theme.space.xxxl
+                    color: Theme.color.outline
+                }
+                Label {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    role: "bodyMedium"
+                    color: Theme.color.onSurfaceVariant
+                    text: qsTr("Add a video or a photo to the timeline: the preview appears here.")
+                }
             }
 
             ScopePanel {
@@ -63,38 +99,65 @@ Rectangle {
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
                 anchors.right: parent.right
-                anchors.rightMargin: Theme.editor.meterWidth + Theme.space.sm
-                height: Math.min(parent.height * 0.5, 220)
+                height: Math.min(parent.height * 0.5, Theme.editor.timelineDefaultHeight * 0.75)
                 visible: panel.showScopes
                 sink: panel.player.sink
                 onCloseRequested: panel.showScopes = false
             }
         }
 
-        // Position on the left, buttons in the centre, duration on the right, at any width.
+        // Transport: position / duration on the left, buttons in the centre, tools on the right, at any width.
         Item {
             Layout.fillWidth: true
-            implicitHeight: buttons.implicitHeight
+            Layout.preferredHeight: Theme.editor.toolbarHeight
+            Layout.leftMargin: Theme.space.md
+            Layout.rightMargin: Theme.space.sm
 
-            Label {
+            Row {
+                id: times
                 anchors { left: parent.left; verticalCenter: parent.verticalCenter }
-                role: "labelLarge"
-                font.features: { "tnum": 1 }
-                text: panel.player.timecode(panel.player.skimming ? panel.player.shownPosition : panel.player.position)
-                color: panel.player.skimming ? Theme.color.onSurfaceVariant : Theme.color.onSurface
-                Accessible.name: qsTr("Position")
+                spacing: Theme.space.xs
+                Label {
+                    role: "labelLarge"
+                    font.features: { "tnum": 1 }
+                    text: panel.player.timecode(panel.player.skimming ? panel.player.shownPosition : panel.player.position)
+                    color: panel.player.skimming ? Theme.color.onSurfaceVariant : Theme.color.primary
+                    Accessible.name: qsTr("Position")
+                }
+                Label {
+                    role: "labelLarge"
+                    color: Theme.color.outline
+                    text: "/"
+                }
+                Label {
+                    id: durationLabel
+                    role: "labelLarge"
+                    font.features: { "tnum": 1 }
+                    color: Theme.color.onSurfaceVariant
+                    text: panel.player.rate !== 0 && panel.player.rate !== 1
+                          ? qsTr("%1 · %2×").arg(panel.player.timecode(panel.editor.timeline.duration)).arg(panel.player.rate)
+                          : panel.player.timecode(panel.editor.timeline.duration)
+                    Accessible.name: qsTr("Duration")
+                }
             }
+            // Centred, moved aside when the player is too narrow for the times and the tools around it.
             Row {
                 id: buttons
-                anchors.centerIn: parent
+                anchors.verticalCenter: parent.verticalCenter
+                x: Math.max(times.width + Theme.space.sm, Math.min((parent.width - width) / 2, tools.x - width - Theme.space.sm))
                 spacing: Theme.space.sm
-                IconButton {
+                Tool {
+                    anchors.verticalCenter: parent.verticalCenter
                     iconName: "skip_previous"
                     label: qsTr("Go to start")
                     shortcutText: "Home"
                     onClicked: panel.player.seek(0)
                 }
                 IconButton {
+                    objectName: "playButton"
+                    anchors.verticalCenter: parent.verticalCenter
+                    implicitWidth: Theme.editor.playButtonSize
+                    implicitHeight: Theme.editor.playButtonSize
                     variant: "filled"
                     iconName: panel.player.playing ? "pause" : "play_arrow"
                     label: panel.player.playing ? qsTr("Pause") : qsTr("Play")
@@ -102,54 +165,52 @@ Rectangle {
                     enabled: panel.editor.timeline.duration > 0
                     onClicked: panel.player.togglePlay()
                 }
-                IconButton {
+                Tool {
+                    anchors.verticalCenter: parent.verticalCenter
                     iconName: "skip_next"
                     label: qsTr("Go to end")
                     shortcutText: qsTr("End")
                     onClicked: panel.player.seek(panel.editor.timeline.duration)
                 }
             }
-            IconButton {
-                id: scopesBtn
-                objectName: "scopesButton"
-                anchors { right: photoBtn.left; rightMargin: Theme.space.xs; verticalCenter: parent.verticalCenter }
-                variant: panel.showScopes ? "filled" : "standard"
-                iconName: "monitoring"
-                label: qsTr("Video scopes (histogram, waveform, vectorscope)")
-                onClicked: panel.showScopes = !panel.showScopes
-            }
-            // The frame on screen as an image (SPEC §5.15): cover, thumbnail, a still to share.
-            IconButton {
-                id: photoBtn
-                objectName: "exportFrameButton"
-                anchors { right: formatBtn.left; rightMargin: Theme.space.xs; verticalCenter: parent.verticalCenter }
-                iconName: "photo_camera"
-                label: qsTr("Save the current frame as an image")
-                enabled: panel.editor.timeline.duration > 0
-                onClicked: {
-                    const path = panel.editor.exportCurrentFrame(panel.editor.name, App.videosFolder())
-                    if (path !== "")
-                        App.message(qsTr("Frame saved as %1").arg(path))
-                    else
-                        App.message(qsTr("The frame could not be saved."))
-                }
-            }
-            // Format of the canvas under the player (SPEC §4), one click away (SPEC 0bis rule 1).
-            FormatButton {
-                id: formatBtn
-                anchors { right: durationLabel.left; rightMargin: Theme.space.sm; verticalCenter: parent.verticalCenter }
-                editor: panel.editor
-            }
-            Label {
-                id: durationLabel
+            Row {
+                id: tools
                 anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-                role: "labelLarge"
-                font.features: { "tnum": 1 }
-                color: Theme.color.onSurfaceVariant
-                text: panel.player.rate !== 0 && panel.player.rate !== 1
-                      ? qsTr("%1× · %2").arg(panel.player.rate).arg(panel.player.timecode(panel.editor.timeline.duration))
-                      : panel.player.timecode(panel.editor.timeline.duration)
-                Accessible.name: qsTr("Duration")
+                spacing: Theme.space.xxs
+                Tool {
+                    id: scopesBtn
+                    objectName: "scopesButton"
+                    anchors.verticalCenter: parent.verticalCenter
+                    checkable: true
+                    checked: panel.showScopes
+                    iconName: "monitoring"
+                    label: qsTr("Video scopes (histogram, waveform, vectorscope)")
+                    onClicked: panel.showScopes = !panel.showScopes
+                }
+                // The frame on screen as an image (SPEC §5.15): cover, thumbnail, a still to share.
+                Tool {
+                    objectName: "exportFrameButton"
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconName: "photo_camera"
+                    label: qsTr("Save the current frame as an image")
+                    shortcutText: qsTr("Ctrl+Shift+E")
+                    enabled: panel.editor.timeline.duration > 0
+                    onClicked: panel.frameRequested()
+                }
+                // Format of the canvas under the player (SPEC §4), one click away (SPEC 0bis rule 1).
+                FormatButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    editor: panel.editor
+                }
+                Tool {
+                    objectName: "fullScreenButton"
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconName: "fullscreen"
+                    label: qsTr("Full screen")
+                    shortcutText: "F11"
+                    enabled: panel.editor.timeline.duration > 0
+                    onClicked: panel.fullScreenRequested()
+                }
             }
         }
     }

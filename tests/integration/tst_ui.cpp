@@ -539,7 +539,10 @@ private slots:
     void mixer()
     {
         const int mainRow = editor()->timeline()->mainRow();
-        click(byName(u"trackHeader_%1"_s.arg(mainRow)));
+        // The free part of the header (next to the level meter; the switches and the cover are buttons of their own).
+        QQuickItem *header = byName(u"trackHeader_%1"_s.arg(mainRow));
+        QVERIFY(header);
+        click(header, QPointF(header->width() / 2 - 4, 0));
         QTRY_VERIFY(byName(u"trackVolume"_s));
         const int steps = editor()->document().undoStack().index();
         QQuickItem *slider = byName(u"trackVolume"_s);

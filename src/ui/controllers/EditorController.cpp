@@ -27,6 +27,8 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
+#include <QPainter>
 #include <QLocale>
 #include <QFileInfo>
 #include <QLoggingCategory>
@@ -131,7 +133,8 @@ bool EditorController::close(QString *error)
     m_closed = true;
     // The frame on screen becomes the draft's thumbnail on the home screen; if nothing was shown yet (closed at
     // once), the first frame of the first clip.
-    QImage frame = m_player->sink()->latest();
+    // A cover chosen by the user stays the draft's picture.
+    QImage frame = coverPath().isEmpty() ? m_player->sink()->latest() : QImage(coverPath());
     const auto blank = [](const QImage &image) {
         if (image.isNull()) {
             return true;
@@ -1265,6 +1268,28 @@ void EditorController::clearSelection()
     }
 }
 
+void EditorController::selectAll()
+{
+    const Sequence *sequence = data().mainSequence();
+    if (!sequence) {
+        return;
+    }
+    QSet<ClipId> selection;
+    for (const auto *tracks : {&sequence->visualTracks, &sequence->audioTracks}) {
+        for (const Track &track : *tracks) {
+            if (track.locked) {
+                continue;
+            }
+            for (const Clip &clip : track.clips) {
+                selection.insert(clip.id);
+            }
+        }
+    }
+    m_transition = {};
+    m_cut = {};
+    setSelection(std::move(selection));
+}
+
 void EditorController::undo()
 {
     m_document->undoStack().undo();
@@ -1287,6 +1312,50 @@ void EditorController::setSnappingEnabled(bool enabled)
 void EditorController::toggleSnapping()
 {
     setSnappingEnabled(!m_snappingEnabled);
+}
+
+bool EditorController::skimmingEnabled() const
+{
+    return m_document->uiState().value(u"skimming"_s).toBool(true);
+}
+
+void EditorController::setSkimmingEnabled(bool enabled)
+{
+    if (enabled == skimmingEnabled()) {
+        return;
+    }
+    QJsonObject state = m_document->uiState();
+    state.insert(u"skimming"_s, enabled);
+    m_document->setUiState(state);
+    if (!enabled) {
+        m_player->endSkim();
+    }
+    emit skimmingChanged();
+    emit message(enabled ? tr("Preview axis on: point at the timeline to see that frame")
+                         : tr("Preview axis off"), false);
+}
+
+void EditorController::toggleSkimming()
+{
+    setSkimmingEnabled(!skimmingEnabled());
+}
+
+double EditorController::panelSize(const QString &key, double fallback) const
+{
+    const QJsonValue value = m_document->uiState().value(u"panels"_s).toObject().value(key);
+    return value.isDouble() && value.toDouble() > 0 ? value.toDouble() : fallback;
+}
+
+void EditorController::setPanelSize(const QString &key, double size)
+{
+    if (size <= 0 || std::abs(panelSize(key, 0) - size) < 0.5) {
+        return;
+    }
+    QJsonObject state = m_document->uiState();
+    QJsonObject panels = state.value(u"panels"_s).toObject();
+    panels.insert(key, std::round(size));
+    state.insert(u"panels"_s, panels);
+    m_document->setUiState(state);
 }
 
 bool EditorController::magneticMain() const
@@ -1564,6 +1633,62 @@ QString EditorController::exportCurrentFrame(const QString &fileName, const QStr
     return path;
 }
 
+namespace {
+
+// "base.ext" in `folder`, or "base (2).ext"… when it exists: an export never overwrites a file.
+QString uniqueFilePath(const QString &folder, QString base, const QString &extension)
+{
+    base.replace(QRegularExpression(u"[/\\\\:*?\"<>|]"_s), u"-"_s);
+    base = base.trimmed();
+    if (base.isEmpty()) {
+        base = u"vedit"_s;
+    }
+    QString path = QDir(folder).filePath(base + u"."_s + extension);
+    for (int n = 2; QFileInfo::exists(path); ++n) {
+        path = QDir(folder).filePath(u"%1 (%2).%3"_s.arg(base).arg(n).arg(extension));
+    }
+    return path;
+}
+
+} // namespace
+
+QString EditorController::coverPath() const
+{
+    const QString path = QDir(m_document->directory()).filePath(u"cover.png"_s);
+    return QFileInfo::exists(path) ? path : QString();
+}
+
+QUrl EditorController::coverUrl() const
+{
+    const QString path = coverPath();
+    if (path.isEmpty()) {
+        return {};
+    }
+    QUrl url = QUrl::fromLocalFile(path);
+    url.setQuery(u"v=%1"_s.arg(m_coverSerial));
+    return url;
+}
+
+bool EditorController::setCover(const QImage &image)
+{
+    if (image.isNull()) {
+        return false;
+    }
+    // At most 1920 px on the long side: a cover is a still, and the draft folder stays small.
+    const QImage cover = std::max(image.width(), image.height()) > 1920
+                             ? image.scaled(1920, 1920, Qt::KeepAspectRatio, Qt::SmoothTransformation)
+                             : image;
+    const QString path = QDir(m_document->directory()).filePath(u"cover.png"_s);
+    if (!cover.convertToFormat(QImage::Format_RGB32).save(path, "PNG")) {
+        emit message(tr("The cover could not be saved."), false);
+        return false;
+    }
+    m_document->setThumbnail(cover.scaled(320, 320, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ++m_coverSerial;
+    emit coverChanged();
+    return true;
+}
+
 bool EditorController::setCoverFromCurrentFrame()
 {
     const QImage frame = m_player->sink()->latest();
@@ -1571,10 +1696,68 @@ bool EditorController::setCoverFromCurrentFrame()
         emit message(tr("No video frame available to set as cover."), false);
         return false;
     }
-    m_document->setThumbnail(frame.scaled(320, 320, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    saveNow();
+    if (!setCover(frame)) {
+        return false;
+    }
     emit message(tr("Cover set from current frame."), false);
     return true;
+}
+
+bool EditorController::setCoverFromImage(const QUrl &file)
+{
+    const QImage image(file.isLocalFile() ? file.toLocalFile() : file.toString());
+    if (image.isNull()) {
+        emit message(tr("This picture cannot be opened."), false);
+        return false;
+    }
+    if (!setCover(image)) {
+        return false;
+    }
+    emit message(tr("Cover set from the picture."), false);
+    return true;
+}
+
+void EditorController::clearCover()
+{
+    const QString path = coverPath();
+    if (path.isEmpty()) {
+        return;
+    }
+    QFile::remove(path);
+    ++m_coverSerial;
+    emit coverChanged();
+    emit message(tr("Cover removed: the draft shows where you stopped editing."), false);
+}
+
+QString EditorController::exportCover(const QString &folder, bool youtube)
+{
+    const QImage cover(coverPath());
+    if (cover.isNull() || !QFileInfo(folder).isDir()) {
+        return {};
+    }
+    QString base = data().name;
+    if (!youtube) {
+        const QString path = uniqueFilePath(folder, base + u" - "_s + tr("cover"), u"png"_s);
+        return cover.save(path, "PNG") ? path : QString();
+    }
+    // 1280×720: the whole picture fitted in the middle, on a blurred, darkened copy filling the frame (a vertical
+    // cover stays whole instead of being cropped).
+    const QSize size(1280, 720);
+    QImage canvas(size, QImage::Format_RGB32);
+    {
+        QPainter painter(&canvas);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        const QImage fill = cover.scaled(size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        // Blur by a round trip through a small size (cheap and on every backend: CPU only).
+        const QImage blurred = fill.scaled(size / 24, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                                   .scaled(fill.size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+        painter.drawImage(QPoint((size.width() - blurred.width()) / 2, (size.height() - blurred.height()) / 2), blurred);
+        painter.fillRect(canvas.rect(), QColor(0, 0, 0, 90));
+        const QImage fitted = cover.scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        painter.drawImage(QPoint((size.width() - fitted.width()) / 2, (size.height() - fitted.height()) / 2), fitted);
+    }
+    const QString path = uniqueFilePath(folder, base + u" - "_s + tr("cover") + u" 1280x720"_s, u"jpg"_s);
+    return canvas.save(path, "JPG", 92) ? path : QString();
 }
 
 QVariantMap EditorController::exportDefaults() const

@@ -13,27 +13,23 @@ Rectangle {
     required property Editor editor
     readonly property AudioLibraryModel library: App.audioLibrary
 
-    color: Theme.color.surface
+    color: "transparent" // the library panel's surface
 
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Theme.space.md
+        anchors.topMargin: 0
         spacing: Theme.space.sm
 
-        RowLayout {
+        LibraryHeader {
             Layout.fillWidth: true
-            Label {
-                Layout.fillWidth: true
-                role: "titleMedium"
-                text: qsTr("Music")
-            }
-            BusyIndicator {
-                Layout.preferredWidth: Theme.space.xl
-                Layout.preferredHeight: Theme.space.xl
-                running: panel.library.loading
-                visible: running
-            }
+            title: qsTr("Music")
+            busy: panel.library.loading
             IconButton {
+                anchors.verticalCenter: parent.verticalCenter
+                implicitWidth: Theme.editor.toolButtonSize
+                implicitHeight: Theme.editor.toolButtonSize
+                iconSize: Theme.editor.toolIconSize
                 iconName: "refresh"
                 label: qsTr("Look for new music")
                 onClicked: panel.library.reload()

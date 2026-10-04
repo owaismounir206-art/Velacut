@@ -6,6 +6,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import Vedit.Components
 import Vedit.Theme
@@ -112,7 +113,7 @@ Rectangle {
         }
     }
 
-    color: Theme.color.surfaceContainerLow
+    color: "transparent" // the timeline panel's surface
     clip: true
 
     // ---- geometry ----------------------------------------------------------------------------------------------
@@ -210,28 +211,53 @@ Rectangle {
             return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0")
         }
 
+        // Labelled ticks at every step, small ones in between (a quarter or a fifth of the step).
+        readonly property int minorDivisions: {
+            if (step < fps)
+                return step === 15 ? 3 : step >= 10 ? 5 : step
+            const seconds = step / fps
+            return seconds <= 2 ? 4 : seconds % 5 === 0 ? 5 : seconds % 3 === 0 ? 3 : 2
+        }
         Repeater {
             model: Math.ceil(ruler.width / (ruler.step * view.zoom)) + 2
             delegate: Item {
+                id: tick
                 required property int index
                 readonly property int frame: (Math.floor(flick.contentX / (ruler.step * view.zoom)) + index) * ruler.step
                 x: frame * view.zoom - flick.contentX
                 height: ruler.height
                 Rectangle {
                     width: Theme.editor.hairline
-                    height: parent.height / 3
+                    height: Theme.editor.rulerMajorTick
                     anchors.bottom: parent.bottom
                     color: Theme.color.outline
                 }
+                Repeater {
+                    model: ruler.minorDivisions - 1
+                    delegate: Rectangle {
+                        required property int index
+                        x: (index + 1) * ruler.step * view.zoom / ruler.minorDivisions
+                        width: Theme.editor.hairline
+                        y: ruler.height - height
+                        height: Theme.editor.rulerMinorTick
+                        color: Theme.color.outlineVariant
+                    }
+                }
                 Label {
                     x: Theme.space.xs
-                    anchors.verticalCenter: parent.verticalCenter
+                    y: Theme.space.xs
                     role: "labelSmall"
                     font.features: { "tnum": 1 }
                     color: Theme.color.onSurfaceVariant
-                    text: ruler.label(parent.frame)
+                    text: ruler.label(tick.frame)
                 }
             }
+        }
+        Rectangle {
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: Theme.editor.hairline
+            color: Theme.color.outlineVariant
         }
         // In/Out range highlight on ruler
         Rectangle {
@@ -245,30 +271,29 @@ Rectangle {
             border.width: Theme.editor.hairline
             border.color: Theme.color.primary
         }
-        // In point bracket marker
+        // In and Out points: brackets on the ruler.
         Rectangle {
             visible: view.editor.inPoint >= 0
             x: view.editor.inPoint * view.zoom - flick.contentX
-            width: 2
+            width: Theme.editor.playheadWidth
             height: ruler.height
             color: Theme.color.primary
             Rectangle {
-                width: 6
-                height: 4
+                width: Theme.space.sm
+                height: Theme.editor.playheadWidth * 2
                 color: Theme.color.primary
             }
         }
-        // Out point bracket marker
         Rectangle {
             visible: view.editor.outPoint >= 0
-            x: view.editor.outPoint * view.zoom - flick.contentX - 2
-            width: 2
+            x: view.editor.outPoint * view.zoom - flick.contentX - width
+            width: Theme.editor.playheadWidth
             height: ruler.height
             color: Theme.color.primary
             Rectangle {
                 anchors.right: parent.right
-                width: 6
-                height: 4
+                width: Theme.space.sm
+                height: Theme.editor.playheadWidth * 2
                 color: Theme.color.primary
             }
         }
@@ -314,7 +339,14 @@ Rectangle {
         }
     }
 
-    // ---- track headers: kind, level meter, a click opens the track's volume (mixer, SPEC §5.9) ------------------------
+    // ---- track headers (SPEC §5.2, §5.9): lock, hide, mute always one click away, the level of the track, a click on
+    // the free part opens its volume; the main track starts with the cover of the video (SPEC §4) ---------------------
+    component HeaderButton: IconButton {
+        implicitWidth: Theme.editor.toolButtonSize - Theme.space.sm
+        implicitHeight: implicitWidth
+        iconSize: Theme.editor.smallIconSize
+        checkable: true
+    }
     Item {
         id: headers
         y: Theme.editor.rulerHeight
@@ -327,47 +359,21 @@ Rectangle {
                 id: header
                 required property var modelData
                 required property int index
+                readonly property bool main: modelData.kind === "main"
+                readonly property bool audio: modelData.kind === "audio"
                 objectName: "trackHeader_" + index
                 y: view.rowTop(index) - flick.contentY
                 width: headers.width
                 height: view.rowHeight(index)
 
-                Rectangle {
-                    anchors.fill: parent
-                    color: header.modelData.locked ? Theme.alpha(Theme.color.errorContainer, 0.25)
-                         : header.modelData.kind === "main" ? Theme.color.surfaceContainerHigh : Theme.color.surfaceContainerLow
-                    border.width: Theme.editor.hairline
-                    border.color: header.modelData.locked ? Theme.color.error : Theme.color.outlineVariant
-                }
-
-                Icon {
-                    anchors.centerIn: parent
-                    name: header.modelData.locked ? "lock"
-                        : header.modelData.muted ? "volume_off"
-                        : header.modelData.hidden ? "visibility_off"
-                        : header.modelData.kind === "audio" ? "music_note"
-                        : header.modelData.kind === "main" ? "movie" : "picture_in_picture"
-                    color: header.modelData.locked ? Theme.color.error
-                         : header.modelData.muted ? Theme.color.error
-                         : header.modelData.kind === "main" ? Theme.color.primary : Theme.color.onSurfaceVariant
-                    Accessible.name: header.modelData.kind === "audio" ? qsTr("Audio track")
-                                   : header.modelData.kind === "main" ? qsTr("Main track") : qsTr("Overlay track")
-                }
-
-                LevelMeter {
-                    anchors.right: parent.right
-                    anchors.rightMargin: Theme.space.xxs
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: parent.height - Theme.space.sm
-                    player: view.player
-                    key: header.modelData.trackId
-                }
-
+                // The free part of the header: the track's volume and settings.
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     ToolTip.visible: containsMouse
-                    ToolTip.text: qsTr("Track settings")
+                    ToolTip.delay: 600
+                    ToolTip.text: header.audio ? qsTr("Audio track: volume and settings")
+                                : header.main ? qsTr("Main track: volume and settings") : qsTr("Overlay track: volume and settings")
                     hoverEnabled: true
                     onClicked: {
                         trackMixer.track = header.modelData
@@ -375,8 +381,167 @@ Rectangle {
                         trackMixer.open()
                     }
                 }
+
+                Row {
+                    id: switches
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.space.xs
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 0
+                    HeaderButton {
+                        objectName: "trackLockButton_" + header.index
+                        iconName: header.modelData.locked ? "lock" : "lock_open"
+                        checked: header.modelData.locked
+                        label: header.modelData.locked ? qsTr("Unlock the track") : qsTr("Lock the track")
+                        onClicked: view.editor.setTrackLocked(header.modelData.trackId, !header.modelData.locked)
+                    }
+                    HeaderButton {
+                        visible: !header.audio
+                        objectName: "trackHideButton_" + header.index
+                        iconName: header.modelData.hidden ? "visibility_off" : "visibility"
+                        checked: header.modelData.hidden
+                        label: header.modelData.hidden ? qsTr("Show the track") : qsTr("Hide the track")
+                        onClicked: view.editor.setTrackHidden(header.modelData.trackId, !header.modelData.hidden)
+                    }
+                    HeaderButton {
+                        visible: header.audio || header.main
+                        objectName: "trackMuteButton_" + header.index
+                        iconName: header.modelData.muted ? "volume_off" : "volume_up"
+                        checked: header.modelData.muted
+                        label: header.modelData.muted ? qsTr("Turn the sound on") : qsTr("Mute the track")
+                        onClicked: view.editor.setTrackMuted(header.modelData.trackId, !header.modelData.muted)
+                    }
+                }
+
+                // The cover (SPEC §4, §5.13ter): the chosen picture, else an invitation to choose one.
+                Rectangle {
+                    id: coverTile
+                    objectName: "coverButton"
+                    visible: header.main
+                    anchors.right: meter.left
+                    anchors.rightMargin: Theme.space.xs
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.editor.coverWidth
+                    height: parent.height - Theme.space.sm
+                    radius: Theme.shape.extraSmall
+                    color: Theme.color.surfaceContainerHighest
+                    clip: true
+                    Accessible.role: Accessible.Button
+                    Accessible.name: qsTr("Cover")
+                    Image {
+                        anchors.fill: parent
+                        source: view.editor.coverUrl
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        cache: false
+                        visible: status === Image.Ready
+                    }
+                    Rectangle {
+                        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                        height: coverLabel.implicitHeight + Theme.space.xxs
+                        color: Theme.alpha(Theme.color.scrim, 0.6)
+                        Label {
+                            id: coverLabel
+                            anchors.centerIn: parent
+                            role: "labelSmall"
+                            color: Theme.readableOn(Theme.color.scrim)
+                            text: qsTr("Cover")
+                        }
+                    }
+                    Icon {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: (parent.height - coverLabel.implicitHeight - height) / 2
+                        visible: view.editor.coverUrl.toString() === ""
+                        name: "add_photo_alternate"
+                        size: Theme.editor.toolIconSize
+                        color: Theme.color.onSurfaceVariant
+                    }
+                    StateLayer {
+                        radius: parent.radius
+                        color: Theme.color.onSurface
+                        hovered: coverMouse.containsMouse
+                        pressed: coverMouse.pressed
+                        pressPoint: Qt.point(coverMouse.mouseX, coverMouse.mouseY)
+                    }
+                    MouseArea {
+                        id: coverMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        ToolTip.visible: containsMouse
+                        ToolTip.delay: 600
+                        ToolTip.text: qsTr("Cover of the video: shown on the draft and in the exported file")
+                        onClicked: coverMenu.popup()
+                    }
+                }
+
+                LevelMeter {
+                    id: meter
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.space.sm
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: parent.height - Theme.space.md
+                    player: view.player
+                    key: header.modelData.trackId
+                }
             }
         }
+        Rectangle {
+            anchors.right: parent.right
+            width: Theme.editor.hairline
+            height: parent.height
+            color: Theme.color.outlineVariant
+        }
+    }
+
+    // What to do with the cover: a frame of the video, a picture, saving it as a file.
+    Menu {
+        id: coverMenu
+        objectName: "coverMenu"
+        MenuItem {
+            objectName: "coverFromFrame"
+            iconName: "photo_camera"
+            text: qsTr("Use the frame on screen")
+            enabled: view.model.duration > 0
+            onTriggered: view.editor.setCoverFromCurrentFrame()
+        }
+        MenuItem {
+            iconName: "image"
+            text: qsTr("Choose a picture…")
+            onTriggered: coverDialog.open()
+        }
+        MenuSeparator {}
+        MenuItem {
+            iconName: "download"
+            text: qsTr("Save the cover (PNG)")
+            enabled: view.editor.coverUrl.toString() !== ""
+            onTriggered: {
+                const path = view.editor.exportCover(App.videosFolder(), false)
+                App.message(path !== "" ? qsTr("Cover saved as %1").arg(path) : qsTr("The cover could not be saved."))
+            }
+        }
+        MenuItem {
+            iconName: "smart_display"
+            text: qsTr("Save for YouTube (1280×720 JPG)")
+            enabled: view.editor.coverUrl.toString() !== ""
+            onTriggered: {
+                const path = view.editor.exportCover(App.videosFolder(), true)
+                App.message(path !== "" ? qsTr("Cover saved as %1").arg(path) : qsTr("The cover could not be saved."))
+            }
+        }
+        MenuItem {
+            iconName: "delete"
+            text: qsTr("Remove the cover")
+            enabled: view.editor.coverUrl.toString() !== ""
+            onTriggered: view.editor.clearCover()
+        }
+    }
+    FileDialog {
+        id: coverDialog
+        title: qsTr("Choose a picture for the cover")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [qsTr("Pictures (%1)").arg("*.png *.jpg *.jpeg *.webp *.bmp"), qsTr("All files (*)")]
+        onAccepted: view.editor.setCoverFromImage(selectedFile)
     }
 
     // The volume and settings of one track.
@@ -451,20 +616,6 @@ Rectangle {
                     checked: trackMixer.track.hidden ?? false
                     Accessible.name: qsTr("Hide track")
                     onToggled: view.editor.setTrackHidden(trackMixer.track.trackId, checked)
-                }
-            }
-            RowLayout {
-                visible: trackMixer.track.kind === "main"
-                Layout.fillWidth: true
-                Button {
-                    Layout.fillWidth: true
-                    variant: "tonal"
-                    iconName: "image"
-                    text: qsTr("Set project cover from current frame")
-                    onClicked: {
-                        view.editor.setCoverFromCurrentFrame()
-                        trackMixer.close()
-                    }
                 }
             }
         }
@@ -550,7 +701,7 @@ Rectangle {
                 id: skimmer
                 // Never skim while a scrub drag owns the playhead: double seeks (skim + scrub per
                 // pointer move) built an async backlog in the MLT consumer and desynced the preview.
-                enabled: !view.isScrubbing
+                enabled: !view.isScrubbing && view.editor.skimmingEnabled
                 onPointChanged: if (hovered && !view.isScrubbing) view.player.skim(view.frameAt(point.position.x))
                 onHoveredChanged: if (!hovered) view.player.endSkim()
             }
@@ -563,35 +714,44 @@ Rectangle {
                     y: view.rowTop(index)
                     width: canvas.width
                     height: view.rowHeight(index)
-                    radius: Theme.shape.small
-                    color: modelData.kind === "main" ? Theme.color.surfaceContainerHigh : Theme.color.surfaceContainer
+                    radius: Theme.shape.extraSmall
+                    color: Theme.color.surfaceContainerLow
+                    opacity: modelData.hidden ? Theme.state.disabledContent : 1
                 }
             }
 
-            // Empty project: the main track says what to do.
+            // Empty project: the main track says what to do, across the view.
             Rectangle {
                 visible: view.model.duration === 0
-                x: Theme.space.sm
+                x: flick.contentX + Theme.space.sm
                 y: view.rowTop(view.model.mainRow)
-                width: Math.min(flick.width, Theme.editor.dialogWidth) - 2 * Theme.space.sm
+                width: flick.width - 2 * Theme.space.sm
                 height: view.rowHeight(view.model.mainRow)
-                radius: Theme.shape.small
-                color: "transparent"
-                border.width: Theme.editor.selectionBorder
+                radius: Theme.shape.extraSmall
+                color: emptyHover.hovered ? Theme.color.surfaceContainerHigh : Theme.color.surfaceContainerLow
+                border.width: Theme.editor.hairline
                 border.color: Theme.color.outlineVariant
+                HoverHandler { id: emptyHover; cursorShape: Qt.PointingHandCursor }
+                TapHandler { onTapped: view.importRequested() }
                 RowLayout {
                     anchors.centerIn: parent
                     spacing: Theme.space.md
-                    Icon { name: "add_photo_alternate"; color: Theme.color.onSurfaceVariant }
+                    Rectangle {
+                        implicitWidth: Theme.editor.toolButtonSize
+                        implicitHeight: implicitWidth
+                        radius: Theme.shape.full
+                        color: Theme.color.primaryContainer
+                        Icon {
+                            anchors.centerIn: parent
+                            name: "add"
+                            size: Theme.editor.toolIconSize
+                            color: Theme.color.onPrimaryContainer
+                        }
+                    }
                     Label {
                         role: "bodyMedium"
                         color: Theme.color.onSurfaceVariant
-                        text: qsTr("Drop videos and photos here")
-                    }
-                    Button {
-                        variant: "text"
-                        text: qsTr("Import")
-                        onClicked: view.importRequested()
+                        text: qsTr("Drop videos and photos here, or click to import")
                     }
                 }
             }
@@ -752,15 +912,15 @@ Rectangle {
         height: view.height
         z: 15
 
-        // Floating timecode badge while scrubbing
+        // Floating timecode while scrubbing.
         Rectangle {
             id: timecodeBadge
             visible: view.isScrubbing
             anchors.bottom: knob.top
-            anchors.bottomMargin: 4
+            anchors.bottomMargin: Theme.space.xs
             anchors.horizontalCenter: parent.horizontalCenter
-            width: timecodeLabel.implicitWidth + 12
-            height: 20
+            width: timecodeLabel.implicitWidth + Theme.space.md
+            height: Theme.editor.badgeHeight
             radius: Theme.shape.extraSmall
             color: Theme.color.inverseSurface
             Label {
@@ -768,21 +928,18 @@ Rectangle {
                 anchors.centerIn: parent
                 role: "labelSmall"
                 font.features: { "tnum": 1 }
-                font.bold: true
                 color: Theme.color.inverseOnSurface
                 text: view.player.timecode(view.visualPlayheadFrame)
             }
         }
 
-        // Contrast halo for visibility on any background
+        // The line, with a thin dark edge so it reads on any picture.
         Rectangle {
             x: -width / 2
-            width: Theme.editor.playheadWidth + 2
+            width: Theme.editor.playheadWidth + 2 * Theme.editor.hairline
             height: parent.height
-            color: Theme.alpha(Theme.color.scrim, 0.45)
+            color: Theme.alpha(Theme.color.scrim, 0.35)
         }
-
-        // Main playhead vertical line
         Rectangle {
             x: -width / 2
             width: Theme.editor.playheadWidth
@@ -790,26 +947,27 @@ Rectangle {
             color: Theme.color.primary
         }
 
-        // Playhead head / knob
+        // The head, on the ruler: a rounded tab pointing down at the frame.
         Item {
             id: knob
             x: -width / 2
             y: Theme.editor.rulerHeight - height
-            width: Theme.editor.playheadKnob + 2
-            height: Theme.editor.rulerHeight - 2
+            width: Theme.editor.playheadKnob
+            height: Theme.editor.rulerHeight - Theme.space.sm
             Rectangle {
-                anchors.fill: parent
+                width: parent.width
+                height: parent.height - parent.width / 2
                 radius: Theme.shape.extraSmall
                 color: Theme.color.primary
-                border.width: 1
-                border.color: Theme.color.onPrimary
             }
             Rectangle {
-                anchors.centerIn: parent
-                width: 4
-                height: 4
-                radius: 2
-                color: Theme.color.onPrimary
+                // the point: a square turned by 45°, its lower half below the tab
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: parent.height - parent.width / 2 - height / 2
+                width: parent.width / Math.SQRT2
+                height: width
+                rotation: 45
+                color: Theme.color.primary
             }
         }
 

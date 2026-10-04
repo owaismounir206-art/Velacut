@@ -12,6 +12,8 @@ T.AbstractButton {
     // Accessible name and tooltip text (icon buttons have no visible label).
     property string label: ""
     property string shortcutText: ""
+    // Glyph size: 24 (M3), smaller in the dense toolbars of the editor (Theme.editor.toolIconSize).
+    property real iconSize: 24
 
     readonly property bool _selected: checkable && checked
     readonly property color containerColor: {
@@ -37,7 +39,7 @@ T.AbstractButton {
 
     implicitWidth: Theme.space.control(40)
     implicitHeight: Theme.space.control(40)
-    padding: 8
+    padding: (Math.min(implicitWidth, implicitHeight) - iconSize) / 2
     focusPolicy: Qt.StrongFocus
 
     Accessible.role: Accessible.Button
@@ -51,7 +53,7 @@ T.AbstractButton {
 
     contentItem: Icon {
         name: control.iconName
-        size: 24
+        size: control.iconSize
         filled: control._selected || control.variant === "filled" && !control.checkable
         color: control.contentColor
     }

@@ -61,6 +61,10 @@ qt_add_qml_module(vedit_ui
         qml/ScopePanel.qml
         qml/Teleprompter.qml
         qml/RecordDialog.qml
+        qml/ShortcutsDialog.qml
+        qml/LibraryHeader.qml
+        qml/TemplateCard.qml
+        qml/FullScreenPreview.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"
     PREFIX "/vedit/shaders"

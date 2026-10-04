@@ -123,6 +123,17 @@ class ThemeEditor : public QObject
     Q_PROPERTY(qreal splitterSize MEMBER m_splitterSize CONSTANT FINAL)
     Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight CONSTANT FINAL)
     Q_PROPERTY(qreal dialogWidth MEMBER m_dialogWidth CONSTANT FINAL)
+    // Editor chrome: top bar, library rail, the compact icon buttons of the toolbars and panel headers
+    Q_PROPERTY(qreal topBarHeight MEMBER m_topBarHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal panelHeaderHeight MEMBER m_panelHeaderHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal railWidth MEMBER m_railWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal railItemHeight MEMBER m_railItemHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal toolButtonSize MEMBER m_toolButtonSize CONSTANT FINAL)
+    Q_PROPERTY(qreal toolIconSize MEMBER m_toolIconSize CONSTANT FINAL)
+    Q_PROPERTY(qreal smallIconSize MEMBER m_smallIconSize CONSTANT FINAL)
+    Q_PROPERTY(qreal badgeHeight MEMBER m_badgeHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal panelMinimumWidth MEMBER m_panelMinimumWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal playButtonSize MEMBER m_playButtonSize CONSTANT FINAL)
     // Properties panel (right) and asset libraries (left)
     Q_PROPERTY(qreal propertiesWidth MEMBER m_propertiesWidth CONSTANT FINAL)
     Q_PROPERTY(qreal tabIndicator MEMBER m_tabIndicator CONSTANT FINAL)
@@ -138,6 +149,10 @@ class ThemeEditor : public QObject
     Q_PROPERTY(qreal meterWidth MEMBER m_meterWidth CONSTANT FINAL)
     // Refresh of the audio meters (ms): not an animation, so not affected by "reduce motion".
     Q_PROPERTY(qreal meterInterval MEMBER m_meterInterval CONSTANT FINAL)
+    // Delays that are not animations (not affected by "reduce motion"): controls that hide by themselves (ms), the
+    // step of the looping previews of the libraries (ms)
+    Q_PROPERTY(qreal autoHideDelay MEMBER m_autoHideDelay CONSTANT FINAL)
+    Q_PROPERTY(qreal previewLoopInterval MEMBER m_previewLoopInterval CONSTANT FINAL)
     // Home screen
     Q_PROPERTY(qreal draftCardWidth MEMBER m_draftCardWidth CONSTANT FINAL)
     Q_PROPERTY(qreal draftThumbnailHeight MEMBER m_draftThumbnailHeight CONSTANT FINAL)
@@ -146,6 +161,12 @@ class ThemeEditor : public QObject
     // Timeline
     Q_PROPERTY(qreal rulerHeight MEMBER m_rulerHeight CONSTANT FINAL)
     Q_PROPERTY(qreal trackHeaderWidth MEMBER m_trackHeaderWidth CONSTANT FINAL)
+    // Cover tile at the head of the main track (SPEC §4), the label strip of a clip, ruler ticks
+    Q_PROPERTY(qreal coverWidth MEMBER m_coverWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal clipLabelHeight MEMBER m_clipLabelHeight CONSTANT FINAL)
+    Q_PROPERTY(qreal rulerMajorTick MEMBER m_rulerMajorTick CONSTANT FINAL)
+    Q_PROPERTY(qreal rulerMinorTick MEMBER m_rulerMinorTick CONSTANT FINAL)
+    Q_PROPERTY(qreal gripSize MEMBER m_gripSize CONSTANT FINAL)
     Q_PROPERTY(qreal mainTrackHeight MEMBER m_mainTrackHeight CONSTANT FINAL)
     Q_PROPERTY(qreal overlayTrackHeight MEMBER m_overlayTrackHeight CONSTANT FINAL)
     Q_PROPERTY(qreal audioTrackHeight MEMBER m_audioTrackHeight CONSTANT FINAL)
@@ -182,6 +203,16 @@ private:
     qreal m_splitterSize = 8;
     qreal m_toolbarHeight = 48;
     qreal m_dialogWidth = 560;
+    qreal m_topBarHeight = 48;
+    qreal m_panelHeaderHeight = 36;
+    qreal m_railWidth = 80;
+    qreal m_railItemHeight = 52;
+    qreal m_toolButtonSize = 32;
+    qreal m_toolIconSize = 20;
+    qreal m_smallIconSize = 16;
+    qreal m_badgeHeight = 20;
+    qreal m_panelMinimumWidth = 220;
+    qreal m_playButtonSize = 40;
     qreal m_propertiesWidth = 312;
     qreal m_tabIndicator = 3;
     qreal m_swatchSize = 24;
@@ -194,12 +225,19 @@ private:
     qreal m_transitionMark = 22;
     qreal m_meterWidth = 6;
     qreal m_meterInterval = 33;
+    qreal m_autoHideDelay = 2500;
+    qreal m_previewLoopInterval = 75;
     qreal m_draftCardWidth = 232;
     qreal m_draftThumbnailHeight = 130;
     qreal m_heroHeight = 176;
     qreal m_contentMaxWidth = 1240;
     qreal m_rulerHeight = 28;
-    qreal m_trackHeaderWidth = 48;
+    qreal m_trackHeaderWidth = 156;
+    qreal m_coverWidth = 56;
+    qreal m_clipLabelHeight = 18;
+    qreal m_rulerMajorTick = 10;
+    qreal m_rulerMinorTick = 4;
+    qreal m_gripSize = 2;
     qreal m_mainTrackHeight = 64;
     qreal m_overlayTrackHeight = 48;
     qreal m_audioTrackHeight = 40;

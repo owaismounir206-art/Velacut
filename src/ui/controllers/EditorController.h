@@ -75,9 +75,15 @@ class EditorController : public QObject
     Q_PROPERTY(double frameRate READ frameRate NOTIFY formatChanged FINAL)
     Q_PROPERTY(bool snappingEnabled READ snappingEnabled WRITE setSnappingEnabled NOTIFY snappingChanged FINAL)
     Q_PROPERTY(bool magneticMain READ magneticMain NOTIFY magneticMainChanged FINAL)
+    // Preview axis (SPEC 0bis rule 12): pointing at the timeline shows that frame without moving the playhead.
+    // On by default, switched off with a button; remembered with the project.
+    Q_PROPERTY(bool skimmingEnabled READ skimmingEnabled WRITE setSkimmingEnabled NOTIFY skimmingChanged FINAL)
     Q_PROPERTY(int inPoint READ inPoint NOTIFY inOutChanged FINAL)
     Q_PROPERTY(int outPoint READ outPoint NOTIFY inOutChanged FINAL)
     Q_PROPERTY(bool hasInOut READ hasInOut NOTIFY inOutChanged FINAL)
+    // The cover of the video (SPEC §5.13ter): chosen by the user (a frame or a picture), shown at the head of the main
+    // track and on the draft; empty URL = none chosen (the draft then shows the frame where the editing stopped).
+    Q_PROPERTY(QUrl coverUrl READ coverUrl NOTIFY coverChanged FINAL)
 
 public:
     enum SaveState
@@ -168,6 +174,8 @@ public:
     Q_INVOKABLE bool duplicateSelection();
     Q_INVOKABLE void select(const QString &clipId, bool additive);
     Q_INVOKABLE void clearSelection();
+    // Every clip of the unlocked tracks (Ctrl+A).
+    Q_INVOKABLE void selectAll();
     Q_INVOKABLE void selectTransition(const QString &transitionId);
     // A cut without a transition clicked on the timeline: the Transitions library opens for it.
     Q_INVOKABLE void selectCut(const QString &fromClipId);
@@ -177,6 +185,13 @@ public:
     bool snappingEnabled() const { return m_snappingEnabled; }
     void setSnappingEnabled(bool enabled);
     Q_INVOKABLE void toggleSnapping();
+    bool skimmingEnabled() const;
+    void setSkimmingEnabled(bool enabled);
+    Q_INVOKABLE void toggleSkimming();
+    // Sizes of the resizable panels (library and properties width, timeline height), remembered with the project
+    // (SPEC §4 "layout ricordato per progetto"). `fallback` when the project has none.
+    Q_INVOKABLE double panelSize(const QString &key, double fallback) const;
+    Q_INVOKABLE void setPanelSize(const QString &key, double size);
     bool magneticMain() const;
     Q_INVOKABLE bool setMagneticMain(bool enabled);
     Q_INVOKABLE bool toggleMagneticMain();
@@ -257,6 +272,14 @@ public:
     // video cover). Never overwrites: "name (2).png". Returns the path written, or an empty string.
     Q_INVOKABLE QString exportCurrentFrame(const QString &fileName, const QString &folder);
     Q_INVOKABLE bool setCoverFromCurrentFrame();
+    Q_INVOKABLE bool setCoverFromImage(const QUrl &file);
+    Q_INVOKABLE void clearCover();
+    QUrl coverUrl() const;
+    // The cover as a picture file in `folder`: PNG at its own size, or JPG 1280×720 (YouTube thumbnail, the picture
+    // fitted on a blurred copy of itself). Never overwrites. Returns the path written, or an empty string.
+    Q_INVOKABLE QString exportCover(const QString &folder, bool youtube);
+    // The path of the cover picture in the draft ("" = none): attached to the exported MP4.
+    QString coverPath() const;
 
     // Saves at once (the window lost focus); saving is otherwise automatic.
     Q_INVOKABLE void saveNow();
@@ -273,7 +296,9 @@ signals:
     void formatChanged();
     void snappingChanged();
     void magneticMainChanged();
+    void skimmingChanged();
     void inOutChanged();
+    void coverChanged();
     // The project changed (any command, undo or redo).
     void modelChanged();
     // For the snackbar: `undoable` shows the "Undo" action.
@@ -329,7 +354,9 @@ private:
     bool m_snappingEnabled = true;
     int m_inPoint = -1;
     int m_outPoint = -1;
+    int m_coverSerial = 0; // cache-busting part of coverUrl
     bool m_closed = false;
+    bool setCover(const QImage &image);
 };
 
 } // namespace vedit::ui
