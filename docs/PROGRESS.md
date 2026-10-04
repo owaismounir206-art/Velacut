@@ -1,9 +1,68 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-10-01 (Fasi 0-4 ✅ complete; Fase 5 🔶 70%; documentazione completa)
+Ultimo aggiornamento: 2026-10-04 (Fasi 0-4 ✅ complete; Fase 5 🔶 ~80%; Fase 8 🔶 85%: encoding/decoding hardware a cascata, zero-copy UMA NV12/P010 con shader BT.709/BT.2020, timeline scrubbing 60/120 FPS disaccoppiato e scorciatoie Q/W)
+
+## Sessione 2026-10-04 — Zero-Copy UMA, Scrubbing 60/120 FPS e Scorciatoie Q/W (SPEC §1bis, §5.2, §5.3)
+- **Pipeline Hardware GPU Zero-Copy & Ottimizzazione UMA (`src/engine/gpu/HwVideoDecoder`, `src/engine/playback/LruFrameCache`)**:
+  * Decodifica video hardware con fallback a cascata su 3 livelli: Tier 1 (HW dedicato AMF/QSV) → Tier 2 (HW generico VA-API/D3D11VA/Vulkan) → Tier 3 (CPU multithread libavcodec).
+  * Degradazione automatica trasparente a Tier 3 per formati chroma non accelerati (4:2:2, 4:4:4, High 10 senza HW).
+  * Formati nativi semi-planari NV12 (8-bit) e P010 (10-bit) mantenuti senza alcuna conversione CPU-side `sws_scale` RGB.
+  * Shaders RHI `preview.vert` e `preview.frag` compilati con `qsb`: texturing bi-planare (R8/R16 per il piano Y, RG8/RG16 per il piano UV) e conversione YUV→RGB eseguita direttamente via hardware nella GPU con matrici ITU-R BT.709 (SDR) e BT.2020 (HDR).
+  * Gestione UMA: `BoundedLruCache` thread-safe rigidamente limitata tra 15 e 30 frame (default 24 frame, ~74.6 MB per 1080p NV12), eliminando round-trip e saturazione del bus di sistema.
+  * Nuova suite di test `tst_hwdecoder` (8/8 passati, verifica reale su AMD Phoenix2 / Radeon 740M con `radeonsi_drv_video.so`).
+- **Disaccoppiamento Playhead UI & Reactive Scrubbing Policy (`TimelineView.qml`, `TimelinePlayer`)**:
+  * Playhead UI guidato a 60/120 FPS fluidi sul thread UI tramite `visualPlayheadFrame` completamente disaccoppiato dalle chiamate sincrone di seek.
+  * `scrubSeek(frame)` con rate-limiting a ~33 ms (30 fps) e backpressure: se un frame è in elaborazione (`m_seekInFlight`), i target intermedi vengono accorpati atomicamente in `m_pendingScrubFrame` e scartati, evitando la saturazione della pipeline MLT/FFmpeg.
+  * Watchdog temporale anti-deadlock di 120 ms nel consumer loop.
+  * Frame-accurate commit via `commitSeek` su rilascio cursore (`onReleased`) e su debounce di inattività a 60 ms.
+- **Allineamento Scorciatoie SPEC §5.2 (Q/W) e Shuttle §5.3**:
+  * `TimelineEditor::rippleTrimClip`: `Q` esegue il ripple trim dall'inizio clip al playhead riposizionando il cursore sulla giunzione; `W` esegue il ripple trim dal playhead alla fine del clip.
+  * Integrazione completa in `EditorController`, `ActionRegistry` ed `EditorScreen.qml`.
+  * Verificati frame-stepping atomico (Frecce Sinistra/Destra) e shuttle J-K-L (-8x..+8x).
+  * Test unitari e di integrazione dedicati in `tst_timelineeditor` (`rippleTrimClipTest`) e `tst_editor` (`rippleTrimShortcuts`).
+  * Suite CTest: **28/28 test superati al 100%**.
+
+## Sessione 2026-10-04 — Export hardware, iGPU, fotogramma
+- **Encoding hardware con fallback (SPEC §5.15, Fase 8, criterio parziale)**:
+  * `ExportSettings`: nuovo `videoCodec` (H.264/H.265/AV1), `hardwareEncoder` (auto/off), `maxFileSizeMB`.
+  * `EncoderPlan planEncoder(...)`: funzione pura che unisce la scelta dell'utente con gli encoder **verificati
+    dal probe** (solo encoder con cui il probe ha davvero codificato fotogrammi). Catena: VA-API → QSV → NVENC →
+    Vulkan Video; software: libx264/libx265/libsvtav1.
+  * `Renderer::render`: consumer costruito dal piano; **se l'encoder hardware fallisce a metà export riparte in
+    software** e l'utente riceve un avviso tra i warnings (SPEC 1bis regola 4). Verificato su questa Radeon 740M
+    (Phoenix2): `h264_vaapi`, `hevc_vaapi`, `av1_vaapi` tutti funzionanti via MLT 7.40.
+  * `RenderJob` passa la lista encoder nel job JSON; `AppController` la ricava da decisione+capacità.
+  * **Dimensione massima del file**: bitrate medio calcolato dal target (`targetVideoBitrate`); two-pass in
+    software (`v2pass` di MLT), VBR con tetto in hardware (i VA-API non hanno il two-pass, documentato).
+  * **Preset piattaforme** (YouTube/TikTok/Reels/Shorts/X) e sezione **"Avanzate"** (codec, accelerazione
+    hardware con nome GPU, dimensione massima) nella finestra di export, chiusa di default (SPEC 0bis regola 7/8).
+  * Test: `encoderPlanFollowsSettingsAndCapabilities` (unit), `exportsHevcWhenAsked`,
+    `exportRespectsMaximumSize` (file ≤ target), `exportsWithTheGpuEncoderWhenAvailable` (probe reale; skip se la
+    macchina non ha encoder GPU verificati).
+  * **Commit**: `25096eb`.
+- **Ottimizzazioni iGPU per Radeon 740M e Intel Arc 130V (richiesta esplicita)**:
+  * `decideGraphics` ora riporta `integratedGpu` (iGPU senza dGPU nel sistema); motivo visibile in Preferenze.
+  * `TimelinePlayer::setPreviewLimit`: l'**anteprima** si renderizza al massimo a 1080p di lato corto con iGPU a
+    memoria condivisa o rendering software (540p con ≤1 GB di VRAM). Fps, posizioni ed **export** restano a
+    piena risoluzione: si riducono i pixel, non la funzionalità. Le superfici QML già si adattavano (fitRect).
+  * **Decodifica hardware nel producer MLT: NON attivata**, su misura: verificato con `melt avformat:…
+    hwaccel=vaapi` su un H.264 1080p60 (1,26 s vs 1,26 s; il download GPU→RAM annulla il risparmio). La
+    preferenza resta, il probe continua a verificare i decoder, ma il beneficio misurato è nullo e un driver
+    difettoso produrrebbe frame neri (SPEC 1bis regola 4). Documentato in `docs/GPU_COMPATIBILITY.md` §5.
+  * `docs/GPU_COMPATIBILITY.md`: nuova sezione 5 con i risultati misurati su **Radeon 740M** (encoder VA-API
+    H.264/HEVC/AV1 funzionanti; `quality` del driver Mesa con range 0–32 → valori 8/18/28) e le note per
+    **Arc 130V** (VA-API prima di QSV, serve `intel-media-driver`, AV1 hardware pratico).
+  * Test: `tst_gpu::integratedGpuIsDetected`. **Commit**: `713a0f5`.
+- **Esporta fotogramma corrente (SPEC §5.15, base della copertina §5.13ter)**:
+  * `EditorController::exportCurrentFrame`: PNG del frame a schermo, mai sovrascritto ("nome (2).png").
+  * Pulsante macchina fotografica nella barra di trasporto dell'anteprima + snackbar con il percorso;
+    `AppController::videosFolder()` esposto a QML.
+  * Test `tst_editor::exportsTheFrameOnScreen`. **Commit**: `3858c86`.
+- **Traduzioni**: nuove stringhe di export/anteprima estratte e tradotte (0 non tradotte in `vedit_it.ts`).
 
 ## Fase corrente
-**Fase 5 — Libreria creativa: 70% completo** (fondamenta tecniche complete; mancano UI QML, GPU transitions, brand kit)
+**Fase 5 — Libreria creativa: ~80%** (fondamenta tecniche complete; mancano percorso GPU transazioni+PSNR, UI QML del
+gestore asset, brand kit, slideshow automatica — vedi "Note oneste" in fondo)
 
 ### Sessione 2026-10-01
 - **P5.7 — Template di progetto con segnaposto (fondamenta complete)**:

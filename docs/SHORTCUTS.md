@@ -44,8 +44,8 @@
 | `Ctrl+Shift+A` | Deseleziona tutto |
 | `[` | Trim inizio clip al playhead |
 | `]` | Trim fine clip al playhead |
-| `Q` | Estendi clip selezionata fino al playhead (a sinistra) |
-| `W` | Estendi clip selezionata fino al playhead (a destra) |
+| `Q` | Ripple trim dall'inizio clip alla testina (taglia a sinistra del playhead) |
+| `W` | Ripple trim dalla testina alla fine clip (taglia a destra del playhead) |
 
 ## Timeline
 
