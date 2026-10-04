@@ -1,6 +1,8 @@
 // The timeline (D-16): ruler, tracks (overlays above the magnetic main track, audio below), clips, playhead.
 // Pointing shows the frame under the pointer (skimming); clicking moves the playhead; clips are dragged, trimmed by
 // their edges and snap to edges and to the playhead; media and files can be dropped anywhere.
+// The view follows the playhead, like CapCut: page-scrolling while playing, centring on a seek, and the timeline
+// scrolls under the playhead while it is dragged past an edge of the view.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
@@ -30,6 +32,9 @@ Rectangle {
     // Decoupled 60/120 FPS playhead tracking & reactive scrubbing
     property bool isScrubbing: false
     property int visualPlayheadFrame: player.position
+    // The scrub position in viewport pixels (flick coordinates) while scrubbing. It can be beyond the
+    // edges of the view: the timeline then scrolls under it, CapCut-style, for as long as it stays out.
+    property real scrubX: 0
 
     Timer {
         id: scrubDebounceTimer
@@ -42,14 +47,44 @@ Rectangle {
         }
     }
 
+    // While the pointer is held past an edge of the view during a scrub drag, the timeline keeps
+    // moving under it (like CapCut): the playhead stays pinned at the edge, the content scrolls,
+    // faster the further out the pointer is.
+    Timer {
+        id: scrubAutoScrollTimer
+        interval: 16
+        repeat: true
+        running: view.isScrubbing
+        onTriggered: {
+            const pastRight = view.scrubX - flick.width
+            const pastLeft = -view.scrubX
+            if (pastRight > 0) {
+                flick.contentX = Math.min(flick.contentWidth - flick.width,
+                                          flick.contentX + Math.min(60, Math.max(2, pastRight * 0.2)))
+                view.updateScrubbing(view.scrubX)
+            } else if (pastLeft > 0) {
+                flick.contentX = Math.max(0, flick.contentX - Math.min(60, Math.max(2, pastLeft * 0.2)))
+                view.updateScrubbing(view.scrubX)
+            }
+        }
+    }
+
     function clampFrame(frame) {
         // The player clamps every seek to [0, duration-1]: clamp the visual playhead too, or the
         // cursor and the playhead disagree while dragging beyond the end of the timeline.
         return Math.max(0, Math.min(frame, view.player.duration - 1))
     }
 
-    function startScrubbing(targetFrame) {
-        const target = clampFrame(targetFrame)
+    // The frame of a scrub position in viewport pixels: pinned at the edges of the view, so the
+    // playhead stays visible (knob included) while the timeline scrolls under it.
+    function scrubFrameAt(x) {
+        const pinned = x < 0 ? 0 : x > flick.width ? flick.width - Theme.editor.playheadKnob : x
+        return clampFrame(frameAt(pinned + flick.contentX))
+    }
+
+    function startScrubbing(x) {
+        view.scrubX = x
+        const target = scrubFrameAt(x)
         view.player.pause()
         view.isScrubbing = true
         view.visualPlayheadFrame = target
@@ -57,12 +92,13 @@ Rectangle {
         scrubDebounceTimer.restart()
     }
 
-    function updateScrubbing(targetFrame) {
-        const target = clampFrame(targetFrame)
+    function updateScrubbing(x) {
+        view.scrubX = x
         if (!view.isScrubbing) {
             view.isScrubbing = true
             view.player.pause()
         }
+        const target = scrubFrameAt(x)
         view.visualPlayheadFrame = target
         view.player.scrubSeek(target)
         scrubDebounceTimer.restart()
@@ -127,17 +163,24 @@ Rectangle {
         }
     }
 
-    // Keep the playhead in view while playing and sync visual playhead when not scrubbing.
+    // Keep the playhead in view: page-scrolling while playing, and the view moves to it on a seek
+    // (keyboard, preview, markers), like CapCut. During a scrub drag this does nothing: the drag owns
+    // the playhead and the edge auto-scroll (scrubAutoScrollTimer).
     Connections {
         target: view.player
         function onPositionChanged() {
             if (!view.isScrubbing)
                 view.visualPlayheadFrame = view.player.position
-            if (!view.player.playing)
+            if (view.isScrubbing)
                 return
             const x = view.player.position * view.zoom
-            if (x > flick.contentX + flick.width * 0.9 || x < flick.contentX)
-                flick.contentX = Math.max(0, x - flick.width * 0.1)
+            if (view.player.playing) {
+                if (x > flick.contentX + flick.width * 0.9 || x < flick.contentX)
+                    flick.contentX = Math.max(0, x - flick.width * 0.1)
+            } else if (x < flick.contentX || x > flick.contentX + flick.width) {
+                // A seek from elsewhere: the timeline scrolls, the playhead centred in the view.
+                flick.contentX = Math.max(0, Math.min(flick.contentWidth - flick.width, x - flick.width / 2))
+            }
         }
     }
 
@@ -234,8 +277,8 @@ Rectangle {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.SizeHorCursor
-            onPressed: (mouse) => view.startScrubbing(view.frameAt(mouse.x + flick.contentX))
-            onPositionChanged: (mouse) => { if (pressed) view.updateScrubbing(view.frameAt(mouse.x + flick.contentX)) }
+            onPressed: (mouse) => view.startScrubbing(mouse.x)
+            onPositionChanged: (mouse) => { if (pressed) view.updateScrubbing(mouse.x) }
             onReleased: view.finishScrubbing()
             onCanceled: view.finishScrubbing()
         }
@@ -494,11 +537,11 @@ Rectangle {
                 hoverEnabled: true
                 onPressed: (mouse) => {
                     view.editor.clearSelection()
-                    view.startScrubbing(view.frameAt(mouse.x))
+                    view.startScrubbing(mouse.x - flick.contentX)
                 }
                 onPositionChanged: (mouse) => {
                     if (pressed)
-                        view.updateScrubbing(view.frameAt(mouse.x))
+                        view.updateScrubbing(mouse.x - flick.contentX)
                 }
                 onReleased: view.finishScrubbing()
                 onCanceled: view.finishScrubbing()
@@ -777,12 +820,12 @@ Rectangle {
             height: Theme.editor.rulerHeight
             cursorShape: Qt.SizeHorCursor
             onPressed: (mouse) => {
-                view.startScrubbing(view.frameAt(playheadItem.x - Theme.editor.trackHeaderWidth + flick.contentX + mouse.x - Theme.editor.playheadKnob))
+                view.startScrubbing(playheadItem.x - Theme.editor.trackHeaderWidth + mouse.x - Theme.editor.playheadKnob)
             }
             onPositionChanged: (mouse) => {
                 if (pressed) {
                     const sceneX = mapToItem(ruler, mouse.x, 0).x
-                    view.updateScrubbing(view.frameAt(sceneX + flick.contentX))
+                    view.updateScrubbing(sceneX)
                 }
             }
             onReleased: view.finishScrubbing()
