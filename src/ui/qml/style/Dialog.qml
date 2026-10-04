@@ -41,6 +41,11 @@ T.Dialog {
         }
     }
 
+    // The actions (standardButtons or buttons given by the dialog), hidden when there are none.
+    footer: DialogButtonBox {
+        visible: count > 0
+    }
+
     background: Rectangle {
         radius: Theme.shape.extraLarge
         color: Theme.color.surfaceContainerHigh

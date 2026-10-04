@@ -144,9 +144,9 @@ ApplicationWindow {
                             Label { role: "labelLarge"; text: qsTr("Manual seed:"); anchors.verticalCenter: parent.verticalCenter }
                             Repeater {
                                 // Sample seeds for trying the dynamic color (the user picks any color in Preferences).
-                                model: ["#4f5bd5", "#e62d42", "#3a944a", "#c88800", "#2190a4", "#9141ac", "#777777"]
+                                model: Theme.seedSuggestions
                                 Rectangle {
-                                    required property string modelData
+                                    required property color modelData
                                     width: 32
                                     height: 32
                                     radius: Theme.shape.full
@@ -157,7 +157,7 @@ ApplicationWindow {
                                         onTapped: { Theme.manualSeed = parent.modelData; Theme.seedSource = Theme.Manual }
                                     }
                                     Accessible.role: Accessible.Button
-                                    Accessible.name: modelData
+                                    Accessible.name: modelData.toString()
                                 }
                             }
                         }

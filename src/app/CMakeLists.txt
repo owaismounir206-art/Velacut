@@ -18,7 +18,7 @@ vedit_target_options(vedit)
 # Translations (Qt Linguist). Source strings are English; Italian in i18n/vedit_it.ts.
 # Update the .ts files with: cmake --build build --target update_translations
 qt_add_translations(vedit
-    SOURCE_TARGETS vedit vedit_ui vedit_components vedit_style vedit_theme vedit_engine vedit_gpu vedit_core
+    SOURCE_TARGETS vedit vedit_ui vedit_components vedit_style vedit_theme vedit_engine vedit_gpu vedit_core vedit_fx
                    vedit_document
     TS_FILES "${CMAKE_SOURCE_DIR}/i18n/vedit_it.ts"
     # English needs a translation only for plurals ("%n clips deleted").

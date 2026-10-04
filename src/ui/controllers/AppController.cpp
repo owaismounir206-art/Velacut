@@ -21,6 +21,8 @@
 #include <QGuiApplication>
 #include <QJSEngine>
 #include <QLoggingCategory>
+#include <QProcess>
+#include <QSettings>
 #include <QSysInfo>
 
 Q_LOGGING_CATEGORY(lcAppController, "vedit.ui.app")
@@ -280,6 +282,98 @@ void AppController::notify(const QString &title, const QString &body) const
     }
     notifications.call(QDBus::NoBlock, u"Notify"_s, u"vedit"_s, 0u, u"vedit"_s, title, body, QStringList{},
                        QVariantMap{}, 8000);
+}
+
+} // namespace vedit::ui
+
+namespace vedit::ui {
+
+QString AppController::savedLanguage()
+{
+    return QSettings().value(u"ui/language"_s, u"auto"_s).toString();
+}
+
+QString AppController::language() const
+{
+    return savedLanguage();
+}
+
+void AppController::setLanguage(const QString &language)
+{
+    if (language == savedLanguage() || (language != u"auto"_s && language != u"it"_s && language != u"en"_s)) {
+        return;
+    }
+    QSettings().setValue(u"ui/language"_s, language);
+    m_restartNeeded = true;
+    emit preferencesChanged();
+}
+
+void AppController::changeGraphics(const std::function<void(gpu::GraphicsPreferences &)> &change)
+{
+    gpu::GraphicsPreferences preferences = gpu::GraphicsPreferences::load();
+    const gpu::GraphicsPreferences before = preferences;
+    change(preferences);
+    if (preferences == before) {
+        return;
+    }
+    preferences.save();
+    m_restartNeeded = true;
+    emit preferencesChanged();
+}
+
+int AppController::uiBackendChoice() const
+{
+    return static_cast<int>(gpu::GraphicsPreferences::load().ui);
+}
+
+void AppController::setUiBackendChoice(int choice)
+{
+    if (choice < 0 || choice > static_cast<int>(gpu::UiBackendChoice::Software)) {
+        return;
+    }
+    changeGraphics([choice](gpu::GraphicsPreferences &p) { p.ui = static_cast<gpu::UiBackendChoice>(choice); });
+}
+
+bool AppController::gpuEffects() const
+{
+    return gpu::GraphicsPreferences::load().gpuEffects;
+}
+
+void AppController::setGpuEffects(bool enabled)
+{
+    changeGraphics([enabled](gpu::GraphicsPreferences &p) { p.gpuEffects = enabled; });
+}
+
+bool AppController::hardwareDecoding() const
+{
+    return gpu::GraphicsPreferences::load().hardwareDecoding;
+}
+
+void AppController::setHardwareDecoding(bool enabled)
+{
+    changeGraphics([enabled](gpu::GraphicsPreferences &p) { p.hardwareDecoding = enabled; });
+}
+
+bool AppController::hardwareEncoding() const
+{
+    return gpu::GraphicsPreferences::load().hardwareEncoding;
+}
+
+void AppController::setHardwareEncoding(bool enabled)
+{
+    changeGraphics([enabled](gpu::GraphicsPreferences &p) { p.hardwareEncoding = enabled; });
+}
+
+void AppController::restart()
+{
+    closeEditor(); // everything written
+    QStringList arguments = QCoreApplication::arguments();
+    const QString program = arguments.takeFirst();
+    // The files given at the first start are in a draft now: not again.
+    arguments.erase(std::remove_if(arguments.begin(), arguments.end(), [](const QString &a) { return !a.startsWith(u'-'); }),
+                    arguments.end());
+    QProcess::startDetached(program, arguments);
+    QCoreApplication::exit(0);
 }
 
 } // namespace vedit::ui

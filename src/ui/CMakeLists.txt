@@ -18,7 +18,7 @@ qt_add_qml_module(vedit_ui
         models/AudioLibraryModel.h models/AudioLibraryModel.cpp
         models/AssetLibraryModel.h models/AssetLibraryModel.cpp
         models/DraftsModel.h models/DraftsModel.cpp
-        models/Preferences.h models/Preferences.cpp
+        models/PackagesModel.h models/PackagesModel.cpp
         models/MediaPoolModel.h models/MediaPoolModel.cpp
         models/TimelineModel.h models/TimelineModel.cpp
         controllers/EngineTypes.h
@@ -64,6 +64,7 @@ qt_add_qml_module(vedit_ui
         qml/ShortcutsDialog.qml
         qml/LibraryHeader.qml
         qml/TemplateCard.qml
+        qml/PreferencesDialog.qml
         qml/FullScreenPreview.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"

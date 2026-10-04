@@ -13,6 +13,7 @@ Item {
     id: root
 
     signal infoRequested()
+    signal preferencesRequested()
 
     Component.onCompleted: App.drafts.refresh()
 
@@ -51,13 +52,22 @@ Item {
                 text: "vedit"
             }
         }
-        IconButton {
+        Row {
             anchors.right: parent.right
             anchors.rightMargin: Theme.space.sm
             anchors.verticalCenter: parent.verticalCenter
-            iconName: "info"
-            label: qsTr("System information")
-            onClicked: root.infoRequested()
+            IconButton {
+                objectName: "homePreferencesButton"
+                iconName: "settings"
+                label: qsTr("Preferences")
+                shortcutText: qsTr("Ctrl+,")
+                onClicked: root.preferencesRequested()
+            }
+            IconButton {
+                iconName: "info"
+                label: qsTr("System information")
+                onClicked: root.infoRequested()
+            }
         }
     }
 

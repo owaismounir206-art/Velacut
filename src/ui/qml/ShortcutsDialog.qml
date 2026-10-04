@@ -49,6 +49,7 @@ Dialog {
             ["Ctrl+E", qsTr("Export")],
             ["Ctrl+Shift+E", qsTr("Save the current frame as an image")],
             ["Ctrl+K", qsTr("Search commands, effects, transitions, music")],
+            ["Ctrl+,", qsTr("Preferences")],
             ["F11", qsTr("Full-screen preview")]] }
     ]
 

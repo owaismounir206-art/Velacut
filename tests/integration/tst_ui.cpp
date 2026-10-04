@@ -852,6 +852,32 @@ private slots:
         QTRY_VERIFY(!editor());
     }
 
+    // Preferences from the home screen (SPEC §5.16): the theme changes at once; the packs page lists the core pack.
+    void preferences()
+    {
+        QTRY_VERIFY(!editor());
+        click(byName(u"homePreferencesButton"_s));
+        QTRY_VERIFY(byName(u"themeMode"_s));
+        shot(u"12-preferences-appearance"_s);
+        QVERIFY(m_theme->dark());
+        QQuickItem *mode = byName(u"themeMode"_s);
+        click(mode, QPointF(0, 0)); // the middle segment: Light
+        QTRY_VERIFY(!m_theme->dark());
+        shot(u"13-preferences-light"_s);
+        click(mode, QPointF(mode->width() / 3, 0)); // Dark
+        QTRY_VERIFY(m_theme->dark());
+        click(byName(u"preferencesSection_3"_s));
+        QTRY_VERIFY(byName(u"installPackZip"_s));
+        QTRY_VERIFY(byText(u"vedit library"_s));
+        shot(u"14-preferences-packs"_s);
+        click(byName(u"preferencesSection_2"_s));
+        shot(u"15-preferences-performance"_s);
+        key(Qt::Key_Escape);
+        QTRY_VERIFY(!byName(u"installPackZip"_s) && !byName(u"themeMode"_s));
+        // The session's theme (the command line's override) is back as the other tests expect it.
+        m_theme->setSessionOverrides(theme::ThemeManager::Mode::Dark, std::nullopt);
+    }
+
     void colorGradingAndScopes()
     {
         // Re-open a draft to test color grading and scopes

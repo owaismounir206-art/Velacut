@@ -327,7 +327,7 @@
 <context>
     <name>EditorScreen</name>
     <message>
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+36"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+37"/>
         <source>Video exported</source>
         <translation>Video esportato</translation>
     </message>
@@ -342,7 +342,7 @@
         <translation>Non è stato possibile salvare il fotogramma.</translation>
     </message>
     <message>
-        <location line="+154"/>
+        <location line="+155"/>
         <source>Media</source>
         <translation>Media</translation>
     </message>
@@ -425,13 +425,13 @@
 <context>
     <name>EditorTopBar</name>
     <message>
-        <location filename="../src/ui/qml/EditorTopBar.qml" line="+36"/>
-        <location line="+60"/>
+        <location filename="../src/ui/qml/EditorTopBar.qml" line="+37"/>
+        <location line="+66"/>
         <source>Back to projects</source>
         <translation>Torna ai progetti</translation>
     </message>
     <message>
-        <location line="-52"/>
+        <location line="-58"/>
         <source>Menu</source>
         <translation>Menu</translation>
     </message>
@@ -482,6 +482,16 @@
     </message>
     <message>
         <location line="+6"/>
+        <source>Preferences…</source>
+        <translation>Preferenze…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+,</source>
+        <translation>Ctrl+,</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Keyboard shortcuts</source>
         <translation>Scorciatoie da tastiera</translation>
     </message>
@@ -526,8 +536,8 @@
         <translation>Cerca</translation>
     </message>
     <message>
-        <location line="-104"/>
-        <location line="+109"/>
+        <location line="-110"/>
+        <location line="+115"/>
         <source>Ctrl+K</source>
         <translation>Ctrl+K</translation>
     </message>
@@ -1261,12 +1271,22 @@
 <context>
     <name>HomeScreen</name>
     <message>
-        <location filename="../src/ui/qml/HomeScreen.qml" line="+59"/>
+        <location filename="../src/ui/qml/HomeScreen.qml" line="+62"/>
+        <source>Preferences</source>
+        <translation>Preferenze</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+,</source>
+        <translation>Ctrl+,</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>System information</source>
         <translation>Informazioni di sistema</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+34"/>
         <location line="+37"/>
         <source>New project</source>
         <translation>Nuovo progetto</translation>
@@ -1385,17 +1405,17 @@
         <translation>%1 — vedit</translation>
     </message>
     <message>
-        <location line="+56"/>
+        <location line="+68"/>
         <source>System information</source>
         <translation>Informazioni di sistema</translation>
     </message>
     <message>
-        <location line="-43"/>
+        <location line="-55"/>
         <source>Undo</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="+69"/>
+        <location line="+81"/>
         <source>Copy system information</source>
         <translation>Copia informazioni di sistema</translation>
     </message>
@@ -1484,6 +1504,382 @@
         <location line="+8"/>
         <source>Add to the timeline at the playhead</source>
         <translation>Aggiungi alla timeline, al playhead</translation>
+    </message>
+</context>
+<context>
+    <name>PreferencesDialog</name>
+    <message>
+        <location filename="../src/ui/qml/PreferencesDialog.qml" line="+17"/>
+        <source>Preferences</source>
+        <translation>Preferenze</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Appearance</source>
+        <translation>Aspetto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Language</source>
+        <translation>Lingua</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Performance</source>
+        <translation>Prestazioni</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+345"/>
+        <source>Asset packs</source>
+        <translation>Pacchetti di asset</translation>
+    </message>
+    <message>
+        <location line="-344"/>
+        <source>About</source>
+        <translation>Informazioni</translation>
+    </message>
+    <message>
+        <location line="+155"/>
+        <source>Some changes apply when vedit starts again. Your project is saved.</source>
+        <translation>Alcune modifiche valgono dal prossimo avvio di vedit. Il progetto è salvato.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Restart now</source>
+        <translation>Riavvia ora</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Theme</source>
+        <translation>Tema</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Automatic follows the light or dark setting of the desktop.</source>
+        <translation>Automatico segue l&apos;impostazione chiara o scura del desktop.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+104"/>
+        <location line="+23"/>
+        <source>Automatic</source>
+        <translation>Automatico</translation>
+    </message>
+    <message>
+        <location line="-126"/>
+        <source>Light</source>
+        <translation>Chiaro</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Dark</source>
+        <translation>Scuro</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Colour</source>
+        <translation>Colore</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The interface takes its colours from one colour (Material You).</source>
+        <translation>L&apos;interfaccia ricava i suoi colori da un solo colore (Material You).</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Desktop accent</source>
+        <translation>Colore del desktop</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Wallpaper</source>
+        <translation>Sfondo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Project cover</source>
+        <translation>Copertina del progetto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Chosen by me</source>
+        <translation>Scelto da me</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>vedit default</source>
+        <translation>Predefinito di vedit</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Not available here: the next source in the list is used.</source>
+        <translation>Non disponibile qui: si usa la fonte successiva dell&apos;elenco.</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Other…</source>
+        <translation>Altro…</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Colour style</source>
+        <translation>Stile dei colori</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Tonal</source>
+        <translation>Tonale</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Vibrant</source>
+        <translation>Vivace</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Expressive</source>
+        <translation>Espressivo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Neutral</source>
+        <translation>Neutro</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Faithful</source>
+        <translation>Fedele</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Content</source>
+        <translation>Contenuto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Monochrome</source>
+        <translation>Monocromatico</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Contrast</source>
+        <translation>Contrasto</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+17"/>
+        <source>Desktop setting</source>
+        <translation>Come il desktop</translation>
+    </message>
+    <message>
+        <location line="-17"/>
+        <source>Standard</source>
+        <translation>Standard</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Medium</source>
+        <translation>Medio</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>High</source>
+        <translation>Alto</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Density</source>
+        <translation>Densità</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Compact puts more controls on the screen.</source>
+        <translation>Compatta mette più controlli sullo schermo.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Comfortable</source>
+        <translation>Normale</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Compact</source>
+        <translation>Compatta</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Animations</source>
+        <translation>Animazioni</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>All</source>
+        <translation>Tutte</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Reduced</source>
+        <translation>Ridotte</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Language of the interface</source>
+        <translation>Lingua dell&apos;interfaccia</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Automatic uses the language of the desktop.</source>
+        <translation>Automatica usa la lingua del desktop.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Graphics</source>
+        <translation>Grafica</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Interface drawn with: %1</source>
+        <translation>Interfaccia disegnata con: %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>safe mode</source>
+        <translation>modalità sicura</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Interface backend</source>
+        <translation>Motore dell&apos;interfaccia</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Automatic picks the best one that works on this computer. Software works everywhere, more slowly.</source>
+        <translation>Automatico sceglie il migliore che funziona su questo computer. Software funziona ovunque, più lentamente.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Software</source>
+        <translation>Software</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Acceleration</source>
+        <translation>Accelerazione</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>When the graphics card fails, vedit goes back to the processor by itself.</source>
+        <translation>Se la scheda grafica non ce la fa, vedit torna da solo al processore.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Effects on the graphics card</source>
+        <translation>Effetti sulla scheda grafica</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Hardware video decoding</source>
+        <translation>Decodifica video hardware</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Hardware video encoding (export)</source>
+        <translation>Codifica video hardware (esportazione)</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Filters, transitions, effects, text styles, stickers and templates made by others: their items appear in the libraries at once.</source>
+        <translation>Filtri, transizioni, effetti, stili di testo, sticker e template fatti da altri: i loro elementi compaiono subito nelle librerie.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Install from .zip…</source>
+        <translation>Installa da .zip…</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Install from a folder…</source>
+        <translation>Installa da una cartella…</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>Included in vedit</source>
+        <translation>Incluso in vedit</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n item(s)</source>
+        <translation>
+            <numerusform>%n elemento</numerusform>
+            <numerusform>%n elementi</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>version %1</source>
+        <translation>versione %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Remove the pack</source>
+        <translation>Rimuovi il pacchetto</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Pack removed</source>
+        <translation>Pacchetto rimosso</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Installed in %1</source>
+        <translation>Installati in %1</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>An offline video editor: everything runs on this computer. Free software under the GPL 3.0 licence.</source>
+        <translation>Un editor video offline: tutto gira su questo computer. Software libero con licenza GPL 3.0.</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Copy system information</source>
+        <translation>Copia informazioni di sistema</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>System information copied</source>
+        <translation>Informazioni di sistema copiate</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Colour of the interface</source>
+        <translation>Colore dell&apos;interfaccia</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Install an asset pack</source>
+        <translation>Installa un pacchetto di asset</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Asset packs (%1)</source>
+        <translation>Pacchetti di asset (%1)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>All files (*)</source>
+        <translation>Tutti i file (*)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+8"/>
+        <source>Pack installed: its items are in the libraries</source>
+        <translation>Pacchetto installato: i suoi elementi sono nelle librerie</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Install an asset pack from a folder</source>
+        <translation>Installa un pacchetto di asset da una cartella</translation>
     </message>
 </context>
 <context>
@@ -3211,6 +3607,11 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Preferences</source>
+        <translation>Preferenze</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Full-screen preview</source>
         <translation>Anteprima a schermo intero</translation>
     </message>
@@ -3531,7 +3932,7 @@
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/app/main.cpp" line="+92"/>
+        <location filename="../src/app/main.cpp" line="+99"/>
         <source>Offline video editor</source>
         <translation>Editor video offline</translation>
     </message>
@@ -4251,6 +4652,79 @@
     </message>
 </context>
 <context>
+    <name>vedit::fx::PackageManager</name>
+    <message>
+        <location filename="../src/fx/PackageManager.cpp" line="+70"/>
+        <source>The file does not exist: %1</source>
+        <translation>Il file non esiste: %1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>No room for unpacking the archive.</source>
+        <translation>Non c&apos;è spazio per estrarre l&apos;archivio.</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>This is not a vedit pack: pack.json is missing.</source>
+        <translation>Questo non è un pacchetto di vedit: manca pack.json.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The pack has errors: %1</source>
+        <translation>Il pacchetto contiene errori: %1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The pack&apos;s id is not valid: %1</source>
+        <translation>L&apos;identificativo del pacchetto non è valido: %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The pack contains no items.</source>
+        <translation>Il pacchetto non contiene elementi.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>The pack could not be installed in %1.</source>
+        <translation>Non è stato possibile installare il pacchetto in %1.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The vedit library is part of the application and cannot be removed.</source>
+        <translation>La libreria di vedit fa parte dell&apos;applicazione e non si può rimuovere.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The pack could not be removed: %1</source>
+        <translation>Non è stato possibile rimuovere il pacchetto: %1</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Installing from an archive needs bsdtar (package libarchive) or unzip.</source>
+        <translation>Per installare da un archivio serve bsdtar (pacchetto libarchive) o unzip.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>The archive could not be opened: %1</source>
+        <translation>Non è stato possibile aprire l&apos;archivio: %1</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The archive contains links or paths outside the pack: not installed.</source>
+        <translation>L&apos;archivio contiene collegamenti o percorsi esterni al pacchetto: non installato.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The folder cannot be created: %1</source>
+        <translation>Non è possibile creare la cartella: %1</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>The file cannot be copied: %1</source>
+        <translation>Non è possibile copiare il file: %1</translation>
+    </message>
+</context>
+<context>
     <name>vedit::migrations</name>
     <message>
         <location filename="../src/core/serialization/Migrations.cpp" line="+35"/>
@@ -4699,7 +5173,7 @@
 <context>
     <name>vedit::ui::AppController</name>
     <message>
-        <location filename="../src/ui/controllers/AppController.cpp" line="+119"/>
+        <location filename="../src/ui/controllers/AppController.cpp" line="+121"/>
         <source>GPU</source>
         <translation>GPU</translation>
     </message>

@@ -11,6 +11,7 @@
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 
+#include <functional>
 #include <memory>
 
 class QQmlEngine;
@@ -41,6 +42,13 @@ class AppController : public QObject
     Q_PROPERTY(bool safeMode READ safeMode CONSTANT FINAL)
     Q_PROPERTY(QStringList graphicsReasons READ graphicsReasons CONSTANT FINAL)
     Q_PROPERTY(QString systemInformation READ systemInformation NOTIFY systemInformationChanged FINAL)
+    // Preferences (SPEC §5.16, 1bis rule 6). Language and graphics apply at the next start: restartNeeded tells.
+    Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY preferencesChanged FINAL)
+    Q_PROPERTY(int uiBackendChoice READ uiBackendChoice WRITE setUiBackendChoice NOTIFY preferencesChanged FINAL)
+    Q_PROPERTY(bool gpuEffects READ gpuEffects WRITE setGpuEffects NOTIFY preferencesChanged FINAL)
+    Q_PROPERTY(bool hardwareDecoding READ hardwareDecoding WRITE setHardwareDecoding NOTIFY preferencesChanged FINAL)
+    Q_PROPERTY(bool hardwareEncoding READ hardwareEncoding WRITE setHardwareEncoding NOTIFY preferencesChanged FINAL)
+    Q_PROPERTY(bool restartNeeded READ restartNeeded NOTIFY preferencesChanged FINAL)
 
 public:
     // `helperExecutable`: vedit-render (default: next to the running executable).
@@ -87,13 +95,33 @@ public:
     // A desktop notification (org.freedesktop.Notifications), e.g. when an export ends while vedit is in background.
     Q_INVOKABLE void notify(const QString &title, const QString &body) const;
 
+    // "auto" (the system's), "it" or "en": read by main() before the interface exists.
+    static QString savedLanguage();
+    QString language() const;
+    void setLanguage(const QString &language);
+    int uiBackendChoice() const;
+    void setUiBackendChoice(int choice);
+    bool gpuEffects() const;
+    void setGpuEffects(bool enabled);
+    bool hardwareDecoding() const;
+    void setHardwareDecoding(bool enabled);
+    bool hardwareEncoding() const;
+    void setHardwareEncoding(bool enabled);
+    bool restartNeeded() const { return m_restartNeeded; }
+    // Starts vedit again (after saving everything) so that language and graphics choices apply.
+    Q_INVOKABLE void restart();
+
 signals:
     void editorChanged();
     void systemInformationChanged();
+    void preferencesChanged();
     // For the snackbar.
     void message(const QString &text);
 
 private:
+    void changeGraphics(const std::function<void(gpu::GraphicsPreferences &)> &change);
+
+    bool m_restartNeeded = false;
     gpu::GraphicsDecision m_decision;
     gpu::GpuCapabilities m_capabilities;
     QString m_helper;

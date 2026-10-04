@@ -55,6 +55,8 @@ class ThemeManager : public QObject
     Q_PROPERTY(bool softwareRendering READ softwareRendering NOTIFY softwareRenderingChanged FINAL)
     Q_PROPERTY(QString fontFamily READ fontFamily CONSTANT FINAL)
     Q_PROPERTY(QString iconFontFamily READ iconFontFamily CONSTANT FINAL)
+    // Seeds to try for the manual colour source (Preferences, component gallery): any other can be picked.
+    Q_PROPERTY(QVariantList seedSuggestions READ seedSuggestions CONSTANT FINAL)
 
 public:
     enum class Mode
@@ -155,6 +157,7 @@ public:
     void setSoftwareRendering(bool software);
     QString fontFamily() const;
     QString iconFontFamily() const;
+    static QVariantList seedSuggestions();
 
     // Seed sources computed elsewhere (in background): wallpaper color, current project cover.
     void setWallpaperSeed(const std::optional<QColor> &color);

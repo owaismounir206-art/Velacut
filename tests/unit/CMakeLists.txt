@@ -14,3 +14,4 @@ vedit_add_test(tst_kernels SOURCES tst_kernels.cpp LIBRARIES vedit_fx vedit_core
 vedit_add_test(tst_transitions SOURCES tst_transitions.cpp LIBRARIES vedit_fx vedit_core)
 vedit_add_test(tst_subtitles SOURCES tst_subtitles.cpp LIBRARIES vedit_core)
 vedit_add_test(tst_hwdecoder SOURCES tst_hwdecoder.cpp LIBRARIES vedit_gpu vedit_engine)
+vedit_add_test(tst_packages SOURCES tst_packages.cpp LIBRARIES vedit_fx)

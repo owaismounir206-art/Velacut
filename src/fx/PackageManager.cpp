@@ -2,208 +2,202 @@
 #include "PackageManager.h"
 
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
-#include <QJsonDocument>
-#include <QJsonObject>
+#include <QProcess>
+#include <QRegularExpression>
 #include <QStandardPaths>
+#include <QTemporaryDir>
 
 using namespace Qt::StringLiterals;
 
 namespace vedit::fx {
+
+namespace {
+
+// The folder holding pack.json: the folder itself, or the only folder inside it (an archive of the pack's folder).
+QString packRoot(const QString &folder)
+{
+    if (QFileInfo::exists(folder + u"/pack.json"_s)) {
+        return folder;
+    }
+    const QStringList entries = QDir(folder).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    if (entries.size() == 1 && QFileInfo::exists(folder + u"/"_s + entries.front() + u"/pack.json"_s)) {
+        return folder + u"/"_s + entries.front();
+    }
+    return {};
+}
+
+} // namespace
 
 PackageManager::PackageManager(QObject *parent)
     : QObject(parent)
 {
 }
 
-QString PackageManager::userPackagesDir()
+PackageManager &PackageManager::instance()
 {
-    return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + u"/vedit/packs"_s;
+    static PackageManager manager;
+    return manager;
 }
 
 std::vector<PackageInfo> PackageManager::installedPackages() const
 {
     std::vector<PackageInfo> packages;
-
-    // Built-in core pack
-    PackageInfo core;
-    core.id = u"vedit.core"_s;
-    core.name = u"Core Assets"_s;
-    core.version = u"1.0"_s;
-    core.author = u"vedit"_s;
-    core.path = u":/vedit/packs/vedit.core"_s;
-    core.builtIn = true;
-    packages.push_back(core);
-
-    // User-installed packages
-    const QString userDir = userPackagesDir();
-    if (QDir(userDir).exists()) {
-        const QStringList entries = QDir(userDir).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-        for (const QString &entry : entries) {
-            const QString packagePath = userDir + u"/"_s + entry;
-            PackageInfo info = loadPackageInfo(packagePath);
-            if (!info.id.isEmpty()) {
-                packages.push_back(info);
-            }
+    const Library core = Library::load(u":/vedit/packs/vedit.core"_s);
+    packages.push_back({core.packId(), core.packName(), core.packVersion(), core.itemCount(), u":/vedit/packs/vedit.core"_s, true});
+    const QDir folder(Library::userPacksFolder());
+    for (const QString &entry : folder.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
+        const Library pack = Library::load(folder.filePath(entry));
+        if (pack.errors().isEmpty() && pack.packId() != core.packId()) {
+            packages.push_back({pack.packId(), pack.packName(), pack.packVersion(), pack.itemCount(), folder.filePath(entry), false});
         }
     }
-
     return packages;
-}
-
-PackageInfo PackageManager::loadPackageInfo(const QString &packageDir) const
-{
-    PackageInfo info;
-    const QString manifestPath = packageDir + u"/manifest.json"_s;
-    QFile file(manifestPath);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return info;
-    }
-
-    const QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
-    if (!doc.isObject()) {
-        return info;
-    }
-
-    const QJsonObject obj = doc.object();
-    info.id = obj.value(u"id"_s).toString();
-    info.name = obj.value(u"name"_s).toString();
-    info.version = obj.value(u"version"_s).toString(u"1.0"_s);
-    info.author = obj.value(u"author"_s).toString();
-    info.path = packageDir;
-    info.builtIn = false;
-
-    return info;
 }
 
 bool PackageManager::installPackage(const QString &sourcePath, QString *error)
 {
-    const QFileInfo sourceInfo(sourcePath);
-    if (!sourceInfo.exists()) {
+    const auto failed = [error](const QString &text) {
         if (error) {
-            *error = tr("Source path does not exist: %1").arg(sourcePath);
+            *error = text;
         }
         return false;
+    };
+    const QFileInfo source(sourcePath);
+    if (!source.exists()) {
+        return failed(tr("The file does not exist: %1").arg(sourcePath));
     }
-
-    const QString userDir = userPackagesDir();
-    QDir().mkpath(userDir);
-
-    // Handle .zip archives
-    if (sourceInfo.suffix().toLower() == u"zip"_s) {
-        // TODO: Extract zip to a temporary directory, load manifest, then move to final location
-        if (error) {
-            *error = tr("ZIP package installation not yet implemented.");
+    QTemporaryDir unpacked;
+    QString folder = sourcePath;
+    if (source.isFile()) {
+        if (!unpacked.isValid()) {
+            return failed(tr("No room for unpacking the archive."));
         }
-        return false;
-    }
-
-    // Handle directories
-    if (!sourceInfo.isDir()) {
-        if (error) {
-            *error = tr("Source must be a directory or .zip archive.");
+        QString reason;
+        if (!extractArchive(sourcePath, unpacked.path(), &reason)) {
+            return failed(reason);
         }
-        return false;
+        folder = unpacked.path();
     }
-
-    // Load package info to get the ID
-    const PackageInfo info = loadPackageInfo(sourcePath);
-    if (info.id.isEmpty()) {
-        if (error) {
-            *error = tr("Invalid package: manifest.json not found or invalid.");
-        }
-        return false;
+    const QString root = packRoot(folder);
+    if (root.isEmpty()) {
+        return failed(tr("This is not a vedit pack: pack.json is missing."));
     }
-
-    // Check if already installed
-    const QString destPath = userDir + u"/"_s + info.id;
-    if (QDir(destPath).exists()) {
-        if (error) {
-            *error = tr("Package '%1' is already installed.").arg(info.id);
-        }
-        return false;
+    const Library pack = Library::load(root);
+    if (!pack.errors().isEmpty()) {
+        return failed(tr("The pack has errors: %1").arg(pack.errors().join(u"; "_s)));
     }
-
-    // Copy the package directory
-    if (!QFile::copy(sourcePath, destPath)) {
-        // Qt's QFile::copy doesn't work for directories, use a recursive copy
-        if (!copyRecursively(sourcePath, destPath, error)) {
-            return false;
-        }
+    static const QRegularExpression safeId(u"^[A-Za-z0-9._-]+$"_s);
+    if (!safeId.match(pack.packId()).hasMatch() || pack.packId() == QLatin1String(Library::kCorePack)) {
+        return failed(tr("The pack's id is not valid: %1").arg(pack.packId()));
     }
-
-    emit packagesChanged();
+    if (pack.itemCount() == 0) {
+        return failed(tr("The pack contains no items."));
+    }
+    const QString destination = Library::userPacksFolder() + u"/"_s + pack.packId();
+    // Copied next to its place first: a failed copy never leaves half a pack where the library looks.
+    const QString staging = destination + u".installing"_s;
+    QDir(staging).removeRecursively();
+    QString reason;
+    if (!copyRecursively(root, staging, &reason)) {
+        QDir(staging).removeRecursively();
+        return failed(reason);
+    }
+    QDir(destination).removeRecursively(); // an update replaces the installed version
+    if (!QDir().rename(staging, destination)) {
+        QDir(staging).removeRecursively();
+        return failed(tr("The pack could not be installed in %1.").arg(Library::userPacksFolder()));
+    }
+    Library::reload();
+    emit libraryChanged();
     return true;
 }
 
 bool PackageManager::removePackage(const QString &packageId, QString *error)
 {
-    // Cannot remove built-in packages
-    if (packageId == u"vedit.core"_s) {
+    if (packageId == QLatin1String(Library::kCorePack) || packageId.contains(u'/') || packageId.startsWith(u'.')) {
         if (error) {
-            *error = tr("Cannot remove built-in package.");
+            *error = tr("The vedit library is part of the application and cannot be removed.");
         }
         return false;
     }
-
-    const QString packagePath = userPackagesDir() + u"/"_s + packageId;
-    if (!QDir(packagePath).exists()) {
+    const QString folder = Library::userPacksFolder() + u"/"_s + packageId;
+    if (!QFileInfo(folder).isDir() || !QDir(folder).removeRecursively()) {
         if (error) {
-            *error = tr("Package not found: %1").arg(packageId);
+            *error = tr("The pack could not be removed: %1").arg(packageId);
         }
         return false;
     }
-
-    // Remove the directory
-    if (!QDir(packagePath).removeRecursively()) {
-        if (error) {
-            *error = tr("Failed to remove package directory: %1").arg(packagePath);
-        }
-        return false;
-    }
-
-    emit packagesChanged();
+    Library::reload();
+    emit libraryChanged();
     return true;
 }
 
-bool PackageManager::copyRecursively(const QString &srcPath, const QString &dstPath, QString *error)
+bool PackageManager::extractArchive(const QString &archive, const QString &destination, QString *error)
 {
-    const QDir srcDir(srcPath);
-    if (!srcDir.exists()) {
+    // libarchive's bsdtar is part of every Arch system (pacman uses it); unzip as a second choice.
+    QString program = QStandardPaths::findExecutable(u"bsdtar"_s);
+    QStringList arguments{u"-x"_s, u"-f"_s, archive, u"-C"_s, destination};
+    if (program.isEmpty()) {
+        program = QStandardPaths::findExecutable(u"unzip"_s);
+        arguments = {u"-q"_s, archive, u"-d"_s, destination};
+    }
+    if (program.isEmpty()) {
         if (error) {
-            *error = tr("Source directory does not exist: %1").arg(srcPath);
+            *error = tr("Installing from an archive needs bsdtar (package libarchive) or unzip.");
         }
         return false;
     }
-
-    if (!QDir().mkpath(dstPath)) {
+    QProcess process;
+    process.start(program, arguments);
+    if (!process.waitForFinished(120000) || process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
         if (error) {
-            *error = tr("Failed to create destination directory: %1").arg(dstPath);
+            *error = tr("The archive could not be opened: %1").arg(QString::fromLocal8Bit(process.readAllStandardError()).trimmed());
         }
         return false;
     }
-
-    const QStringList entries = srcDir.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QString &entry : entries) {
-        const QString srcEntry = srcPath + u"/"_s + entry;
-        const QString dstEntry = dstPath + u"/"_s + entry;
-
-        const QFileInfo info(srcEntry);
-        if (info.isDir()) {
-            if (!copyRecursively(srcEntry, dstEntry, error)) {
-                return false;
+    // Nothing may land outside the destination (archives with "../" or absolute paths).
+    const QString base = QDir(destination).canonicalPath();
+    QDirIterator it(destination, QDir::AllEntries | QDir::NoDotAndDotDot | QDir::System | QDir::Hidden, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        const QFileInfo info(it.next());
+        if (info.isSymLink() || !info.canonicalFilePath().startsWith(base)) {
+            if (error) {
+                *error = tr("The archive contains links or paths outside the pack: not installed.");
             }
-        } else {
-            if (!QFile::copy(srcEntry, dstEntry)) {
-                if (error) {
-                    *error = tr("Failed to copy file: %1 to %2").arg(srcEntry, dstEntry);
-                }
-                return false;
-            }
+            return false;
         }
     }
+    return true;
+}
 
+bool PackageManager::copyRecursively(const QString &source, const QString &destination, QString *error)
+{
+    if (!QDir().mkpath(destination)) {
+        if (error) {
+            *error = tr("The folder cannot be created: %1").arg(destination);
+        }
+        return false;
+    }
+    const QDir from(source);
+    for (const QFileInfo &entry : from.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot)) {
+        const QString target = destination + u"/"_s + entry.fileName();
+        if (entry.isSymLink()) {
+            continue; // a pack is plain files
+        }
+        if (entry.isDir()) {
+            if (!copyRecursively(entry.filePath(), target, error)) {
+                return false;
+            }
+        } else if (!QFile::copy(entry.filePath(), target)) {
+            if (error) {
+                *error = tr("The file cannot be copied: %1").arg(entry.filePath());
+            }
+            return false;
+        }
+    }
     return true;
 }
 

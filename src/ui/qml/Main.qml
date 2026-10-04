@@ -48,6 +48,7 @@ ApplicationWindow {
         id: homeScreen
         HomeScreen {
             onInfoRequested: infoDialog.open()
+            onPreferencesRequested: preferences.open()
         }
     }
     Component {
@@ -56,8 +57,19 @@ ApplicationWindow {
             editor: App.editor
             onMessage: (text, undoable) => window.showMessage(text, undoable)
             onInfoRequested: infoDialog.open()
+            onPreferencesRequested: preferences.open()
         }
     }
+
+    // Preferences: from the home screen, the editor's menu, or Ctrl+, anywhere.
+    PreferencesDialog {
+        id: preferences
+        objectName: "preferencesDialog"
+        anchors.centerIn: parent
+        width: Math.min(window.width - 2 * Theme.space.xl, Theme.editor.dialogWidth * 1.4)
+        height: Math.min(window.height - 2 * Theme.space.xl, Theme.editor.dialogWidth * 1.25)
+    }
+    Shortcut { sequence: "Ctrl+,"; onActivated: preferences.open() }
 
     // Leaving the window or the app: everything is saved already, this writes the last second of changes.
     onActiveChanged: if (!active && App.editor) App.editor.saveNow()

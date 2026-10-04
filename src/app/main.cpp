@@ -78,7 +78,14 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     logging::install();
 
-    // Interface language: the system one (Italian and English available from the start, SPEC §4).
+    // Interface language: the system one, or the one chosen in Preferences (Italian and English, SPEC §4). The default
+    // locale is what the translations and the libraries' names (fx::LocalizedText) follow.
+    const QString language = ui::AppController::savedLanguage();
+    if (language == u"it"_s) {
+        QLocale::setDefault(QLocale(QLocale::Italian, QLocale::Italy));
+    } else if (language == u"en"_s) {
+        QLocale::setDefault(QLocale(QLocale::English, QLocale::UnitedKingdom));
+    }
     QTranslator qtTranslator;
     if (qtTranslator.load(QLocale(), u"qt"_s, u"_"_s, QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
         QCoreApplication::installTranslator(&qtTranslator);

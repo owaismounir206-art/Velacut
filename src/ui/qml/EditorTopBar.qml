@@ -20,6 +20,7 @@ Item {
     signal frameRequested()
     signal infoRequested()
     signal shortcutsRequested()
+    signal preferencesRequested()
 
     implicitHeight: Theme.editor.topBarHeight
 
@@ -79,6 +80,12 @@ Item {
                     text: qsTr("Search…")
                     shortcutText: qsTr("Ctrl+K")
                     onTriggered: bar.searchRequested()
+                }
+                MenuItem {
+                    iconName: "settings"
+                    text: qsTr("Preferences…")
+                    shortcutText: qsTr("Ctrl+,")
+                    onTriggered: bar.preferencesRequested()
                 }
                 MenuItem {
                     iconName: "keyboard"

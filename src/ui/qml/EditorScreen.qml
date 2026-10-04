@@ -14,6 +14,7 @@ Item {
     required property Editor editor
     signal message(string text, bool undoable)
     signal infoRequested()
+    signal preferencesRequested()
 
     Connections {
         target: root.editor
@@ -160,6 +161,7 @@ Item {
             onImportRequested: library.importFiles()
             onInfoRequested: root.infoRequested()
             onShortcutsRequested: shortcuts.open()
+            onPreferencesRequested: root.preferencesRequested()
             onFrameRequested: root.saveFrame()
         }
 

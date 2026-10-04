@@ -1,27 +1,29 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "fx/Library.h"
+
 #include <QObject>
 #include <QString>
-#include <QStringList>
 
 #include <vector>
 
 namespace vedit::fx {
 
-// Information about an installed asset package.
+// An asset pack as Preferences → Packs shows it.
 struct PackageInfo
 {
-    QString id;      // unique package identifier (e.g., "user.myfilters")
-    QString name;    // display name
-    QString version; // version string
-    QString author;  // package author
-    QString path;    // absolute path to the package directory
-    bool builtIn = false; // true for vedit.core and other built-in packs
+    QString id;           // "vedit.core", "my.filters"…
+    LocalizedText name;
+    int version = 1;
+    int items = 0;        // filters, transitions, styles, stickers, effects, templates…
+    QString path;         // the pack's folder
+    bool builtIn = false; // vedit.core: part of the application, cannot be removed
 };
 
-// Manages user-installed asset packages (effects, transitions, LUT, stickers, templates).
-// Packages are installed to ~/.local/share/vedit/packs/ and loaded alongside the core pack.
+// The user's asset packs (SPEC §5.13 "gestore degli asset"; format in docs/EFFECT_FORMAT.md): installed from a folder
+// or a .zip archive into Library::userPacksFolder(), removed from there. After every change the library is reloaded
+// (Library::reload()) and libraryChanged() is emitted, so the panels show the new items at once.
 class PackageManager : public QObject
 {
     Q_OBJECT
@@ -29,27 +31,22 @@ class PackageManager : public QObject
 public:
     explicit PackageManager(QObject *parent = nullptr);
 
-    // Lists all installed packages (built-in + user-installed).
+    // The process-wide instance (its signal reaches every library panel).
+    static PackageManager &instance();
+
+    // The core pack, then the user's packs that load without errors.
     std::vector<PackageInfo> installedPackages() const;
-
-    // Installs a package from a directory or .zip archive.
-    // Returns true on success, false with error message on failure.
+    // Installs (or updates, same id) the pack in a folder or a .zip archive. False with `error` set on failure.
     bool installPackage(const QString &sourcePath, QString *error = nullptr);
-
-    // Removes a user-installed package by ID. Built-in packages cannot be removed.
-    // Returns true on success, false with error message on failure.
+    // Removes a user pack. The core pack cannot be removed.
     bool removePackage(const QString &packageId, QString *error = nullptr);
 
-    // Returns the user packages directory (~/.local/share/vedit/packs/).
-    static QString userPackagesDir();
-
 signals:
-    void packagesChanged();
+    void libraryChanged();
 
 private:
-    PackageInfo loadPackageInfo(const QString &packageDir) const;
-    bool copyRecursively(const QString &srcPath, const QString &dstPath, QString *error);
-    bool extractZip(const QString &zipPath, const QString &destDir, QString *error);
+    static bool extractArchive(const QString &archive, const QString &destination, QString *error);
+    static bool copyRecursively(const QString &source, const QString &destination, QString *error);
 };
 
 } // namespace vedit::fx

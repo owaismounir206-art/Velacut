@@ -19,9 +19,16 @@ resources/packs/vedit.core/
 ```
 Ogni file di elementi è `{ "categories": [ { "id", "name" } ], "items": [ … ] }`. I nomi sono oggetti
 `{ "en": …, "it": … }` (i manifest sono dati: l'interfaccia sceglie la lingua). Il pacchetto `vedit.core` è incorporato
-nell'applicazione (risorse Qt `:/vedit/packs/vedit.core`), quindi l'app funziona anche senza file installati. I
-pacchetti dell'utente (stessa struttura, in `~/.local/share/vedit/packs/<id>/`) arrivano con la gestione dei
-pacchetti (Fase 5).
+nell'applicazione (risorse Qt `:/vedit/packs/vedit.core`), quindi l'app funziona anche senza file installati.
+
+**Pacchetti dell'utente** (Fase 5, Preferenze → Pacchetti di asset): stessa struttura, in
+`$XDG_DATA_HOME/vedit/packs/<id>/` (di solito `~/.local/share/vedit/packs/`). Si installano da una cartella o da un
+archivio `.zip` (estratto con `bsdtar`, altrimenti `unzip`; rifiutati collegamenti e percorsi fuori dal pacchetto).
+Requisiti: `pack.json` con `"format": "vedit.pack"` e un `id` di soli `A-Z a-z 0-9 . _ -` diverso da `vedit.core`;
+almeno un elemento; nessun errore di caricamento (es. un `kernel` sconosciuto). I file di elementi sono facoltativi: un
+pacchetto porta solo i tipi che gli servono. Reinstallare lo stesso `id` lo aggiorna. Gli elementi si aggiungono a
+quelli del pacchetto core (un id già presente resta quello del core) e compaiono subito nei pannelli, senza riavviare
+(la libreria in uso viene sostituita in blocco: chi la sta leggendo in un altro thread continua sulla precedente).
 
 Nel progetto un elemento si riferisce con un `AssetRef` `{ "pack": "vedit.core", "id": "filters/warm", "version": 1 }`
 (FILE_FORMAT §5.9). Gli id non cambiano mai; una modifica incompatibile alza `version`.

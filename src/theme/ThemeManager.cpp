@@ -381,6 +381,17 @@ bool ThemeManager::hasIcon(const QString &name) const
     return iconCodepoints().contains(name);
 }
 
+QVariantList ThemeManager::seedSuggestions()
+{
+    // The built-in seed first, then a hue wheel of seeds that give distinct schemes in every variant.
+    QVariantList seeds;
+    for (const QRgb rgb : {kDefaultSeed, QRgb(0xff0b8fa3), QRgb(0xff1e8e3e), QRgb(0xffa8870b), QRgb(0xffe8710a),
+                           QRgb(0xffd93025), QRgb(0xffc2185b), QRgb(0xff7b1fa2), QRgb(0xff777777)}) {
+        seeds.append(QColor::fromRgba(rgb));
+    }
+    return seeds;
+}
+
 QStringList ThemeManager::colorRoleNames() const
 {
     QStringList names;

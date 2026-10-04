@@ -4,7 +4,7 @@
 <context>
     <name>EditorScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+362"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+364"/>
         <source>Choose %n video(s) or photo(s) for the template</source>
         <translation>
             <numerusform>Choose %n video or photo for the template</numerusform>
@@ -15,11 +15,22 @@
 <context>
     <name>HomeScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/HomeScreen.qml" line="+343"/>
+        <location filename="../src/ui/qml/HomeScreen.qml" line="+353"/>
         <source>%n project(s)</source>
         <translation>
             <numerusform>%n project</numerusform>
             <numerusform>%n projects</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>PreferencesDialog</name>
+    <message numerus="yes">
+        <location filename="../src/ui/qml/PreferencesDialog.qml" line="+428"/>
+        <source>%n item(s)</source>
+        <translation>
+            <numerusform>%n item</numerusform>
+            <numerusform>%n items</numerusform>
         </translation>
     </message>
 </context>

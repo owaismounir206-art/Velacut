@@ -6,6 +6,11 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QLocale>
+#include <QStandardPaths>
+
+#include <atomic>
+#include <memory>
+#include <mutex>
 
 using namespace Qt::StringLiterals;
 
@@ -99,6 +104,9 @@ Library Library::load(const QString &folder)
     Library library;
     const auto read = [&](const QString &name) -> QJsonObject {
         QFile file(folder + u"/"_s + name);
+        if (!file.exists() && name != u"pack.json"_s) {
+            return {}; // a pack has only the kinds of items it brings
+        }
         if (!file.open(QIODevice::ReadOnly)) {
             library.m_errors << u"%1: cannot be read"_s.arg(name);
             return {};
@@ -112,6 +120,11 @@ Library Library::load(const QString &folder)
     };
     const QJsonObject pack = read(u"pack.json"_s);
     library.m_packId = pack.value(u"id"_s).toString();
+    library.m_packName = localized(pack.value(u"name"_s));
+    library.m_packVersion = pack.value(u"version"_s).toInt(1);
+    if (pack.value(u"format"_s).toString() != u"vedit.pack"_s || library.m_packId.isEmpty()) {
+        library.m_errors << u"pack.json: not a vedit pack (format \"vedit.pack\" and an id are required)"_s;
+    }
 
     const QJsonObject filters = read(u"filters.json"_s);
     library.m_filterCategories = categories(filters);
@@ -240,10 +253,97 @@ Library Library::load(const QString &folder)
     return library;
 }
 
+namespace {
+
+// The library in use. Replaced as a whole by reload(); the previous ones are never freed, so that references taken by
+// other threads (rendering, thumbnails) stay valid.
+std::atomic<const Library *> &currentLibrary()
+{
+    static std::atomic<const Library *> current{nullptr};
+    return current;
+}
+
+const Library *loadInstalled()
+{
+    // Owned here until the program ends (never freed earlier: see currentLibrary()).
+    static std::mutex mutex;
+    static std::vector<std::unique_ptr<Library>> loaded;
+    auto owned = std::make_unique<Library>(Library::load(u":/vedit/packs/vedit.core"_s));
+    Library *library = owned.get();
+    {
+        std::lock_guard lock(mutex);
+        loaded.push_back(std::move(owned));
+    }
+    const QDir folder(Library::userPacksFolder());
+    for (const QString &entry : folder.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
+        const Library pack = Library::load(folder.filePath(entry));
+        if (pack.errors().isEmpty() && pack.packId() != QLatin1String(Library::kCorePack)) {
+            library->merge(pack);
+        }
+    }
+    return library;
+}
+
+} // namespace
+
 const Library &Library::core()
 {
-    static const Library library = load(u":/vedit/packs/vedit.core"_s);
-    return library;
+    static std::once_flag once;
+    std::call_once(once, [] {
+        const Library *expected = nullptr;
+        currentLibrary().compare_exchange_strong(expected, loadInstalled());
+    });
+    return *currentLibrary().load();
+}
+
+void Library::reload()
+{
+    core(); // the first load happened
+    currentLibrary().store(loadInstalled());
+}
+
+QString Library::userPacksFolder()
+{
+    return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + u"/vedit/packs"_s;
+}
+
+int Library::itemCount() const
+{
+    return static_cast<int>(m_filters.size() + m_transitions.size() + m_textStyles.size() + m_animations.size() +
+                            m_stickers.size() + m_videoEffects.size() + m_templates.size());
+}
+
+namespace {
+
+template<typename T>
+void mergeItems(std::vector<T> &into, const std::vector<T> &from)
+{
+    for (const T &item : from) {
+        if (std::none_of(into.begin(), into.end(), [&item](const T &existing) { return existing.id == item.id; })) {
+            into.push_back(item);
+        }
+    }
+}
+
+} // namespace
+
+void Library::merge(const Library &other)
+{
+    mergeItems(m_filterCategories, other.m_filterCategories);
+    mergeItems(m_filters, other.m_filters);
+    mergeItems(m_transitionCategories, other.m_transitionCategories);
+    mergeItems(m_transitions, other.m_transitions);
+    mergeItems(m_textCategories, other.m_textCategories);
+    mergeItems(m_textStyles, other.m_textStyles);
+    mergeItems(m_animationCategories, other.m_animationCategories);
+    mergeItems(m_animations, other.m_animations);
+    mergeItems(m_stickerCategories, other.m_stickerCategories);
+    mergeItems(m_stickers, other.m_stickers);
+    mergeItems(m_videoEffectCategories, other.m_videoEffectCategories);
+    mergeItems(m_videoEffects, other.m_videoEffects);
+    mergeItems(m_templateCategories, other.m_templateCategories);
+    mergeItems(m_templates, other.m_templates);
+    mergeItems(m_effects, other.m_effects);
 }
 
 const FilterPreset *Library::filter(const QString &id) const

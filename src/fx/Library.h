@@ -143,12 +143,23 @@ class Library
 public:
     static constexpr const char *kCorePack = "vedit.core";
 
-    // The core pack, loaded once (thread-safe).
+    // The library in use: the core pack and, after it, the user's packs (userPacksFolder()). Thread-safe; a reference
+    // stays valid for the whole run, also after reload() (old libraries are kept: installing packs is rare).
     static const Library &core();
-    // Loads a pack folder (for tests and, later, user packs). Problems end up in errors().
+    // Loads the packs again (a pack was installed or removed): later calls of core() see the new library.
+    static void reload();
+    // Where the user's packs live: <XDG data>/vedit/packs/<id>/ (docs/EFFECT_FORMAT.md §1).
+    static QString userPacksFolder();
+    // Loads a pack folder. Only pack.json is required; problems end up in errors().
     static Library load(const QString &folder);
+    // Adds the items of `other` (a user pack) whose ids are not taken yet, and its new categories.
+    void merge(const Library &other);
 
     QString packId() const { return m_packId; }
+    const LocalizedText &packName() const { return m_packName; }
+    int packVersion() const { return m_packVersion; }
+    // Number of items of every kind (shown in Preferences → Packs).
+    int itemCount() const;
     const QStringList &errors() const { return m_errors; }
 
     const std::vector<Category> &filterCategories() const { return m_filterCategories; }
@@ -179,6 +190,8 @@ public:
 
 private:
     QString m_packId;
+    LocalizedText m_packName;
+    int m_packVersion = 1;
     QStringList m_errors;
     std::vector<Category> m_filterCategories;
     std::vector<FilterPreset> m_filters;

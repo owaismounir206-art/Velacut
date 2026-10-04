@@ -2,6 +2,7 @@
 #include "AssetLibraryModel.h"
 
 #include "fx/Library.h"
+#include "fx/PackageManager.h"
 
 #include <QJsonArray>
 #include <QJsonObject>
@@ -13,6 +14,11 @@ namespace vedit::ui {
 AssetLibraryModel::AssetLibraryModel(QObject *parent)
     : QAbstractListModel(parent)
 {
+    // A pack installed or removed (Preferences → Packs): the new items show at once.
+    connect(&fx::PackageManager::instance(), &fx::PackageManager::libraryChanged, this, [this] {
+        refresh();
+        emit kindChanged(); // the categories may have changed too
+    });
     refresh();
 }
 
