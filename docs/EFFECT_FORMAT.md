@@ -74,10 +74,11 @@ Il percorso GPU facoltativo (Fase 5) aggiungerà un campo `gpu` con lo shader; i
 ```
 Applicare uno stile copia `style` nella clip (il progetto resta autosufficiente) e registra `stylePreset`.
 
-## 6. Dimensione attuale delle librerie (Fase 2)
-32 filtri in 7 categorie, 18 transizioni in 3 categorie, 24 stili di testo in 5 categorie. La specifica chiede alla
-fine almeno 60 filtri, 100 transizioni e 40 stili: le librerie crescono nelle fasi successive (transizioni 3D e
-distorsioni con la Fase 5, effetti testo con la Fase 3).
+## 6. Dimensione attuale delle librerie
+66 filtri in 9 categorie (tutti diversi tra loro: `tst_kernels::coreLibraryLoads` confronta le trasformazioni di
+colore), 114 transizioni in 10 categorie, 77 stili di testo (53 animati), 93 animazioni (30 di ingresso, 30 di uscita,
+33 in ciclo, comprese le varianti del Ken Burns), 101 effetti video, 109 sticker, 8 template di progetto. Minimi della
+specifica: 60 filtri, 100 transizioni, 40 stili, 50 template di testo, 80 effetti, 30 animazioni per categoria.
 
 ## 7. Sticker (`stickers.json`, Fase 5)
 ```json

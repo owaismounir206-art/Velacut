@@ -609,7 +609,7 @@ private slots:
         const Library &library = Library::core();
         QVERIFY2(library.errors().isEmpty(), qPrintable(library.errors().join(u'\n')));
         QCOMPARE(library.packId(), QStringLiteral("vedit.core"));
-        QVERIFY(library.filters().size() >= 30);
+        QVERIFY(library.filters().size() >= 60); // SPEC §5.10: at least 60 filters, in categories
         QVERIFY(library.transitions().size() >= 100);
         QVERIFY(library.textStyles().size() >= 40); // SPEC §5.7: at least 40 styles
         // … and at least 50 animated text templates, with their text in both languages.
@@ -666,6 +666,33 @@ private slots:
         }
         for (const FilterPreset &filter : library.filters()) {
             QVERIFY2(!filter.look.isIdentity() || filter.vignette != 0 || filter.grain != 0, qPrintable(filter.id));
+        }
+        // …and no two filters look the same: their colour transforms differ on a grid of test colours.
+        const auto signature = [](const FilterPreset &filter) {
+            std::vector<double> values;
+            for (const double r : {0.1, 0.5, 0.9}) {
+                for (const double g : {0.1, 0.5, 0.9}) {
+                    for (const double b : {0.1, 0.5, 0.9}) {
+                        const auto out = ColorLut::evaluate(filter.look, {r, g, b});
+                        values.insert(values.end(), out.begin(), out.end());
+                    }
+                }
+            }
+            values.push_back(filter.vignette);
+            values.push_back(filter.grain);
+            return values;
+        };
+        const auto &filters = library.filters();
+        for (size_t i = 0; i < filters.size(); ++i) {
+            const auto a = signature(filters[i]);
+            for (size_t j = i + 1; j < filters.size(); ++j) {
+                const auto b = signature(filters[j]);
+                double distance = 0;
+                for (size_t k = 0; k < a.size(); ++k) {
+                    distance += std::abs(a[k] - b[k]);
+                }
+                QVERIFY2(distance > 0.5, qPrintable(filters[i].id + u" ~ "_s + filters[j].id));
+            }
         }
         QVERIFY(library.filter(QStringLiteral("filters/bw")));
         QCOMPARE(library.filter(QStringLiteral("filters/bw"))->look.saturation, -1.0);

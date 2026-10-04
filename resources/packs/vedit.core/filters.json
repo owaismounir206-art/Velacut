@@ -48,6 +48,20 @@
                 "en": "Food",
                 "it": "Cibo"
             }
+        },
+        {
+            "id": "travel",
+            "name": {
+                "en": "Travel",
+                "it": "Viaggio"
+            }
+        },
+        {
+            "id": "night",
+            "name": {
+                "en": "Night & neon",
+                "it": "Notte e neon"
+            }
         }
     ],
     "items": [
@@ -597,6 +611,712 @@
                 "vibrance": 0.3,
                 "sharpness": 0.5,
                 "highlights": -0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/sunny",
+            "version": 1,
+            "category": "life",
+            "name": {
+                "en": "Sunny",
+                "it": "Soleggiato"
+            },
+            "look": {
+                "exposure": 0.15,
+                "temperature": 0.25,
+                "vibrance": 0.2,
+                "contrast": 0.08
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/summer",
+            "version": 1,
+            "category": "life",
+            "name": {
+                "en": "Summer",
+                "it": "Estate"
+            },
+            "look": {
+                "temperature": 0.3,
+                "tint": 0.05,
+                "saturation": 0.15,
+                "highlights": -0.15,
+                "shadows": 0.15
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/juicy",
+            "version": 1,
+            "category": "life",
+            "name": {
+                "en": "Juicy",
+                "it": "Succoso"
+            },
+            "look": {
+                "saturation": 0.4,
+                "vibrance": 0.15,
+                "contrast": 0.15,
+                "blacks": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/daylight",
+            "version": 1,
+            "category": "life",
+            "name": {
+                "en": "Daylight",
+                "it": "Luce del giorno"
+            },
+            "look": {
+                "exposure": 0.2,
+                "whites": 0.15,
+                "temperature": -0.05,
+                "vibrance": 0.15
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/peach",
+            "version": 1,
+            "category": "portrait",
+            "name": {
+                "en": "Peach",
+                "it": "Pesca"
+            },
+            "look": {
+                "temperature": 0.2,
+                "tint": 0.12,
+                "fade": 0.08,
+                "highlights": -0.1,
+                "vibrance": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/milk",
+            "version": 1,
+            "category": "portrait",
+            "name": {
+                "en": "Milk",
+                "it": "Latte"
+            },
+            "look": {
+                "exposure": 0.25,
+                "contrast": -0.15,
+                "saturation": -0.15,
+                "fade": 0.15,
+                "whites": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/blush",
+            "version": 1,
+            "category": "portrait",
+            "name": {
+                "en": "Blush",
+                "it": "Guance rosa"
+            },
+            "look": {
+                "tint": 0.15,
+                "temperature": 0.1,
+                "shadows": 0.1,
+                "vibrance": 0.12,
+                "curve": [
+                    [
+                        0,
+                        0.04
+                    ],
+                    [
+                        0.5,
+                        0.53
+                    ],
+                    [
+                        1,
+                        1
+                    ]
+                ]
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/tan",
+            "version": 1,
+            "category": "portrait",
+            "name": {
+                "en": "Tan",
+                "it": "Abbronzato"
+            },
+            "look": {
+                "temperature": 0.3,
+                "saturation": 0.1,
+                "contrast": 0.12,
+                "shadowTone": [
+                    0.4,
+                    0.2,
+                    -0.2
+                ],
+                "splitAmount": 0.4
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/cyber",
+            "version": 1,
+            "category": "cinema",
+            "name": {
+                "en": "Cyber",
+                "it": "Cyber"
+            },
+            "look": {
+                "tint": -0.25,
+                "contrast": 0.25,
+                "saturation": -0.1,
+                "shadowTone": [
+                    -0.3,
+                    0.5,
+                    0.2
+                ],
+                "highlightTone": [
+                    0.2,
+                    0.5,
+                    0.1
+                ],
+                "splitAmount": 0.6
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/arctic",
+            "version": 1,
+            "category": "cinema",
+            "name": {
+                "en": "Arctic",
+                "it": "Artico"
+            },
+            "look": {
+                "temperature": -0.4,
+                "contrast": 0.15,
+                "saturation": -0.2,
+                "highlights": 0.1,
+                "vignette": -0.2
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/golden-hour",
+            "version": 1,
+            "category": "cinema",
+            "name": {
+                "en": "Golden hour",
+                "it": "Ora d'oro"
+            },
+            "look": {
+                "temperature": 0.45,
+                "tint": 0.05,
+                "highlightTone": [
+                    0.7,
+                    0.45,
+                    0.0
+                ],
+                "splitAmount": 0.5,
+                "contrast": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/dune",
+            "version": 1,
+            "category": "cinema",
+            "name": {
+                "en": "Dune",
+                "it": "Duna"
+            },
+            "look": {
+                "temperature": 0.35,
+                "saturation": -0.25,
+                "contrast": 0.2,
+                "fade": 0.06,
+                "shadowTone": [
+                    0.3,
+                    0.15,
+                    -0.1
+                ],
+                "splitAmount": 0.4
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/thriller",
+            "version": 1,
+            "category": "cinema",
+            "name": {
+                "en": "Thriller",
+                "it": "Thriller"
+            },
+            "look": {
+                "exposure": -0.15,
+                "contrast": 0.3,
+                "saturation": -0.35,
+                "shadowTone": [
+                    -0.2,
+                    0.15,
+                    0.35
+                ],
+                "splitAmount": 0.5,
+                "vignette": -0.35
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/warm-film",
+            "version": 1,
+            "category": "vintage",
+            "name": {
+                "en": "Warm film",
+                "it": "Pellicola calda"
+            },
+            "look": {
+                "temperature": 0.25,
+                "fade": 0.12,
+                "contrast": 0.08,
+                "grain": 0.25,
+                "curve": [
+                    [
+                        0,
+                        0.06
+                    ],
+                    [
+                        0.5,
+                        0.52
+                    ],
+                    [
+                        1,
+                        0.96
+                    ]
+                ]
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/lomo",
+            "version": 1,
+            "category": "vintage",
+            "name": {
+                "en": "Lomo",
+                "it": "Lomo"
+            },
+            "look": {
+                "contrast": 0.35,
+                "saturation": 0.3,
+                "vignette": -0.55,
+                "shadowTone": [
+                    -0.2,
+                    0.1,
+                    0.4
+                ],
+                "splitAmount": 0.4
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/cross-process",
+            "version": 1,
+            "category": "vintage",
+            "name": {
+                "en": "Cross process",
+                "it": "Cross processing"
+            },
+            "look": {
+                "contrast": 0.2,
+                "shadowTone": [
+                    -0.1,
+                    0.2,
+                    0.6
+                ],
+                "highlightTone": [
+                    0.6,
+                    0.6,
+                    -0.3
+                ],
+                "splitAmount": 0.8,
+                "saturation": 0.15
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/expired",
+            "version": 1,
+            "category": "vintage",
+            "name": {
+                "en": "Expired film",
+                "it": "Pellicola scaduta"
+            },
+            "look": {
+                "fade": 0.25,
+                "tint": 0.15,
+                "saturation": -0.2,
+                "grain": 0.35,
+                "temperature": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/super8",
+            "version": 1,
+            "category": "vintage",
+            "name": {
+                "en": "Super 8",
+                "it": "Super 8"
+            },
+            "look": {
+                "temperature": 0.3,
+                "fade": 0.18,
+                "contrast": 0.15,
+                "grain": 0.45,
+                "vignette": -0.4
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/bw-silver",
+            "version": 1,
+            "category": "bw",
+            "name": {
+                "en": "Silver",
+                "it": "Argento"
+            },
+            "look": {
+                "saturation": -1,
+                "contrast": 0.2,
+                "highlights": 0.15,
+                "curve": [
+                    [
+                        0,
+                        0.03
+                    ],
+                    [
+                        0.25,
+                        0.22
+                    ],
+                    [
+                        0.75,
+                        0.8
+                    ],
+                    [
+                        1,
+                        1
+                    ]
+                ]
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/bw-warm",
+            "version": 1,
+            "category": "bw",
+            "name": {
+                "en": "Warm black & white",
+                "it": "Bianco e nero caldo"
+            },
+            "look": {
+                "saturation": -1,
+                "shadowTone": [
+                    0.3,
+                    0.15,
+                    -0.15
+                ],
+                "highlightTone": [
+                    0.25,
+                    0.15,
+                    0.0
+                ],
+                "splitAmount": 0.35,
+                "contrast": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/bw-high-key",
+            "version": 1,
+            "category": "bw",
+            "name": {
+                "en": "High key",
+                "it": "Chiave alta"
+            },
+            "look": {
+                "saturation": -1,
+                "exposure": 0.4,
+                "contrast": -0.1,
+                "whites": 0.25,
+                "blacks": 0.15
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/forest",
+            "version": 1,
+            "category": "nature",
+            "name": {
+                "en": "Forest",
+                "it": "Foresta"
+            },
+            "look": {
+                "tint": -0.15,
+                "vibrance": 0.2,
+                "shadows": 0.15,
+                "shadowTone": [
+                    -0.1,
+                    0.3,
+                    0.1
+                ],
+                "splitAmount": 0.4
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/ocean",
+            "version": 1,
+            "category": "nature",
+            "name": {
+                "en": "Ocean",
+                "it": "Oceano"
+            },
+            "look": {
+                "temperature": -0.25,
+                "vibrance": 0.3,
+                "contrast": 0.12,
+                "highlightTone": [
+                    -0.1,
+                    0.3,
+                    0.5
+                ],
+                "splitAmount": 0.35
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/spring",
+            "version": 1,
+            "category": "nature",
+            "name": {
+                "en": "Spring",
+                "it": "Primavera"
+            },
+            "look": {
+                "exposure": 0.15,
+                "tint": -0.08,
+                "vibrance": 0.3,
+                "fade": 0.05,
+                "shadows": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/sweet",
+            "version": 1,
+            "category": "food",
+            "name": {
+                "en": "Sweet",
+                "it": "Dolce"
+            },
+            "look": {
+                "temperature": 0.15,
+                "tint": 0.1,
+                "saturation": 0.15,
+                "exposure": 0.1,
+                "highlights": -0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/bakery",
+            "version": 1,
+            "category": "food",
+            "name": {
+                "en": "Bakery",
+                "it": "Forno"
+            },
+            "look": {
+                "temperature": 0.35,
+                "contrast": 0.12,
+                "vibrance": 0.15,
+                "shadowTone": [
+                    0.35,
+                    0.2,
+                    0.0
+                ],
+                "splitAmount": 0.35
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/tropical",
+            "version": 1,
+            "category": "travel",
+            "name": {
+                "en": "Tropical",
+                "it": "Tropicale"
+            },
+            "look": {
+                "vibrance": 0.35,
+                "saturation": 0.15,
+                "temperature": 0.1,
+                "tint": -0.08,
+                "contrast": 0.1
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/nordic",
+            "version": 1,
+            "category": "travel",
+            "name": {
+                "en": "Nordic",
+                "it": "Nordico"
+            },
+            "look": {
+                "temperature": -0.2,
+                "saturation": -0.3,
+                "fade": 0.1,
+                "contrast": 0.05,
+                "highlights": 0.05
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/riviera",
+            "version": 1,
+            "category": "travel",
+            "name": {
+                "en": "Riviera",
+                "it": "Riviera"
+            },
+            "look": {
+                "temperature": 0.2,
+                "vibrance": 0.25,
+                "highlightTone": [
+                    0.4,
+                    0.3,
+                    0.1
+                ],
+                "shadowTone": [
+                    -0.1,
+                    0.1,
+                    0.35
+                ],
+                "splitAmount": 0.5
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/alpine",
+            "version": 1,
+            "category": "travel",
+            "name": {
+                "en": "Alpine",
+                "it": "Alpino"
+            },
+            "look": {
+                "temperature": -0.1,
+                "contrast": 0.2,
+                "vibrance": 0.2,
+                "highlights": -0.2,
+                "sharpness": 0.3
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/neon-night",
+            "version": 1,
+            "category": "night",
+            "name": {
+                "en": "Neon night",
+                "it": "Notte al neon"
+            },
+            "look": {
+                "contrast": 0.25,
+                "saturation": 0.3,
+                "shadowTone": [
+                    0.1,
+                    -0.1,
+                    0.6
+                ],
+                "highlightTone": [
+                    0.7,
+                    0.1,
+                    0.5
+                ],
+                "splitAmount": 0.7
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/midnight-blue",
+            "version": 1,
+            "category": "night",
+            "name": {
+                "en": "Midnight blue",
+                "it": "Blu mezzanotte"
+            },
+            "look": {
+                "exposure": -0.2,
+                "temperature": -0.45,
+                "contrast": 0.15,
+                "saturation": -0.1,
+                "vignette": -0.3
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/city-lights",
+            "version": 1,
+            "category": "night",
+            "name": {
+                "en": "City lights",
+                "it": "Luci della città"
+            },
+            "look": {
+                "contrast": 0.2,
+                "vibrance": 0.25,
+                "highlights": 0.15,
+                "blacks": 0.1,
+                "highlightTone": [
+                    0.5,
+                    0.35,
+                    0.0
+                ],
+                "splitAmount": 0.35
+            }
+        },
+        {
+            "kind": "filter",
+            "id": "filters/cyberpunk",
+            "version": 1,
+            "category": "night",
+            "name": {
+                "en": "Cyberpunk",
+                "it": "Cyberpunk"
+            },
+            "look": {
+                "contrast": 0.3,
+                "tint": 0.3,
+                "saturation": 0.25,
+                "shadowTone": [
+                    0.0,
+                    0.2,
+                    0.7
+                ],
+                "highlightTone": [
+                    0.7,
+                    0.0,
+                    0.6
+                ],
+                "splitAmount": 0.8
             }
         }
     ]
