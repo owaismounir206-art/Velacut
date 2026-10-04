@@ -30,12 +30,25 @@ compile_commands.json
 __pycache__/
 .env
 
-# Media Assets & Temporary Renders
+# Media Assets & Temporary Renders (test video / multimedia assets)
 assets/temp/
 render_cache/
 tests/fixtures/media/
+media_test/
+test_media/
+sample_media/
+sample_videos/
 *.mp4
 *.mov
 *.mkv
+*.avi
+*.webm
+*.wmv
+*.flv
+*.m4v
+*.mpg
+*.mpeg
 *.raw
 *.yuv
+*.wav
+*.pcm
