@@ -140,6 +140,7 @@ Dialog {
                 Repeater {
                     model: dialog.platformModel
                     Chip {
+                        required property var modelData
                         variant: "assist"
                         text: modelData.label
                         onClicked: {
@@ -201,21 +202,21 @@ Dialog {
                             role: "bodySmall"
                             color: Theme.color.onSurfaceVariant
                             elide: Text.ElideMiddle
-                            visible: dialog.defaults.hardwareAvailable
-                            text: dialog.defaults.gpuName ?? ""
+                            visible: Boolean(dialog.defaults && dialog.defaults.hardwareAvailable)
+                            text: (dialog.defaults && dialog.defaults.gpuName) ? dialog.defaults.gpuName : ""
                         }
                         Label {
                             Layout.fillWidth: true
                             role: "bodySmall"
                             color: Theme.color.onSurfaceVariant
-                            visible: !dialog.defaults.hardwareAvailable
+                            visible: !Boolean(dialog.defaults && dialog.defaults.hardwareAvailable)
                             text: qsTr("No GPU encoder was found on this computer: the export uses the processor.")
                         }
                     }
                     Switch {
                         id: hardwareUse
                         objectName: "hardwareEncodeSwitch"
-                        enabled: dialog.defaults.hardwareAvailable
+                        enabled: Boolean(dialog.defaults && dialog.defaults.hardwareAvailable)
                     }
                 }
                 Label { role: "labelLarge"; text: qsTr("Maximum file size") }

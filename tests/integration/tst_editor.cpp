@@ -1100,6 +1100,51 @@ private slots:
         QVERIFY2(before == after, qPrintable(firstDifference(before, after)));
     }
 
+    void rippleTrimShortcuts()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-ripple"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache-ripple"_s));
+        QString error;
+        auto editor = std::make_unique<EditorController>(store.createDraft(&error), analysis,
+                                                         QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor->player()->setVolume(0.0);
+        editor->importAndInsertPaths({m_files.landscape, m_files.photo}, 0, editor->timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(*editor).clips.size(), size_t(2), 20000);
+
+        // Landscape: 0..120, Photo: 120..210
+        // Test Q (rippleTrimLeft) at frame 30
+        editor->player()->seek(30);
+        QVERIFY(editor->canRippleTrimLeft());
+        QVERIFY(editor->rippleTrimLeft());
+        // Clip 0 trimmed: duration 90 (starts at 0), playhead moved to cut point 0
+        QCOMPARE(mainTrack(*editor).clips[0].duration.value(), 90);
+        QCOMPARE(editor->player()->position(), 0);
+        QCOMPARE(mainTrack(*editor).clips[1].start.value(), 90);
+
+        // Undo
+        editor->undo();
+        QCOMPARE(mainTrack(*editor).clips[0].duration.value(), 120);
+        QCOMPARE(mainTrack(*editor).clips[1].start.value(), 120);
+
+        // Test W (rippleTrimRight) at frame 70
+        editor->player()->seek(70);
+        QVERIFY(editor->canRippleTrimRight());
+        QVERIFY(editor->rippleTrimRight());
+        // Clip 0 trimmed: duration 70, clip 1 shifted left to 70
+        QCOMPARE(mainTrack(*editor).clips[0].duration.value(), 70);
+        QCOMPARE(mainTrack(*editor).clips[1].start.value(), 70);
+
+        // Test ActionRegistry triggers for Q and W
+        editor->undo();
+        editor->player()->seek(50);
+        QVERIFY(editor->actions()->trigger(u"rippleTrimLeft"_s));
+        QCOMPARE(mainTrack(*editor).clips[0].duration.value(), 70);
+        editor->undo();
+        editor->player()->seek(80);
+        QVERIFY(editor->actions()->trigger(u"rippleTrimRight"_s));
+        QCOMPARE(mainTrack(*editor).clips[0].duration.value(), 80);
+    }
+
     void cleanupTestCase() {}
 };
 

@@ -547,12 +547,12 @@
     <message>
         <location line="+16"/>
         <source>Use hardware acceleration</source>
-        <translation>Usa l'accelerazione hardware</translation>
+        <translation>Usa l&apos;accelerazione hardware</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>No GPU encoder was found on this computer: the export uses the processor.</source>
-        <translation>Nessun encoder GPU trovato su questo computer: l'export usa il processore.</translation>
+        <translation>Nessun encoder GPU trovato su questo computer: l&apos;export usa il processore.</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -1312,6 +1312,21 @@
         <location line="+10"/>
         <source>Video scopes (histogram, waveform, vectorscope)</source>
         <translation>Scope video (istogramma, forma d&apos;onda, vettorscopio)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Save the current frame as an image</source>
+        <translation>Salva il fotogramma corrente come immagine</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Frame saved as %1</source>
+        <translation>Fotogramma salvato come %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The frame could not be saved.</source>
+        <translation>Impossibile salvare il fotogramma.</translation>
     </message>
     <message>
         <location line="+16"/>
@@ -3977,12 +3992,12 @@
 <context>
     <name>vedit::ui::AppController</name>
     <message>
-        <location filename="../src/ui/controllers/AppController.cpp" line="+119"/>
+        <location filename="../src/ui/controllers/AppController.cpp" line="+120"/>
         <source>GPU</source>
         <translation>GPU</translation>
     </message>
     <message>
-        <location line="+52"/>
+        <location line="+57"/>
         <source>Template not found.</source>
         <translation>Modello non trovato.</translation>
     </message>
@@ -4739,7 +4754,7 @@
         <translation>Cambia formato</translation>
     </message>
     <message>
-        <location line="+85"/>
+        <location line="+109"/>
         <source>%1 GB</source>
         <translation>%1 GB</translation>
     </message>

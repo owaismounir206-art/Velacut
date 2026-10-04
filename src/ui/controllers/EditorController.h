@@ -152,6 +152,11 @@ public:
     bool canSplit() const;
     // The selected clips at the playhead, or else the clip under the playhead (main track first).
     Q_INVOKABLE bool split();
+    bool canRippleTrimLeft() const;
+    bool canRippleTrimRight() const;
+    // Ripple trim from clip start to playhead (Q) and playhead to clip end (W)
+    Q_INVOKABLE bool rippleTrimLeft();
+    Q_INVOKABLE bool rippleTrimRight();
     Q_INVOKABLE bool deleteSelection();
     Q_INVOKABLE bool duplicateSelection();
     Q_INVOKABLE void select(const QString &clipId, bool additive);
@@ -262,6 +267,7 @@ private:
     int playhead() const;
     std::optional<ClipId> clipAtPlayhead() const;
     std::vector<ClipId> splitTargets() const;
+    std::optional<ClipId> rippleTrimTarget() const;
     std::optional<ClipId> insertAtRow(const MediaId &mediaId, int frame, int trackRow);
 
     std::unique_ptr<document::Document> m_document;

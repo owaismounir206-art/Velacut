@@ -57,6 +57,9 @@ public:
                         std::optional<TrackId> targetTrack = std::nullopt);
     // Moves one edge of a clip to `time` (clamped to the available material and to the neighbours).
     EditResult trimClip(const ClipId &clipId, ClipEdge edge, const RationalTime &time);
+    // Ripple trim from clip start to time (Q) or from time to clip end (W).
+    // Subsequent clips on the track (and on magnetic main track) shift to close the gap.
+    EditResult rippleTrimClip(const ClipId &clipId, ClipEdge edge, const RationalTime &time);
     EditResult splitClip(const ClipId &clipId, const RationalTime &time);
     EditResult deleteClips(const std::vector<ClipId> &clipIds);
     // Places a copy of each clip right after it (on the main track the following clips move along; elsewhere a new

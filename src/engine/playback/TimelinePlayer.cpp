@@ -27,6 +27,7 @@ TimelinePlayer::TimelinePlayer(QObject *parent)
     : QObject(parent)
     , m_reverse(std::make_unique<ReverseProxyQueue>())
 {
+    m_seekClock.start();
     connect(m_reverse.get(), &ReverseProxyQueue::busyChanged, this, &TimelinePlayer::reverseChanged);
     connect(m_reverse.get(), &ReverseProxyQueue::progressChanged, this, &TimelinePlayer::reverseChanged);
     connect(m_reverse.get(), &ReverseProxyQueue::ready, this, [this](const MediaId &mediaId) {
@@ -339,9 +340,40 @@ void TimelinePlayer::shuttleBackward()
 
 void TimelinePlayer::seek(int frame)
 {
+    commitSeek(frame);
+}
+
+void TimelinePlayer::scrubSeek(int frame)
+{
+    const int target = std::clamp(frame, 0, std::max(0, m_duration - 1));
+    setPosition(target);
+
+    const qint64 now = m_seekClock.elapsed();
+    // Safety watchdog: reset stuck in-flight flag after 120ms
+    if (m_seekInFlight && (now - m_lastSeekMs > 120)) {
+        m_seekInFlight = false;
+    }
+
+    // Backpressure & rate-limiting: coalesce intermediate seeks to prevent choking the MLT consumer/tractor
+    if (m_seekInFlight || (now - m_lastSeekMs < 33)) {
+        m_pendingScrubFrame = target;
+        return;
+    }
+
+    m_pendingScrubFrame.reset();
+    m_seekInFlight = true;
+    m_lastSeekMs = now;
+    showFrame(target);
+}
+
+void TimelinePlayer::commitSeek(int frame)
+{
     const int target = std::clamp(frame, 0, std::max(0, m_duration - 1));
     const bool wasSkimming = m_skimming;
     m_skimming = false;
+    m_pendingScrubFrame.reset();
+    m_seekInFlight = true;
+    m_lastSeekMs = m_seekClock.elapsed();
     setPosition(target);
     showFrame(target);
     if (wasSkimming) {
@@ -453,9 +485,19 @@ void TimelinePlayer::onFrameShown(int position, quint64 generation)
     if (generation != m_generation || !m_consumer) {
         return;
     }
+    m_seekInFlight = false;
     if (position != m_shownPosition) {
         m_shownPosition = position;
         emit shownPositionChanged();
+    }
+    // If a scrub seek request arrived while previous frame was rendering, dispatch the latest one now
+    if (m_pendingScrubFrame.has_value()) {
+        const int target = *m_pendingScrubFrame;
+        m_pendingScrubFrame.reset();
+        m_seekInFlight = true;
+        m_lastSeekMs = m_seekClock.elapsed();
+        showFrame(target);
+        return;
     }
     if (!playing()) {
         return;

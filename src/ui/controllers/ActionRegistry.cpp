@@ -129,6 +129,10 @@ ActionRegistry::ActionRegistry(EditorController &editor)
     add({u"pasteAttributes"_s, tr("Paste attributes"), u"content_paste"_s, tr("Ctrl+Alt+V"), 0,
          [this, inspector] { return inspector->canPaste() && !m_editor.selectedClips().empty(); },
          [inspector] { return inspector->pasteAttributes(); }});
+    add({u"rippleTrimLeft"_s, tr("Ripple trim start to playhead"), u"content_cut"_s, u"Q"_s, 0,
+         [this] { return m_editor.canRippleTrimLeft(); }, [this] { return m_editor.rippleTrimLeft(); }});
+    add({u"rippleTrimRight"_s, tr("Ripple trim playhead to end"), u"content_cut"_s, u"W"_s, 0,
+         [this] { return m_editor.canRippleTrimRight(); }, [this] { return m_editor.rippleTrimRight(); }});
     add({u"createCompound"_s, tr("Group into a compound clip"), u"stacks"_s, {}, 0,
          [this] { return !m_editor.selectedClips().empty(); }, [this] { return m_editor.createCompoundClip(); }});
     add({u"expandCompound"_s, tr("Ungroup the compound clip"), u"stacks"_s, {}, 0,

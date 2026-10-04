@@ -27,6 +27,46 @@ Rectangle {
     // Frame where a drag snapped (a guide line is drawn there), -1 when none.
     property int snapGuide: -1
 
+    // Decoupled 60/120 FPS playhead tracking & reactive scrubbing
+    property bool isScrubbing: false
+    property int visualPlayheadFrame: player.position
+
+    Timer {
+        id: scrubDebounceTimer
+        interval: 60 // 50-80ms debounce for frame-accurate commit
+        repeat: false
+        onTriggered: {
+            if (view.isScrubbing) {
+                view.player.commitSeek(view.visualPlayheadFrame)
+            }
+        }
+    }
+
+    function startScrubbing(targetFrame) {
+        view.player.pause()
+        view.isScrubbing = true
+        view.visualPlayheadFrame = targetFrame
+        view.player.scrubSeek(targetFrame)
+        scrubDebounceTimer.restart()
+    }
+
+    function updateScrubbing(targetFrame) {
+        if (!view.isScrubbing) {
+            view.isScrubbing = true
+        }
+        view.visualPlayheadFrame = targetFrame
+        view.player.scrubSeek(targetFrame)
+        scrubDebounceTimer.restart()
+    }
+
+    function finishScrubbing() {
+        if (view.isScrubbing) {
+            scrubDebounceTimer.stop()
+            view.player.commitSeek(view.visualPlayheadFrame)
+            view.isScrubbing = false
+        }
+    }
+
     color: Theme.color.surfaceContainerLow
     clip: true
 
@@ -78,10 +118,12 @@ Rectangle {
         }
     }
 
-    // Keep the playhead in view while playing.
+    // Keep the playhead in view while playing and sync visual playhead when not scrubbing.
     Connections {
         target: view.player
         function onPositionChanged() {
+            if (!view.isScrubbing)
+                view.visualPlayheadFrame = view.player.position
             if (!view.player.playing)
                 return
             const x = view.player.position * view.zoom
@@ -143,8 +185,10 @@ Rectangle {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.SizeHorCursor
-            onPressed: (mouse) => { view.player.pause(); view.player.seek(view.frameAt(mouse.x + flick.contentX)) }
-            onPositionChanged: (mouse) => { if (pressed) view.player.seek(view.frameAt(mouse.x + flick.contentX)) }
+            onPressed: (mouse) => view.startScrubbing(view.frameAt(mouse.x + flick.contentX))
+            onPositionChanged: (mouse) => { if (pressed) view.updateScrubbing(view.frameAt(mouse.x + flick.contentX)) }
+            onReleased: view.finishScrubbing()
+            onCanceled: view.finishScrubbing()
         }
         // Markers of the video (M adds one at the playhead): click = go there, right click = remove.
         Repeater {
@@ -352,13 +396,14 @@ Rectangle {
                 hoverEnabled: true
                 onPressed: (mouse) => {
                     view.editor.clearSelection()
-                    view.player.pause()
-                    view.player.seek(view.frameAt(mouse.x))
+                    view.startScrubbing(view.frameAt(mouse.x))
                 }
                 onPositionChanged: (mouse) => {
                     if (pressed)
-                        view.player.seek(view.frameAt(mouse.x))
+                        view.updateScrubbing(view.frameAt(mouse.x))
                 }
+                onReleased: view.finishScrubbing()
+                onCanceled: view.finishScrubbing()
             }
             HoverHandler {
                 id: skimmer
@@ -556,9 +601,11 @@ Rectangle {
 
     // ---- playhead (over the ruler and the tracks) ---------------------------------------------------------------------
     Item {
-        x: Theme.editor.trackHeaderWidth + view.player.position * view.zoom - flick.contentX
+        id: playheadItem
+        x: Theme.editor.trackHeaderWidth + (view.isScrubbing ? view.visualPlayheadFrame : view.player.position) * view.zoom - flick.contentX
         visible: x >= Theme.editor.trackHeaderWidth && x <= view.width
         height: view.height
+        z: 10
         Rectangle {
             x: -width / 2
             width: Theme.editor.playheadWidth
@@ -572,6 +619,24 @@ Rectangle {
             height: Theme.editor.playheadKnob
             radius: width / 2
             color: Theme.color.onSurface
+        }
+        MouseArea {
+            x: -Theme.editor.playheadKnob
+            y: 0
+            width: Theme.editor.playheadKnob * 2
+            height: Theme.editor.rulerHeight
+            cursorShape: Qt.SizeHorCursor
+            onPressed: (mouse) => {
+                view.startScrubbing(view.frameAt(playheadItem.x - Theme.editor.trackHeaderWidth + flick.contentX + mouse.x - Theme.editor.playheadKnob))
+            }
+            onPositionChanged: (mouse) => {
+                if (pressed) {
+                    const sceneX = mapToItem(ruler, mouse.x, 0).x
+                    view.updateScrubbing(view.frameAt(sceneX + flick.contentX))
+                }
+            }
+            onReleased: view.finishScrubbing()
+            onCanceled: view.finishScrubbing()
         }
     }
 }

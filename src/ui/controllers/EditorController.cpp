@@ -1058,6 +1058,95 @@ bool EditorController::split()
     return ok;
 }
 
+std::optional<ClipId> EditorController::rippleTrimTarget() const
+{
+    const RationalTime at(playhead(), data().settings.frameRate);
+    for (const ClipId &id : m_selection) {
+        const Clip *clip = data().findClip(id);
+        if (clip && clip->start < at && at < clip->end()) {
+            return id;
+        }
+    }
+    return clipAtPlayhead();
+}
+
+bool EditorController::canRippleTrimLeft() const
+{
+    const auto target = rippleTrimTarget();
+    if (!target) {
+        return false;
+    }
+    const Clip *clip = data().findClip(*target);
+    if (!clip) {
+        return false;
+    }
+    const RationalTime at(playhead(), data().settings.frameRate);
+    return clip->start < at && at < clip->end();
+}
+
+bool EditorController::canRippleTrimRight() const
+{
+    const auto target = rippleTrimTarget();
+    if (!target) {
+        return false;
+    }
+    const Clip *clip = data().findClip(*target);
+    if (!clip) {
+        return false;
+    }
+    const RationalTime at(playhead(), data().settings.frameRate);
+    return clip->start < at && at < clip->end();
+}
+
+bool EditorController::rippleTrimLeft()
+{
+    const auto target = rippleTrimTarget();
+    if (!target) {
+        emit message(tr("Move the playhead over a clip to ripple trim."), false);
+        return false;
+    }
+    const Clip *clip = data().findClip(*target);
+    if (!clip) {
+        return false;
+    }
+    const RationalTime at(playhead(), data().settings.frameRate);
+    if (at <= clip->start || at >= clip->end()) {
+        emit message(tr("Move the playhead over a clip to ripple trim."), false);
+        return false;
+    }
+    const RationalTime oldStart = clip->start;
+    const bool ok = apply(TimelineEditor(data(), data().mainSequenceId).rippleTrimClip(*target, ClipEdge::Start, at));
+    if (ok) {
+        const int newPos = static_cast<int>(oldStart.rescaled(data().settings.frameRate, Rounding::Floor).value());
+        m_player->seek(newPos);
+        emit message(tr("Trimmed start to playhead"), true);
+    }
+    return ok;
+}
+
+bool EditorController::rippleTrimRight()
+{
+    const auto target = rippleTrimTarget();
+    if (!target) {
+        emit message(tr("Move the playhead over a clip to ripple trim."), false);
+        return false;
+    }
+    const Clip *clip = data().findClip(*target);
+    if (!clip) {
+        return false;
+    }
+    const RationalTime at(playhead(), data().settings.frameRate);
+    if (at <= clip->start || at >= clip->end()) {
+        emit message(tr("Move the playhead over a clip to ripple trim."), false);
+        return false;
+    }
+    const bool ok = apply(TimelineEditor(data(), data().mainSequenceId).rippleTrimClip(*target, ClipEdge::End, at));
+    if (ok) {
+        emit message(tr("Trimmed playhead to end"), true);
+    }
+    return ok;
+}
+
 bool EditorController::deleteSelection()
 {
     if (m_selection.isEmpty()) {

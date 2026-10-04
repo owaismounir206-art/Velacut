@@ -521,6 +521,82 @@ EditResult TimelineEditor::trimClip(const ClipId &clipId, ClipEdge edge, const R
     return finish(std::move(modified), tr("Trim clip"), clipId);
 }
 
+EditResult TimelineEditor::rippleTrimClip(const ClipId &clipId, ClipEdge edge, const RationalTime &requestedTime)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    Track &track = *ref->track;
+    if (track.locked) {
+        return fail(tr("The track is locked."));
+    }
+    const bool magnetic = isMagneticMain(modified, track);
+    Clip &clip = ref->clip();
+    MediaClipData *media = clip.media();
+    const RationalTime time = requestedTime.rescaled(m_rate, Rounding::NearestEven);
+    const RationalTime oneFrame(1, m_rate);
+
+    if (edge == ClipEdge::Start) {
+        // Q: Ripple trim from start of clip to playhead
+        if (time <= clip.start) {
+            return EditResult{};
+        }
+        RationalTime delta = time - clip.start;
+        if (delta >= clip.duration) {
+            delta = clip.duration - oneFrame;
+        }
+        if (delta <= RationalTime(0, m_rate)) {
+            return EditResult{};
+        }
+        if (media) {
+            media->sourceIn += RationalTime(sourceFrames(delta.value(), media->speed), m_rate);
+            if (media->sourceIn.isNegative()) {
+                media->sourceIn = RationalTime(0, m_rate);
+            }
+        } else if (CompoundClipData *compound = clip.compound()) {
+            compound->sourceIn += delta;
+        } else {
+            shiftClipLocalTime(clip, delta);
+        }
+        clip.duration -= delta;
+        if (magnetic) {
+            pack(track, m_rate);
+        } else {
+            for (size_t i = ref->index + 1; i < track.clips.size(); ++i) {
+                track.clips[i].start -= delta;
+            }
+        }
+    } else {
+        // W: Ripple trim from playhead to end of clip
+        if (time >= clip.end()) {
+            return EditResult{};
+        }
+        RationalTime newDuration = time - clip.start;
+        if (newDuration < oneFrame) {
+            newDuration = oneFrame;
+        }
+        if (newDuration >= clip.duration) {
+            return EditResult{};
+        }
+        RationalTime delta = clip.duration - newDuration;
+        clip.duration = newDuration;
+        if (magnetic) {
+            pack(track, m_rate);
+        } else {
+            for (size_t i = ref->index + 1; i < track.clips.size(); ++i) {
+                track.clips[i].start -= delta;
+            }
+        }
+    }
+    clampTransitions(track);
+    return finish(std::move(modified), edge == ClipEdge::Start ? tr("Ripple trim start to playhead") : tr("Ripple trim playhead to end"), clipId);
+}
+
 EditResult TimelineEditor::splitClip(const ClipId &clipId, const RationalTime &requestedTime)
 {
     if (!m_sequence) {

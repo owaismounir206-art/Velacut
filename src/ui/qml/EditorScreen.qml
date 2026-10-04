@@ -42,6 +42,8 @@ Item {
     Shortcut { sequence: "Home"; enabled: !root.typing; onActivated: root.editor.player.seek(0) }
     Shortcut { sequence: "End"; enabled: !root.typing; onActivated: root.editor.player.seek(root.editor.timeline.duration) }
     Shortcut { sequences: ["S", "Ctrl+B"]; enabled: !root.typing; onActivated: root.editor.split() }
+    Shortcut { sequence: "Q"; enabled: !root.typing; onActivated: root.editor.rippleTrimLeft() }
+    Shortcut { sequence: "W"; enabled: !root.typing; onActivated: root.editor.rippleTrimRight() }
     Shortcut { sequences: [StandardKey.Delete, "Backspace"]; enabled: !root.typing; onActivated: root.editor.deleteSelection() }
     Shortcut { sequence: "Ctrl+D"; onActivated: root.editor.duplicateSelection() }
     Shortcut { sequences: [StandardKey.Undo]; enabled: !root.typing; onActivated: root.editor.undo() }

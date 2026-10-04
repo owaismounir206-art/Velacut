@@ -867,6 +867,58 @@ private slots:
         QVERIFY(session.data().findClip(secondId) == nullptr);
         QCOMPARE(session.data().findClip(compId)->duration, origDuration);
     }
+
+    void rippleTrimClipTest()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+
+        // Clip A: 0..300, Clip B: 300..420, Clip C: 420..510
+        // Test Ripple Trim Start (Q): trim first 60 frames of A
+        EditResult resQ = session.editor().rippleTrimClip(a, ClipEdge::Start, frames(60));
+        QVERIFY(resQ.ok());
+        QVERIFY(session.apply(std::move(resQ)));
+
+        const Clip *clipA = session.data().findClip(a);
+        const Clip *clipB = session.data().findClip(b);
+        const Clip *clipC = session.data().findClip(c);
+        QVERIFY(clipA && clipB && clipC);
+        QCOMPARE(clipA->start, frames(0));
+        QCOMPARE(clipA->duration, frames(240));
+        QCOMPARE(clipA->media()->sourceIn, frames(60));
+        QCOMPARE(clipB->start, frames(240));
+        QCOMPARE(clipC->start, frames(360));
+
+        // Undo restores original state
+        session.stack.undo();
+        clipA = session.data().findClip(a);
+        clipB = session.data().findClip(b);
+        clipC = session.data().findClip(c);
+        QCOMPARE(clipA->duration, frames(300));
+        QCOMPARE(clipA->media()->sourceIn, frames(0));
+        QCOMPARE(clipB->start, frames(300));
+        QCOMPARE(clipC->start, frames(420));
+
+        // Test Ripple Trim End (W): trim clip B to 50 frames (from 300 to 350)
+        EditResult resW = session.editor().rippleTrimClip(b, ClipEdge::End, frames(350));
+        QVERIFY(resW.ok());
+        QVERIFY(session.apply(std::move(resW)));
+
+        clipA = session.data().findClip(a);
+        clipB = session.data().findClip(b);
+        clipC = session.data().findClip(c);
+        QCOMPARE(clipB->start, frames(300));
+        QCOMPARE(clipB->duration, frames(50));
+        QCOMPARE(clipC->start, frames(350));
+
+        // Undo restores original state
+        session.stack.undo();
+        clipB = session.data().findClip(b);
+        clipC = session.data().findClip(c);
+        QCOMPARE(clipB->duration, frames(120));
+        QCOMPARE(clipC->start, frames(420));
+    }
 };
 
 QTEST_GUILESS_MAIN(TestTimelineEditor)

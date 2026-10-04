@@ -6,6 +6,7 @@
 #include "engine/playback/FrameSink.h"
 #include "engine/timeline/TimelineProjection.h"
 
+#include <QElapsedTimer>
 #include <QObject>
 #include <QPointer>
 #include <QSize>
@@ -14,6 +15,7 @@
 
 #include <atomic>
 #include <memory>
+#include <optional>
 
 namespace Mlt {
 class Consumer;
@@ -101,6 +103,10 @@ public:
     Q_INVOKABLE void shuttleBackward();
     // Moves the playhead (and pauses skimming).
     Q_INVOKABLE void seek(int frame);
+    // Non-blocking scrub seeking with backpressure/coalescing for smooth UI dragging.
+    Q_INVOKABLE void scrubSeek(int frame);
+    // Frame-accurate seek commit on drag release or debounce.
+    Q_INVOKABLE void commitSeek(int frame);
     Q_INVOKABLE void step(int frames);
     // Shows `frame` without moving the playhead (pointer over the timeline); ignored while playing.
     Q_INVOKABLE void skim(int frame);
@@ -165,6 +171,10 @@ private:
     int m_previewLimit = 0;
     QString m_error;
     QStringList m_warnings;
+    std::atomic<bool> m_seekInFlight{false};
+    std::optional<int> m_pendingScrubFrame;
+    QElapsedTimer m_seekClock;
+    qint64 m_lastSeekMs = 0;
 };
 
 } // namespace vedit::engine
