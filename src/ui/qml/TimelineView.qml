@@ -42,20 +42,29 @@ Rectangle {
         }
     }
 
+    function clampFrame(frame) {
+        // The player clamps every seek to [0, duration-1]: clamp the visual playhead too, or the
+        // cursor and the playhead disagree while dragging beyond the end of the timeline.
+        return Math.max(0, Math.min(frame, view.player.duration - 1))
+    }
+
     function startScrubbing(targetFrame) {
+        const target = clampFrame(targetFrame)
         view.player.pause()
         view.isScrubbing = true
-        view.visualPlayheadFrame = targetFrame
-        view.player.scrubSeek(targetFrame)
+        view.visualPlayheadFrame = target
+        view.player.scrubSeek(target)
         scrubDebounceTimer.restart()
     }
 
     function updateScrubbing(targetFrame) {
+        const target = clampFrame(targetFrame)
         if (!view.isScrubbing) {
             view.isScrubbing = true
+            view.player.pause()
         }
-        view.visualPlayheadFrame = targetFrame
-        view.player.scrubSeek(targetFrame)
+        view.visualPlayheadFrame = target
+        view.player.scrubSeek(target)
         scrubDebounceTimer.restart()
     }
 
@@ -496,7 +505,10 @@ Rectangle {
             }
             HoverHandler {
                 id: skimmer
-                onPointChanged: if (hovered) view.player.skim(view.frameAt(point.position.x))
+                // Never skim while a scrub drag owns the playhead: double seeks (skim + scrub per
+                // pointer move) built an async backlog in the MLT consumer and desynced the preview.
+                enabled: !view.isScrubbing
+                onPointChanged: if (hovered && !view.isScrubbing) view.player.skim(view.frameAt(point.position.x))
                 onHoveredChanged: if (!hovered) view.player.endSkim()
             }
 

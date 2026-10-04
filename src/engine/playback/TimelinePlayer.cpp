@@ -307,6 +307,10 @@ void TimelinePlayer::setRate(double rate)
     tractor->seek(m_position);
     m_consumer->purge();
     m_consumer->set("refresh", 1);
+    // The purge above discarded any seek response still in flight: don't wait for a frame that will
+    // never arrive, or the next scrub would silently swallow its first seek for up to 120 ms.
+    m_seekInFlight = false;
+    m_pendingScrubFrame.reset();
     m_rate = rate;
     emit stateChanged();
 }
@@ -347,6 +351,11 @@ void TimelinePlayer::scrubSeek(int frame)
 {
     const int target = std::clamp(frame, 0, std::max(0, m_duration - 1));
     setPosition(target);
+    // A drag takes over from hover skimming: stop it so the skim hairline doesn't stick on the playhead.
+    if (m_skimming) {
+        m_skimming = false;
+        emit stateChanged();
+    }
 
     const qint64 now = m_seekClock.elapsed();
     // Safety watchdog: reset stuck in-flight flag after 120ms
@@ -371,6 +380,12 @@ void TimelinePlayer::commitSeek(int frame)
     const int target = std::clamp(frame, 0, std::max(0, m_duration - 1));
     const bool wasSkimming = m_skimming;
     m_skimming = false;
+    // Already on the requested frame and nothing still rendering: skip the purge/refresh storm that
+    // the 60 ms debounce timer would otherwise send during fast scrubbing (async backlog prevention).
+    if (!wasSkimming && target == m_position && target == m_shownPosition
+        && !m_seekInFlight && !m_pendingScrubFrame.has_value()) {
+        return;
+    }
     m_pendingScrubFrame.reset();
     m_seekInFlight = true;
     m_lastSeekMs = m_seekClock.elapsed();
@@ -392,11 +407,24 @@ void TimelinePlayer::skim(int frame)
     if (playing() || !m_consumer) {
         return;
     }
+    const qint64 now = m_seekClock.elapsed();
+    // Safety watchdog (same as scrubSeek): never stay stuck if a seek response never arrives.
+    if (m_seekInFlight && (now - m_lastSeekMs > 120)) {
+        m_seekInFlight = false;
+    }
+    // Backpressure: skimming (hover axis, trim handles) used to call showFrame() for every pointer move,
+    // bypassing the scrub rate limiting and flooding the MLT consumer with async seeks (frame backlog,
+    // stale preview, playhead/cursor desync). One seek in flight at a time: the next hover point wins.
+    if (m_seekInFlight || m_pendingScrubFrame.has_value()) {
+        return;
+    }
     const int target = std::clamp(frame, 0, std::max(0, m_duration - 1));
     if (!m_skimming) {
         m_skimming = true;
         emit stateChanged();
     }
+    m_seekInFlight = true;
+    m_lastSeekMs = now;
     showFrame(target);
 }
 
