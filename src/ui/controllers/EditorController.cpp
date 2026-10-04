@@ -1234,6 +1234,30 @@ void EditorController::setHardwareEncoding(QStringList encoders, QString gpuName
     m_exportJob->setHardwareEncoders(m_hardwareEncoders);
 }
 
+QString EditorController::exportCurrentFrame(const QString &fileName, const QString &folder)
+{
+    const QImage frame = m_player->sink()->latest();
+    if (frame.isNull() || !QFileInfo(folder).isDir()) {
+        return {};
+    }
+    // The same characters the export stays away from; a recognizable base name.
+    QString base = fileName.trimmed();
+    base.replace(QRegularExpression(u"[/\\\\:*?\"<>|]"_s), u"-"_s);
+    if (base.isEmpty()) {
+        base = data().name;
+        base.replace(QRegularExpression(u"[/\\\\:*?\"<>|]"_s), u"-"_s);
+        base = base.trimmed().isEmpty() ? u"frame"_s : base.trimmed();
+    }
+    QString path = QDir(folder).filePath(base + u".png"_s);
+    for (int n = 2; QFileInfo::exists(path); ++n) {
+        path = QDir(folder).filePath(u"%1 (%2).png"_s.arg(base).arg(n));
+    }
+    if (!frame.save(path, "PNG")) {
+        return {};
+    }
+    return path;
+}
+
 QVariantMap EditorController::exportDefaults() const
 {
     const QJsonObject last = m_document->uiState().value(u"export"_s).toObject();

@@ -80,6 +80,8 @@ public:
     Q_INVOKABLE QUrl fileUrl(const QString &path) const { return QUrl::fromLocalFile(path); }
     Q_INVOKABLE void openFolderOf(const QString &path) const;
     Q_INVOKABLE void openFile(const QString &path) const;
+    // The default folder of the system for videos (where the frame export puts its images).
+    Q_INVOKABLE QString videosFolder() const;
     // A desktop notification (org.freedesktop.Notifications), e.g. when an export ends while vedit is in background.
     Q_INVOKABLE void notify(const QString &title, const QString &body) const;
 

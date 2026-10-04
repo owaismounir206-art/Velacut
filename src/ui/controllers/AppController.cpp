@@ -3,6 +3,7 @@
 
 #include "ActionRegistry.h"
 #include "RecordController.h"
+#include "common/Paths.h"
 #include "core/project/TemplateBuilder.h"
 #include "document/Document.h"
 #include "document/DraftStore.h"
@@ -117,6 +118,11 @@ QString AppController::gpuDisplayName() const
         return m_capabilities.opengl.renderer;
     }
     return tr("GPU");
+}
+
+QString AppController::videosFolder() const
+{
+    return paths::videosDir();
 }
 
 void AppController::makeEditor(std::unique_ptr<document::Document> document)

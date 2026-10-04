@@ -112,11 +112,27 @@ Rectangle {
             IconButton {
                 id: scopesBtn
                 objectName: "scopesButton"
-                anchors { right: formatBtn.left; rightMargin: Theme.space.xs; verticalCenter: parent.verticalCenter }
+                anchors { right: photoBtn.left; rightMargin: Theme.space.xs; verticalCenter: parent.verticalCenter }
                 variant: panel.showScopes ? "filled" : "standard"
                 iconName: "monitoring"
                 label: qsTr("Video scopes (histogram, waveform, vectorscope)")
                 onClicked: panel.showScopes = !panel.showScopes
+            }
+            // The frame on screen as an image (SPEC §5.15): cover, thumbnail, a still to share.
+            IconButton {
+                id: photoBtn
+                objectName: "exportFrameButton"
+                anchors { right: formatBtn.left; rightMargin: Theme.space.xs; verticalCenter: parent.verticalCenter }
+                iconName: "photo_camera"
+                label: qsTr("Save the current frame as an image")
+                enabled: panel.editor.timeline.duration > 0
+                onClicked: {
+                    const path = panel.editor.exportCurrentFrame(panel.editor.name, App.videosFolder())
+                    if (path !== "")
+                        App.message(qsTr("Frame saved as %1").arg(path))
+                    else
+                        App.message(qsTr("The frame could not be saved."))
+                }
             }
             // Format of the canvas under the player (SPEC §4), one click away (SPEC 0bis rule 1).
             FormatButton {

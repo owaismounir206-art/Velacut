@@ -224,6 +224,9 @@ public:
     Q_INVOKABLE QString folderPath(const QUrl &url) const;
     // Hardware encoders verified by the probe and the name of the GPU that has them (shown in the export window).
     void setHardwareEncoding(QStringList encoders, QString gpuName);
+    // Saves the frame on screen as an image (SPEC §5.15 "esporta fotogramma corrente"; also the basis of the
+    // video cover). Never overwrites: "name (2).png". Returns the path written, or an empty string.
+    Q_INVOKABLE QString exportCurrentFrame(const QString &fileName, const QString &folder);
 
     // Saves at once (the window lost focus); saving is otherwise automatic.
     Q_INVOKABLE void saveNow();

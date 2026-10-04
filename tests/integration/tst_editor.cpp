@@ -432,6 +432,32 @@ private slots:
         QVERIFY2(before == after, qPrintable(firstDifference(before, after)));
     }
 
+    // The frame on screen saved as an image (SPEC §5.15): PNG in the folder asked for, never overwriting.
+    void exportsTheFrameOnScreen()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-frame"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache-frame"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        editor.player()->seek(30);
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.player()->sink()->latest().isNull(), 20000);
+
+        const QString folder = m_dir.filePath(u"frames"_s);
+        QVERIFY(QDir().mkpath(folder));
+        const QString saved = editor.exportCurrentFrame(u"my frame"_s, folder);
+        QVERIFY(!saved.isEmpty());
+        QCOMPARE(saved, folder + u"/my frame.png"_s);
+        QVERIFY(QFile(saved).size() > 0);
+        // Never overwrites: the second one gets " (2)".
+        const QString again = editor.exportCurrentFrame(u"my frame"_s, folder);
+        QCOMPARE(again, folder + u"/my frame (2).png"_s);
+        // A folder that does not exist: no crash, no file.
+        QVERIFY(editor.exportCurrentFrame(u"x"_s, folder + u"/nope"_s).isEmpty());
+    }
+
     // Markers at the playhead (on the selected clip, or on the video) and jumping between them; preset animations.
     void markersAndAnimations()
     {
