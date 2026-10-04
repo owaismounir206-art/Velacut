@@ -1,6 +1,37 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-10-04 (Fasi 0-4 ✅ complete; Fase 5 🔶 ~80%; Fase 8 🔶 85%: encoding/decoding hardware a cascata, zero-copy UMA NV12/P010 con shader BT.709/BT.2020, timeline scrubbing 60/120 FPS disaccoppiato e scorciatoie Q/W)
+Ultimo aggiornamento: 2026-10-04 (Fasi 0-4 ✅ complete; Fase 5 🔶 ~80%; Fase 8 🔶 85%: tuning iGPU UMA Radeon 740M/Arc 130V con fast-path <16 ms, fix backlog scrubbing/skimming)
+
+## Sessione 2026-10-04 — Tuning iGPU UMA (Radeon 740M / Arc 130V) e fix backlog scrubbing (SPEC §1bis, §5.3, §6)
+- **Decoder: budget UMA in byte e fast-path sequenziale <16 ms (`src/engine/gpu/HwVideoDecoder`)**:
+  * La cache LRU di scrubbing ora è dimensionata da un **budget in byte (~76 MiB)** oltre che dal numero
+    frame (`umaCacheCapacityForFrameSize`, finestra 15–30): 1080p NV12 → 25 frame, 720p → 30, 4K/10-bit → 15.
+    Su iGPU a memoria condivisa (AMD Phoenix2, Intel Lunar Lake) i frame grandi non saturano più la RAM.
+  * **Fast-path di decodifica forward**: se il target è avanti di ≤64 frame rispetto all'ultimo frame decodificato
+    e lo stream è contiguo, si decodifica in avanti senza keyframe-seek; il gap è ammesso solo se il costo
+    previsto (EMA del costo per frame × gap) resta **≤16 ms**. Strumentazione: `lastDecodeMs`,
+    `averageFrameCostMs`, `forwardFastPathHits`. I frame intermedi decodificati verso il target vengono
+    cachati gratis: lo scrubbing all'indietro/in jitter diventa un hit LRU a latenza zero.
+  * Catena di fallback invariata (Tier 1 AMF/QSV → Tier 2 VA-API/D3D11VA/Vulkan → Tier 3 CPU) con reset della
+    contiguità su `flush()`, `close()` e `fallbackToSoftware()`. Verificato su questa GPU: fast path attivo a
+    ogni step +1 con costo per frame < 16 ms (`tst_hwdecoder::forwardFastPathAndNeighbourCache`,
+    `umaCacheCapacityAdaptive`; suite 28/28).
+- **Fix bug timeline/scrubbing: cursore↔playhead e backlog di seek (`TimelineView.qml`, `TimelinePlayer`)**:
+  * `TimelinePlayer::skim` non era soggetto a backpressure: hover-axis e maniglie di trim inviavano
+    `showFrame` non throttlati a ogni pointermove, saturando il consumer MLT di seek asincroni (preview stantio,
+    playhead disallineato dal cursore). Ora al massimo **un seek in flight**: i point intermedi vengono
+    scartati (vince il più recente), con watchdog a 120 ms identico a `scrubSeek`.
+  * Il playhead visivo QML ora è **clampato a [0, duration-1]** (`clampFrame`): prima, trascinando oltre la
+    fine, la UI disegnava il cursore oltre il contenuto mentre il player clampava il timestamp → divergenza
+    visiva. `updateScrubbing` ora mette anche in pausa se entra in scrub mentre si riproduce.
+  * `HoverHandler` dello skimming disattivato durante il drag di scrub (evitava doppie richieste
+    skim+scrub per ogni movimento del puntatore).
+  * `setRate` (play/pause) resetta `m_seekInFlight`/`m_pendingScrubFrame` dopo il purge del consumer: prima
+    il purge scartava la risposta di uno seek in flight e il primo seek del nuovo drag veniva inghiottito
+    fino a 120 ms (scatto del playhead all'inizio del drag).
+  * `commitSeek` salta il purge/refresh ridondante quando il target è già il frame mostrato: il debounce di
+    60 ms non genera più tempeste di refresh durante scrubbing fermo. `scrubSeek` termina lo stato di
+    skimming residuo (la hairline di skim non resta più sovrapposta al playhead).
 
 ## Sessione 2026-10-04 — Zero-Copy UMA, Scrubbing 60/120 FPS e Scorciatoie Q/W (SPEC §1bis, §5.2, §5.3)
 - **Pipeline Hardware GPU Zero-Copy & Ottimizzazione UMA (`src/engine/gpu/HwVideoDecoder`, `src/engine/playback/LruFrameCache`)**:

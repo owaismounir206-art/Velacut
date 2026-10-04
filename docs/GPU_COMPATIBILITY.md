@@ -39,7 +39,24 @@ Legenda: ✅ provata (smoke test: file decodificato e **mostrato** ≥ 44 fotogr
 | Grafica ibrida PRIME | 🧩 | scelta della GPU nelle Preferenze: Fase 8 |
 | Macchine virtuali (virgl, VMware SVGA), sessioni remote | 🧩 | rilevate (`/sys/class/dmi`, variabili SSH/XRDP/VNC) |
 
-## 3. Variabili utili per il debug
+## 3. Decodifica iGPU UMA: AMD Radeon 740M (RDNA3/Phoenix2) e Intel Arc 130V (Xe2/Lunar Lake)
+
+- **Catena** (`HwVideoDecoder`, fallback automatico e trasparente):
+  Tier 1 dedicato (AMF su Windows per AMD; QSV/oneVPL per Intel) → Tier 2 generico (VA-API `radeonsi_drv_video`
+  per AMD, VA-API `iHD` per Intel; D3D11VA/Vulkan Video dove presenti) → Tier 3 CPU multithread libavcodec.
+  Su Linux AMF non esiste: le Radeon 740M usano direttamente il Tier 2 VA-API (VCN 4.x).
+- **Memoria UMA**: la cache frame di scrubbing è limitata a un **budget di ~76 MiB** oltre che alla finestra
+  15–30 frame (`umaCacheCapacityForFrameSize`): 1080p → 25 frame NV12, 720p → 30, 4K → 15, 10-bit P010 → 15.
+  Formati non accelerati (4:2:2, 4:4:4, High 10 senza HW) degradano automaticamente al Tier 3.
+- **Latenza**: il **fast-path sequenziale forward** decodifica senza keyframe-seek quando il target è ≤64 frame
+  avanti e il costo previsto (EMA per-frame × gap) resta **≤16 ms**; i frame intermedi vengono cachati gratis
+  (hit LRU a latenza zero per scrubbing all'indietro). Strumentazione: `lastDecodeMs`, `averageFrameCostMs`,
+  `forwardFastPathHits` (test `tst_hwdecoder::forwardFastPathAndNeighbourCache`).
+- **Anti-leak**: tutti i piani NV12/P010 sono copie bounded (QByteArray) con rilascio deterministico di
+  `AVFrame`/`AVPacket` (`av_frame_unref` su ogni percorso, anche di errore); la contiguità del fast-path è
+  invalidata su `flush()`, `close()`, cambio tier e fallback a software.
+
+## 4. Variabili utili per il debug
 | Variabile / opzione | Effetto |
 |---|---|
 | `vedit --safe-mode` | nessuna accelerazione GPU |
@@ -56,7 +73,7 @@ Legenda: ✅ provata (smoke test: file decodificato e **mostrato** ≥ 44 fotogr
 | `QT_LOGGING_RULES="vedit.*.debug=true"` | log dettagliati di vedit (anche in `~/.local/state/vedit/logs/vedit.log`) |
 | `./build/vedit-gpuprobe --vulkan\|--opengl\|--video` | esegue a mano un singolo probe (stampa JSON) |
 
-## 4. Verifiche della Fase 1 (editor completo)
+## 5. Verifiche della Fase 1 (editor completo)
 Su questa macchina (Intel Arc 140V, Mesa 26.2, Hyprland Wayland) lo smoke test dell'editor (`vedit --smoke-test`:
 nuovo progetto, import, timeline, proiezione MLT, anteprima; almeno 45 fotogrammi decodificati e 20 mostrati) passa con
 UI **Vulkan**, **OpenGL** (`QSG_RHI_BACKEND=opengl`), **software** headless (`QT_QUICK_BACKEND=software`
@@ -67,7 +84,7 @@ Variabili aggiunte per i test: `VEDIT_MUSIC_DIR` (cartella della libreria musica
 `tst_ui`), `VEDIT_NO_SANDBOX=1` (disattiva la sandbox XDG delle build di sviluppo: **attenzione**, così l'app scrive
 nella home vera).
 
-## 5. Le due GPU obiettivo: AMD Radeon 740M e Intel Arc 130V
+## 6. Le due GPU obiettivo: AMD Radeon 740M e Intel Arc 130V
 
 Entrambe sono **iGPU con memoria condivisa** (UMA): ogni pixel dell'anteprima passa per la RAM di sistema, e ogni byte
 scritto dall'encoder VA-API arriva da lì. Le ottimizzazioni mirano a ridurre i pixel, non ad aggiungere percorsi GPU
