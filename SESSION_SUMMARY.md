@@ -1,3 +1,5 @@
+> **Documento superato** (scritto in una sessione precedente, contiene valutazioni non più valide): lo stato aggiornato e verificato è in `docs/PROGRESS.md`.
+
 # Riepilogo Sessione 2026-10-01
 
 ## Lavoro Completato

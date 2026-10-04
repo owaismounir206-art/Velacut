@@ -1,3 +1,5 @@
+> **Documento superato** (scritto in una sessione precedente, contiene valutazioni non più valide): lo stato aggiornato e verificato è in `docs/PROGRESS.md`.
+
 # Stato di Implementazione della SPEC
 
 Questo documento descrive onestamente lo stato di implementazione di `SPEC-editor-video.md` al 2026-10-01.

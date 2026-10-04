@@ -1,3 +1,5 @@
+> **Documento superato** (scritto in una sessione precedente, contiene valutazioni non più valide): lo stato aggiornato e verificato è in `docs/PROGRESS.md`.
+
 # vedit - Stato Finale Implementazione SPEC
 
 **Data**: 2026-10-01  

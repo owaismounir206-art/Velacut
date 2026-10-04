@@ -1,6 +1,45 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-10-04 (Fasi 0-4 ✅ complete; Fase 5 🔶 ~80%; Fase 8 🔶 85%: tuning iGPU UMA Radeon 740M/Arc 130V con fast-path <16 ms, fix backlog scrubbing/skimming)
+Ultimo aggiornamento: 2026-10-04 sera (Fasi 0-4 ✅; Fase 5 🔶 ~90%: template completi, gestore asset, copertina;
+rifacimento dell'interfaccia in stile CapCut; Fase 8 🔶: preferenze reali)
+
+## Sessione 2026-10-04 (sera) — Interfaccia stile CapCut, template, preferenze, gestore asset
+Obiettivo dell'utente: "sistemare tutto secondo la SPEC, renderlo il più possibile uguale a CapCut e migliorare
+l'estetica". Fatto, un commit per incremento:
+- **Editor stile CapCut** (`4790f3d`): pannelli come card arrotondate su sfondo più scuro (ruoli derivati
+  `Theme.color.backdrop`/`panel` in `ThemeColors.h`), ridimensionabili con dimensioni ricordate per progetto
+  (`EditorController::panelSize`, `uiState.panels`); barra superiore compatta (Menu, nome al centro, ricerca, Esporta);
+  barra contestuale a sole icone con annulla/ripeti (SPEC §4 li vuole lì), Q/W accanto a Dividi, interruttori magnete,
+  aggancio e **asse di anteprima** (SPEC 0bis regola 12, `skimmingEnabled`, prima mancava); lettore con intestazione,
+  timecode unico, **schermo intero F11** (`FullScreenPreview.qml`); vu-meter master a segmenti lungo la timeline;
+  intestazioni traccia con blocca/nascondi/muto sempre visibili e **copertina** in testa alla traccia principale
+  (da fotogramma o immagine, export PNG e YouTube 1280×720; prima la chiusura dell'editor sovrascriveva la copertina
+  scelta); righello con tacche minori, clip con striscia nome+durata, maniglie di trim piene, nuova testina; dettagli del
+  progetto e formato a un clic quando non è selezionato nulla; `ComboBox` M3 nello stile (prima il fallback disegnava una
+  tendina bianca Fusion); finestra Scorciatoie; Ctrl+A/Ctrl+T/Ctrl+N/Ctrl+Maiusc+E.
+- **Schermata iniziale** (`eda424b`): grande "Nuovo progetto" con gradiente tonale, Registra schermo e Template, galleria
+  dei template disegnati nel loro formato, bozze su card; file trascinati ovunque = nuovo progetto con quei file.
+- **Deadlock** (`7d1309b`): sotto carico un worker restava bloccato in `producer_timewarp_init` di MLT mentre un altro
+  producer veniva costruito, e la chiusura dell'editor aspettava per sempre. La costruzione dei producer dei worker è
+  serializzata (`MediaProducerCache::constructionMutex`, mai preso sul thread dell'interfaccia: provato, bloccava la UI).
+- **Template completi** (`1737104`, criterio Fase 5 prima metà ✅): `TemplateBuilder` era uno stub con un `TODO` (niente
+  testi, sticker, transizioni, filtri): rimosso; `EditorController::applyTemplate` costruisce il progetto con le operazioni
+  vere (formato, segnaposto che riempiono il riquadro, filtro, transizione su ogni taglio, titoli animati, sticker).
+  Scegliere un template apre il progetto e chiede subito i media, che riempiono i segnaposto in ordine (la musica va sotto
+  il video); banner sul lettore; **Sostituisci** nella barra (SPEC §5.2), doppio clic su un segnaposto, media rilasciato
+  su un segnaposto o con Alt su una clip, "+" di un media riempie il segnaposto selezionato.
+  Test: `tst_editor::phaseFiveCriterionTemplate` (fino all'MP4 esportato), `tst_ui::templateFromTheHomeScreen` (2 azioni).
+- **Preferenze e gestore asset** (`955364a`): finestra Preferenze (aspetto Material You completo, lingua applicata
+  all'avvio, motore grafico e accelerazioni = `GraphicsPreferences` reali con "Riavvia ora", pacchetti, informazioni).
+  Gestore pacchetti vero: `pack.json` come da EFFECT_FORMAT (il vecchio leggeva `manifest.json`, lo ZIP era un `TODO`),
+  install da cartella o `.zip` (bsdtar/unzip, percorsi pericolosi rifiutati), aggiornamento, rimozione; la libreria
+  unisce i pacchetti utente ed è sostituita atomicamente, i pannelli si aggiornano subito. Rimosso il modello
+  `Preferences` finto (setter vuoti, mai usato). **Bug**: lo stile non aveva `DialogButtonBox`, quindi i dialoghi con
+  `standardButtons` non mostravano pulsanti (Rinomina OK/Annulla, Informazioni). Test `tst_packages`, `tst_ui::preferences`.
+- Traduzioni italiane complete a ogni incremento (anche `vedit_fx`, prima esclusa dall'estrazione); `SHORTCUTS.md`
+  riscritto: elencava scorciatoie inesistenti (Ctrl+O, Ctrl+S, strumenti V/H/C/T, Ctrl+1..4 pannelli…).
+- Nota: un test aveva usato `QStandardPaths::setTestModeEnabled` creando cartelle vuote in `~/.qttest`, fuori dal
+  progetto: rimosse subito (solo `rmdir` di cartelle vuote) e il test ora gira solo con `XDG_DATA_HOME` nella build.
 
 ## Sessione 2026-10-04 — Tuning iGPU UMA (Radeon 740M / Arc 130V) e fix backlog scrubbing (SPEC §1bis, §5.3, §6)
 - **Decoder: budget UMA in byte e fast-path sequenziale <16 ms (`src/engine/gpu/HwVideoDecoder`)**:
