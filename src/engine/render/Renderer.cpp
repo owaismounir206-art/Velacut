@@ -221,6 +221,25 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
             }
         }
     }
+    // The cover inside the file (SPEC §5.13ter): an MJPEG picture stream marked "attached_pic", the video and audio
+    // copied as they are. A failure leaves the video without a cover, with a warning.
+    const QString suffix = output.suffix().toLower();
+    if (!settings.coverImage.isEmpty() && QFileInfo::exists(settings.coverImage)
+        && (suffix == u"mp4"_s || suffix == u"mov"_s || suffix == u"m4v"_s)) {
+        const QString covered = partial + u".cover."_s + suffix;
+        QProcess process;
+        process.start(u"ffmpeg"_s, {u"-hide_banner"_s, u"-loglevel"_s, u"error"_s, u"-y"_s, u"-i"_s, partial, u"-i"_s,
+                                     settings.coverImage, u"-map"_s, u"0"_s, u"-map"_s, u"1"_s, u"-c"_s, u"copy"_s,
+                                     u"-c:v:1"_s, u"mjpeg"_s, u"-disposition:v:1"_s, u"attached_pic"_s, u"-f"_s,
+                                     suffix == u"mov"_s ? u"mov"_s : u"mp4"_s, covered});
+        if (process.waitForFinished(60000) && process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0) {
+            QFile::remove(partial);
+            QFile::rename(covered, partial);
+        } else {
+            QFile::remove(covered);
+            result.warnings << u"cover: %1"_s.arg(QString::fromLocal8Bit(process.readAllStandardError()).trimmed());
+        }
+    }
     std::error_code error;
     std::filesystem::rename(QFile::encodeName(partial).toStdString(), QFile::encodeName(output.absoluteFilePath()).toStdString(),
                             error);

@@ -120,7 +120,8 @@ QJsonObject ExportSettings::toJson() const
                        {u"hardwareEncoder"_s, hardwareEncoderName(hardwareEncoder)},
                        {u"maxFileSizeMB"_s, static_cast<double>(maxFileSizeMB)},
                        {u"normalizeLoudness"_s, normalizeLoudness},
-                       {u"targetLufs"_s, targetLufs}};
+                       {u"targetLufs"_s, targetLufs},
+                       {u"cover"_s, coverImage}};
 }
 
 std::optional<ExportSettings> ExportSettings::fromJson(const QJsonObject &json)
@@ -155,6 +156,7 @@ std::optional<ExportSettings> ExportSettings::fromJson(const QJsonObject &json)
     if (json.contains(u"targetLufs"_s)) {
         settings.targetLufs = json.value(u"targetLufs"_s).toDouble(-14.0);
     }
+    settings.coverImage = json.value(u"cover"_s).toString();
     return settings;
 }
 

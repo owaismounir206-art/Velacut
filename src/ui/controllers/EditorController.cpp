@@ -2115,6 +2115,7 @@ bool EditorController::startExport(const QString &fileName, const QString &folde
                                                                           : engine::HardwareEncoder::Off;
     settings.maxFileSizeMB = std::max(0, maxFileSizeMB);
     settings.normalizeLoudness = normalizeLoudness;
+    settings.coverImage = coverPath(); // the cover chosen by the user goes into the file
     settings.targetLufs = targetLufs;
     QJsonObject state = m_document->uiState();
     state.insert(u"export"_s, QJsonObject{{u"folder"_s, folder},

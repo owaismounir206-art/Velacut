@@ -55,6 +55,8 @@ struct ExportSettings
     qint64 maxFileSizeMB = 0; // 0 = no size target; otherwise bitrate is computed to respect it
     bool normalizeLoudness = false;
     double targetLufs = -14.0;
+    // A picture attached to the file as its cover (SPEC §5.13ter): MP4/MOV only; empty = none.
+    QString coverImage;
 
     QJsonObject toJson() const;
     static std::optional<ExportSettings> fromJson(const QJsonObject &json);

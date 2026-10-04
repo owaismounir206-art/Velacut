@@ -18,6 +18,7 @@
 #include "ui/controllers/EditorController.h"
 
 #include <QElapsedTimer>
+#include <QImage>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTextStream>
@@ -1218,6 +1219,12 @@ private slots:
         }
         QCOMPARE(editor.data().mainSequence()->audioTracks.front().clips.front().start.value(), 0);
 
+        // A cover for the video (SPEC §5.13ter): it goes into the exported file.
+        QSignalSpy cover(&editor, &EditorController::coverChanged);
+        QVERIFY(editor.setCoverFromImage(QUrl::fromLocalFile(m_files.photo)));
+        QCOMPARE(cover.count(), 1);
+        QVERIFY(!editor.coverUrl().isEmpty());
+
         // And it is a complete video: exported, the right size and length, with sound.
         const QString folder = m_dir.filePath(u"videos-template"_s);
         QDir().mkpath(folder);
@@ -1229,6 +1236,15 @@ private slots:
         QCOMPARE(streamOfType(probe, u"video"_s).value(u"height"_s).toInt(), 320);
         QCOMPARE(streamOfType(probe, u"video"_s).value(u"nb_read_frames"_s).toString().toInt(), editor.timeline()->duration());
         QCOMPARE(streamOfType(probe, u"audio"_s).value(u"codec_name"_s).toString(), u"aac"_s);
+        bool attachedCover = false;
+        for (const QJsonValue &stream : probe.value(u"streams"_s).toArray()) {
+            attachedCover = attachedCover || stream.toObject().value(u"disposition"_s).toObject().value(u"attached_pic"_s).toInt() == 1;
+        }
+        QVERIFY(attachedCover);
+        // The cover can also be saved as a picture, in YouTube's size.
+        const QString thumbnail = editor.exportCover(folder, true);
+        QVERIFY(!thumbnail.isEmpty());
+        QCOMPARE(QImage(thumbnail).size(), QSize(1280, 720));
     }
 
     void cleanupTestCase() {}
