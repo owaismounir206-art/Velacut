@@ -25,10 +25,13 @@
 | `→` | Frame successivo |
 | `Shift+←` | 10 frame indietro |
 | `Shift+→` | 10 frame avanti |
+| `↑` | Taglio precedente |
+| `↓` | Taglio successivo |
 | `Home` | Vai all'inizio |
 | `End` | Vai alla fine |
 | `I` | Imposta punto di entrata (In) |
 | `O` | Imposta punto di uscita (Out) |
+| `Alt+X` | Cancella punti In/Out |
 | `M` | Aggiungi marker |
 
 ## Editing
@@ -37,6 +40,7 @@
 |-------------|--------|
 | `S` | Dividi clip al playhead |
 | `Del` o `Backspace` | Elimina selezione |
+| `Shift+Del` o `Shift+Backspace` | Ripple delete (elimina e chiude lo spazio vuoto) |
 | `Ctrl+D` | Duplica selezione |
 | `Ctrl+C` | Copia attributi clip |
 | `Ctrl+V` | Incolla attributi |
@@ -46,6 +50,8 @@
 | `]` | Trim fine clip al playhead |
 | `Q` | Ripple trim dall'inizio clip alla testina (taglia a sinistra del playhead) |
 | `W` | Ripple trim dalla testina alla fine clip (taglia a destra del playhead) |
+| `N` | Attiva/disattiva traccia principale magnetica |
+| `\` | Attiva/disattiva snapping |
 
 ## Timeline
 

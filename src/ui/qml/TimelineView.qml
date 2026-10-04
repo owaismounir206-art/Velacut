@@ -181,6 +181,46 @@ Rectangle {
                 }
             }
         }
+        // In/Out range highlight on ruler
+        Rectangle {
+            visible: view.editor.hasInOut
+            readonly property real inX: view.editor.inPoint >= 0 ? view.editor.inPoint * view.zoom - flick.contentX : 0
+            readonly property real outX: view.editor.outPoint >= 0 ? view.editor.outPoint * view.zoom - flick.contentX : ruler.width
+            x: Math.max(0, Math.min(inX, outX))
+            width: Math.max(0, Math.abs(outX - inX))
+            height: ruler.height
+            color: Theme.alpha(Theme.color.primary, 0.22)
+            border.width: Theme.editor.hairline
+            border.color: Theme.color.primary
+        }
+        // In point bracket marker
+        Rectangle {
+            visible: view.editor.inPoint >= 0
+            x: view.editor.inPoint * view.zoom - flick.contentX
+            width: 2
+            height: ruler.height
+            color: Theme.color.primary
+            Rectangle {
+                width: 6
+                height: 4
+                color: Theme.color.primary
+            }
+        }
+        // Out point bracket marker
+        Rectangle {
+            visible: view.editor.outPoint >= 0
+            x: view.editor.outPoint * view.zoom - flick.contentX - 2
+            width: 2
+            height: ruler.height
+            color: Theme.color.primary
+            Rectangle {
+                anchors.right: parent.right
+                width: 6
+                height: 4
+                color: Theme.color.primary
+            }
+        }
+
         // Click or drag on the ruler: move the playhead (scrubbing).
         MouseArea {
             anchors.fill: parent
@@ -239,16 +279,29 @@ Rectangle {
                 y: view.rowTop(index) - flick.contentY
                 width: headers.width
                 height: view.rowHeight(index)
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: header.modelData.locked ? Theme.alpha(Theme.color.errorContainer, 0.25)
+                         : header.modelData.kind === "main" ? Theme.color.surfaceContainerHigh : Theme.color.surfaceContainerLow
+                    border.width: Theme.editor.hairline
+                    border.color: header.modelData.locked ? Theme.color.error : Theme.color.outlineVariant
+                }
+
                 Icon {
                     anchors.centerIn: parent
-                    name: header.modelData.muted ? "volume_off"
+                    name: header.modelData.locked ? "lock"
+                        : header.modelData.muted ? "volume_off"
+                        : header.modelData.hidden ? "visibility_off"
                         : header.modelData.kind === "audio" ? "music_note"
                         : header.modelData.kind === "main" ? "movie" : "picture_in_picture"
-                    color: header.modelData.muted ? Theme.color.error
+                    color: header.modelData.locked ? Theme.color.error
+                         : header.modelData.muted ? Theme.color.error
                          : header.modelData.kind === "main" ? Theme.color.primary : Theme.color.onSurfaceVariant
                     Accessible.name: header.modelData.kind === "audio" ? qsTr("Audio track")
                                    : header.modelData.kind === "main" ? qsTr("Main track") : qsTr("Overlay track")
                 }
+
                 LevelMeter {
                     anchors.right: parent.right
                     anchors.rightMargin: Theme.space.xxs
@@ -257,11 +310,12 @@ Rectangle {
                     player: view.player
                     key: header.modelData.trackId
                 }
+
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     ToolTip.visible: containsMouse
-                    ToolTip.text: qsTr("Track volume")
+                    ToolTip.text: qsTr("Track settings")
                     hoverEnabled: true
                     onClicked: {
                         trackMixer.track = header.modelData
@@ -273,7 +327,7 @@ Rectangle {
         }
     }
 
-    // The volume of one track (its clips keep their own).
+    // The volume and settings of one track.
     Popup {
         id: trackMixer
         objectName: "trackMixer"
@@ -324,6 +378,41 @@ Rectangle {
                     checked: trackMixer.track.muted ?? false
                     Accessible.name: qsTr("Mute")
                     onToggled: view.editor.setTrackMuted(trackMixer.track.trackId, checked)
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Label { Layout.fillWidth: true; role: "bodyMedium"; text: qsTr("Lock track") }
+                Switch {
+                    objectName: "trackLock"
+                    checked: trackMixer.track.locked ?? false
+                    Accessible.name: qsTr("Lock track")
+                    onToggled: view.editor.setTrackLocked(trackMixer.track.trackId, checked)
+                }
+            }
+            RowLayout {
+                visible: !trackMixer.track.audio
+                Layout.fillWidth: true
+                Label { Layout.fillWidth: true; role: "bodyMedium"; text: qsTr("Hide track") }
+                Switch {
+                    objectName: "trackHide"
+                    checked: trackMixer.track.hidden ?? false
+                    Accessible.name: qsTr("Hide track")
+                    onToggled: view.editor.setTrackHidden(trackMixer.track.trackId, checked)
+                }
+            }
+            RowLayout {
+                visible: trackMixer.track.kind === "main"
+                Layout.fillWidth: true
+                Button {
+                    Layout.fillWidth: true
+                    variant: "tonal"
+                    iconName: "image"
+                    text: qsTr("Set project cover from current frame")
+                    onClicked: {
+                        view.editor.setCoverFromCurrentFrame()
+                        trackMixer.close()
+                    }
                 }
             }
         }
@@ -561,10 +650,11 @@ Rectangle {
             // Snap guide: the edge a dragged clip snapped to.
             Rectangle {
                 visible: view.snapGuide >= 0
-                x: view.snapGuide * view.zoom
-                width: Theme.editor.hairline
+                x: view.snapGuide * view.zoom - 1
+                width: 2
                 height: canvas.height
                 color: Theme.color.tertiary
+                z: 8
             }
 
             // Skimming line (the frame shown in the preview while pointing).
@@ -605,21 +695,69 @@ Rectangle {
         x: Theme.editor.trackHeaderWidth + (view.isScrubbing ? view.visualPlayheadFrame : view.player.position) * view.zoom - flick.contentX
         visible: x >= Theme.editor.trackHeaderWidth && x <= view.width
         height: view.height
-        z: 10
+        z: 15
+
+        // Floating timecode badge while scrubbing
+        Rectangle {
+            id: timecodeBadge
+            visible: view.isScrubbing
+            anchors.bottom: knob.top
+            anchors.bottomMargin: 4
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: timecodeLabel.implicitWidth + 12
+            height: 20
+            radius: Theme.shape.extraSmall
+            color: Theme.color.inverseSurface
+            Label {
+                id: timecodeLabel
+                anchors.centerIn: parent
+                role: "labelSmall"
+                font.features: { "tnum": 1 }
+                font.bold: true
+                color: Theme.color.inverseOnSurface
+                text: view.player.timecode(view.visualPlayheadFrame)
+            }
+        }
+
+        // Contrast halo for visibility on any background
+        Rectangle {
+            x: -width / 2
+            width: Theme.editor.playheadWidth + 2
+            height: parent.height
+            color: Theme.alpha(Theme.color.scrim, 0.45)
+        }
+
+        // Main playhead vertical line
         Rectangle {
             x: -width / 2
             width: Theme.editor.playheadWidth
             height: parent.height
-            color: Theme.color.onSurface
+            color: Theme.color.primary
         }
-        Rectangle {
+
+        // Playhead head / knob
+        Item {
+            id: knob
             x: -width / 2
             y: Theme.editor.rulerHeight - height
-            width: Theme.editor.playheadKnob
-            height: Theme.editor.playheadKnob
-            radius: width / 2
-            color: Theme.color.onSurface
+            width: Theme.editor.playheadKnob + 2
+            height: Theme.editor.rulerHeight - 2
+            Rectangle {
+                anchors.fill: parent
+                radius: Theme.shape.extraSmall
+                color: Theme.color.primary
+                border.width: 1
+                border.color: Theme.color.onPrimary
+            }
+            Rectangle {
+                anchors.centerIn: parent
+                width: 4
+                height: 4
+                radius: 2
+                color: Theme.color.onPrimary
+            }
         }
+
         MouseArea {
             x: -Theme.editor.playheadKnob
             y: 0

@@ -53,7 +53,10 @@ Item {
         radius: Theme.shape.small
         color: clip.kind === "audio" ? Theme.color.tertiaryContainer
              : clip.kind === "text" ? Theme.color.primaryContainer
-             : clip.kind === "sticker" ? Theme.color.tertiaryContainer : Theme.color.secondaryContainer
+             : clip.kind === "sticker" ? Theme.color.secondaryContainer
+             : clip.kind === "adjustment" ? Theme.color.surfaceContainerHighest
+             : clip.kind === "compound" ? Theme.color.surfaceContainerHigh
+             : Theme.color.surfaceContainerHigh
         clip: true
 
         // Only the part of the clip in view (in whole chunks, one chunk of margin) has pictures: a clip minutes long is
@@ -167,7 +170,19 @@ Item {
             radius: parent.radius
             color: "transparent"
             border.width: clip.selected ? Theme.editor.selectionBorder : Theme.editor.hairline
-            border.color: clip.selected ? Theme.color.primary : Theme.color.outlineVariant
+            border.color: clip.selected ? Theme.color.primary
+                        : clip.kind === "adjustment" ? Theme.color.tertiary
+                        : Theme.color.outlineVariant
+        }
+        Icon {
+            visible: clip.locked
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Theme.space.xxs
+            name: "lock"
+            size: 14
+            color: Theme.color.onSurfaceVariant
+            opacity: 0.7
         }
     }
 
@@ -329,11 +344,49 @@ Item {
         onCanceled: { clip.mode = ""; clip.view.snapGuide = -1; clip.view.player.endSkim() }
 
         Rectangle {
+            id: trimTooltip
+            visible: handle.pressed
+            anchors.bottom: parent.top
+            anchors.bottomMargin: 4
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: trimLabel.implicitWidth + 12
+            height: 20
+            radius: Theme.shape.extraSmall
+            color: Theme.color.inverseSurface
+            z: 30
+            Label {
+                id: trimLabel
+                anchors.centerIn: parent
+                role: "labelSmall"
+                font.features: { "tnum": 1 }
+                font.bold: true
+                color: Theme.color.inverseOnSurface
+                property int delta: startEdge ? clip.start - clip.editStart : clip.editEnd - (clip.start + clip.duration)
+                text: (delta >= 0 ? "+" : "") + delta + "f (" + clip.view.player.timecode(clip.shownDuration) + ")"
+            }
+        }
+
+        Rectangle {
             anchors.fill: parent
             anchors.margins: Theme.space.xxs
             radius: Theme.shape.extraSmall
             visible: handle.containsMouse || handle.pressed || clip.selected
             color: handle.pressed ? Theme.color.primary : Theme.color.primaryContainer
+            opacity: handle.pressed ? 1.0 : handle.containsMouse ? 0.9 : 0.6
+            Column {
+                anchors.centerIn: parent
+                spacing: 3
+                visible: parent.visible
+                Repeater {
+                    model: 2
+                    delegate: Rectangle {
+                        width: 2
+                        height: 2
+                        radius: 1
+                        color: handle.pressed ? Theme.color.onPrimary : Theme.color.onPrimaryContainer
+                    }
+                }
+            }
         }
     }
     TrimHandle { objectName: "trimStart"; startEdge: true; anchors.left: parent.left }

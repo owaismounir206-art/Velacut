@@ -73,6 +73,11 @@ class EditorController : public QObject
     Q_PROPERTY(QString formatText READ formatText NOTIFY formatChanged FINAL)
     Q_PROPERTY(QSize canvasSize READ canvasSize NOTIFY formatChanged FINAL)
     Q_PROPERTY(double frameRate READ frameRate NOTIFY formatChanged FINAL)
+    Q_PROPERTY(bool snappingEnabled READ snappingEnabled WRITE setSnappingEnabled NOTIFY snappingChanged FINAL)
+    Q_PROPERTY(bool magneticMain READ magneticMain NOTIFY magneticMainChanged FINAL)
+    Q_PROPERTY(int inPoint READ inPoint NOTIFY inOutChanged FINAL)
+    Q_PROPERTY(int outPoint READ outPoint NOTIFY inOutChanged FINAL)
+    Q_PROPERTY(bool hasInOut READ hasInOut NOTIFY inOutChanged FINAL)
 
 public:
     enum SaveState
@@ -158,6 +163,8 @@ public:
     Q_INVOKABLE bool rippleTrimLeft();
     Q_INVOKABLE bool rippleTrimRight();
     Q_INVOKABLE bool deleteSelection();
+    Q_INVOKABLE bool rippleDeleteSelection();
+    Q_INVOKABLE bool trimSelectedToPlayhead(bool startEdge);
     Q_INVOKABLE bool duplicateSelection();
     Q_INVOKABLE void select(const QString &clipId, bool additive);
     Q_INVOKABLE void clearSelection();
@@ -167,6 +174,20 @@ public:
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
     // Snapping: the nearest clip edge, playhead or start within `threshold` frames of `frame` (else `frame`).
+    bool snappingEnabled() const { return m_snappingEnabled; }
+    void setSnappingEnabled(bool enabled);
+    Q_INVOKABLE void toggleSnapping();
+    bool magneticMain() const;
+    Q_INVOKABLE bool setMagneticMain(bool enabled);
+    Q_INVOKABLE bool toggleMagneticMain();
+    int inPoint() const;
+    int outPoint() const;
+    bool hasInOut() const;
+    Q_INVOKABLE void setInPoint(int frame = -1);
+    Q_INVOKABLE void setOutPoint(int frame = -1);
+    Q_INVOKABLE void clearInOut();
+    Q_INVOKABLE void nextCut();
+    Q_INVOKABLE void previousCut();
     Q_INVOKABLE int snap(int frame, const QStringList &excludedClips, int threshold) const;
     // Start of a range of `duration` frames whose start or end snaps (for dragging clips).
     Q_INVOKABLE int snapRange(int start, int duration, const QStringList &excludedClips, int threshold) const;
@@ -189,6 +210,9 @@ public:
     Q_INVOKABLE bool setTrackVolume(const QString &trackId, double gainDb);
     Q_INVOKABLE void endTrackGesture();
     Q_INVOKABLE bool setTrackMuted(const QString &trackId, bool muted);
+    Q_INVOKABLE bool setTrackLocked(const QString &trackId, bool locked);
+    Q_INVOKABLE bool setTrackHidden(const QString &trackId, bool hidden);
+    Q_INVOKABLE bool setTrackSolo(const QString &trackId, bool solo);
 
     // Freeze frame (SPEC §5.5): the frame at the playhead of the clip on screen, held for 3 s; the rest moves along.
     Q_INVOKABLE bool freezeFrame();
@@ -232,6 +256,7 @@ public:
     // Saves the frame on screen as an image (SPEC §5.15 "esporta fotogramma corrente"; also the basis of the
     // video cover). Never overwrites: "name (2).png". Returns the path written, or an empty string.
     Q_INVOKABLE QString exportCurrentFrame(const QString &fileName, const QString &folder);
+    Q_INVOKABLE bool setCoverFromCurrentFrame();
 
     // Saves at once (the window lost focus); saving is otherwise automatic.
     Q_INVOKABLE void saveNow();
@@ -246,6 +271,9 @@ signals:
     void importingChanged();
     void splitAvailableChanged();
     void formatChanged();
+    void snappingChanged();
+    void magneticMainChanged();
+    void inOutChanged();
     // The project changed (any command, undo or redo).
     void modelChanged();
     // For the snackbar: `undoable` shows the "Undo" action.
@@ -298,6 +326,9 @@ private:
     QList<PendingInsert> m_pendingInserts;
     int m_insertStart = 0;  // where the files were dropped: music starts here, under the video
     int m_insertCursor = 0; // after the last video or photo placed
+    bool m_snappingEnabled = true;
+    int m_inPoint = -1;
+    int m_outPoint = -1;
     bool m_closed = false;
 };
 

@@ -133,6 +133,35 @@ ActionRegistry::ActionRegistry(EditorController &editor)
          [this] { return m_editor.canRippleTrimLeft(); }, [this] { return m_editor.rippleTrimLeft(); }});
     add({u"rippleTrimRight"_s, tr("Ripple trim playhead to end"), u"content_cut"_s, u"W"_s, 0,
          [this] { return m_editor.canRippleTrimRight(); }, [this] { return m_editor.rippleTrimRight(); }});
+    add({u"rippleDelete"_s, tr("Ripple delete"), u"backspace"_s, tr("Shift+Del"), 0, clip,
+         [this] { return m_editor.rippleDeleteSelection(); }});
+    add({u"nextCut"_s, tr("Next cut"), u"skip_next"_s, tr("Down"), 0, always, [this] {
+             m_editor.nextCut();
+             return true;
+         }});
+    add({u"previousCut"_s, tr("Previous cut"), u"skip_previous"_s, tr("Up"), 0, always, [this] {
+             m_editor.previousCut();
+             return true;
+         }});
+    add({u"toggleMagnetic"_s, tr("Toggle magnetic track"), u"auto_awesome_motion"_s, u"N"_s, 0, always, [this] {
+             return m_editor.toggleMagneticMain();
+         }});
+    add({u"toggleSnapping"_s, tr("Toggle snapping"), u"straighten"_s, u"\\"_s, 0, always, [this] {
+             m_editor.toggleSnapping();
+             return true;
+         }});
+    add({u"setInPoint"_s, tr("Set In point"), u"first_page"_s, u"I"_s, 0, always, [this] {
+             m_editor.setInPoint();
+             return true;
+         }});
+    add({u"setOutPoint"_s, tr("Set Out point"), u"last_page"_s, u"O"_s, 0, always, [this] {
+             m_editor.setOutPoint();
+             return true;
+         }});
+    add({u"clearInOut"_s, tr("Clear In/Out points"), u"clear"_s, tr("Alt+X"), 0, [this] { return m_editor.hasInOut(); }, [this] {
+             m_editor.clearInOut();
+             return true;
+         }});
     add({u"createCompound"_s, tr("Group into a compound clip"), u"stacks"_s, {}, 0,
          [this] { return !m_editor.selectedClips().empty(); }, [this] { return m_editor.createCompoundClip(); }});
     add({u"expandCompound"_s, tr("Ungroup the compound clip"), u"stacks"_s, {}, 0,
@@ -191,7 +220,9 @@ ActionRegistry::ActionRegistry(EditorController &editor)
     }
 
     for (const auto signal : {&EditorController::selectionChanged, &EditorController::modelChanged,
-                              &EditorController::undoChanged, &EditorController::splitAvailableChanged}) {
+                              &EditorController::undoChanged, &EditorController::splitAvailableChanged,
+                              &EditorController::snappingChanged, &EditorController::magneticMainChanged,
+                              &EditorController::inOutChanged}) {
         connect(&editor, signal, this, &ActionRegistry::changed);
     }
     connect(inspector, &ClipInspector::clipboardChanged, this, &ActionRegistry::changed);

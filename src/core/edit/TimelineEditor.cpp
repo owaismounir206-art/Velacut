@@ -689,6 +689,80 @@ EditResult TimelineEditor::deleteClips(const std::vector<ClipId> &clipIds)
     return finish(std::move(modified), clipIds.size() == 1 ? tr("Delete clip") : tr("Delete clips"), {});
 }
 
+EditResult TimelineEditor::rippleDeleteClips(const std::vector<ClipId> &clipIds)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    if (clipIds.empty()) {
+        return EditResult{};
+    }
+    Sequence modified = *m_sequence;
+    std::map<TrackId, std::vector<ClipId>> toDeleteByTrack;
+    for (const ClipId &clipId : clipIds) {
+        const auto ref = findClip(modified, clipId);
+        if (!ref) {
+            return fail(tr("The clip does not exist."));
+        }
+        if (ref->track->locked) {
+            return fail(tr("The track is locked."));
+        }
+        toDeleteByTrack[ref->track->id].push_back(clipId);
+    }
+
+    for (auto &[trackId, ids] : toDeleteByTrack) {
+        Track *track = nullptr;
+        for (Track &t : modified.visualTracks) {
+            if (t.id == trackId) {
+                track = &t;
+                break;
+            }
+        }
+        if (!track) {
+            for (Track &t : modified.audioTracks) {
+                if (t.id == trackId) {
+                    track = &t;
+                    break;
+                }
+            }
+        }
+        if (!track) {
+            continue;
+        }
+
+        std::sort(ids.begin(), ids.end(), [&](const ClipId &a, const ClipId &b) {
+            const Clip *ca = track->findClip(a);
+            const Clip *cb = track->findClip(b);
+            return (ca && cb) ? ca->start > cb->start : false;
+        });
+
+        for (const ClipId &clipId : ids) {
+            const int idx = track->clipIndex(clipId);
+            if (idx >= 0) {
+                const Clip removed = takeClip(*track, static_cast<size_t>(idx));
+                const RationalTime dur = removed.duration;
+                for (size_t i = static_cast<size_t>(idx); i < track->clips.size(); ++i) {
+                    track->clips[i].start = std::max(RationalTime(0, m_rate), track->clips[i].start - dur);
+                }
+            }
+        }
+        pruneTransitions(*track);
+    }
+
+    Track &main = modified.visualTracks.front();
+    if (isMagneticMain(modified, main)) {
+        pack(main, m_rate);
+    }
+    for (int pass = 0; pass < 2; ++pass) {
+        for (Track &track : pass == 0 ? modified.visualTracks : modified.audioTracks) {
+            pruneTransitions(track);
+        }
+    }
+    removeEmptyTracks(modified);
+    cleanGroups(modified);
+    return finish(std::move(modified), clipIds.size() == 1 ? tr("Ripple delete clip") : tr("Ripple delete clips"), {});
+}
+
 EditResult TimelineEditor::duplicateClips(const std::vector<ClipId> &clipIds)
 {
     if (!m_sequence) {
@@ -1221,6 +1295,16 @@ EditResult TimelineEditor::setDefaultBackground(const std::optional<CanvasBackgr
     Sequence modified = *m_sequence;
     modified.defaultBackground = background;
     return finish(std::move(modified), tr("Change background"), {});
+}
+
+EditResult TimelineEditor::setMagneticMain(bool enabled)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    modified.magneticMain = enabled;
+    return finish(std::move(modified), enabled ? tr("Enable magnetic main track") : tr("Disable magnetic main track"), {});
 }
 
 EditResult TimelineEditor::createCompoundClip(const std::vector<ClipId> &clipIds, const QString &name)

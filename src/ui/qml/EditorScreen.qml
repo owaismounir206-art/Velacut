@@ -39,12 +39,19 @@ Item {
     Shortcut { sequence: "K"; enabled: !root.typing; onActivated: root.editor.player.pause() }
     Shortcut { sequence: "Left"; enabled: !root.typing; onActivated: root.editor.player.step(-1) }
     Shortcut { sequence: "Right"; enabled: !root.typing; onActivated: root.editor.player.step(1) }
+    Shortcut { sequence: "Shift+Left"; enabled: !root.typing; onActivated: root.editor.player.step(-10) }
+    Shortcut { sequence: "Shift+Right"; enabled: !root.typing; onActivated: root.editor.player.step(10) }
+    Shortcut { sequence: "Up"; enabled: !root.typing; onActivated: root.editor.previousCut() }
+    Shortcut { sequence: "Down"; enabled: !root.typing; onActivated: root.editor.nextCut() }
     Shortcut { sequence: "Home"; enabled: !root.typing; onActivated: root.editor.player.seek(0) }
     Shortcut { sequence: "End"; enabled: !root.typing; onActivated: root.editor.player.seek(root.editor.timeline.duration) }
     Shortcut { sequences: ["S", "Ctrl+B"]; enabled: !root.typing; onActivated: root.editor.split() }
     Shortcut { sequence: "Q"; enabled: !root.typing; onActivated: root.editor.rippleTrimLeft() }
     Shortcut { sequence: "W"; enabled: !root.typing; onActivated: root.editor.rippleTrimRight() }
+    Shortcut { sequence: "["; enabled: !root.typing; onActivated: root.editor.trimSelectedToPlayhead(true) }
+    Shortcut { sequence: "]"; enabled: !root.typing; onActivated: root.editor.trimSelectedToPlayhead(false) }
     Shortcut { sequences: [StandardKey.Delete, "Backspace"]; enabled: !root.typing; onActivated: root.editor.deleteSelection() }
+    Shortcut { sequences: ["Shift+Delete", "Shift+Backspace"]; enabled: !root.typing; onActivated: root.editor.rippleDeleteSelection() }
     Shortcut { sequence: "Ctrl+D"; onActivated: root.editor.duplicateSelection() }
     Shortcut { sequences: [StandardKey.Undo]; enabled: !root.typing; onActivated: root.editor.undo() }
     Shortcut { sequences: [StandardKey.Redo, "Ctrl+Shift+Z", "Ctrl+Y"]; enabled: !root.typing; onActivated: root.editor.redo() }
@@ -55,6 +62,15 @@ Item {
     Shortcut { sequence: "Ctrl+Alt+C"; enabled: !root.typing; onActivated: root.editor.actions.trigger("copyAttributes") }
     Shortcut { sequence: "Ctrl+Alt+V"; enabled: !root.typing; onActivated: root.editor.actions.trigger("pasteAttributes") }
     Shortcut { sequence: "M"; enabled: !root.typing; onActivated: root.editor.addMarker() }
+    Shortcut { sequence: "N"; enabled: !root.typing; onActivated: root.editor.toggleMagneticMain() }
+    Shortcut { sequence: "\\"; enabled: !root.typing; onActivated: root.editor.toggleSnapping() }
+    Shortcut { sequence: "I"; enabled: !root.typing; onActivated: root.editor.setInPoint() }
+    Shortcut { sequence: "O"; enabled: !root.typing; onActivated: root.editor.setOutPoint() }
+    Shortcut { sequence: "Alt+X"; enabled: !root.typing; onActivated: root.editor.clearInOut() }
+    Shortcut { sequences: ["+", "=", "Ctrl+="]; enabled: !root.typing; onActivated: timeline.zoomBy(Theme.editor.zoomStep) }
+    Shortcut { sequences: ["-", "Ctrl+-", "Ctrl+_"]; enabled: !root.typing; onActivated: timeline.zoomBy(1 / Theme.editor.zoomStep) }
+    Shortcut { sequence: "Ctrl+0"; enabled: !root.typing; onActivated: timeline.zoomToFit() }
+    Shortcut { sequence: "Ctrl+1"; enabled: !root.typing; onActivated: timeline.setZoom(1.0) }
 
     // Multicam camera switching (keys 1-9, SPEC §5.10 & §8)
     Shortcut { sequence: "1"; enabled: !root.typing; onActivated: root.editor.multicamAngleKey(1) }

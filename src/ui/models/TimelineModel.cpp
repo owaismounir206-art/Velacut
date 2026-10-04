@@ -140,7 +140,8 @@ void TimelineModel::rebuild()
                                          {u"muted"_s, track.muted},
                                          {u"gainDb"_s, track.gainDb.numberAt(RationalTime(), 0.0)},
                                          {u"hidden"_s, track.hidden},
-                                         {u"locked"_s, track.locked}});
+                                         {u"locked"_s, track.locked},
+                                         {u"solo"_s, track.solo}});
             for (const Clip &clip : track.clips) {
                 Entry entry;
                 entry.id = clip.id;

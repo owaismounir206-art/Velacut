@@ -62,6 +62,8 @@ public:
     EditResult rippleTrimClip(const ClipId &clipId, ClipEdge edge, const RationalTime &time);
     EditResult splitClip(const ClipId &clipId, const RationalTime &time);
     EditResult deleteClips(const std::vector<ClipId> &clipIds);
+    // Deletes clips and closes the gaps on their tracks by shifting subsequent clips left.
+    EditResult rippleDeleteClips(const std::vector<ClipId> &clipIds);
     // Places a copy of each clip right after it (on the main track the following clips move along; elsewhere a new
     // track is created if there is no room). The last copy becomes the primary clip.
     EditResult duplicateClips(const std::vector<ClipId> &clipIds);
@@ -99,6 +101,7 @@ public:
     // Track properties (volume, mute, solo, hidden, locked): `change` must not touch clips or transitions.
     EditResult updateTrack(const TrackId &trackId, const std::function<void(Track &)> &change, const QString &text);
     EditResult setDefaultBackground(const std::optional<CanvasBackground> &background);
+    EditResult setMagneticMain(bool enabled);
 
     // ---- Phase 3 ----
     EditResult createCompoundClip(const std::vector<ClipId> &clipIds, const QString &name = QString());

@@ -54,6 +54,36 @@ Rectangle {
             }
         }
 
+        Divider { vertical: true; Layout.fillHeight: true }
+
+        IconButton {
+            iconName: "auto_awesome_motion"
+            variant: "tonal"
+            checkable: true
+            checked: bar.editor.magneticMain
+            label: bar.editor.magneticMain ? qsTr("Magnetic main track (On)") : qsTr("Magnetic main track (Off)")
+            shortcutText: "N"
+            onClicked: bar.editor.toggleMagneticMain()
+        }
+        IconButton {
+            iconName: "straighten"
+            variant: "tonal"
+            checkable: true
+            checked: bar.editor.snappingEnabled
+            label: bar.editor.snappingEnabled ? qsTr("Snapping (On)") : qsTr("Snapping (Off)")
+            shortcutText: "\\"
+            onClicked: bar.editor.toggleSnapping()
+        }
+        IconButton {
+            visible: bar.editor.hasInOut
+            iconName: "clear"
+            label: qsTr("Clear In/Out points")
+            shortcutText: "Alt+X"
+            onClicked: bar.editor.clearInOut()
+        }
+
+        Divider { vertical: true; Layout.fillHeight: true }
+
         IconButton {
             iconName: "zoom_out"
             label: qsTr("Zoom out")

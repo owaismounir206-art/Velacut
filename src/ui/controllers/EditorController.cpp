@@ -468,6 +468,7 @@ void EditorController::onProjectChanged(const ChangeSet &changes)
     }
     if (changes.settingsChanged || changes.sequences.contains(data().mainSequenceId)) {
         emit formatChanged();
+        emit magneticMainChanged();
     }
     if (!m_transition.isNull() || !m_cut.isNull()) {
         bool exists = false;
@@ -867,6 +868,39 @@ bool EditorController::setTrackMuted(const QString &trackId, bool muted)
                                  muted ? tr("Mute track") : tr("Unmute track")));
 }
 
+bool EditorController::setTrackLocked(const QString &trackId, bool locked)
+{
+    const std::optional<TrackId> id = TrackId::fromString(trackId);
+    if (!id) {
+        return false;
+    }
+    return push(TimelineEditor(data(), data().mainSequenceId)
+                    .updateTrack(*id, [locked](Track &track) { track.locked = locked; },
+                                 locked ? tr("Lock track") : tr("Unlock track")));
+}
+
+bool EditorController::setTrackHidden(const QString &trackId, bool hidden)
+{
+    const std::optional<TrackId> id = TrackId::fromString(trackId);
+    if (!id) {
+        return false;
+    }
+    return push(TimelineEditor(data(), data().mainSequenceId)
+                    .updateTrack(*id, [hidden](Track &track) { track.hidden = hidden; },
+                                 hidden ? tr("Hide track") : tr("Show track")));
+}
+
+bool EditorController::setTrackSolo(const QString &trackId, bool solo)
+{
+    const std::optional<TrackId> id = TrackId::fromString(trackId);
+    if (!id) {
+        return false;
+    }
+    return push(TimelineEditor(data(), data().mainSequenceId)
+                    .updateTrack(*id, [solo](Track &track) { track.solo = solo; },
+                                 solo ? tr("Solo track") : tr("Unsolo track")));
+}
+
 bool EditorController::freezeFrame()
 {
     const std::optional<ClipId> id = clipForLibrary();
@@ -1161,6 +1195,35 @@ bool EditorController::deleteSelection()
     return true;
 }
 
+bool EditorController::rippleDeleteSelection()
+{
+    std::vector<ClipId> ids(m_selection.cbegin(), m_selection.cend());
+    if (ids.empty()) {
+        const auto target = clipAtPlayhead();
+        if (target) {
+            ids.push_back(*target);
+        }
+    }
+    if (ids.empty()) {
+        return false;
+    }
+    if (!apply(TimelineEditor(data(), data().mainSequenceId).rippleDeleteClips(ids), false)) {
+        return false;
+    }
+    setSelection({});
+    emit message(ids.size() == 1 ? tr("Ripple deleted clip") : tr("%n clips ripple deleted", nullptr, static_cast<int>(ids.size())), true);
+    return true;
+}
+
+bool EditorController::trimSelectedToPlayhead(bool startEdge)
+{
+    const auto target = focusClip().has_value() ? focusClip() : clipAtPlayhead();
+    if (!target) {
+        return false;
+    }
+    return trimClip(target->toString(), startEdge, playhead());
+}
+
 bool EditorController::duplicateSelection()
 {
     if (m_selection.isEmpty()) {
@@ -1212,6 +1275,157 @@ void EditorController::redo()
     m_document->undoStack().redo();
 }
 
+void EditorController::setSnappingEnabled(bool enabled)
+{
+    if (m_snappingEnabled != enabled) {
+        m_snappingEnabled = enabled;
+        emit snappingChanged();
+        emit message(enabled ? tr("Snapping enabled") : tr("Snapping disabled"), false);
+    }
+}
+
+void EditorController::toggleSnapping()
+{
+    setSnappingEnabled(!m_snappingEnabled);
+}
+
+bool EditorController::magneticMain() const
+{
+    const Sequence *sequence = data().mainSequence();
+    return sequence ? sequence->magneticMain : true;
+}
+
+bool EditorController::setMagneticMain(bool enabled)
+{
+    if (magneticMain() == enabled) {
+        return true;
+    }
+    const bool ok = apply(TimelineEditor(data(), data().mainSequenceId).setMagneticMain(enabled));
+    if (ok) {
+        emit magneticMainChanged();
+        emit message(enabled ? tr("Magnetic main track enabled") : tr("Magnetic main track disabled"), false);
+    }
+    return ok;
+}
+
+bool EditorController::toggleMagneticMain()
+{
+    return setMagneticMain(!magneticMain());
+}
+
+int EditorController::inPoint() const
+{
+    return m_inPoint;
+}
+
+int EditorController::outPoint() const
+{
+    return m_outPoint;
+}
+
+bool EditorController::hasInOut() const
+{
+    return m_inPoint >= 0 || m_outPoint >= 0;
+}
+
+void EditorController::setInPoint(int frame)
+{
+    const int target = frame >= 0 ? frame : playhead();
+    if (m_outPoint >= 0 && target > m_outPoint) {
+        m_outPoint = target;
+    }
+    m_inPoint = target;
+    emit inOutChanged();
+    emit message(tr("In point set at %1").arg(m_player->timecode(m_inPoint)), false);
+}
+
+void EditorController::setOutPoint(int frame)
+{
+    const int target = frame >= 0 ? frame : playhead();
+    if (m_inPoint >= 0 && target < m_inPoint) {
+        m_inPoint = target;
+    }
+    m_outPoint = target;
+    emit inOutChanged();
+    emit message(tr("Out point set at %1").arg(m_player->timecode(m_outPoint)), false);
+}
+
+void EditorController::clearInOut()
+{
+    if (m_inPoint != -1 || m_outPoint != -1) {
+        m_inPoint = -1;
+        m_outPoint = -1;
+        emit inOutChanged();
+        emit message(tr("In/Out points cleared"), false);
+    }
+}
+
+void EditorController::nextCut()
+{
+    const int currentPos = playhead();
+    int nextPos = -1;
+    const Sequence *sequence = data().mainSequence();
+    if (!sequence) {
+        return;
+    }
+    const Rational rate = data().settings.frameRate;
+    std::set<int> cuts;
+    cuts.insert(m_timeline->duration());
+    for (const auto *tracks : {&sequence->visualTracks, &sequence->audioTracks}) {
+        for (const Track &track : *tracks) {
+            for (const Clip &clip : track.clips) {
+                cuts.insert(static_cast<int>(clip.start.rescaled(rate, Rounding::NearestEven).value()));
+                cuts.insert(static_cast<int>(clip.end().rescaled(rate, Rounding::NearestEven).value()));
+            }
+        }
+    }
+    for (const Marker &marker : sequence->markers) {
+        cuts.insert(static_cast<int>(marker.time.rescaled(rate, Rounding::NearestEven).value()));
+    }
+    for (int cut : cuts) {
+        if (cut > currentPos) {
+            nextPos = cut;
+            break;
+        }
+    }
+    if (nextPos >= 0) {
+        m_player->seek(nextPos);
+    }
+}
+
+void EditorController::previousCut()
+{
+    const int currentPos = playhead();
+    int prevPos = -1;
+    const Sequence *sequence = data().mainSequence();
+    if (!sequence) {
+        return;
+    }
+    const Rational rate = data().settings.frameRate;
+    std::set<int> cuts;
+    cuts.insert(0);
+    for (const auto *tracks : {&sequence->visualTracks, &sequence->audioTracks}) {
+        for (const Track &track : *tracks) {
+            for (const Clip &clip : track.clips) {
+                cuts.insert(static_cast<int>(clip.start.rescaled(rate, Rounding::NearestEven).value()));
+                cuts.insert(static_cast<int>(clip.end().rescaled(rate, Rounding::NearestEven).value()));
+            }
+        }
+    }
+    for (const Marker &marker : sequence->markers) {
+        cuts.insert(static_cast<int>(marker.time.rescaled(rate, Rounding::NearestEven).value()));
+    }
+    for (auto it = cuts.rbegin(); it != cuts.rend(); ++it) {
+        if (*it < currentPos) {
+            prevPos = *it;
+            break;
+        }
+    }
+    if (prevPos >= 0) {
+        m_player->seek(prevPos);
+    }
+}
+
 int EditorController::snap(int frame, const QStringList &excludedClips, int threshold) const
 {
     return snapRange(frame, 0, excludedClips, threshold);
@@ -1219,6 +1433,9 @@ int EditorController::snap(int frame, const QStringList &excludedClips, int thre
 
 int EditorController::snapRange(int start, int duration, const QStringList &excludedClips, int threshold) const
 {
+    if (!m_snappingEnabled) {
+        return start;
+    }
     QSet<ClipId> excluded;
     for (const QString &text : excludedClips) {
         if (const auto id = ClipId::fromString(text)) {
@@ -1345,6 +1562,19 @@ QString EditorController::exportCurrentFrame(const QString &fileName, const QStr
         return {};
     }
     return path;
+}
+
+bool EditorController::setCoverFromCurrentFrame()
+{
+    const QImage frame = m_player->sink()->latest();
+    if (frame.isNull()) {
+        emit message(tr("No video frame available to set as cover."), false);
+        return false;
+    }
+    m_document->setThumbnail(frame.scaled(320, 320, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    saveNow();
+    emit message(tr("Cover set from current frame."), false);
+    return true;
 }
 
 QVariantMap EditorController::exportDefaults() const
