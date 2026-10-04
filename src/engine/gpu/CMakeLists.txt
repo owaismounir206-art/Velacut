@@ -1,10 +1,15 @@
-# vedit_gpu: GPU capability detection, fallback chains, safe mode (docs/ARCHITECTURE.md §7).
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FFMPEG_GPU REQUIRED IMPORTED_TARGET libavformat libavcodec libavutil)
+
+# vedit_gpu: GPU capability detection, fallback chains, safe mode, HW video decoder (docs/ARCHITECTURE.md §7).
 add_library(vedit_gpu STATIC
     GpuCapabilities.h GpuCapabilities.cpp
     GraphicsSetup.h GraphicsSetup.cpp
+    HwVideoDecoder.h HwVideoDecoder.cpp
+    ../playback/LruFrameCache.h ../playback/LruFrameCache.cpp
 )
 target_include_directories(vedit_gpu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-target_link_libraries(vedit_gpu PUBLIC Qt6::Core vedit_common)
+target_link_libraries(vedit_gpu PUBLIC Qt6::Core Qt6::Gui vedit_common PkgConfig::FFMPEG_GPU)
 vedit_target_options(vedit_gpu)
 
 # vedit-gpuprobe: runs the risky driver calls in a separate process.

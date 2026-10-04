@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "engine/playback/LruFrameCache.h"
+
 #include <QImage>
 #include <QMutex>
 #include <QObject>
@@ -10,8 +12,8 @@
 namespace vedit::engine {
 
 // Hands the most recent video frame from the MLT consumer thread to the preview item (docs/ARCHITECTURE.md
-// §5.3): a single "latest frame" slot. Writers never wait for the UI; frames the UI had no time to show are
-// counted as dropped.
+// §5.3): a single "latest frame" slot supporting both QImage (RGBA8888) and zero-copy VideoFrame (NV12/P010).
+// Writers never wait for the UI; frames the UI had no time to show are counted as dropped.
 class FrameSink : public QObject
 {
     Q_OBJECT
@@ -22,8 +24,12 @@ public:
 
     // Any thread. The image must be RGBA8888 (straight alpha) and is shared, not copied.
     void push(const QImage &image, int position);
+    void push(const VideoFrame &frame);
+
     // Any thread: the latest frame and a serial number that changes with every new frame.
     QImage latest(quint64 *serial = nullptr, int *position = nullptr) const;
+    VideoFrame latestFrame(quint64 *serial = nullptr, int *position = nullptr) const;
+
     QSize frameSize() const;
     quint64 framesReceived() const { return m_received; }
     // Frames replaced before the UI took them.
@@ -40,7 +46,7 @@ signals:
 
 private:
     mutable QMutex m_mutex;
-    QImage m_image;
+    VideoFrame m_frame;
     int m_position = -1;
     quint64 m_serial = 0;
     quint64 m_consumedSerial = 0;

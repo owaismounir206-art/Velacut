@@ -12,15 +12,20 @@ FrameSink::FrameSink(QObject *parent)
 
 void FrameSink::push(const QImage &image, int position)
 {
+    push(VideoFrame(image, position));
+}
+
+void FrameSink::push(const VideoFrame &frame)
+{
     bool sizeChanged = false;
     {
         QMutexLocker lock(&m_mutex);
         if (m_serial != m_consumedSerial) {
             ++m_dropped;
         }
-        sizeChanged = image.size() != m_image.size();
-        m_image = image;
-        m_position = position;
+        sizeChanged = frame.size() != m_frame.size();
+        m_frame = frame;
+        m_position = frame.position();
         ++m_serial;
     }
     ++m_received;
@@ -48,13 +53,25 @@ QImage FrameSink::latest(quint64 *serial, int *position) const
     if (position) {
         *position = m_position;
     }
-    return m_image;
+    return m_frame.toImage();
+}
+
+VideoFrame FrameSink::latestFrame(quint64 *serial, int *position) const
+{
+    QMutexLocker lock(&m_mutex);
+    if (serial) {
+        *serial = m_serial;
+    }
+    if (position) {
+        *position = m_position;
+    }
+    return m_frame;
 }
 
 QSize FrameSink::frameSize() const
 {
     QMutexLocker lock(&m_mutex);
-    return m_image.size();
+    return m_frame.size();
 }
 
 void FrameSink::markConsumed(quint64 serial)

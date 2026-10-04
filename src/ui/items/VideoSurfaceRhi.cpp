@@ -35,7 +35,8 @@ public:
         if (m_rhi != rhi()) {
             m_pipeline.reset();
             m_srb.reset();
-            m_texture.reset();
+            m_textureY.reset();
+            m_textureUV.reset();
             m_sampler.reset();
             m_vertices.reset();
             m_uniforms.reset();
@@ -47,14 +48,16 @@ public:
         }
         m_vertices.reset(m_rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer, sizeof(kQuad)));
         m_vertices->create();
-        m_uniforms.reset(m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 64));
+        m_uniforms.reset(m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 80));
         m_uniforms->create();
         m_sampler.reset(m_rhi->newSampler(QRhiSampler::Linear, QRhiSampler::Linear, QRhiSampler::None,
                                           QRhiSampler::ClampToEdge, QRhiSampler::ClampToEdge));
         m_sampler->create();
-        // Placeholder until the first frame arrives, so the resource bindings are always complete.
-        m_texture.reset(m_rhi->newTexture(QRhiTexture::RGBA8, QSize(1, 1)));
-        m_texture->create();
+        // Placeholders until the first frame arrives, so the resource bindings are always complete.
+        m_textureY.reset(m_rhi->newTexture(QRhiTexture::RGBA8, QSize(1, 1)));
+        m_textureY->create();
+        m_textureUV.reset(m_rhi->newTexture(QRhiTexture::RG8, QSize(1, 1)));
+        m_textureUV->create();
         m_hasFrame = false;
         m_srb.reset(m_rhi->newShaderResourceBindings());
         updateBindings();
@@ -81,9 +84,9 @@ public:
             return;
         }
         quint64 serial = 0;
-        QImage image = sink->latest(&serial);
-        if (serial != m_serial && !image.isNull()) {
-            m_pending = std::move(image);
+        engine::VideoFrame frame = sink->latestFrame(&serial);
+        if (serial != m_serial && !frame.isNull()) {
+            m_pending = std::move(frame);
             m_serial = serial;
             sink->markConsumed(serial);
         }
@@ -97,21 +100,57 @@ public:
             m_uploadVertices = false;
         }
         if (!m_pending.isNull()) {
-            if (m_texture->pixelSize() != m_pending.size()) {
-                m_texture.reset(m_rhi->newTexture(QRhiTexture::RGBA8, m_pending.size()));
-                m_texture->create();
-                updateBindings();
+            const auto format = m_pending.format();
+            if (format == engine::VideoPixelFormat::Nv12) {
+                m_formatCode = 1;
+                const auto &yPlane = m_pending.planeY();
+                const auto &uvPlane = m_pending.planeUV();
+                if (m_textureY->pixelSize() != m_pending.size() || m_textureY->format() != QRhiTexture::R8) {
+                    m_textureY.reset(m_rhi->newTexture(QRhiTexture::R8, m_pending.size()));
+                    m_textureY->create();
+                    m_textureUV.reset(m_rhi->newTexture(QRhiTexture::RG8, QSize(m_pending.width() / 2, m_pending.height() / 2)));
+                    m_textureUV->create();
+                    updateBindings();
+                }
+                const QRhiTextureSubresourceUploadDescription descY(yPlane.constData(), yPlane.size());
+                updates->uploadTexture(m_textureY.get(), QRhiTextureUploadDescription({0, 0, descY}));
+                const QRhiTextureSubresourceUploadDescription descUV(uvPlane.constData(), uvPlane.size());
+                updates->uploadTexture(m_textureUV.get(), QRhiTextureUploadDescription({0, 0, descUV}));
+            } else if (format == engine::VideoPixelFormat::P010) {
+                m_formatCode = 2;
+                const auto &yPlane = m_pending.planeY();
+                const auto &uvPlane = m_pending.planeUV();
+                if (m_textureY->pixelSize() != m_pending.size() || m_textureY->format() != QRhiTexture::R16) {
+                    m_textureY.reset(m_rhi->newTexture(QRhiTexture::R16, m_pending.size()));
+                    m_textureY->create();
+                    m_textureUV.reset(m_rhi->newTexture(QRhiTexture::RG16, QSize(m_pending.width() / 2, m_pending.height() / 2)));
+                    m_textureUV->create();
+                    updateBindings();
+                }
+                const QRhiTextureSubresourceUploadDescription descY(yPlane.constData(), yPlane.size());
+                updates->uploadTexture(m_textureY.get(), QRhiTextureUploadDescription({0, 0, descY}));
+                const QRhiTextureSubresourceUploadDescription descUV(uvPlane.constData(), uvPlane.size());
+                updates->uploadTexture(m_textureUV.get(), QRhiTextureUploadDescription({0, 0, descUV}));
+            } else {
+                m_formatCode = 0;
+                const QImage img = m_pending.image();
+                if (m_textureY->pixelSize() != img.size() || m_textureY->format() != QRhiTexture::RGBA8) {
+                    m_textureY.reset(m_rhi->newTexture(QRhiTexture::RGBA8, img.size()));
+                    m_textureY->create();
+                    updateBindings();
+                }
+                updates->uploadTexture(m_textureY.get(), img);
             }
-            updates->uploadTexture(m_texture.get(), m_pending);
             m_frameSize = m_pending.size();
             m_hasFrame = true;
-            m_pending = QImage();
+            m_pending = engine::VideoFrame();
         }
         const QSize target = renderTarget()->pixelSize();
         const QSizeF scale = m_hasFrame ? fitScale(m_frameSize, target) : QSizeF(1.0, 1.0);
         QMatrix4x4 mvp = m_rhi->clipSpaceCorrMatrix();
         mvp.scale(static_cast<float>(scale.width()), static_cast<float>(scale.height()));
         updates->updateDynamicBuffer(m_uniforms.get(), 0, 64, mvp.constData());
+        updates->updateDynamicBuffer(m_uniforms.get(), 64, 4, &m_formatCode);
 
         cb->beginPass(renderTarget(), m_background, {1.0f, 0}, updates);
         if (m_hasFrame) {
@@ -128,9 +167,11 @@ public:
 private:
     void updateBindings()
     {
-        m_srb->setBindings({QRhiShaderResourceBinding::uniformBuffer(0, QRhiShaderResourceBinding::VertexStage, m_uniforms.get()),
+        m_srb->setBindings({QRhiShaderResourceBinding::uniformBuffer(0, QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage, m_uniforms.get()),
                             QRhiShaderResourceBinding::sampledTexture(1, QRhiShaderResourceBinding::FragmentStage,
-                                                                      m_texture.get(), m_sampler.get())});
+                                                                      m_textureY.get(), m_sampler.get()),
+                            QRhiShaderResourceBinding::sampledTexture(2, QRhiShaderResourceBinding::FragmentStage,
+                                                                      m_textureUV.get(), m_sampler.get())});
         m_srb->create();
     }
 
@@ -138,12 +179,14 @@ private:
     std::unique_ptr<QRhiBuffer> m_vertices;
     std::unique_ptr<QRhiBuffer> m_uniforms;
     std::unique_ptr<QRhiSampler> m_sampler;
-    std::unique_ptr<QRhiTexture> m_texture;
+    std::unique_ptr<QRhiTexture> m_textureY;
+    std::unique_ptr<QRhiTexture> m_textureUV;
     std::unique_ptr<QRhiShaderResourceBindings> m_srb;
     std::unique_ptr<QRhiGraphicsPipeline> m_pipeline;
     bool m_uploadVertices = true;
     bool m_hasFrame = false;
-    QImage m_pending;
+    int m_formatCode = 0;
+    engine::VideoFrame m_pending;
     QSize m_frameSize;
     quint64 m_serial = 0;
     QColor m_background = Qt::black;
