@@ -4,7 +4,7 @@
 <context>
     <name>EditorScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+364"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+368"/>
         <source>Choose %n video(s) or photo(s) for the template</source>
         <translation>
             <numerusform>Choose %n video or photo for the template</numerusform>
@@ -89,7 +89,7 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+1982"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+1989"/>
         <location line="+454"/>
         <source>Transition on %n cut(s)</source>
         <translation>
@@ -109,7 +109,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+929"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+954"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>
@@ -117,7 +117,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+349"/>
+        <location line="+401"/>
         <source>%n beat(s) marked on the clip</source>
         <translation>
             <numerusform>%n beat marked on the clip</numerusform>

@@ -4,6 +4,7 @@
 #include "engine/gpu/GraphicsSetup.h"
 #include "ui/controllers/EditorController.h"
 #include "ui/models/AudioLibraryModel.h"
+#include "ui/models/BrandKitModel.h"
 #include "ui/models/DraftsModel.h"
 
 #include <QObject>
@@ -35,6 +36,7 @@ class AppController : public QObject
 
     Q_PROPERTY(vedit::ui::DraftsModel *drafts READ drafts CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::AudioLibraryModel *audioLibrary READ audioLibrary CONSTANT FINAL)
+    Q_PROPERTY(vedit::ui::BrandKitModel *brandKits READ brandKits CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::EditorController *editor READ editor NOTIFY editorChanged FINAL)
     Q_PROPERTY(QString version READ version CONSTANT FINAL)
     Q_PROPERTY(QString uiBackend READ uiBackend CONSTANT FINAL)
@@ -61,6 +63,7 @@ public:
 
     DraftsModel *drafts() const { return m_drafts.get(); }
     AudioLibraryModel *audioLibrary() const { return m_audioLibrary.get(); }
+    BrandKitModel *brandKits() const { return m_brandKits.get(); }
     EditorController *editor() const { return m_editor.get(); }
     document::DraftStore &draftStore() { return *m_store; }
     QString version() const;
@@ -131,6 +134,7 @@ private:
     std::unique_ptr<engine::MediaAnalysis> m_analysis;
     std::unique_ptr<DraftsModel> m_drafts;
     std::unique_ptr<AudioLibraryModel> m_audioLibrary;
+    std::unique_ptr<BrandKitModel> m_brandKits;
     std::unique_ptr<EditorController> m_editor;
 
     // Creates the editor for an open document and passes it what the machine can do (hardware encoders, GPU name).

@@ -642,3 +642,20 @@ viene salvato; i media non trovati restano segnalati senza bloccare l'apertura.
 }
 ```
 (Nell'esempio alcuni oggetti sono compattati su una riga per leggibilità; il file reale usa l'indentazione canonica.)
+
+
+## Appendice B — Kit del marchio (`kit.json`)
+Dati dell'applicazione, non del progetto (SPEC §5.13ter): ogni kit è una cartella in
+`$XDG_DATA_HOME/vedit/brandkits/<uuid>/` con `kit.json` e le **copie** dei suoi file, così un kit continua a funzionare
+se gli originali vengono spostati.
+```json
+{ "format": "vedit.brandkit", "formatVersion": 1, "name": "Canale",
+  "colors": ["#FF5500", "#112233"],            // al massimo 16, compaiono per primi in ogni selettore di colore
+  "fonts": ["Inter"],
+  "logos": ["logos/logo.png"],                  // percorsi relativi alla cartella del kit
+  "intro": "intro/apertura.mp4", "outro": "outro/chiusura.mp4",
+  "music": ["music/sigla.mp3"] }
+```
+Il kit in uso è ricordato in `QSettings` (`brandkit/current`). Un kit eliminato viene spostato in `.trash-<uuid>` (per
+"Annulla") ed eliminato davvero all'avvio successivo. Nel progetto i file del kit sono media come gli altri, con il percorso
+della copia nel kit: eliminando un kit (o un suo file), i progetti che lo usavano trovano quel media mancante.

@@ -27,7 +27,7 @@ Item {
         }
         function onImportRequested() { library.importFiles() }
         function onLibraryRequested(name) {
-            const index = ["media", "audio", "text", "stickers", "effects", "transitions", "filters", "animations"].indexOf(name)
+            const index = ["media", "audio", "text", "stickers", "effects", "transitions", "filters", "animations", "brand"].indexOf(name)
             if (index >= 0)
                 rail.currentIndex = index
         }
@@ -205,7 +205,8 @@ Item {
                                     { text: qsTr("Effects"), iconName: "auto_awesome" },
                                     { text: qsTr("Transitions"), iconName: "transition_fade" },
                                     { text: qsTr("Filters"), iconName: "filter_vintage" },
-                                    { text: qsTr("Animations"), iconName: "animation" }]
+                                    { text: qsTr("Animations"), iconName: "animation" },
+                                    { text: qsTr("Brand"), iconName: "verified" }]
                             onActivated: (index) => { if (index === 1) App.audioLibrary.load() }
                         }
                         Divider { vertical: true; Layout.fillHeight: true }
@@ -249,6 +250,9 @@ Item {
                                 editor: root.editor
                                 kind: AssetLibraryModel.Animations
                                 title: qsTr("Animations")
+                            }
+                            BrandKitPanel {
+                                editor: root.editor
                             }
                         }
                     }

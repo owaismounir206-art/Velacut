@@ -12,6 +12,7 @@
 #include "RecordController.h"
 
 #include <QObject>
+#include <QColor>
 #include <QHash>
 #include <QSet>
 #include <QSize>
@@ -183,6 +184,15 @@ public:
     // Styles: 0 soft, 1 dynamic, 2 memories, 3 cinematic.
     Q_INVOKABLE void buildSlideshow(const QList<QUrl> &photos, const QUrl &music, int style, bool onBeat);
     bool buildingSlideshow() const { return m_slideshow.has_value(); }
+    // Brand kit (SPEC §5.13ter), one click each: the logo as a sticker at the playhead, or as a watermark over the whole
+    // video (a corner, small, half-transparent); the intro at the start and the outro at the end of the main track;
+    // a song under the video; a text in the brand's font and colour.
+    Q_INVOKABLE void addLogo(const QUrl &file);
+    Q_INVOKABLE void addWatermark(const QUrl &file);
+    Q_INVOKABLE void addIntro(const QUrl &file);
+    Q_INVOKABLE void addOutro(const QUrl &file);
+    Q_INVOKABLE void addBrandMusic(const QUrl &file);
+    Q_INVOKABLE bool addBrandText(const QString &fontFamily, const QColor &color);
     void setAskForTemplateMedia(bool ask)
     {
         m_askForTemplateMedia = ask;
@@ -384,6 +394,7 @@ private:
         int trackRow = 0;
         bool sticker = false; // added as a sticker (importStickers)
         ClipId replace{};     // replaces this clip's media instead of being inserted (replaceClipWithFile)
+        bool watermark = false; // a picture over the whole video, in a corner (addWatermark)
     };
     std::vector<ClipId> placeholders() const;
     QList<PendingInsert> m_pendingInserts;

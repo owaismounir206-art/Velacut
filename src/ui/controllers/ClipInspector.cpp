@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ClipInspector.h"
+#include "ui/models/BrandKitModel.h"
 
 #include "EditorController.h"
 #include "core/edit/TimelineEditor.h"
@@ -230,6 +231,9 @@ ClipInspector::ClipInspector(EditorController &editor)
 {
     connect(&editor, &EditorController::selectionChanged, this, &ClipInspector::changed);
     connect(&editor, &EditorController::modelChanged, this, &ClipInspector::changed);
+    if (BrandKitModel *kits = BrandKitModel::instance()) {
+        connect(kits, &BrandKitModel::kitChanged, this, &ClipInspector::swatchesChanged);
+    }
     // The values at the playhead (keyframes) and whether the playhead is on the clip: while paused (moving the
     // playhead, stepping, skimming), and once playback stops. Not at every frame of playback: the whole panel would be
     // recomputed 30 times a second for nothing.
@@ -857,6 +861,9 @@ QVariantMap ClipInspector::canvasBox() const
 QVariantList ClipInspector::swatches() const
 {
     QVariantList list;
+    if (const BrandKitModel *kit = BrandKitModel::instance()) {
+        list << kit->colors();
+    }
     for (const char *name : {"#FFFFFF", "#000000", "#9E9E9E", "#F44336", "#FF9800", "#FFD54F", "#8BC34A", "#26C6DA",
                              "#2196F3", "#7E57C2", "#EC407A", "#795548"}) {
         list << QColor(QLatin1StringView(name));

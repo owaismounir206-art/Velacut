@@ -600,8 +600,33 @@ void EditorController::onImported(const Media &imported)
     }
     const int row = pending->trackRow;
     const bool asSticker = pending->sticker;
+    const bool asWatermark = pending->watermark;
     const ClipId replace = pending->replace;
     m_pendingInserts.erase(pending);
+    if (asWatermark) {
+        if (imported.kind != MediaKind::Image) {
+            emit message(tr("A watermark is a picture (PNG with transparency is best)."), false);
+            return;
+        }
+        const Rational rate = data().settings.frameRate;
+        const int length = m_timeline->duration() > 0 ? m_timeline->duration() : static_cast<int>(5 * rate.toDouble());
+        StickerClipData sticker;
+        sticker.mediaId = mediaId;
+        EditResult insert = TimelineEditor(data(), data().mainSequenceId)
+                                .insertSticker(RationalTime(0, rate), std::move(sticker), RationalTime(length, rate));
+        const ClipId clipId = insert.primaryClip;
+        if (apply(std::move(insert))) {
+            // Bottom right, small and half-transparent: present, never in the way.
+            apply(TimelineEditor(data(), data().mainSequenceId).updateClips({clipId}, [](Clip &clip) {
+                clip.transform.position = Param(Vec2{0.40, 0.40});
+                clip.transform.scale = Param(Vec2{0.16, 0.16});
+                clip.opacity = Param(0.75);
+                clip.name = tr("Watermark");
+            }, tr("Watermark")));
+            emit message(tr("Watermark added over the whole video"), true);
+        }
+        return;
+    }
     if (!replace.isNull() && imported.kind != MediaKind::Audio && data().findClip(replace)) {
         apply(TimelineEditor(data(), data().mainSequenceId).replaceClipMedia(replace, mediaId));
         return;
@@ -1183,6 +1208,58 @@ void EditorController::importStickers(const QList<QUrl> &urls)
         }
     }
     importPaths(paths);
+}
+
+void EditorController::addLogo(const QUrl &file)
+{
+    importStickers({file});
+}
+
+void EditorController::addWatermark(const QUrl &file)
+{
+    if (!file.isLocalFile()) {
+        return;
+    }
+    PendingInsert pending{QFileInfo(file.toLocalFile()).absoluteFilePath(), 0};
+    pending.watermark = true;
+    m_pendingInserts.append(pending);
+    importPaths({pending.path});
+}
+
+void EditorController::addIntro(const QUrl &file)
+{
+    if (file.isLocalFile()) {
+        importAndInsertPaths({file.toLocalFile()}, 0, m_timeline->mainRow());
+    }
+}
+
+void EditorController::addOutro(const QUrl &file)
+{
+    if (file.isLocalFile()) {
+        importAndInsertPaths({file.toLocalFile()}, m_timeline->duration(), m_timeline->mainRow());
+    }
+}
+
+void EditorController::addBrandMusic(const QUrl &file)
+{
+    if (file.isLocalFile()) {
+        importAndInsertPaths({file.toLocalFile()}, 0, m_timeline->mainRow());
+    }
+}
+
+bool EditorController::addBrandText(const QString &fontFamily, const QColor &color)
+{
+    TextClipData text = textInStyle({}, tr("Your text"));
+    if (!fontFamily.isEmpty()) {
+        text.style.fontFamily = fontFamily;
+    }
+    if (color.isValid()) {
+        text.style.color = Param(Color{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()),
+                                       static_cast<std::uint8_t>(color.blue()), 255});
+    }
+    const Rational rate = data().settings.frameRate;
+    return apply(TimelineEditor(data(), data().mainSequenceId)
+                     .insertText(RationalTime(playhead(), rate), std::move(text), RationalTime(0, rate)));
 }
 
 void EditorController::detectBeats()

@@ -15,6 +15,7 @@
 #include "ui/controllers/ClipInspector.h"
 #include "ui/items/AssetThumbnail.h"
 #include "ui/models/AssetLibraryModel.h"
+#include "ui/models/BrandKitModel.h"
 #include "ui/controllers/EditorController.h"
 
 #include <QElapsedTimer>
@@ -1310,6 +1311,98 @@ private slots:
             const double end = clip.end().toSecondsDouble();
             QVERIFY2(std::abs(end / 0.7 - std::round(end / 0.7)) < 0.06, qPrintable(u"cut at %1 s"_s.arg(end)));
         }
+    }
+
+    // Brand kits (SPEC §5.13ter): saved once, kept between sessions, used with a click; their colours first in every
+    // colour picker.
+    void brandKit()
+    {
+        const QString data = qEnvironmentVariable("XDG_DATA_HOME");
+        if (data.isEmpty() || !data.contains(u"/test-home/"_s)) {
+            QSKIP("run through CTest or tools/run-test.sh (XDG_DATA_HOME inside the build tree)");
+        }
+        QDir(BrandKitModel::folder()).removeRecursively();
+        {
+            BrandKitModel kits;
+            QCOMPARE(kits.rowCount(), 0);
+            QCOMPARE(kits.createKit(u"Channel"_s), 0);
+            kits.addColor(QColor(u"#ff5500"_s));
+            kits.addColor(QColor(u"#112233"_s));
+            kits.addColor(QColor(u"#ff5500"_s)); // once
+            kits.addFont(u"Inter"_s);
+            QCOMPARE(kits.addLogo(QUrl::fromLocalFile(m_files.photo)), QString());
+            QCOMPARE(kits.setIntro(QUrl::fromLocalFile(m_files.vertical)), QString());
+            QCOMPARE(kits.setOutro(QUrl::fromLocalFile(m_files.landscape)), QString());
+            QCOMPARE(kits.addMusic(QUrl::fromLocalFile(m_files.music)), QString());
+            QCOMPARE(kits.createKit(u"Work"_s), 1); // a second kit, now the one in use
+            QCOMPARE(kits.current(), 1);
+            kits.setCurrent(0);
+        }
+        // Another session: the kits, their files (copies inside the kit) and the kit in use are there.
+        BrandKitModel kits;
+        BrandKitModel::setInstance(&kits);
+        QCOMPARE(kits.rowCount(), 2);
+        QCOMPARE(kits.name(), u"Channel"_s);
+        QCOMPARE(kits.colors(), (QVariantList{QColor(u"#ff5500"_s), QColor(u"#112233"_s)}));
+        QCOMPARE(kits.logos().size(), 1);
+        QVERIFY(kits.logos().front().toUrl().toLocalFile().startsWith(BrandKitModel::folder()));
+        QVERIFY(QFileInfo::exists(kits.intro().toLocalFile()));
+        QCOMPARE(kits.music().size(), 1);
+        // Deleted, then brought back by "Undo".
+        kits.setCurrent(1);
+        const QString removed = kits.removeKit();
+        QCOMPARE(kits.rowCount(), 1);
+        QVERIFY(kits.restoreKit(removed));
+        QCOMPARE(kits.rowCount(), 2);
+        QCOMPARE(kits.name(), u"Work"_s); // the restored kit is the one in use
+        kits.setCurrent(0);
+        QCOMPARE(kits.name(), u"Channel"_s);
+
+        document::DraftStore store(m_dir.filePath(u"drafts-brand"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        // The kit's colours first in the colour pickers.
+        QCOMPARE(editor.inspector()->swatches().first().value<QColor>(), QColor(u"#ff5500"_s));
+        editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        const ClipId video = mainTrack(editor).clips.front().id;
+        // Intro before the video, outro after it.
+        editor.addIntro(kits.intro());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(2), 20000);
+        QVERIFY(mainTrack(editor).clips.front().id != video);
+        editor.addOutro(kits.outro());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(3), 20000);
+        QCOMPARE(mainTrack(editor).clips[1].id, video);
+        // The logo as a watermark over the whole video, in a corner, half-transparent.
+        editor.addWatermark(kits.logos().front().toUrl());
+        const auto watermark = [&]() -> const Clip * {
+            for (const Track &track : editor.data().mainSequence()->visualTracks) {
+                for (const Clip &clip : track.clips) {
+                    if (clip.sticker()) {
+                        return &clip;
+                    }
+                }
+            }
+            return nullptr;
+        };
+        QTRY_VERIFY_WITH_TIMEOUT(watermark(), 20000);
+        QCOMPARE(watermark()->start.value(), 0);
+        QCOMPARE(watermark()->end(), mainTrack(editor).clips.back().end());
+        QVERIFY(std::get<double>(watermark()->opacity.staticValue()) < 1.0);
+        // A text in the brand's font and colour.
+        QVERIFY(editor.addBrandText(u"Inter"_s, QColor(u"#ff5500"_s)));
+        bool brandText = false;
+        for (const Track &track : editor.data().mainSequence()->visualTracks) {
+            for (const Clip &clip : track.clips) {
+                if (const TextClipData *text = clip.text()) {
+                    brandText = brandText || std::get<Color>(text->style.color.staticValue()) == Color{0xff, 0x55, 0x00, 255};
+                }
+            }
+        }
+        QVERIFY(brandText);
+        BrandKitModel::setInstance(nullptr);
     }
 
     void cleanupTestCase() {}

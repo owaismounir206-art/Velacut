@@ -118,6 +118,271 @@
     </message>
 </context>
 <context>
+    <name>BrandKitPanel</name>
+    <message>
+        <location filename="../src/ui/qml/BrandKitPanel.qml" line="+62"/>
+        <source>Brand kit</source>
+        <translation>Kit del marchio</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Kit options</source>
+        <translation>Opzioni del kit</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+416"/>
+        <source>Rename the kit</source>
+        <translation>Rinomina il kit</translation>
+    </message>
+    <message>
+        <location line="-411"/>
+        <source>Delete the kit</source>
+        <translation>Elimina il kit</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Kit “%1” deleted</source>
+        <translation>Kit «%1» eliminato</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Undo</source>
+        <translation>Annulla</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Save your logo, colours, fonts, intro and outro once: use them in every project with a click.</source>
+        <translation>Salva una volta logo, colori, font, intro e outro: li userai in ogni progetto con un clic.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Create your kit</source>
+        <translation>Crea il tuo kit</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>My brand</source>
+        <translation>Il mio marchio</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>New kit</source>
+        <translation>Nuovo kit</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Brand %1</source>
+        <translation>Marchio %1</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Text in the brand&apos;s style</source>
+        <translation>Testo nello stile del marchio</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Colours</source>
+        <translation>Colori</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A click colours the selected text. They come first in every colour picker.</source>
+        <translation>Un clic colora il testo selezionato. Compaiono per primi in ogni selettore di colore.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>They come first in every colour picker.</source>
+        <translation>Compaiono per primi in ogni selettore di colore.</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>%1 · right click removes it</source>
+        <translation>%1 · tasto destro per toglierlo</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Add a colour</source>
+        <translation>Aggiungi un colore</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Logos</source>
+        <translation>Loghi</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <source>Add at the playhead</source>
+        <translation>Aggiungi alla testina</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Watermark over the whole video</source>
+        <translation>Filigrana su tutto il video</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+67"/>
+        <location line="+50"/>
+        <location line="+42"/>
+        <source>Remove from the kit</source>
+        <translation>Togli dal kit</translation>
+    </message>
+    <message>
+        <location line="-146"/>
+        <location line="+179"/>
+        <source>Add a logo</source>
+        <translation>Aggiungi un logo</translation>
+    </message>
+    <message>
+        <location line="-166"/>
+        <source>Logo</source>
+        <translation>Logo</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Fonts</source>
+        <translation>Font</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Use for the selected text</source>
+        <translation>Usa per il testo selezionato</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>A text in this font</source>
+        <translation>Un testo con questo font</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Add a font…</source>
+        <translation>Aggiungi un font…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Add a font</source>
+        <translation>Aggiungi un font</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Intro and outro</source>
+        <translation>Intro e outro</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Short clips that open and close your videos.</source>
+        <translation>Brevi clip che aprono e chiudono i tuoi video.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Intro</source>
+        <translation>Intro</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Add at the start</source>
+        <translation>Aggiungi all&apos;inizio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Outro</source>
+        <translation>Outro</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Add at the end</source>
+        <translation>Aggiungi alla fine</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>Choose a clip</source>
+        <translation>Scegli una clip</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Music</source>
+        <translation>Musica</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Add under the video</source>
+        <translation>Aggiungi sotto il video</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Add music to the kit…</source>
+        <translation>Aggiungi musica al kit…</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>A colour of the brand</source>
+        <translation>Un colore del marchio</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Pictures (%1)</source>
+        <translation>Immagini (%1)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+7"/>
+        <location line="+7"/>
+        <source>All files (*)</source>
+        <translation>Tutti i file (*)</translation>
+    </message>
+    <message>
+        <location line="-13"/>
+        <source>Logo added to the kit</source>
+        <translation>Logo aggiunto al kit</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Choose the intro</source>
+        <translation>Scegli l&apos;intro</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Choose the outro</source>
+        <translation>Scegli l&apos;outro</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Videos and photos (%1)</source>
+        <translation>Video e foto (%1)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Intro saved in the kit</source>
+        <translation>Intro salvata nel kit</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Outro saved in the kit</source>
+        <translation>Outro salvata nel kit</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Add music to the kit</source>
+        <translation>Aggiungi musica al kit</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Music (%1)</source>
+        <translation>Musica (%1)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Music added to the kit</source>
+        <translation>Musica aggiunta al kit</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Name</source>
+        <translation>Nome</translation>
+    </message>
+</context>
+<context>
     <name>CanvasHandles</name>
     <message>
         <location filename="../src/ui/qml/CanvasHandles.qml" line="+166"/>
@@ -353,42 +618,47 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+23"/>
+        <location line="+24"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-22"/>
-        <location line="+27"/>
+        <location line="-23"/>
+        <location line="+28"/>
         <source>Stickers</source>
         <translation>Sticker</translation>
     </message>
     <message>
-        <location line="-26"/>
-        <location line="+31"/>
+        <location line="-27"/>
+        <location line="+32"/>
         <source>Effects</source>
         <translation>Effetti</translation>
     </message>
     <message>
-        <location line="-30"/>
-        <location line="+35"/>
+        <location line="-31"/>
+        <location line="+36"/>
         <source>Transitions</source>
         <translation>Transizioni</translation>
     </message>
     <message>
-        <location line="-34"/>
-        <location line="+39"/>
+        <location line="-35"/>
+        <location line="+40"/>
         <source>Filters</source>
         <translation>Filtri</translation>
     </message>
     <message>
-        <location line="-38"/>
-        <location line="+43"/>
+        <location line="-39"/>
+        <location line="+44"/>
         <source>Animations</source>
         <translation>Animazioni</translation>
     </message>
     <message>
-        <location line="+102"/>
+        <location line="-43"/>
+        <source>Brand</source>
+        <translation>Marchio</translation>
+    </message>
+    <message>
+        <location line="+148"/>
         <source>Choose a video or a photo for “%1”</source>
         <translation>Scegli un video o una foto per «%1»</translation>
     </message>
@@ -5322,7 +5592,7 @@
 <context>
     <name>vedit::ui::AppController</name>
     <message>
-        <location filename="../src/ui/controllers/AppController.cpp" line="+121"/>
+        <location filename="../src/ui/controllers/AppController.cpp" line="+126"/>
         <source>GPU</source>
         <translation>GPU</translation>
     </message>
@@ -5356,16 +5626,39 @@
     </message>
 </context>
 <context>
+    <name>vedit::ui::BrandKitModel</name>
+    <message>
+        <location filename="../src/ui/models/BrandKitModel.cpp" line="+221"/>
+        <source>My brand</source>
+        <translation>Il mio marchio</translation>
+    </message>
+    <message>
+        <location line="+127"/>
+        <source>Create a brand kit first.</source>
+        <translation>Crea prima un kit del marchio.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The file does not exist: %1</source>
+        <translation>Il file non esiste: %1</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The file could not be copied into the kit.</source>
+        <translation>Non è stato possibile copiare il file nel kit.</translation>
+    </message>
+</context>
+<context>
     <name>vedit::ui::ClipInspector</name>
     <message>
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+362"/>
-        <location line="+1024"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+366"/>
+        <location line="+1027"/>
         <location line="+26"/>
         <source>Change mask</source>
         <translation>Modifica maschera</translation>
     </message>
     <message>
-        <location line="-1024"/>
+        <location line="-1027"/>
         <source>Click on the clip to pick the colour to remove.</source>
         <translation>Fai clic sulla clip per scegliere il colore da rimuovere.</translation>
     </message>
@@ -5400,7 +5693,7 @@
         <translation>Cambia la curva del keyframe</translation>
     </message>
     <message>
-        <location line="+614"/>
+        <location line="+617"/>
         <source>Colour</source>
         <translation>Colore</translation>
     </message>
@@ -5966,17 +6259,33 @@
     <name>vedit::ui::EditorController</name>
     <message>
         <location filename="../src/ui/controllers/EditorController.cpp" line="+204"/>
-        <location line="+935"/>
+        <location line="+960"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
     <message>
-        <location line="-551"/>
+        <location line="-576"/>
         <source>Import media</source>
         <translation>Importa media</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+20"/>
+        <source>A watermark is a picture (PNG with transparency is best).</source>
+        <translation>La filigrana è un&apos;immagine (meglio un PNG con trasparenza).</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <location line="+1"/>
+        <source>Watermark</source>
+        <translation>Filigrana</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Watermark added over the whole video</source>
+        <translation>Filigrana aggiunta su tutto il video</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>Only pictures can become stickers.</source>
         <translation>Solo le immagini possono diventare sticker.</translation>
     </message>
@@ -6027,16 +6336,17 @@
     <message>
         <location line="+42"/>
         <location line="+67"/>
+        <location line="+123"/>
         <source>Your text</source>
         <translation>Il tuo testo</translation>
     </message>
     <message>
-        <location line="-9"/>
+        <location line="-132"/>
         <source>Template</source>
         <translation>Template</translation>
     </message>
     <message>
-        <location line="+100"/>
+        <location line="+152"/>
         <source>Select a music or video clip with sound to find its beats.</source>
         <translation>Seleziona una musica o un video con audio per trovarne i beat.</translation>
     </message>

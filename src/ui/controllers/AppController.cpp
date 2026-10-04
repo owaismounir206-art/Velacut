@@ -47,15 +47,20 @@ AppController::AppController(gpu::GraphicsDecision decision, gpu::GpuCapabilitie
     , m_analysis(std::make_unique<engine::MediaAnalysis>(engine::MediaAnalysis::defaultCacheRoot()))
     , m_drafts(std::make_unique<DraftsModel>(*m_store))
     , m_audioLibrary(std::make_unique<AudioLibraryModel>(AudioLibraryModel::defaultFolder(), m_helper))
+    , m_brandKits(std::make_unique<BrandKitModel>())
 {
     // Exports killed together with vedit leave their job files in the cache.
     engine::RenderJob::removeStaleJobFiles();
+    BrandKitModel::setInstance(m_brandKits.get());
 }
 
 AppController::~AppController()
 {
     // The editor (players, producers) goes before the analysis service it uses.
     m_editor.reset();
+    if (BrandKitModel::instance() == m_brandKits.get()) {
+        BrandKitModel::setInstance(nullptr);
+    }
 }
 
 void AppController::setInstance(AppController *instance)

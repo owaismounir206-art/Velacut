@@ -73,7 +73,8 @@ class ClipInspector : public QObject
     // What a gesture on the preview does: "" = move/resize the clip, "mask" = the mask, "pick" = pick the key colour.
     Q_PROPERTY(QString canvasMode READ canvasMode WRITE setCanvasMode NOTIFY canvasModeChanged FINAL)
     // Colours offered for texts and backgrounds (content colours, not the theme's).
-    Q_PROPERTY(QVariantList swatches READ swatches CONSTANT FINAL)
+    // The colours offered first: the brand kit's in use (SPEC §5.13ter), then the common ones.
+    Q_PROPERTY(QVariantList swatches READ swatches NOTIFY swatchesChanged FINAL)
     // Speed ramping curve presets matching SPEC §5.5
     Q_PROPERTY(QVariantList speedPresets READ speedPresets CONSTANT FINAL)
 
@@ -184,6 +185,7 @@ public:
     static TextStyle defaultTextStyle();
 
 signals:
+    void swatchesChanged();
     void changed();
     void clipboardChanged();
     void canvasModeChanged();

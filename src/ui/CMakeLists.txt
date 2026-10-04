@@ -19,6 +19,7 @@ qt_add_qml_module(vedit_ui
         models/AssetLibraryModel.h models/AssetLibraryModel.cpp
         models/DraftsModel.h models/DraftsModel.cpp
         models/PackagesModel.h models/PackagesModel.cpp
+        models/BrandKitModel.h models/BrandKitModel.cpp
         models/MediaPoolModel.h models/MediaPoolModel.cpp
         models/TimelineModel.h models/TimelineModel.cpp
         controllers/EngineTypes.h
@@ -66,6 +67,7 @@ qt_add_qml_module(vedit_ui
         qml/TemplateCard.qml
         qml/PreferencesDialog.qml
         qml/SlideshowDialog.qml
+        qml/BrandKitPanel.qml
         qml/FullScreenPreview.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"

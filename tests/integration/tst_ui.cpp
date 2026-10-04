@@ -908,6 +908,35 @@ private slots:
         QTRY_VERIFY(!editor());
     }
 
+    // The Brand tab (SPEC §5.13ter): a kit made with one click, its colours and a text in the brand's style.
+    void brandKitPanel()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        click(byText(u"Brand"_s));
+        if (m_app->brandKits()->rowCount() == 0) {
+            QTRY_VERIFY(byName(u"createBrandKit"_s));
+            click(byName(u"createBrandKit"_s));
+        }
+        QTRY_COMPARE(m_app->brandKits()->rowCount(), 1);
+        m_app->brandKits()->addColor(QColor(u"#e53935"_s));
+        m_app->brandKits()->addColor(QColor(u"#fdd835"_s));
+        m_app->brandKits()->addFont(u"Inter"_s);
+        QTRY_VERIFY(byName(u"addBrandText"_s));
+        shot(u"18-brand-kit"_s);
+        click(byName(u"addBrandText"_s));
+        QTRY_VERIFY(std::any_of(editor()->data().mainSequence()->visualTracks.begin(), editor()->data().mainSequence()->visualTracks.end(),
+                                [](const Track &track) {
+                                    return std::any_of(track.clips.begin(), track.clips.end(), [](const Clip &clip) {
+                                        return clip.text() && std::get<Color>(clip.text()->style.color.staticValue()) == Color{0xe5, 0x39, 0x35, 255};
+                                    });
+                                }));
+        click(byText(u"Media"_s));
+        click(byName(u"backButton"_s));
+        QTRY_VERIFY(!editor());
+    }
+
     void colorGradingAndScopes()
     {
         // Re-open a draft to test color grading and scopes
