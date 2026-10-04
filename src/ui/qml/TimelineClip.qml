@@ -23,6 +23,7 @@ Item {
     required property bool locked
     required property int mediaLength
     required property var markers // [{id, frame (from the clip's start), name, color}]
+    required property string placeholder // a template slot waiting for media: its label ("" = a normal clip)
 
     // Gesture in progress: "", "move", "trimStart", "trimEnd".
     property string mode: ""
@@ -49,7 +50,8 @@ Item {
 
     // Pictures run under a label strip; coloured clips (audio, text, stickers) carry their label on their colour.
     readonly property bool pictured: kind === "video" || kind === "image"
-    readonly property color labelColor: kind === "audio" ? Theme.color.onTertiaryContainer
+    readonly property color labelColor: placeholder !== "" ? Theme.color.primary
+                                      : kind === "audio" ? Theme.color.onTertiaryContainer
                                       : kind === "text" ? Theme.color.onPrimaryContainer
                                       : kind === "sticker" ? Theme.color.onSecondaryContainer
                                       : pictured ? Theme.readableOn(Theme.color.scrim) : Theme.color.onSurface
@@ -105,6 +107,37 @@ Item {
                 color: Theme.color.onTertiaryContainer
             }
         }
+        // A template slot: an invitation to put a video or a photo here (double click, drop a media item on it, or select
+        // it and press "+" on a media item).
+        Rectangle {
+            anchors.fill: parent
+            visible: clip.placeholder !== ""
+            color: Theme.alpha(Theme.color.primary, placeholderMouse.containsMouse ? 0.24 : 0.14)
+            radius: parent.radius
+            border.width: Theme.editor.hairline
+            border.color: Theme.color.primary
+            Row {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: Theme.editor.clipLabelHeight / 2
+                spacing: Theme.space.xs
+                visible: clip.width > Theme.space.xxxl
+                Icon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: "add_photo_alternate"
+                    size: Theme.editor.toolIconSize
+                    color: Theme.color.primary
+                }
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: clip.width > Theme.space.xxxl * 3
+                    role: "labelMedium"
+                    color: Theme.color.primary
+                    text: qsTr("Replace")
+                }
+            }
+            HoverHandler { id: placeholderMouse }
+        }
+
         // Name and duration along the top of the clip.
         Rectangle {
             width: parent.width
@@ -119,7 +152,7 @@ Item {
                 clip: true
                 Icon {
                     anchors.verticalCenter: parent.verticalCenter
-                    name: clip.kind === "audio" ? "music_note" : clip.kind === "text" ? "title"
+                    name: clip.placeholder !== "" ? "photo_library" : clip.kind === "audio" ? "music_note" : clip.kind === "text" ? "title"
                         : clip.kind === "sticker" ? "add_reaction" : clip.kind === "adjustment" ? "tune"
                         : clip.kind === "compound" ? "stacks" : clip.kind === "image" ? "image" : "movie"
                     size: Theme.editor.clipLabelHeight - Theme.space.xs
@@ -319,6 +352,7 @@ Item {
             }
         }
         onCanceled: { clip.mode = ""; clip.view.snapGuide = -1 }
+        onDoubleClicked: if (clip.placeholder !== "") clip.view.editor.replaceRequested(clip.clipId)
     }
 
     // Edges: drag to trim; the preview shows the frame at the new cut.

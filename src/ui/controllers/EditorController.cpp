@@ -31,6 +31,7 @@
 #include <QPainter>
 #include <QLocale>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QLoggingCategory>
 #include <QPointer>
 #include <QRegularExpression>
@@ -594,7 +595,12 @@ void EditorController::onImported(const Media &imported)
     }
     const int row = pending->trackRow;
     const bool asSticker = pending->sticker;
+    const ClipId replace = pending->replace;
     m_pendingInserts.erase(pending);
+    if (!replace.isNull() && imported.kind != MediaKind::Audio && data().findClip(replace)) {
+        apply(TimelineEditor(data(), data().mainSequenceId).replaceClipMedia(replace, mediaId));
+        return;
+    }
     if (asSticker) {
         if (imported.kind != MediaKind::Image) {
             emit message(tr("Only pictures can become stickers."), false);
@@ -636,10 +642,119 @@ std::optional<ClipId> EditorController::insertAtRow(const MediaId &mediaId, int 
     return clip;
 }
 
+std::vector<ClipId> EditorController::placeholders() const
+{
+    std::vector<ClipId> list;
+    const Sequence *sequence = data().mainSequence();
+    if (!sequence) {
+        return list;
+    }
+    // Main track first, then the overlays; each in time order.
+    for (const Track &track : sequence->visualTracks) {
+        for (const Clip &clip : track.clips) {
+            if (clip.placeholder) {
+                list.push_back(clip.id);
+            }
+        }
+    }
+    return list;
+}
+
+int EditorController::placeholderCount() const
+{
+    return static_cast<int>(placeholders().size());
+}
+
+QString EditorController::firstPlaceholder() const
+{
+    const std::vector<ClipId> list = placeholders();
+    return list.empty() ? QString() : list.front().toString();
+}
+
+bool EditorController::replaceClip(const QString &clipId, const QString &mediaId)
+{
+    const std::optional<ClipId> clip = ClipId::fromString(clipId);
+    const std::optional<MediaId> media = MediaId::fromString(mediaId);
+    if (!clip || !media) {
+        return false;
+    }
+    return apply(TimelineEditor(data(), data().mainSequenceId).replaceClipMedia(*clip, *media));
+}
+
+void EditorController::replaceClipWithFile(const QString &clipId, const QUrl &file)
+{
+    const std::optional<ClipId> clip = ClipId::fromString(clipId);
+    if (!clip || !file.isLocalFile()) {
+        return;
+    }
+    const QString path = QFileInfo(file.toLocalFile()).absoluteFilePath();
+    PendingInsert pending{path, 0};
+    pending.replace = *clip;
+    m_pendingInserts.append(pending);
+    importPaths({path});
+}
+
+void EditorController::fillPlaceholders(const QList<QUrl> &files)
+{
+    static const QStringList audioSuffixes{u"mp3"_s, u"wav"_s, u"flac"_s, u"aac"_s, u"ogg"_s, u"opus"_s, u"m4a"_s, u"wma"_s};
+    const std::vector<ClipId> targets = placeholders();
+    QStringList music;
+    QStringList rest;
+    QList<PendingInsert> replacements;
+    size_t next = 0;
+    for (const QUrl &url : files) {
+        if (!url.isLocalFile()) {
+            continue;
+        }
+        const QString path = QFileInfo(url.toLocalFile()).absoluteFilePath();
+        if (audioSuffixes.contains(QFileInfo(path).suffix().toLower())) {
+            music << path; // never a slot: music goes under the video, from its start
+        } else if (next < targets.size()) {
+            PendingInsert pending{path, 0};
+            pending.replace = targets[next++];
+            replacements.append(pending);
+        } else {
+            rest << path;
+        }
+    }
+    // Leftover videos after the end, music from the start (insert positions are set by the first batch).
+    if (!rest.isEmpty() || !music.isEmpty()) {
+        importAndInsertPaths(rest + music, m_timeline->duration(), m_timeline->mainRow());
+        if (!music.isEmpty()) {
+            m_insertStart = 0;
+        }
+    }
+    QStringList paths;
+    for (const PendingInsert &pending : std::as_const(replacements)) {
+        m_pendingInserts.append(pending);
+        paths << pending.path;
+    }
+    if (!paths.isEmpty()) {
+        importPaths(paths);
+    }
+}
+
 bool EditorController::addMedia(const QString &mediaId)
 {
     const std::optional<MediaId> id = MediaId::fromString(mediaId);
-    return id && insertAtRow(*id, playhead(), m_timeline->mainRow());
+    if (!id) {
+        return false;
+    }
+    // A template slot is selected: "+" fills it, and the next empty slot becomes the selection.
+    const std::optional<ClipId> focus = focusClip();
+    const Clip *clip = focus ? data().findClip(*focus) : nullptr;
+    const Media *media = data().findMedia(*id);
+    if (clip && clip->placeholder && media && media->kind != MediaKind::Audio) {
+        if (!apply(TimelineEditor(data(), data().mainSequenceId).replaceClipMedia(*focus, *id))) {
+            return false;
+        }
+        const std::vector<ClipId> left = placeholders();
+        if (!left.empty()) {
+            setSelection({left.front()});
+        }
+        return true;
+    }
+    return insertAtRow(*id, playhead(), m_timeline->mainRow()).has_value();
 }
 
 bool EditorController::insertMedia(const QString &mediaId, int frame, int trackRow)
@@ -688,10 +803,13 @@ bool EditorController::addFromLibrary(AudioLibraryModel *library, int row)
     return true;
 }
 
-bool EditorController::addText(const QString &styleId)
+namespace {
+
+// A text in a style of the library (its sample text and animation too), or the default style.
+TextClipData textInStyle(const QString &styleId, const QString &fallbackText)
 {
     TextClipData text;
-    text.text = tr("Your text");
+    text.text = fallbackText;
     text.style = ClipInspector::defaultTextStyle();
     if (const fx::TextStylePreset *preset = styleId.isEmpty() ? nullptr : fx::Library::core().textStyle(styleId)) {
         text.style = projectjson::textStyleFromJson(preset->style);
@@ -703,9 +821,134 @@ bool EditorController::addText(const QString &styleId)
             text.animation = projectjson::textAnimationFromJson(preset->animation);
         }
     }
+    return text;
+}
+
+// {"en": "…", "it": "…"} in the language of the interface, or a plain string.
+QString localized(const QJsonValue &value)
+{
+    if (value.isString()) {
+        return value.toString();
+    }
+    const QJsonObject object = value.toObject();
+    const QString language = QLocale().language() == QLocale::Italian ? u"it"_s : u"en"_s;
+    return object.value(language).toString(object.value(u"en"_s).toString());
+}
+
+} // namespace
+
+bool EditorController::addText(const QString &styleId)
+{
+    TextClipData text = textInStyle(styleId, tr("Your text"));
     const Rational rate = data().settings.frameRate;
     return apply(TimelineEditor(data(), data().mainSequenceId)
                      .insertText(RationalTime(playhead(), rate), std::move(text), RationalTime(0, rate))); // default length
+}
+
+bool EditorController::applyTemplate(const QJsonObject &spec, const QString &name)
+{
+    const QJsonArray shots = spec.value(u"slots"_s).toArray();
+    if (shots.isEmpty() || !data().mainSequence()) {
+        return false;
+    }
+    const Rational rate = data().settings.frameRate;
+    const auto seconds = [&rate](double value) {
+        return RationalTime::fromSeconds(Rational(static_cast<qint64>(std::llround(value * 1000)), 1000), rate,
+                                         Rounding::NearestEven);
+    };
+    const auto build = [this](EditResult result) { return m_document->apply(std::move(result)); };
+
+    // The format first (the shots are placed in it), then the shots.
+    static const QStringList formats{u"16:9"_s, u"9:16"_s, u"1:1"_s, u"4:5"_s, u"21:9"_s, u"3:4"_s};
+    const qsizetype format = formats.indexOf(spec.value(u"canvas"_s).toString(u"16:9"_s));
+    setCanvasPreset(static_cast<int>(std::max<qsizetype>(0, format)));
+    for (const QJsonValue &value : shots) {
+        const QJsonObject shot = value.toObject();
+        Placeholder placeholder;
+        placeholder.label = localized(shot.value(u"label"_s));
+        const QString kind = shot.value(u"kind"_s).toString();
+        placeholder.kind = kind == u"video"_s ? PlaceholderKind::Video
+                         : kind == u"photo"_s ? PlaceholderKind::Photo : PlaceholderKind::Any;
+        if (!build(TimelineEditor(data(), data().mainSequenceId)
+                       .insertPlaceholder(placeholder, seconds(std::max(0.5, shot.value(u"seconds"_s).toDouble(3.0)))))) {
+            return false;
+        }
+    }
+    const Sequence &sequence = *data().mainSequence();
+    const Track &main = sequence.visualTracks.front();
+    std::vector<ClipId> slotClips;
+    for (const Clip &clip : main.clips) {
+        slotClips.push_back(clip.id);
+    }
+    const RationalTime end = main.clips.empty() ? RationalTime(0, rate) : main.clips.back().end();
+
+    // The look of every shot, which stays when the media replace the placeholders: the shot fills the frame (a
+    // template is designed for its format: no black bars) and gets the template's filter.
+    const fx::FilterPreset *filter = fx::Library::core().filter(spec.value(u"filter"_s).toString());
+    const std::optional<AssetRef> filterRef = filter ? std::optional(AssetRef{QString::fromLatin1(fx::Library::kCorePack),
+                                                                             filter->id, filter->version})
+                                                     : std::nullopt;
+    build(TimelineEditor(data(), data().mainSequenceId).updateClips(slotClips, [&filterRef](Clip &clip) {
+        clip.transform.fit = FitMode::Cover;
+        if (filterRef) {
+            Effect effect;
+            effect.id = EffectId::create();
+            effect.type = u"vedit.filter"_s;
+            effect.preset = *filterRef;
+            clip.effects.insert(clip.effects.begin(), std::move(effect));
+        }
+    }, tr("Template")));
+    const QJsonObject transition = spec.value(u"transition"_s).toObject();
+    if (const fx::TransitionPreset *preset = fx::Library::core().transition(transition.value(u"preset"_s).toString())) {
+        build(TimelineEditor(data(), data().mainSequenceId)
+                  .applyTransitionToAll(main.id, AssetRef{QString::fromLatin1(fx::Library::kCorePack), preset->id, preset->version},
+                                        seconds(transition.value(u"seconds"_s).toDouble(0.5))));
+    }
+    for (const QJsonValue &value : spec.value(u"texts"_s).toArray()) {
+        const QJsonObject entry = value.toObject();
+        TextClipData text = textInStyle(entry.value(u"style"_s).toString(), tr("Your text"));
+        const QString written = localized(entry.value(u"text"_s));
+        if (!written.isEmpty()) {
+            text.text = written;
+        }
+        const double length = entry.value(u"seconds"_s).toDouble(0);
+        build(TimelineEditor(data(), data().mainSequenceId)
+                  .insertText(seconds(entry.value(u"at"_s).toDouble(0)), std::move(text),
+                              length > 0 ? seconds(length) : RationalTime(0, rate)));
+    }
+    for (const QJsonValue &value : spec.value(u"stickers"_s).toArray()) {
+        const QJsonObject entry = value.toObject();
+        const fx::StickerPreset *preset = fx::Library::core().sticker(entry.value(u"id"_s).toString());
+        if (!preset) {
+            continue;
+        }
+        StickerClipData sticker;
+        sticker.source = AssetRef{QString::fromLatin1(fx::Library::kCorePack), preset->id, preset->version};
+        if (!preset->graphic.isEmpty()) {
+            sticker.graphic = projectjson::graphicFromJson(preset->graphic);
+        }
+        if (!preset->visualizer.isEmpty()) {
+            sticker.visualizer = projectjson::visualizerFromJson(preset->visualizer);
+        }
+        const RationalTime at = seconds(entry.value(u"at"_s).toDouble(0));
+        const double length = entry.value(u"seconds"_s).toDouble(0);
+        // 0 s: until the end of the video (a progress bar, a frame around the whole video).
+        const RationalTime duration = length > 0 ? seconds(length) : end - at;
+        if (duration.value() > 0) {
+            build(TimelineEditor(data(), data().mainSequenceId).insertSticker(at, std::move(sticker), duration));
+        }
+    }
+    if (!name.isEmpty()) {
+        EditResult rename;
+        rename.script.push_back(edits::setName(data().name, name));
+        rename.text = tr("Rename project");
+        build(std::move(rename));
+    }
+    m_document->undoStack().clear(); // the template is where the project starts, not an edit to undo
+    if (const std::optional<ClipId> first = placeholders().empty() ? std::nullopt : std::optional(placeholders().front())) {
+        setSelection({*first});
+    }
+    return true;
 }
 
 bool EditorController::addSticker(const QString &assetId)

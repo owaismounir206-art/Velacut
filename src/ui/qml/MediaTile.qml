@@ -100,6 +100,7 @@ Item {
             }
             onCentroidChanged: {
                 if (active) {
+                    ghost.altHeld = (centroid.modifiers & Qt.AltModifier) !== 0
                     const point = picture.mapToItem(ghost.parent, centroid.position.x, centroid.position.y)
                     ghost.x = point.x - ghost.width / 2
                     ghost.y = point.y - ghost.height / 2
@@ -119,6 +120,8 @@ Item {
     Rectangle {
         id: ghost
         readonly property string mediaId: tile.mediaId
+        // Alt held while dragging: the media replaces the clip it is dropped on (SPEC §5.2).
+        property bool altHeld: false
         visible: false
         z: Theme.elevation.level5
         width: picture.width / 2

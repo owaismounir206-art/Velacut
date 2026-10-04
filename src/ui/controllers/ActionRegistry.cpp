@@ -117,6 +117,15 @@ ActionRegistry::ActionRegistry(EditorController &editor)
          }});
     add({u"enhance"_s, tr("Enhance"), u"auto_fix_high"_s, {}, videoLike | Audio, clip,
          [inspector] { return inspector->autoEnhance(); }});
+    // Another video or photo in the same place, with the same length and look (SPEC 0bis rule 3, §5.2, §5.13).
+    add({u"replace"_s, tr("Replace"), u"find_replace"_s, {}, videoLike, clip, [this] {
+             const std::optional<ClipId> focus = m_editor.focusClip();
+             if (!focus) {
+                 return false;
+             }
+             emit m_editor.replaceRequested(focus->toString());
+             return true;
+         }});
     add({u"adjustLayer"_s, tr("Adjust"), u"tune"_s, {}, AdjustmentLayer, clip, properties(u"adjust"_s)});
     add({u"filterLayer"_s, tr("Filters"), u"filter_vintage"_s, {}, AdjustmentLayer, clip, library(u"filters"_s)});
     add({u"transitionAll"_s, tr("Apply to all cuts"), u"transition_fade"_s, {}, TransitionSelected, always,

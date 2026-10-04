@@ -2,6 +2,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import Vedit.Components
 import Vedit.Theme
@@ -19,6 +20,10 @@ Item {
         function onMessage(text, undoable) { root.message(text, undoable) }
         function onPropertiesRequested(page) { properties.showPage(page) }
         function onExportRequested() { exportDialog.openDialog() }
+        function onReplaceRequested(clipId) {
+            replaceDialog.clipId = clipId
+            replaceDialog.open()
+        }
         function onImportRequested() { library.importFiles() }
         function onLibraryRequested(name) {
             const index = ["media", "audio", "text", "stickers", "effects", "transitions", "filters", "animations"].indexOf(name)
@@ -255,6 +260,7 @@ Item {
                         editor: root.editor
                         onFullScreenRequested: root.setFullScreen(true)
                         onFrameRequested: root.saveFrame()
+                        onTemplateMediaRequested: templateMediaDialog.open()
                     }
                 }
 
@@ -335,6 +341,35 @@ Item {
     RecordDialog {
         id: recordDialog
         editor: root.editor
+    }
+
+    // "Replace": one video or photo for the clip (keeps its place, length and look).
+    FileDialog {
+        id: replaceDialog
+        property string clipId
+        title: root.editor.timeline.placeholderOf(clipId) !== ""
+               ? qsTr("Choose a video or a photo for “%1”").arg(root.editor.timeline.placeholderOf(clipId))
+               : qsTr("Choose a video or a photo to put in its place")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [qsTr("Videos and photos (%1)").arg("*.mp4 *.mov *.mkv *.webm *.avi *.mts *.m2ts *.m4v *.jpg *.jpeg *.png *.webp *.gif *.heic"),
+                      qsTr("All files (*)")]
+        onAccepted: root.editor.replaceClipWithFile(clipId, selectedFile)
+    }
+    // A template: all its shots at once, in order (SPEC §5.13).
+    FileDialog {
+        id: templateMediaDialog
+        objectName: "templateMediaDialog"
+        title: qsTr("Choose %n video(s) or photo(s) for the template", "", root.editor.placeholderCount)
+        fileMode: FileDialog.OpenFiles
+        nameFilters: [qsTr("Videos, photos and music (%1)").arg("*.mp4 *.mov *.mkv *.webm *.avi *.mts *.m2ts *.m4v *.jpg *.jpeg *.png *.webp *.gif *.heic *.mp3 *.wav *.flac *.aac *.ogg *.opus *.m4a"),
+                      qsTr("All files (*)")]
+        onAccepted: root.editor.fillPlaceholders(selectedFiles)
+    }
+    Component.onCompleted: {
+        if (root.editor.askForTemplateMedia) {
+            root.editor.askForTemplateMedia = false
+            templateMediaDialog.open()
+        }
     }
 
     ShortcutsDialog {

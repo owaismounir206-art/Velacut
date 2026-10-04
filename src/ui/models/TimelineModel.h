@@ -52,6 +52,7 @@ public:
         LockedRole,
         MediaLengthRole, // frames of material in the media (-1: unlimited, e.g. photos)
         MarkersRole,
+        PlaceholderRole, // the label of a template slot waiting for media ("" = not a placeholder)
     };
 
     struct TrackRow
@@ -81,6 +82,10 @@ public:
 
     // Frames shown by the view; clips outside (with a margin of the same width) get no row.
     Q_INVOKABLE void setVisibleRange(int firstFrame, int lastFrame);
+    // The clip covering `frame` on that row ("" = none): where a media item dropped on the timeline lands.
+    Q_INVOKABLE QString clipAt(int frame, int trackRow) const;
+    // Its template slot label, "" when it is not a placeholder.
+    Q_INVOKABLE QString placeholderOf(const QString &clipId) const;
     void setSelection(const QSet<ClipId> &selection);
     // Every clip overlapping the view or not: for snapping.
     std::vector<std::pair<int, int>> clipEdges(const QSet<ClipId> &excluded) const;
@@ -106,6 +111,7 @@ private:
         bool locked = false;
         int mediaLength = -1;
         QVariantList markers;
+        QString placeholder;
 
         friend bool operator==(const Entry &, const Entry &) = default;
     };

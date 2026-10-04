@@ -17,6 +17,7 @@ Item {
     property bool showScopes: false
     signal fullScreenRequested()
     signal frameRequested()
+    signal templateMediaRequested()
 
     component Tool: IconButton {
         implicitWidth: Theme.editor.toolButtonSize
@@ -90,6 +91,46 @@ Item {
                     role: "bodyMedium"
                     color: Theme.color.onSurfaceVariant
                     text: qsTr("Add a video or a photo to the timeline: the preview appears here.")
+                }
+            }
+
+            // A template with shots still empty: what to do next, where the result will appear.
+            Rectangle {
+                objectName: "templateBanner"
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.topMargin: Theme.space.sm
+                visible: panel.editor.placeholderCount > 0
+                width: Math.min(parent.width - 2 * Theme.space.md, bannerRow.implicitWidth + 2 * Theme.space.md)
+                height: bannerRow.implicitHeight + 2 * Theme.space.sm
+                radius: Theme.shape.medium
+                color: Theme.color.inverseSurface
+                RowLayout {
+                    id: bannerRow
+                    anchors.fill: parent
+                    anchors.leftMargin: Theme.space.md
+                    anchors.rightMargin: Theme.space.sm
+                    spacing: Theme.space.md
+                    Icon {
+                        name: "photo_library"
+                        size: Theme.editor.toolIconSize
+                        color: Theme.color.inversePrimary
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        role: "bodyMedium"
+                        elide: Text.ElideRight
+                        color: Theme.color.inverseOnSurface
+                        text: qsTr("%n shot(s) of the template to fill with your videos and photos", "", panel.editor.placeholderCount)
+                    }
+                    Button {
+                        objectName: "chooseTemplateMedia"
+                        implicitHeight: Theme.editor.toolButtonSize
+                        variant: "filled"
+                        iconName: "add_photo_alternate"
+                        text: qsTr("Choose")
+                        onClicked: panel.templateMediaRequested()
+                    }
                 }
             }
 

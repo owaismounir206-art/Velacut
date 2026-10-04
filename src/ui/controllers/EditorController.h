@@ -16,6 +16,7 @@
 #include <QSize>
 #include <QStringList>
 #include <QUrl>
+#include <QJsonObject>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
@@ -84,6 +85,10 @@ class EditorController : public QObject
     // The cover of the video (SPEC §5.13ter): chosen by the user (a frame or a picture), shown at the head of the main
     // track and on the draft; empty URL = none chosen (the draft then shows the frame where the editing stopped).
     Q_PROPERTY(QUrl coverUrl READ coverUrl NOTIFY coverChanged FINAL)
+    // Template slots still waiting for media (SPEC §5.13): the interface invites to fill them.
+    Q_PROPERTY(int placeholderCount READ placeholderCount NOTIFY modelChanged FINAL)
+    // Set when the project was just made from a template: the interface asks at once for the media of its slots.
+    Q_PROPERTY(bool askForTemplateMedia MEMBER m_askForTemplateMedia NOTIFY askForTemplateMediaChanged FINAL)
 
 public:
     enum SaveState
@@ -156,6 +161,25 @@ public:
     Q_INVOKABLE bool addFromLibrary(vedit::ui::AudioLibraryModel *library, int row);
     // A media item dropped on the timeline.
     Q_INVOKABLE bool insertMedia(const QString &mediaId, int frame, int trackRow);
+    // "Replace" (SPEC §5.2, §5.13): the clip shows another video or photo, keeping its place, length and look; a
+    // template slot becomes a normal clip. From the media pool, or from a file (imported first).
+    Q_INVOKABLE bool replaceClip(const QString &clipId, const QString &mediaId);
+    Q_INVOKABLE void replaceClipWithFile(const QString &clipId, const QUrl &file);
+    // The files go into the template slots in timeline order (one file each); files left over go after the video,
+    // music under it.
+    Q_INVOKABLE void fillPlaceholders(const QList<QUrl> &files);
+    int placeholderCount() const;
+    // The first slot waiting for media, in timeline order ("" = none).
+    Q_INVOKABLE QString firstPlaceholder() const;
+    // Builds the project of a template (SPEC §5.13; the spec of fx::TemplatePreset, docs/EFFECT_FORMAT.md): its format,
+    // a placeholder for each shot, the transition on every cut, the filter on every shot, its titles and stickers. Not
+    // undoable (it is how the project starts). False if the template has no shots.
+    bool applyTemplate(const QJsonObject &spec, const QString &name);
+    void setAskForTemplateMedia(bool ask)
+    {
+        m_askForTemplateMedia = ask;
+        emit askForTemplateMediaChanged();
+    }
 
     // Timeline
     Q_INVOKABLE bool moveClip(const QString &clipId, int frame, int trackRow);
@@ -299,6 +323,7 @@ signals:
     void skimmingChanged();
     void inOutChanged();
     void coverChanged();
+    void askForTemplateMediaChanged();
     // The project changed (any command, undo or redo).
     void modelChanged();
     // For the snackbar: `undoable` shows the "Undo" action.
@@ -310,6 +335,8 @@ signals:
     void propertiesRequested(const QString &page);
     void exportRequested();
     void importRequested();
+    // Asks the interface for a video or photo to put in this clip instead ("Replace").
+    void replaceRequested(const QString &clipId);
 
 private:
     bool apply(EditResult result, bool selectResult = true);
@@ -347,7 +374,9 @@ private:
         QString path;
         int trackRow = 0;
         bool sticker = false; // added as a sticker (importStickers)
+        ClipId replace{};     // replaces this clip's media instead of being inserted (replaceClipWithFile)
     };
+    std::vector<ClipId> placeholders() const;
     QList<PendingInsert> m_pendingInserts;
     int m_insertStart = 0;  // where the files were dropped: music starts here, under the video
     int m_insertCursor = 0; // after the last video or photo placed
@@ -355,6 +384,7 @@ private:
     int m_inPoint = -1;
     int m_outPoint = -1;
     int m_coverSerial = 0; // cache-busting part of coverUrl
+    bool m_askForTemplateMedia = false;
     bool m_closed = false;
     bool setCover(const QImage &image);
 };

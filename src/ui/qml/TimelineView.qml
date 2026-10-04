@@ -892,6 +892,20 @@ Rectangle {
                 onDropped: (event) => {
                     const frame = view.editor.snap(view.frameAt(event.x), [], view.snapFrames)
                     const row = view.rowAt(event.y)
+                    // On a template slot, or on any clip with Alt held: the media replaces the clip (SPEC §5.2, §5.13).
+                    const target = view.model.clipAt(view.frameAt(event.x), row)
+                    const altHeld = !!event.source && event.source.altHeld === true // a media item dragged with Alt
+                    const replacing = target !== "" && (view.model.placeholderOf(target) !== "" || altHeld)
+                    if (replacing && event.hasUrls && event.urls.length > 0) {
+                        view.editor.replaceClipWithFile(target, event.urls[0])
+                        event.acceptProposedAction()
+                        return
+                    }
+                    if (replacing && event.source && event.source.mediaId !== undefined) {
+                        view.editor.replaceClip(target, event.source.mediaId)
+                        event.accept()
+                        return
+                    }
                     if (event.hasUrls) {
                         view.editor.importAndInsert(event.urls, frame, row)
                         event.acceptProposedAction()

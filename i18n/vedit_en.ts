@@ -2,6 +2,17 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en" sourcelanguage="en">
 <context>
+    <name>EditorScreen</name>
+    <message numerus="yes">
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+362"/>
+        <source>Choose %n video(s) or photo(s) for the template</source>
+        <translation>
+            <numerusform>Choose %n video or photo for the template</numerusform>
+            <numerusform>Choose %n videos or photos for the template</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HomeScreen</name>
     <message numerus="yes">
         <location filename="../src/ui/qml/HomeScreen.qml" line="+343"/>
@@ -9,6 +20,17 @@
         <translation>
             <numerusform>%n project</numerusform>
             <numerusform>%n projects</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>PreviewPanel</name>
+    <message numerus="yes">
+        <location filename="../src/ui/qml/PreviewPanel.qml" line="+124"/>
+        <source>%n shot(s) of the template to fill with your videos and photos</source>
+        <translation>
+            <numerusform>%n shot of the template to fill with your videos and photos</numerusform>
+            <numerusform>%n shots of the template to fill with your videos and photos</numerusform>
         </translation>
     </message>
 </context>
@@ -65,7 +87,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+840"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+1083"/>
         <source>%n beat(s) marked on the clip</source>
         <translation>
             <numerusform>%n beat marked on the clip</numerusform>

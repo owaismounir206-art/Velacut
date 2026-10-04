@@ -817,6 +817,41 @@ private slots:
         QTRY_COMPARE(m_app->drafts()->count(), drafts);
     }
 
+    // A template from the home screen (SPEC §5.13): a click opens its project and asks for the media, choosing them
+    // fills every shot. Phase 5 criterion, from the interface.
+    void templateFromTheHomeScreen()
+    {
+        QTRY_VERIFY(!editor());
+        m_actions = 0;
+        click(byName(u"template_templates/vlog-day"_s));                               // 1
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        QTRY_COMPARE(editor()->placeholderCount(), 5);
+        QTRY_VERIFY(byName(u"templateBanner"_s));
+        shot(u"10-template-opened"_s);
+        // The file dialog opened by itself (not drivable headless): the choice is made directly, counted as the one
+        // action it is, and the dialog closed.
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = m_window->findChild<QObject *>(u"templateMediaDialog"_s)));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QMetaObject::invokeMethod(dialog, "reject");
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        // The dialog is a window of its own: back to the editor's (a window manager does this on a desktop).
+        m_window->requestActivate();
+        QTRY_VERIFY(m_window->isActive());
+        editor()->fillPlaceholders({QUrl::fromLocalFile(m_files.landscape), QUrl::fromLocalFile(m_files.vertical),
+                                    QUrl::fromLocalFile(m_files.photo), QUrl::fromLocalFile(m_files.landscape),
+                                    QUrl::fromLocalFile(m_files.vertical)});
+        ++m_actions;                                                                    // 2
+        QTRY_COMPARE_WITH_TIMEOUT(editor()->placeholderCount(), 0, 30000);
+        QTRY_VERIFY(!byName(u"templateBanner"_s));
+        shot(u"11-template-filled"_s);
+        qInfo("template to a complete video: %d actions", m_actions);
+        QVERIFY(m_actions <= 2);
+        click(byName(u"backButton"_s));
+        QTRY_VERIFY(!editor());
+    }
+
     void colorGradingAndScopes()
     {
         // Re-open a draft to test color grading and scopes

@@ -10,6 +10,7 @@
 #include "engine/analysis/Decoding.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/mlt/MltRuntime.h"
+#include "fx/Library.h"
 #include "ui/controllers/ActionRegistry.h"
 #include "ui/controllers/ClipInspector.h"
 #include "ui/items/AssetThumbnail.h"
@@ -551,7 +552,7 @@ private slots:
         editor.select(mainTrack(editor).clips[0].id.toString(), false);
         QCOMPARE(ids(), (QStringList{u"split"_s, u"rippleTrimLeft"_s, u"rippleTrimRight"_s, u"delete"_s, u"duplicate"_s,
                                      u"speed"_s, u"volume"_s, u"animation"_s, u"freeze"_s, u"reverse"_s, u"mirror"_s,
-                                     u"rotate"_s, u"enhance"_s}));
+                                     u"rotate"_s, u"enhance"_s, u"replace"_s}));
         editor.select(mainTrack(editor).clips[1].id.toString(), false);
         QVERIFY(!ids().contains(u"speed"_s) && ids().contains(u"mirror"_s));
 
@@ -1145,6 +1146,89 @@ private slots:
         editor->player()->seek(80);
         QVERIFY(editor->actions()->trigger(u"rippleTrimRight"_s));
         QCOMPARE(mainTrack(*editor).clips[0].duration.value(), 80);
+    }
+
+    // SPEC §8, Phase 5 criterion (first half): "I use a template, replace the media and get a complete video".
+    void phaseFiveCriterionTemplate()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-template"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        const fx::TemplatePreset *preset = fx::Library::core().templatePreset(u"templates/vlog-day"_s);
+        QVERIFY(preset);
+        QVERIFY(editor.applyTemplate(preset->spec, preset->name.text()));
+
+        // The template's project: its format, a slot per shot with the filter, transitions on every cut, its title
+        // and its progress bar; nothing to undo, the first slot selected.
+        const int shots = static_cast<int>(preset->spec.value(u"slots"_s).toArray().size());
+        QCOMPARE(editor.placeholderCount(), shots);
+        QCOMPARE(editor.canvasPreset(), int(CanvasPreset::Portrait9x16));
+        QCOMPARE(editor.data().name, preset->name.text());
+        QVERIFY(!editor.canUndo());
+        QCOMPARE(editor.selection(), QStringList{editor.firstPlaceholder()});
+        const Sequence &sequence = *editor.data().mainSequence();
+        QCOMPARE(static_cast<int>(sequence.visualTracks.front().clips.size()), shots);
+        QCOMPARE(static_cast<int>(sequence.visualTracks.front().transitions.size()), shots - 1);
+        for (const Clip &clip : sequence.visualTracks.front().clips) {
+            QVERIFY(clip.placeholder);
+            QCOMPARE(clip.transform.fit, FitMode::Cover); // the shots fill the template's format
+            QVERIFY(std::any_of(clip.effects.begin(), clip.effects.end(),
+                                [](const Effect &e) { return e.type == u"vedit.filter"_s && e.preset && e.preset->id == u"filters/honey"_s; }));
+        }
+        bool title = false;
+        bool progress = false;
+        for (const Track &track : sequence.visualTracks) {
+            for (const Clip &clip : track.clips) {
+                // The title in the language of the interface (English or Italian).
+                const QJsonObject written = preset->spec.value(u"texts"_s).toArray().first().toObject().value(u"text"_s).toObject();
+                title = title || (clip.text() && (clip.text()->text == written.value(u"en"_s).toString()
+                                                  || clip.text()->text == written.value(u"it"_s).toString()));
+                progress = progress || (clip.sticker() && clip.sticker()->graphic);
+            }
+        }
+        QVERIFY(title);
+        QVERIFY(progress);
+
+        // "+" on a media item fills the selected slot, and the next slot is selected.
+        editor.importFiles({QUrl::fromLocalFile(m_files.landscape)});
+        QTRY_COMPARE_WITH_TIMEOUT(editor.data().media.size(), size_t(1), 20000);
+        QVERIFY(editor.addMedia(editor.data().media.front().id.toString()));
+        QCOMPARE(editor.placeholderCount(), shots - 1);
+        QCOMPARE(editor.selection(), QStringList{editor.firstPlaceholder()});
+
+        // The other shots at once, in order (what the template asks for when it opens).
+        const QStringList files{m_files.vertical, m_files.photo, m_files.landscape, m_files.vertical};
+        QList<QUrl> urls;
+        for (const QString &file : files) {
+            urls << QUrl::fromLocalFile(file);
+        }
+        urls << QUrl::fromLocalFile(m_files.music); // music goes under the video, not in a slot
+        editor.fillPlaceholders(urls);
+        QTRY_COMPARE_WITH_TIMEOUT(editor.placeholderCount(), 0, 30000);
+        QTRY_COMPARE_WITH_TIMEOUT(editor.data().mainSequence()->audioTracks.size(), size_t(1), 30000);
+        const Track &main = editor.data().mainSequence()->visualTracks.front();
+        QCOMPARE(static_cast<int>(main.clips.size()), shots);
+        // The look stayed: filter and transitions are still there on the real media.
+        QCOMPARE(static_cast<int>(main.transitions.size()), shots - 1);
+        for (const Clip &clip : main.clips) {
+            QVERIFY(clip.media());
+            QVERIFY(std::any_of(clip.effects.begin(), clip.effects.end(), [](const Effect &e) { return e.type == u"vedit.filter"_s; }));
+        }
+        QCOMPARE(editor.data().mainSequence()->audioTracks.front().clips.front().start.value(), 0);
+
+        // And it is a complete video: exported, the right size and length, with sound.
+        const QString folder = m_dir.filePath(u"videos-template"_s);
+        QDir().mkpath(folder);
+        QSignalSpy exported(&editor, &EditorController::exportFinished);
+        QVERIFY(editor.startExport(u"template"_s, folder, 180, u"30"_s, 1));
+        QVERIFY(exported.wait(120000));
+        const QJsonObject probe = ffprobe(exported.first().first().toString());
+        QCOMPARE(streamOfType(probe, u"video"_s).value(u"width"_s).toInt(), 180);
+        QCOMPARE(streamOfType(probe, u"video"_s).value(u"height"_s).toInt(), 320);
+        QCOMPARE(streamOfType(probe, u"video"_s).value(u"nb_read_frames"_s).toString().toInt(), editor.timeline()->duration());
+        QCOMPARE(streamOfType(probe, u"audio"_s).value(u"codec_name"_s).toString(), u"aac"_s);
     }
 
     void cleanupTestCase() {}

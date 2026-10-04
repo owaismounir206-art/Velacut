@@ -327,7 +327,7 @@
 <context>
     <name>EditorScreen</name>
     <message>
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+31"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+36"/>
         <source>Video exported</source>
         <translation>Video esportato</translation>
     </message>
@@ -386,6 +386,40 @@
         <location line="+43"/>
         <source>Animations</source>
         <translation>Animazioni</translation>
+    </message>
+    <message>
+        <location line="+102"/>
+        <source>Choose a video or a photo for “%1”</source>
+        <translation>Scegli un video o una foto per «%1»</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Choose a video or a photo to put in its place</source>
+        <translation>Scegli un video o una foto da mettere al suo posto</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Videos and photos (%1)</source>
+        <translation>Video e foto (%1)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+10"/>
+        <source>All files (*)</source>
+        <translation>Tutti i file (*)</translation>
+    </message>
+    <message numerus="yes">
+        <location line="-3"/>
+        <source>Choose %n video(s) or photo(s) for the template</source>
+        <translation>
+            <numerusform>Scegli %n video o foto per il template</numerusform>
+            <numerusform>Scegli %n video o foto per il template</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Videos, photos and music (%1)</source>
+        <translation>Video, foto e musica (%1)</translation>
     </message>
 </context>
 <context>
@@ -1455,7 +1489,7 @@
 <context>
     <name>PreviewPanel</name>
     <message>
-        <location filename="../src/ui/qml/PreviewPanel.qml" line="+41"/>
+        <location filename="../src/ui/qml/PreviewPanel.qml" line="+42"/>
         <source>Player</source>
         <translation>Lettore</translation>
     </message>
@@ -1474,8 +1508,21 @@
         <source>Add a video or a photo to the timeline: the preview appears here.</source>
         <translation>Aggiungi un video o una foto alla timeline: l&apos;anteprima compare qui.</translation>
     </message>
+    <message numerus="yes">
+        <location line="+31"/>
+        <source>%n shot(s) of the template to fill with your videos and photos</source>
+        <translation>
+            <numerusform>%n ripresa del template da riempire con i tuoi video e le tue foto</numerusform>
+            <numerusform>%n riprese del template da riempire con i tuoi video e le tue foto</numerusform>
+        </translation>
+    </message>
     <message>
-        <location line="+33"/>
+        <location line="+7"/>
+        <source>Choose</source>
+        <translation>Scegli</translation>
+    </message>
+    <message>
+        <location line="+35"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
@@ -3248,12 +3295,17 @@
 <context>
     <name>TimelineClip</name>
     <message>
-        <location filename="../src/ui/qml/TimelineClip.qml" line="+47"/>
+        <location filename="../src/ui/qml/TimelineClip.qml" line="+48"/>
         <source>Clip %1</source>
         <translation>Clip %1</translation>
     </message>
     <message>
-        <location line="+198"/>
+        <location line="+87"/>
+        <source>Replace</source>
+        <translation>Sostituisci</translation>
+    </message>
+    <message>
+        <location line="+143"/>
         <source>Group into a compound clip</source>
         <translation>Raggruppa in una clip composta</translation>
     </message>
@@ -3293,7 +3345,7 @@
         <translation>Ctrl+Alt+V</translation>
     </message>
     <message>
-        <location line="+124"/>
+        <location line="+125"/>
         <source>%1 · %2f</source>
         <translation>%1 · %2 fot.</translation>
     </message>
@@ -4278,12 +4330,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+265"/>
+        <location line="+274"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-264"/>
+        <location line="-273"/>
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
@@ -4353,7 +4405,12 @@
         <translation>Migliora</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
+        <source>Replace</source>
+        <translation>Sostituisci</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
@@ -4622,8 +4679,8 @@
         <translation>Animazione in ciclo</translation>
     </message>
     <message>
-        <location line="-266"/>
-        <location line="+267"/>
+        <location line="-275"/>
+        <location line="+276"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -4642,22 +4699,22 @@
 <context>
     <name>vedit::ui::AppController</name>
     <message>
-        <location filename="../src/ui/controllers/AppController.cpp" line="+120"/>
+        <location filename="../src/ui/controllers/AppController.cpp" line="+119"/>
         <source>GPU</source>
         <translation>GPU</translation>
     </message>
     <message>
-        <location line="+57"/>
+        <location line="+55"/>
         <source>Template not found.</source>
         <translation>Modello non trovato.</translation>
     </message>
     <message>
-        <location line="+8"/>
-        <source>Failed to create project from template.</source>
-        <translation>Creazione del progetto dal modello non riuscita.</translation>
+        <location line="+5"/>
+        <source>This template cannot be used.</source>
+        <translation>Questo template non si può usare.</translation>
     </message>
     <message>
-        <location line="+61"/>
+        <location line="+51"/>
         <source>Project recovered: vedit did not close properly last time. Your latest changes are here.</source>
         <translation>Progetto recuperato: l&apos;ultima volta vedit non si è chiuso correttamente. Le tue ultime modifiche sono qui.</translation>
     </message>
@@ -5285,33 +5342,40 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+202"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+203"/>
+        <location line="+741"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
     <message>
-        <location line="+384"/>
+        <location line="-357"/>
         <source>Import media</source>
         <translation>Importa media</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+19"/>
         <source>Only pictures can become stickers.</source>
         <translation>Solo le immagini possono diventare sticker.</translation>
     </message>
     <message>
-        <location line="+72"/>
+        <location line="+181"/>
         <location line="+13"/>
         <source>Add music</source>
         <translation>Aggiungi musica</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+42"/>
+        <location line="+67"/>
         <source>Your text</source>
         <translation>Il tuo testo</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="-9"/>
+        <source>Template</source>
+        <translation>Template</translation>
+    </message>
+    <message>
+        <location line="+100"/>
         <source>Select a music or video clip with sound to find its beats.</source>
         <translation>Seleziona una musica o un video con audio per trovarne i beat.</translation>
     </message>
@@ -5584,7 +5648,7 @@
 <context>
     <name>vedit::ui::TimelineModel</name>
     <message>
-        <location filename="../src/ui/models/TimelineModel.cpp" line="+165"/>
+        <location filename="../src/ui/models/TimelineModel.cpp" line="+188"/>
         <source>Sticker</source>
         <translation>Sticker</translation>
     </message>
@@ -5592,6 +5656,11 @@
         <location line="+2"/>
         <source>Multicam</source>
         <translation>Multicamera</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Your shot</source>
+        <translation>La tua ripresa</translation>
     </message>
 </context>
 </TS>

@@ -89,6 +89,8 @@ QVariant TimelineModel::data(const QModelIndex &index, int role) const
         return entry.mediaLength;
     case MarkersRole:
         return entry.markers;
+    case PlaceholderRole:
+        return entry.placeholder;
     default:
         return {};
     }
@@ -99,7 +101,28 @@ QHash<int, QByteArray> TimelineModel::roleNames() const
     return {{ClipIdRole, "clipId"},     {TrackRowRole, "trackRow"}, {StartRole, "start"},
             {DurationRole, "duration"}, {NameRole, "name"},         {KindRole, "kind"},
             {MediaIdRole, "mediaId"},   {SourceInRole, "sourceIn"}, {SelectedRole, "selected"},
-            {LockedRole, "locked"},     {MediaLengthRole, "mediaLength"}, {MarkersRole, "markers"}};
+            {LockedRole, "locked"},     {MediaLengthRole, "mediaLength"}, {MarkersRole, "markers"},
+            {PlaceholderRole, "placeholder"}};
+}
+
+QString TimelineModel::clipAt(int frame, int trackRow) const
+{
+    for (const Entry &entry : m_all) {
+        if (entry.trackRow == trackRow && frame >= entry.start && frame < entry.start + entry.duration) {
+            return entry.id.toString();
+        }
+    }
+    return {};
+}
+
+QString TimelineModel::placeholderOf(const QString &clipId) const
+{
+    for (const Entry &entry : m_all) {
+        if (entry.id.toString() == clipId) {
+            return entry.placeholder;
+        }
+    }
+    return {};
 }
 
 std::optional<TimelineModel::TrackRow> TimelineModel::trackRow(int row) const
@@ -168,6 +191,10 @@ void TimelineModel::rebuild()
                     entry.name = QStringLiteral("%1 [Cam %2]").arg(base).arg(compound->activeAngle + 1);
                 } else {
                     entry.name = clip.name;
+                }
+                if (clip.placeholder) {
+                    entry.placeholder = clip.placeholder->label.isEmpty() ? tr("Your shot") : clip.placeholder->label;
+                    entry.name = entry.placeholder;
                 }
                 entry.selected = m_selection.contains(clip.id);
                 entry.locked = track.locked;

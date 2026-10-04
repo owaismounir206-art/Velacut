@@ -4,7 +4,6 @@
 #include "ActionRegistry.h"
 #include "RecordController.h"
 #include "common/Paths.h"
-#include "core/project/TemplateBuilder.h"
 #include "document/Document.h"
 #include "document/DraftStore.h"
 #include "engine/analysis/MediaAnalysis.h"
@@ -170,32 +169,17 @@ bool AppController::newProjectFromTemplate(const QString &templateId)
         return false;
     }
 
-    // Load the template from the core pack
-    const fx::Library library = fx::Library::load(u":/vedit/packs/vedit.core"_s);
-    const fx::TemplatePreset *preset = library.templatePreset(templateId);
+    const fx::TemplatePreset *preset = fx::Library::core().templatePreset(templateId);
     if (!preset) {
         emit message(tr("Template not found."));
         return false;
     }
-
-    // Build the sequence from the template
-    Project &project = document->project();
-    const std::optional<Sequence> sequence = TemplateBuilder::fromTemplate(preset->spec, project.data().settings.frameRate);
-    if (!sequence) {
-        emit message(tr("Failed to create project from template."));
-        return false;
-    }
-
-    // Replace the main sequence with the template sequence
-    ProjectMutator mutator(project);
-    const SequenceId oldMainId = project.data().mainSequenceId;
-    mutator.removeSequence(oldMainId);
-    mutator.insertSequence(0, *sequence);
-
-    // Set the project name from the template
-    mutator.setName(preset->name.text());
-
     makeEditor(std::move(document));
+    if (!m_editor->applyTemplate(preset->spec, preset->name.text())) {
+        emit message(tr("This template cannot be used."));
+    }
+    // The next step is the user's media: the editor asks for them at once (SPEC 0bis: fewest actions).
+    m_editor->setAskForTemplateMedia(m_editor->placeholderCount() > 0);
     emit editorChanged();
     return true;
 }
