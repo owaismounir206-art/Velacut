@@ -103,6 +103,7 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     connect(m_importer.get(), &engine::MediaImporter::failed, this, [this](const QString &path, const QString &text) {
         m_pendingInserts.removeIf([&path](const PendingInsert &pending) { return pending.path == path; });
         emit message(text, false);
+        slideshowFileDone(path, std::nullopt);
     });
     connect(m_importer.get(), &engine::MediaImporter::busyChanged, this, &EditorController::importingChanged);
     connect(m_exportJob.get(), &engine::RenderJob::finished, this, [this](const QString &path) { emit exportFinished(path); });
@@ -588,6 +589,10 @@ void EditorController::onImported(const Media &imported)
         // All the files of one import are one undo step.
         m_document->apply(std::move(add), MergeKey{u"import"_s, m_importBatch});
     }
+    if (m_slideshow && (m_slideshow->photos.contains(imported.path) || m_slideshow->music == imported.path)) {
+        slideshowFileDone(imported.path, mediaId);
+        return;
+    }
     const auto pending = std::find_if(m_pendingInserts.begin(), m_pendingInserts.end(),
                                       [&imported](const PendingInsert &p) { return p.path == imported.path; });
     if (pending == m_pendingInserts.end()) {
@@ -732,6 +737,196 @@ void EditorController::fillPlaceholders(const QList<QUrl> &files)
     if (!paths.isEmpty()) {
         importPaths(paths);
     }
+}
+
+void EditorController::buildSlideshow(const QList<QUrl> &photos, const QUrl &music, int style, bool onBeat)
+{
+    PendingSlideshow slideshow;
+    for (const QUrl &url : photos) {
+        if (url.isLocalFile()) {
+            slideshow.photos << QFileInfo(url.toLocalFile()).absoluteFilePath();
+        }
+    }
+    if (slideshow.photos.isEmpty()) {
+        emit message(tr("Choose at least one photo for the slideshow."), false);
+        return;
+    }
+    slideshow.music = music.isLocalFile() ? QFileInfo(music.toLocalFile()).absoluteFilePath() : QString();
+    slideshow.style = std::clamp(style, 0, 3);
+    slideshow.onBeat = onBeat && !slideshow.music.isEmpty();
+    QStringList files = slideshow.photos;
+    if (!slideshow.music.isEmpty()) {
+        files << slideshow.music;
+    }
+    m_slideshow = std::move(slideshow);
+    emit slideshowChanged();
+    emit message(tr("Preparing the slideshow…"), false);
+    importPaths(files);
+}
+
+void EditorController::slideshowFileDone(const QString &path, const std::optional<MediaId> &media)
+{
+    if (!m_slideshow || (!m_slideshow->photos.contains(path) && m_slideshow->music != path)) {
+        return;
+    }
+    if (media) {
+        m_slideshow->imported.insert(path, *media);
+    } else {
+        m_slideshow->failed.insert(path);
+    }
+    QStringList all = m_slideshow->photos;
+    if (!m_slideshow->music.isEmpty()) {
+        all << m_slideshow->music;
+    }
+    for (const QString &file : std::as_const(all)) {
+        if (!m_slideshow->imported.contains(file) && !m_slideshow->failed.contains(file)) {
+            return; // still importing
+        }
+    }
+    const MediaId musicId = m_slideshow->imported.value(m_slideshow->music);
+    const Media *song = musicId.isNull() ? nullptr : data().findMedia(musicId);
+    if (!m_slideshow->onBeat || !song) {
+        finishSlideshow({});
+        return;
+    }
+    // The beats of the song in background (decoding a whole song never runs on the interface thread).
+    QPointer<EditorController> self(this);
+    QThreadPool::globalInstance()->start([self, media = *song] {
+        const std::optional<engine::Spectrum> spectrum = engine::cachedSpectrum(media);
+        const std::vector<double> beats = spectrum ? engine::detectBeats(*spectrum) : std::vector<double>{};
+        QMetaObject::invokeMethod(qApp, [self, beats] {
+            if (self) {
+                self->finishSlideshow(beats);
+            }
+        });
+    });
+}
+
+void EditorController::finishSlideshow(const std::vector<double> &beats)
+{
+    if (!m_slideshow) {
+        return;
+    }
+    const PendingSlideshow slideshow = std::move(*m_slideshow);
+    m_slideshow.reset();
+    struct Style
+    {
+        double seconds;
+        const char *transition;
+        double transitionSeconds;
+        const char *filter;
+    };
+    static constexpr Style styles[] = {{3.0, "transitions/dissolve", 0.8, ""},
+                                       {2.0, "transitions/push-left", 0.4, "filters/vivid"},
+                                       {3.5, "transitions/dissolve", 1.0, "filters/film"},
+                                       {3.0, "transitions/dip-to-black", 0.6, "filters/teal-orange"}};
+    const Style &look = styles[slideshow.style];
+    const Rational rate = data().settings.frameRate;
+    const auto seconds = [](double value, const Rational &r) {
+        return RationalTime::fromSeconds(Rational(static_cast<qint64>(std::llround(value * 1000)), 1000), r, Rounding::NearestEven);
+    };
+    const auto build = [this](EditResult result) { return m_document->apply(std::move(result)); };
+
+    std::vector<MediaId> photos;
+    for (const QString &path : slideshow.photos) {
+        const MediaId id = slideshow.imported.value(path);
+        const Media *media = id.isNull() ? nullptr : data().findMedia(id);
+        if (media && media->kind != MediaKind::Audio) {
+            photos.push_back(id);
+        }
+    }
+    if (photos.empty()) {
+        emit slideshowChanged();
+        emit message(tr("None of the chosen files is a photo or a video."), false);
+        return;
+    }
+    // When each photo ends: every `seconds`, or on the beat nearest to that (never much shorter or longer).
+    std::vector<double> ends;
+    double t = 0;
+    for (size_t i = 0; i < photos.size(); ++i) {
+        double end = t + look.seconds;
+        double best = -1;
+        for (const double beat : beats) {
+            if (beat >= t + look.seconds * 0.6 && beat <= t + look.seconds * 1.6
+                && (best < 0 || std::abs(beat - end) < std::abs(best - end))) {
+                best = beat;
+            }
+        }
+        end = best > 0 ? best : end;
+        ends.push_back(end);
+        t = end;
+    }
+
+    // The photos in order (the first one sets the format of the video, SPEC 0bis rule 1).
+    static const QString moves[] = {u"animations/loop/ken_burns"_s, u"animations/loop/ken_burns_out"_s,
+                                    u"animations/loop/ken_burns_left"_s, u"animations/loop/ken_burns_right"_s};
+    double start = 0;
+    for (size_t i = 0; i < photos.size(); ++i) {
+        const RationalTime at = seconds(start, rate);
+        const RationalTime length = std::max(RationalTime(1, data().settings.frameRate), seconds(ends[i] - start, data().settings.frameRate));
+        EditResult insert = i == 0 ? insertMediaAdoptingFormat(data(), data().mainSequenceId, photos[i], at)
+                                   : TimelineEditor(data(), data().mainSequenceId)
+                                         .insertMedia(photos[i], at, TimeRange{RationalTime(0, data().settings.frameRate), length});
+        const ClipId clipId = insert.primaryClip;
+        if (!build(std::move(insert))) {
+            continue;
+        }
+        if (i == 0) { // inserted at the default length of a photo
+            build(TimelineEditor(data(), data().mainSequenceId).trimClip(clipId, ClipEdge::End, at + length));
+        }
+        const QString move = moves[i % 4];
+        build(TimelineEditor(data(), data().mainSequenceId).updateClips({clipId}, [&move](Clip &clip) {
+            clip.transform.fit = FitMode::Cover;
+            ClipAnimation animation = TimelineEditor::kenBurns();
+            animation.type.id = move;
+            clip.animations.loop = animation;
+        }, tr("Slideshow")));
+        start = ends[i];
+    }
+    const Sequence &sequence = *data().mainSequence();
+    const Track &main = sequence.visualTracks.front();
+    std::vector<ClipId> clips;
+    for (const Clip &clip : main.clips) {
+        clips.push_back(clip.id);
+    }
+    if (const fx::FilterPreset *filter = fx::Library::core().filter(QString::fromLatin1(look.filter))) {
+        const AssetRef ref{QString::fromLatin1(fx::Library::kCorePack), filter->id, filter->version};
+        build(TimelineEditor(data(), data().mainSequenceId).updateClips(clips, [&ref](Clip &clip) {
+            Effect effect;
+            effect.id = EffectId::create();
+            effect.type = u"vedit.filter"_s;
+            effect.preset = ref;
+            clip.effects.insert(clip.effects.begin(), std::move(effect));
+        }, tr("Apply filter")));
+    }
+    if (const fx::TransitionPreset *transition = fx::Library::core().transition(QString::fromLatin1(look.transition));
+        transition && clips.size() > 1) {
+        build(TimelineEditor(data(), data().mainSequenceId)
+                  .applyTransitionToAll(main.id, AssetRef{QString::fromLatin1(fx::Library::kCorePack), transition->id, transition->version},
+                                        seconds(look.transitionSeconds, rate)));
+    }
+    // The music under the photos, as long as them, ending with a fade.
+    const MediaId song = slideshow.imported.value(slideshow.music);
+    if (!song.isNull()) {
+        EditResult insert = TimelineEditor(data(), data().mainSequenceId).insertMedia(song, RationalTime(0, rate));
+        const ClipId musicClip = insert.primaryClip;
+        if (build(std::move(insert))) {
+            const RationalTime videoEnd = data().mainSequence()->visualTracks.front().clips.back().end();
+            const Clip *clip = data().findClip(musicClip);
+            if (clip && videoEnd < clip->end()) {
+                build(TimelineEditor(data(), data().mainSequenceId).trimClip(musicClip, ClipEdge::End, videoEnd));
+            }
+            build(TimelineEditor(data(), data().mainSequenceId).updateClips({musicClip}, [&](Clip &c) {
+                if (MediaClipData *media = std::get_if<MediaClipData>(&c.payload)) {
+                    media->audio.fadeOut = std::min(seconds(2.0, rate), c.duration);
+                }
+            }, tr("Fades")));
+        }
+    }
+    m_document->undoStack().clear(); // the slideshow is where the project starts
+    m_player->seek(0);
+    emit slideshowChanged();
+    emit message(tr("Slideshow ready: %n photo(s). Change anything you like.", nullptr, static_cast<int>(photos.size())), false);
 }
 
 bool EditorController::addMedia(const QString &mediaId)

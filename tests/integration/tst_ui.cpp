@@ -873,9 +873,39 @@ private slots:
         click(byName(u"preferencesSection_2"_s));
         shot(u"15-preferences-performance"_s);
         key(Qt::Key_Escape);
-        QTRY_VERIFY(!byName(u"installPackZip"_s) && !byName(u"themeMode"_s));
+        QObject *dialog = m_window->findChild<QObject *>(u"preferencesDialog"_s);
+        QVERIFY(dialog);
+        QTRY_VERIFY(!dialog->property("visible").toBool()); // closed, its exit animation over
         // The session's theme (the command line's override) is back as the other tests expect it.
         m_theme->setSessionOverrides(theme::ThemeManager::Mode::Dark, std::nullopt);
+    }
+
+    // "Slideshow from photos" from the home screen (SPEC §5.13bis): photos and a style, "Create", a project.
+    void slideshowFromTheHomeScreen()
+    {
+        QTRY_VERIFY(!editor());
+        m_actions = 0;
+        click(byName(u"slideshowQuickButton"_s));                                      // 1
+        QTRY_VERIFY(byName(u"choosePhotos"_s));
+        // The photos chosen in the file dialog (not drivable headless): set directly, counted as the action it is.
+        QObject *dialog = byName(u"choosePhotos"_s);
+        while (dialog && !dialog->property("photos").isValid()) {
+            dialog = dialog->parent();
+        }
+        QVERIFY(dialog);
+        dialog->setProperty("photos", QVariant::fromValue(QList<QUrl>{QUrl::fromLocalFile(m_files.photo),
+                                                                      QUrl::fromLocalFile(m_files.photo)}));
+        ++m_actions;                                                                    // 2
+        click(byName(u"slideshowStyle_1"_s));                                          // 3
+        shot(u"16-slideshow-dialog"_s);
+        click(byName(u"createSlideshow"_s));                                           // 4
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        QTRY_VERIFY_WITH_TIMEOUT(!editor()->buildingSlideshow() && mainTrack().clips.size() == 2, 20000);
+        shot(u"17-slideshow-project"_s);
+        qInfo("slideshow from the home screen: %d actions", m_actions);
+        click(byName(u"backButton"_s));
+        QTRY_VERIFY(!editor());
     }
 
     void colorGradingAndScopes()

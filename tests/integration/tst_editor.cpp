@@ -1247,6 +1247,71 @@ private slots:
         QCOMPARE(QImage(thumbnail).size(), QSize(1280, 720));
     }
 
+    // "Slideshow from photos" (SPEC §5.13bis): the photos in order with a camera move each, the style's transition
+    // and filter, the music under them cut to their length with a fade; nothing to undo.
+    void slideshowFromPhotos()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-slideshow"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        // One editor at a time, as in the application (two SDL audio consumers closing crash inside SDL).
+        auto first = std::make_unique<EditorController>(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController &editor = *first;
+        editor.player()->setVolume(0.0);
+        QList<QUrl> photos;
+        const QColor colours[] = {Qt::red, Qt::green, Qt::blue};
+        for (int i = 0; i < 3; ++i) {
+            QImage image(320, 240, QImage::Format_RGB32);
+            image.fill(colours[i]);
+            const QString path = m_dir.filePath(u"slide-%1.png"_s.arg(i));
+            QVERIFY(image.save(path));
+            photos << QUrl::fromLocalFile(path);
+        }
+        QSignalSpy built(&editor, &EditorController::slideshowChanged);
+        editor.buildSlideshow(photos, QUrl::fromLocalFile(m_files.music), 1, false); // dynamic: 2 s, push, vivid
+        QVERIFY(editor.buildingSlideshow());
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.buildingSlideshow(), 30000);
+
+        const Track &main = editor.data().mainSequence()->visualTracks.front();
+        QCOMPARE(main.clips.size(), size_t(3));
+        QStringList moves;
+        for (const Clip &clip : main.clips) {
+            QCOMPARE(clip.duration.value(), 60); // 2 s at 30 fps
+            QCOMPARE(clip.transform.fit, FitMode::Cover);
+            QVERIFY(clip.animations.loop);
+            moves << clip.animations.loop->type.id;
+            QVERIFY(std::any_of(clip.effects.begin(), clip.effects.end(),
+                                [](const Effect &e) { return e.preset && e.preset->id == u"filters/vivid"_s; }));
+        }
+        QCOMPARE(moves.removeDuplicates(), 0); // a different move for every photo
+        QCOMPARE(main.transitions.size(), size_t(2));
+        QCOMPARE(main.transitions.front().type.id, u"transitions/push-left"_s);
+        // The song (6 s) is as long as the photos and fades out.
+        const auto &audio = editor.data().mainSequence()->audioTracks;
+        QCOMPARE(audio.size(), size_t(1));
+        const Clip &song = audio.front().clips.front();
+        QCOMPARE(song.start.value(), 0);
+        QCOMPARE(song.end(), main.clips.back().end());
+        QVERIFY(song.media()->audio.fadeOut);
+        QVERIFY(!editor.canUndo());
+        first.reset();
+
+        // On the beat: with clicks every 0.7 s, a 3 s photo ends on the beat nearest to 3 s (2.8 s), and so on.
+        const QString clicks = m_dir.filePath(u"clicks.wav"_s);
+        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s, u"aevalsrc='if(lt(mod(t\\,0.7)\\,0.03)\\,sin(2*PI*1500*t)\\,0)':s=44100:d=12"_s,
+                           clicks}));
+        EditorController beat(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        beat.player()->setVolume(0.0);
+        beat.buildSlideshow(photos, QUrl::fromLocalFile(clicks), 0, true); // soft: 3 s, on the beat
+        QTRY_VERIFY_WITH_TIMEOUT(!beat.buildingSlideshow(), 60000);
+        const Track &onBeat = beat.data().mainSequence()->visualTracks.front();
+        QCOMPARE(onBeat.clips.size(), size_t(3));
+        for (const Clip &clip : onBeat.clips) {
+            const double end = clip.end().toSecondsDouble();
+            QVERIFY2(std::abs(end / 0.7 - std::round(end / 0.7)) < 0.06, qPrintable(u"cut at %1 s"_s.arg(end)));
+        }
+    }
+
     void cleanupTestCase() {}
 };
 

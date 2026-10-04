@@ -13,6 +13,8 @@ T.DialogButtonBox {
     padding: Theme.space.xl
     topPadding: Theme.space.md
     alignment: Qt.AlignRight
+    // M3: the dismissive action first, the confirming one last (rightmost), whatever the platform's habit.
+    buttonLayout: T.DialogButtonBox.GnomeLayout
 
     delegate: Button {
         variant: "text"

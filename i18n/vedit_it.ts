@@ -1286,7 +1286,7 @@
         <translation>Informazioni di sistema</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+33"/>
         <location line="+37"/>
         <source>New project</source>
         <translation>Nuovo progetto</translation>
@@ -1307,7 +1307,7 @@
         <translation>Suggerimento: trascina qui i file per iniziare con quelli.</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+25"/>
         <source>Record screen</source>
         <translation>Registra schermo</translation>
     </message>
@@ -1318,17 +1318,27 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+83"/>
+        <source>Slideshow</source>
+        <translation>Slideshow</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Photos and music become a video, on the beat</source>
+        <translation>Foto e musica diventano un video, a ritmo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+87"/>
         <source>Templates</source>
         <translation>Template</translation>
     </message>
     <message>
-        <location line="-82"/>
+        <location line="-86"/>
         <source>Pick a ready-made video and put your own shots in it</source>
         <translation>Scegli un video già pronto e mettici le tue riprese</translation>
     </message>
     <message>
-        <location line="+89"/>
+        <location line="+93"/>
         <source>Choose one, then replace each shot with your videos and photos</source>
         <translation>Scegline uno, poi sostituisci ogni ripresa con i tuoi video e le tue foto</translation>
     </message>
@@ -1356,7 +1366,7 @@
         <translation>I tuoi progetti compaiono qui, pronti a ripartire esattamente da dove li hai lasciati.</translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+47"/>
         <source>Rename project</source>
         <translation>Rinomina il progetto</translation>
     </message>
@@ -3617,6 +3627,145 @@
     </message>
 </context>
 <context>
+    <name>SlideshowDialog</name>
+    <message>
+        <location filename="../src/ui/qml/SlideshowDialog.qml" line="+16"/>
+        <source>Slideshow from photos</source>
+        <translation>Slideshow dalle foto</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Cancel</source>
+        <translation>Annulla</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Create</source>
+        <translation>Crea</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>Change the photos</source>
+        <translation>Cambia le foto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+180"/>
+        <source>Choose the photos</source>
+        <translation>Scegli le foto</translation>
+    </message>
+    <message numerus="yes">
+        <location line="-173"/>
+        <source>%n photo(s), in this order</source>
+        <translation>
+            <numerusform>%n foto, in questo ordine</numerusform>
+            <numerusform>%n foto, in questo ordine</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>They follow the order of their names.</source>
+        <translation>Seguono l&apos;ordine dei loro nomi.</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>+%1</source>
+        <translation>+%1</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Music</source>
+        <translation>Musica</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>None</source>
+        <translation>Nessuna</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Other…</source>
+        <translation>Altro…</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Chosen: %1 — cut to the length of the slideshow, with a fade at the end</source>
+        <translation>Scelta: %1 — tagliata alla durata dello slideshow, con dissolvenza finale</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Style</source>
+        <translation>Stile</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Soft</source>
+        <translation>Morbido</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Slow dissolves, 3 s per photo</source>
+        <translation>Dissolvenze lente, 3 s per foto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Dynamic</source>
+        <translation>Dinamico</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Quick pushes, vivid colours, 2 s</source>
+        <translation>Spinte rapide, colori vivaci, 2 s</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Memories</source>
+        <translation>Ricordi</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Film look, long dissolves</source>
+        <translation>Aspetto pellicola, dissolvenze lunghe</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cinematic</source>
+        <translation>Cinematografico</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Teal and orange, fades to black</source>
+        <translation>Verde acqua e arancio, dissolvenze al nero</translation>
+    </message>
+    <message>
+        <location line="+67"/>
+        <location line="+4"/>
+        <source>Change photo on the beat of the music</source>
+        <translation>Cambia foto a ritmo di musica</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Photos (%1)</source>
+        <translation>Foto (%1)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+12"/>
+        <source>All files (*)</source>
+        <translation>Tutti i file (*)</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>Choose the music</source>
+        <translation>Scegli la musica</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Music (%1)</source>
+        <translation>Musica (%1)</translation>
+    </message>
+</context>
+<context>
     <name>SpeedCurveEditor</name>
     <message>
         <location filename="../src/ui/qml/SpeedCurveEditor.qml" line="+93"/>
@@ -5188,7 +5337,7 @@
         <translation>Questo template non si può usare.</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+60"/>
         <source>Project recovered: vedit did not close properly last time. Your latest changes are here.</source>
         <translation>Progetto recuperato: l&apos;ultima volta vedit non si è chiuso correttamente. Le tue ultime modifiche sono qui.</translation>
     </message>
@@ -5816,23 +5965,61 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+203"/>
-        <location line="+741"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+204"/>
+        <location line="+935"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
     <message>
-        <location line="-357"/>
+        <location line="-551"/>
         <source>Import media</source>
         <translation>Importa media</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+23"/>
         <source>Only pictures can become stickers.</source>
         <translation>Solo le immagini possono diventare sticker.</translation>
     </message>
     <message>
-        <location line="+181"/>
+        <location line="+140"/>
+        <source>Choose at least one photo for the slideshow.</source>
+        <translation>Scegli almeno una foto per lo slideshow.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Preparing the slideshow…</source>
+        <translation>Preparazione dello slideshow…</translation>
+    </message>
+    <message>
+        <location line="+77"/>
+        <source>None of the chosen files is a photo or a video.</source>
+        <translation>Nessuno dei file scelti è una foto o un video.</translation>
+    </message>
+    <message>
+        <location line="+43"/>
+        <source>Slideshow</source>
+        <translation>Slideshow</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Apply filter</source>
+        <translation>Applica filtro</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Fades</source>
+        <translation>Dissolvenze</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+6"/>
+        <source>Slideshow ready: %n photo(s). Change anything you like.</source>
+        <translation>
+            <numerusform>Slideshow pronto: %n foto. Cambia quello che vuoi.</numerusform>
+            <numerusform>Slideshow pronto: %n foto. Cambia quello che vuoi.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+53"/>
         <location line="+13"/>
         <source>Add music</source>
         <translation>Aggiungi musica</translation>
@@ -6099,7 +6286,7 @@
         <translation>%1 × %2 · %3 · circa %4</translation>
     </message>
     <message>
-        <location line="+303"/>
+        <location line="+304"/>
         <source>Select at least 2 clips to synchronize by audio.</source>
         <translation>Seleziona almeno 2 clip da sincronizzare con l&apos;audio.</translation>
     </message>

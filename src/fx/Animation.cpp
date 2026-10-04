@@ -226,6 +226,17 @@ void applyLoopAnimation(QStringView id, double cycleT, double &posX, double &pos
         scX *= 1.0 + 0.08 * cycleT;
         scY *= 1.0 + 0.08 * cycleT;
         posX += 0.015 * cycleT;
+    } else if (name == u"ken_burns_out") {
+        // The same, backwards: from a little closer to the whole picture.
+        scX *= 1.08 - 0.08 * cycleT;
+        scY *= 1.08 - 0.08 * cycleT;
+        posX -= 0.015 * (1.0 - cycleT);
+    } else if (name == u"ken_burns_left" || name == u"ken_burns_right") {
+        // A slow pan across a slightly enlarged picture (enlarged enough that no edge comes into view).
+        const double direction = name == u"ken_burns_left" ? -1.0 : 1.0;
+        scX *= 1.1;
+        scY *= 1.1;
+        posX += direction * 0.04 * (cycleT - 0.5);
     } else if (name == u"pulse") {
         const double factor = 1.0 + 0.15 * std::sin(angle);
         scX *= factor;

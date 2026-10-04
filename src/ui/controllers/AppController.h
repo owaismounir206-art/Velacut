@@ -79,6 +79,8 @@ public:
     Q_INVOKABLE bool recordScreen();
     // Files dropped on the home screen: a new project with them on the timeline (canvas from the first one).
     Q_INVOKABLE bool newProjectWithFiles(const QList<QUrl> &files);
+    // "Slideshow from photos" (SPEC §5.13bis): a new project made from the photos, the music and the style.
+    Q_INVOKABLE bool newSlideshow(const QList<QUrl> &photos, const QUrl &music, int style, bool onBeat);
     Q_INVOKABLE bool openDraft(const QString &draftId);
     // Back to the home screen (everything is already saved; this writes the last changes).
     Q_INVOKABLE void closeEditor();

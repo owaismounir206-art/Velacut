@@ -15,7 +15,7 @@
 <context>
     <name>HomeScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/HomeScreen.qml" line="+353"/>
+        <location filename="../src/ui/qml/HomeScreen.qml" line="+356"/>
         <source>%n project(s)</source>
         <translation>
             <numerusform>%n project</numerusform>
@@ -65,6 +65,17 @@
     </message>
 </context>
 <context>
+    <name>SlideshowDialog</name>
+    <message numerus="yes">
+        <location filename="../src/ui/qml/SlideshowDialog.qml" line="+79"/>
+        <source>%n photo(s), in this order</source>
+        <translation>
+            <numerusform>%n photo, in this order</numerusform>
+            <numerusform>%n photos, in this order</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>TemplateCard</name>
     <message numerus="yes">
         <location filename="../src/ui/qml/TemplateCard.qml" line="+134"/>
@@ -98,7 +109,15 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+1083"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+929"/>
+        <source>Slideshow ready: %n photo(s). Change anything you like.</source>
+        <translation>
+            <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>
+            <numerusform>Slideshow ready: %n photos. Change anything you like.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+349"/>
         <source>%n beat(s) marked on the clip</source>
         <translation>
             <numerusform>%n beat marked on the clip</numerusform>

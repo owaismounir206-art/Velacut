@@ -12,6 +12,7 @@
 #include "RecordController.h"
 
 #include <QObject>
+#include <QHash>
 #include <QSet>
 #include <QSize>
 #include <QStringList>
@@ -89,6 +90,7 @@ class EditorController : public QObject
     Q_PROPERTY(int placeholderCount READ placeholderCount NOTIFY modelChanged FINAL)
     // Set when the project was just made from a template: the interface asks at once for the media of its slots.
     Q_PROPERTY(bool askForTemplateMedia MEMBER m_askForTemplateMedia NOTIFY askForTemplateMediaChanged FINAL)
+    Q_PROPERTY(bool buildingSlideshow READ buildingSlideshow NOTIFY slideshowChanged FINAL)
 
 public:
     enum SaveState
@@ -175,6 +177,12 @@ public:
     // a placeholder for each shot, the transition on every cut, the filter on every shot, its titles and stickers. Not
     // undoable (it is how the project starts). False if the template has no shots.
     bool applyTemplate(const QJsonObject &spec, const QString &name);
+    // "Slideshow from photos" (SPEC §5.13bis): the photos in order, each with a slow camera move, the style's transition
+    // and look, the music under them (its length fitted, a fade at the end); with `onBeat` the photos change on the
+    // beats of the music. The project is built once every file is imported (and the beats found). Not undoable.
+    // Styles: 0 soft, 1 dynamic, 2 memories, 3 cinematic.
+    Q_INVOKABLE void buildSlideshow(const QList<QUrl> &photos, const QUrl &music, int style, bool onBeat);
+    bool buildingSlideshow() const { return m_slideshow.has_value(); }
     void setAskForTemplateMedia(bool ask)
     {
         m_askForTemplateMedia = ask;
@@ -324,6 +332,7 @@ signals:
     void inOutChanged();
     void coverChanged();
     void askForTemplateMediaChanged();
+    void slideshowChanged();
     // The project changed (any command, undo or redo).
     void modelChanged();
     // For the snackbar: `undoable` shows the "Undo" action.
@@ -385,6 +394,18 @@ private:
     int m_outPoint = -1;
     int m_coverSerial = 0; // cache-busting part of coverUrl
     bool m_askForTemplateMedia = false;
+    struct PendingSlideshow
+    {
+        QStringList photos; // absolute paths, in order
+        QString music;
+        int style = 0;
+        bool onBeat = false;
+        QHash<QString, MediaId> imported;
+        QSet<QString> failed;
+    };
+    std::optional<PendingSlideshow> m_slideshow;
+    void slideshowFileDone(const QString &path, const std::optional<MediaId> &media);
+    void finishSlideshow(const std::vector<double> &beats);
     bool m_closed = false;
     bool setCover(const QImage &image);
 };

@@ -65,6 +65,7 @@ qt_add_qml_module(vedit_ui
         qml/LibraryHeader.qml
         qml/TemplateCard.qml
         qml/PreferencesDialog.qml
+        qml/SlideshowDialog.qml
         qml/FullScreenPreview.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"

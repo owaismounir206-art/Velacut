@@ -87,7 +87,7 @@ Item {
             y: Theme.space.lg
             spacing: Theme.space.xl
 
-            RowLayout {
+            ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Theme.space.md
 
@@ -96,7 +96,6 @@ Item {
                     id: hero
                     objectName: "newProjectButton"
                     Layout.fillWidth: true
-                    Layout.preferredWidth: content.width * 0.68
                     Layout.preferredHeight: Theme.editor.heroHeight
                     Accessible.role: Accessible.Button
                     Accessible.name: qsTr("New project")
@@ -172,14 +171,14 @@ Item {
                 }
 
                 // Other ways to start, each a project the user can change freely afterwards (SPEC §5.13bis).
-                ColumnLayout {
+                RowLayout {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: content.width * 0.32
-                    Layout.fillHeight: true
                     spacing: Theme.space.md
                     Repeater {
                         model: [{ id: "recordScreenQuickButton", icon: "screen_record", text: qsTr("Record screen"),
                                   detail: qsTr("Screen, webcam or both, with the teleprompter") },
+                                { id: "slideshowQuickButton", icon: "slideshow", text: qsTr("Slideshow"),
+                                  detail: qsTr("Photos and music become a video, on the beat") },
                                 { id: "templatesQuickButton", icon: "dashboard_customize", text: qsTr("Templates"),
                                   detail: qsTr("Pick a ready-made video and put your own shots in it") }]
                         delegate: Rectangle {
@@ -187,12 +186,14 @@ Item {
                             required property var modelData
                             objectName: modelData.id
                             Layout.fillWidth: true
-                            Layout.fillHeight: true
+                            Layout.preferredWidth: 1 // equal thirds
+                            implicitHeight: toolRow.implicitHeight + 2 * Theme.space.lg
                             radius: Theme.shape.large
                             color: Theme.color.panel
                             Accessible.role: Accessible.Button
                             Accessible.name: modelData.text
                             RowLayout {
+                                id: toolRow
                                 anchors.fill: parent
                                 anchors.margins: Theme.space.lg
                                 spacing: Theme.space.md
@@ -242,6 +243,8 @@ Item {
                                 onClicked: {
                                     if (tool.modelData.id === "recordScreenQuickButton")
                                         App.recordScreen()
+                                    else if (tool.modelData.id === "slideshowQuickButton")
+                                        slideshow.open()
                                     else
                                         scroller.contentY = Math.min(templatesSection.y + content.y,
                                                                      scroller.contentHeight - scroller.height)
@@ -406,6 +409,12 @@ Item {
             if (event.hasUrls && App.newProjectWithFiles(event.urls))
                 event.acceptProposedAction()
         }
+    }
+
+    SlideshowDialog {
+        id: slideshow
+        anchors.centerIn: parent
+        width: Math.min(root.width - 2 * Theme.space.xl, Theme.editor.dialogWidth * 1.15)
     }
 
     Dialog {

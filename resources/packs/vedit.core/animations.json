@@ -1296,6 +1296,48 @@
             "params": {
                 "easing": "linear"
             }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/ken_burns_out",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Slow zoom out",
+                "it": "Zoom lento indietro"
+            },
+            "defaultDuration": 0.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/ken_burns_left",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Slow pan left",
+                "it": "Panoramica lenta a sinistra"
+            },
+            "defaultDuration": 0.0,
+            "params": {
+                "easing": "linear"
+            }
+        },
+        {
+            "kind": "animation",
+            "id": "animations/loop/ken_burns_right",
+            "version": 1,
+            "category": "loop",
+            "name": {
+                "en": "Slow pan right",
+                "it": "Panoramica lenta a destra"
+            },
+            "defaultDuration": 0.0,
+            "params": {
+                "easing": "linear"
+            }
         }
     ]
 }

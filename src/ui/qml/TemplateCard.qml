@@ -64,7 +64,7 @@ Item {
                 wrapMode: Text.WordWrap
                 maximumLineCount: 3
                 elide: Text.ElideRight
-                role: "labelLarge"
+                role: card.aspect < 1 ? "labelMedium" : "labelLarge"
                 color: card.onTone
                 text: card.name
             }
