@@ -68,6 +68,11 @@ public:
     int64_t durationFrames() const { return m_durationFrames; }
     int64_t durationUs() const { return m_durationUs; }
 
+    // Pipeline latency instrumentation (SPEC §6: seek/scrubbing must stay under one frame budget).
+    double lastDecodeMs() const { return m_lastDecodeMs; }
+    double averageFrameCostMs() const { return m_avgFrameCostMs; }
+    uint64_t forwardFastPathHits() const { return m_forwardFastPathHits; }
+
     // Seeks and decodes the frame at `timestampSeconds` (or closest preceding keyframe + decode forward).
     // Uses bounded LRU frame cache for immediate zero-latency hits during scrubbing.
     std::optional<engine::VideoFrame> decodeFrameAt(double timestampSeconds,
@@ -81,6 +86,11 @@ public:
 
     // Flushes codec and stream buffers.
     void flush();
+
+    // UMA-aware LRU sizing (anti-leak on shared-memory iGPUs such as Radeon 740M and Arc 130V):
+    // the frame count is clamped to the 15..30 window but shrinks within a ~76 MiB byte budget,
+    // so large frames (4K, 10-bit) cannot saturate system RAM.
+    static size_t umaCacheCapacityForFrameSize(const QSize &frameSize, bool tenBit = false);
 
     // Cache metrics
     size_t cacheSize() const { return m_cache.size(); }
@@ -100,6 +110,10 @@ private:
     bool isColorFormatAccelerated(int pixelFormat, int profile) const;
     void fallbackToSoftware(const QString &reason);
     TargetGpuArchitecture detectTargetArchitecture();
+    // Extracts a VideoFrame (native NV12/P010 planes, or RGBA fallback) copying all pixel data.
+    engine::VideoFrame extractFrame(const AVFrame &frame, int64_t frameIndex, int64_t pts) const;
+    // EMA of the per-frame decode cost, used to keep the forward fast path inside the latency budget.
+    void recordDecodeLatency(double elapsedMs, int64_t framesDecoded);
 
     DecoderConfig m_config;
     QString m_filePath;
@@ -116,6 +130,13 @@ private:
     AVCodecContext *m_codecContext = nullptr;
     AVBufferRef *m_hwDeviceContext = nullptr;
     int m_hwPixelFormat = -1; // e.g. AV_PIX_FMT_VAAPI
+
+    // Forward fast path state: the decoder output is contiguous right after `m_lastDecodedIndex`.
+    int64_t m_lastDecodedIndex = -1;
+    bool m_streamContiguous = false;
+    double m_lastDecodeMs = 0.0;
+    double m_avgFrameCostMs = 0.0;
+    uint64_t m_forwardFastPathHits = 0;
 
     engine::BoundedLruCache<int64_t, engine::VideoFrame> m_cache;
     QStringList m_diagnostics;

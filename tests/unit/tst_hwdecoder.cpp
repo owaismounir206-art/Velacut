@@ -218,6 +218,65 @@ private slots:
 
         decoder.close();
     }
+
+    void umaCacheCapacityAdaptive()
+    {
+        // Byte-budget UMA sizing, clamped to the 15..30 frame window (FASE 2): small frames use the
+        // ceiling, huge frames shrink towards the floor so shared iGPU memory cannot saturate.
+        QCOMPARE(HwVideoDecoder::umaCacheCapacityForFrameSize(QSize()), size_t(24)); // default
+        QCOMPARE(HwVideoDecoder::umaCacheCapacityForFrameSize(QSize(640, 360)), size_t(30));
+        QCOMPARE(HwVideoDecoder::umaCacheCapacityForFrameSize(QSize(1920, 1080)), size_t(25));
+        QCOMPARE(HwVideoDecoder::umaCacheCapacityForFrameSize(QSize(1920, 1080), true), size_t(15)); // 10-bit P010
+        QCOMPARE(HwVideoDecoder::umaCacheCapacityForFrameSize(QSize(3840, 2160)), size_t(15)); // 4K clamps to floor
+    }
+
+    void forwardFastPathAndNeighbourCache()
+    {
+        QString testVideo;
+        for (const QString &candidate : {QStringLiteral("/home/owais/Velacut/build/testmedia/smoke_720p30.mp4"),
+                                         QStringLiteral("testmedia/smoke_720p30.mp4")}) {
+            if (QFileInfo::exists(candidate)) {
+                testVideo = candidate;
+                break;
+            }
+        }
+        if (testVideo.isEmpty()) {
+            QSKIP("No test MP4 found in dev-home/Videos");
+        }
+
+        DecoderConfig config;
+        config.enableHardware = true;
+
+        HwVideoDecoder decoder(config);
+        QVERIFY(decoder.open(testVideo));
+
+        // Frame 0 pays the keyframe seek: the sequential fast path must not be used yet.
+        auto first = decoder.decodeFrame(0);
+        QVERIFY(first.has_value());
+        QVERIFY(!first->isNull());
+        QCOMPARE(decoder.forwardFastPathHits(), uint64_t(0));
+
+        // Walking forward frame by frame (the typical scrubbing pattern) must go through the
+        // forward fast path: no keyframe seeks, decode cost under the 16 ms latency budget.
+        for (int64_t i = 1; i <= 8; ++i) {
+            auto frame = decoder.decodeFrame(i);
+            QVERIFY(frame.has_value());
+            QVERIFY(!frame->isNull());
+        }
+        QVERIFY2(decoder.forwardFastPathHits() >= 1,
+                 "sequential forward decoding never took the fast path");
+        QVERIFY2(decoder.averageFrameCostMs() > 0.0 && decoder.averageFrameCostMs() < 16.0,
+                 "per-frame decode cost exceeds the 16 ms pipeline latency budget");
+
+        // Frames decoded on the way are cached: a small jump back is a cache hit (no decode).
+        const uint64_t hitsBefore = decoder.cacheHits();
+        auto back = decoder.decodeFrame(5);
+        QVERIFY(back.has_value());
+        QCOMPARE(back->position(), 5);
+        QCOMPARE(decoder.cacheHits(), hitsBefore + 1);
+
+        decoder.close();
+    }
 };
 
 QTEST_MAIN(TestHwDecoder)

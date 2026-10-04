@@ -2,6 +2,7 @@
 #include "HwVideoDecoder.h"
 
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QLoggingCategory>
@@ -36,6 +37,15 @@ enum AVPixelFormat pickHwFormat(AVCodecContext *ctx, const enum AVPixelFormat *p
     }
     return AV_PIX_FMT_NONE;
 }
+
+// Pipeline latency budget per frame (SPEC §6: no frame drops during scrubbing at 60/120 Hz).
+constexpr double kPipelineLatencyBudgetMs = 16.0;
+// Maximum forward distance (in frames) the sequential fast path will decode without a keyframe seek.
+constexpr int64_t kMaxForwardGap = 64;
+// Frames decoded on the way to a target that are cached for free (backward-scrub hits).
+constexpr int64_t kCacheNeighbourhood = 30;
+// Shared-memory budget of the bounded LRU frame cache on UMA iGPUs (Radeon 740M / Arc 130V).
+constexpr qint64 kUmaBudgetBytes = 76 * 1024 * 1024;
 
 } // namespace
 
@@ -125,6 +135,11 @@ void HwVideoDecoder::close()
     m_videoStreamIndex = -1;
     m_hwPixelFormat = -1;
     m_filePath.clear();
+    // Reset the forward fast path: the demuxer/decoder state is gone.
+    m_lastDecodedIndex = -1;
+    m_streamContiguous = false;
+    m_lastDecodeMs = 0.0;
+    m_avgFrameCostMs = 0.0;
 }
 
 bool HwVideoDecoder::isColorFormatAccelerated(int pixelFormat, int profile) const
@@ -219,6 +234,18 @@ bool HwVideoDecoder::initStream()
         m_durationUs = 0;
     }
     m_durationFrames = static_cast<int64_t>(std::llround(m_durationUs * m_frameRate / 1000000.0));
+
+    // UMA-aware adaptive cache sizing (Radeon 740M / Arc 130V shared memory): the frame count stays in
+    // the 15..30 window but is derived from a byte budget, so 4K or 10-bit frames cannot saturate RAM.
+    const bool tenBit = stream->codecpar->bits_per_raw_sample > 8;
+    const size_t capacity = umaCacheCapacityForFrameSize(m_videoSize, tenBit);
+    m_cache.setCapacity(capacity);
+    m_diagnostics << QStringLiteral("UMA LRU cache: %1 frames (%2-bit %3x%4, budget %5 MB)")
+                        .arg(capacity)
+                        .arg(tenBit ? 10 : 8)
+                        .arg(m_videoSize.width())
+                        .arg(m_videoSize.height())
+                        .arg(kUmaBudgetBytes / (1024 * 1024));
 
     return true;
 }
@@ -435,6 +462,9 @@ void HwVideoDecoder::fallbackToSoftware(const QString &reason)
         av_buffer_unref(&m_hwDeviceContext);
     }
     m_hwPixelFormat = -1;
+    // The new software decoder starts from scratch: the forward fast path must re-arm on the next seek.
+    m_lastDecodedIndex = -1;
+    m_streamContiguous = false;
     initSoftwareCpu();
 }
 
@@ -443,6 +473,8 @@ void HwVideoDecoder::flush()
     if (m_codecContext) {
         avcodec_flush_buffers(m_codecContext);
     }
+    // Flushed codec buffers are no longer contiguous with the last decoded frame.
+    m_streamContiguous = false;
 }
 
 std::optional<engine::VideoFrame> HwVideoDecoder::decodeFrameAt(double timestampSeconds,
@@ -470,9 +502,26 @@ std::optional<engine::VideoFrame> HwVideoDecoder::decodeFrame(int64_t frameIndex
     const int64_t start = stream->start_time != AV_NOPTS_VALUE ? stream->start_time : 0;
     const int64_t targetPts = start + av_rescale_q(frameIndex, AVRational{1, static_cast<int>(std::lround(m_frameRate))}, stream->time_base);
 
-    // Seek to closest preceding keyframe
-    if (av_seek_frame(m_formatContext, m_videoStreamIndex, targetPts, AVSEEK_FLAG_BACKWARD) >= 0) {
-        flush();
+    QElapsedTimer decodeClock;
+    decodeClock.start();
+    int64_t framesDecoded = 0;
+
+    // Latency-aware sequential fast path: when scrubbing walks forward over neighbouring frames and the
+    // decoder output is still contiguous right after the last decoded frame, decode forward instead of
+    // paying a keyframe seek plus a whole GOP. The gap is admitted only while the predicted decode time
+    // (per-frame cost EMA × gap) stays inside the 16 ms pipeline latency budget (SPEC §6).
+    const int64_t gap = m_lastDecodedIndex >= 0 ? frameIndex - m_lastDecodedIndex : 0;
+    const double predictedMs = m_avgFrameCostMs * static_cast<double>(gap);
+    const bool decodeForward = !keyframeOnly && m_streamContiguous && gap > 0 && gap <= kMaxForwardGap
+        && predictedMs <= kPipelineLatencyBudgetMs;
+    if (decodeForward) {
+        ++m_forwardFastPathHits;
+        qCDebug(lcHwDec) << "forward fast path: +" << gap << "frames";
+    } else {
+        // Seek to closest preceding keyframe
+        if (av_seek_frame(m_formatContext, m_videoStreamIndex, targetPts, AVSEEK_FLAG_BACKWARD) >= 0) {
+            flush();
+        }
     }
 
     AVPacket *packet = av_packet_alloc();
@@ -522,85 +571,40 @@ std::optional<engine::VideoFrame> HwVideoDecoder::decodeFrame(int64_t frameIndex
             }
 
             const int64_t currentPts = effectiveFrame->pts != AV_NOPTS_VALUE ? effectiveFrame->pts : targetPts;
+            const int64_t currentFrame = std::max<int64_t>(
+                0, av_rescale_q(currentPts - start, stream->time_base,
+                                AVRational{1, static_cast<int>(std::lround(m_frameRate))}));
+            ++framesDecoded;
+
             if (keyframeOnly || currentPts >= targetPts || readRet < 0) {
                 // Extract into VideoFrame (NV12 or P010 semi-planar directly without CPU RGB conversion!)
-                engine::VideoPixelFormat outFormat = engine::VideoPixelFormat::Rgba8888;
-                engine::GpuFramePlane planeY;
-                engine::GpuFramePlane planeUV;
-
-                const int w = effectiveFrame->width;
-                const int h = effectiveFrame->height;
-
-                if (effectiveFrame->format == AV_PIX_FMT_NV12) {
-                    outFormat = engine::VideoPixelFormat::Nv12;
-                    planeY.width = w;
-                    planeY.height = h;
-                    planeY.stride = effectiveFrame->linesize[0];
-                    planeY.data = QByteArray(reinterpret_cast<const char *>(effectiveFrame->data[0]), planeY.stride * h);
-
-                    planeUV.width = w / 2;
-                    planeUV.height = h / 2;
-                    planeUV.stride = effectiveFrame->linesize[1];
-                    planeUV.data = QByteArray(reinterpret_cast<const char *>(effectiveFrame->data[1]), planeUV.stride * (h / 2));
-                } else if (effectiveFrame->format == AV_PIX_FMT_P010LE || effectiveFrame->format == AV_PIX_FMT_P010BE) {
-                    outFormat = engine::VideoPixelFormat::P010;
-                    planeY.width = w;
-                    planeY.height = h;
-                    planeY.stride = effectiveFrame->linesize[0];
-                    planeY.data = QByteArray(reinterpret_cast<const char *>(effectiveFrame->data[0]), planeY.stride * h);
-
-                    planeUV.width = w / 2;
-                    planeUV.height = h / 2;
-                    planeUV.stride = effectiveFrame->linesize[1];
-                    planeUV.data = QByteArray(reinterpret_cast<const char *>(effectiveFrame->data[1]), planeUV.stride * (h / 2));
-                } else if (effectiveFrame->format == AV_PIX_FMT_YUV420P) {
-                    // Convert planar YUV420P to semi-planar NV12 for unified zero-copy GPU shader presentation
-                    outFormat = engine::VideoPixelFormat::Nv12;
-                    planeY.width = w;
-                    planeY.height = h;
-                    planeY.stride = w;
-                    planeY.data.resize(w * h);
-                    for (int y = 0; y < h; ++y) {
-                        std::copy_n(effectiveFrame->data[0] + y * effectiveFrame->linesize[0], w,
-                                    reinterpret_cast<uint8_t *>(planeY.data.data()) + y * w);
-                    }
-
-                    planeUV.width = w / 2;
-                    planeUV.height = h / 2;
-                    planeUV.stride = w;
-                    planeUV.data.resize(w * (h / 2));
-                    auto *uvDst = reinterpret_cast<uint8_t *>(planeUV.data.data());
-                    for (int y = 0; y < h / 2; ++y) {
-                        const uint8_t *uSrc = effectiveFrame->data[1] + y * effectiveFrame->linesize[1];
-                        const uint8_t *vSrc = effectiveFrame->data[2] + y * effectiveFrame->linesize[2];
-                        for (int x = 0; x < w / 2; ++x) {
-                            uvDst[y * w + x * 2] = uSrc[x];
-                            uvDst[y * w + x * 2 + 1] = vSrc[x];
-                        }
-                    }
-                } else {
-                    // Fallback to RGBA8888 QImage
-                    QImage img(w, h, QImage::Format_RGBA8888);
-                    av_image_copy_to_buffer(img.bits(), img.sizeInBytes(), effectiveFrame->data,
-                                            effectiveFrame->linesize, static_cast<AVPixelFormat>(effectiveFrame->format),
-                                            w, h, 1);
-                    outFormat = engine::VideoPixelFormat::Rgba8888;
-                    engine::VideoFrame videoFrame(img, static_cast<int>(frameIndex), currentPts);
-                    m_cache.insert(frameIndex, videoFrame);
-                    av_frame_unref(swFrame);
-                    av_frame_unref(frame);
-                    cleanup();
-                    return videoFrame;
-                }
-
-                engine::VideoFrame videoFrame(outFormat, QSize(w, h), std::move(planeY), std::move(planeUV),
-                                              static_cast<int>(frameIndex), currentPts);
-                m_cache.insert(frameIndex, videoFrame);
+                engine::VideoFrame videoFrame = extractFrame(*effectiveFrame, frameIndex, currentPts);
                 av_frame_unref(swFrame);
                 av_frame_unref(frame);
+                if (!videoFrame.isNull()) {
+                    m_cache.insert(frameIndex, videoFrame);
+                }
+                // The decoder output is now contiguous right after this frame: forward seeks of a few
+                // frames can be decoded without a new keyframe seek (sub-16 ms scrubbing fast path).
+                m_lastDecodedIndex = currentFrame;
+                m_streamContiguous = true;
+                recordDecodeLatency(decodeClock.elapsed(), framesDecoded);
                 cleanup();
+                if (videoFrame.isNull()) {
+                    return std::nullopt;
+                }
                 return videoFrame;
             }
+
+            // Frames decoded on the way to the target are cached for free: backward scrubbing and jitter
+            // hit the LRU cache instead of the decoder. The bounded capacity keeps UMA memory capped.
+            if (frameIndex - currentFrame <= kCacheNeighbourhood) {
+                engine::VideoFrame neighbour = extractFrame(*effectiveFrame, currentFrame, currentPts);
+                if (!neighbour.isNull()) {
+                    m_cache.insert(currentFrame, neighbour);
+                }
+            }
+
             av_frame_unref(swFrame);
             av_frame_unref(frame);
         }
@@ -610,8 +614,107 @@ std::optional<engine::VideoFrame> HwVideoDecoder::decodeFrame(int64_t frameIndex
         }
     }
 
+    recordDecodeLatency(decodeClock.elapsed(), framesDecoded);
+    m_streamContiguous = false;
     cleanup();
     return std::nullopt;
+}
+
+engine::VideoFrame HwVideoDecoder::extractFrame(const AVFrame &frame, int64_t frameIndex, int64_t pts) const
+{
+    const int w = frame.width;
+    const int h = frame.height;
+
+    if (frame.format == AV_PIX_FMT_NV12) {
+        engine::GpuFramePlane planeY;
+        planeY.width = w;
+        planeY.height = h;
+        planeY.stride = frame.linesize[0];
+        planeY.data = QByteArray(reinterpret_cast<const char *>(frame.data[0]), planeY.stride * h);
+
+        engine::GpuFramePlane planeUV;
+        planeUV.width = w / 2;
+        planeUV.height = h / 2;
+        planeUV.stride = frame.linesize[1];
+        planeUV.data = QByteArray(reinterpret_cast<const char *>(frame.data[1]), planeUV.stride * (h / 2));
+        return engine::VideoFrame(engine::VideoPixelFormat::Nv12, QSize(w, h), std::move(planeY), std::move(planeUV),
+                                  static_cast<int>(frameIndex), pts);
+    }
+    if (frame.format == AV_PIX_FMT_P010LE || frame.format == AV_PIX_FMT_P010BE) {
+        engine::GpuFramePlane planeY;
+        planeY.width = w;
+        planeY.height = h;
+        planeY.stride = frame.linesize[0];
+        planeY.data = QByteArray(reinterpret_cast<const char *>(frame.data[0]), planeY.stride * h);
+
+        engine::GpuFramePlane planeUV;
+        planeUV.width = w / 2;
+        planeUV.height = h / 2;
+        planeUV.stride = frame.linesize[1];
+        planeUV.data = QByteArray(reinterpret_cast<const char *>(frame.data[1]), planeUV.stride * (h / 2));
+        return engine::VideoFrame(engine::VideoPixelFormat::P010, QSize(w, h), std::move(planeY), std::move(planeUV),
+                                  static_cast<int>(frameIndex), pts);
+    }
+    if (frame.format == AV_PIX_FMT_YUV420P) {
+        // Convert planar YUV420P to semi-planar NV12 for unified zero-copy GPU shader presentation
+        engine::GpuFramePlane planeY;
+        planeY.width = w;
+        planeY.height = h;
+        planeY.stride = w;
+        planeY.data.resize(w * h);
+        for (int y = 0; y < h; ++y) {
+            std::copy_n(frame.data[0] + y * frame.linesize[0], w,
+                        reinterpret_cast<uint8_t *>(planeY.data.data()) + y * w);
+        }
+
+        engine::GpuFramePlane planeUV;
+        planeUV.width = w / 2;
+        planeUV.height = h / 2;
+        planeUV.stride = w;
+        planeUV.data.resize(w * (h / 2));
+        auto *uvDst = reinterpret_cast<uint8_t *>(planeUV.data.data());
+        for (int y = 0; y < h / 2; ++y) {
+            const uint8_t *uSrc = frame.data[1] + y * frame.linesize[1];
+            const uint8_t *vSrc = frame.data[2] + y * frame.linesize[2];
+            for (int x = 0; x < w / 2; ++x) {
+                uvDst[y * w + x * 2] = uSrc[x];
+                uvDst[y * w + x * 2 + 1] = vSrc[x];
+            }
+        }
+        return engine::VideoFrame(engine::VideoPixelFormat::Nv12, QSize(w, h), std::move(planeY), std::move(planeUV),
+                                  static_cast<int>(frameIndex), pts);
+    }
+
+    // Fallback to RGBA8888 QImage (any other pixel format)
+    QImage img(w, h, QImage::Format_RGBA8888);
+    av_image_copy_to_buffer(img.bits(), img.sizeInBytes(), frame.data, frame.linesize,
+                            static_cast<AVPixelFormat>(frame.format), w, h, 1);
+    return engine::VideoFrame(img, static_cast<int>(frameIndex), pts);
+}
+
+void HwVideoDecoder::recordDecodeLatency(double elapsedMs, int64_t framesDecoded)
+{
+    m_lastDecodeMs = elapsedMs;
+    if (framesDecoded <= 0) {
+        return;
+    }
+    // Exponential moving average of the per-frame decode cost: it feeds the fast-path admission
+    // test (predicted cost × gap must stay under the 16 ms pipeline latency budget).
+    const double perFrame = elapsedMs / static_cast<double>(framesDecoded);
+    m_avgFrameCostMs = m_avgFrameCostMs <= 0.0 ? perFrame : 0.8 * m_avgFrameCostMs + 0.2 * perFrame;
+}
+
+size_t HwVideoDecoder::umaCacheCapacityForFrameSize(const QSize &frameSize, bool tenBit)
+{
+    if (frameSize.isEmpty()) {
+        return 24; // default bounded capacity
+    }
+    // NV12 = 1.5 bytes/pixel, P010 = 3 bytes/pixel (the RGBA fallback path is rare and still bounded
+    // by the 15..30 window).
+    const qint64 pixels = qint64(frameSize.width()) * frameSize.height();
+    const qint64 bytesPerFrame = tenBit ? pixels * 3 : (pixels * 3) / 2;
+    const size_t capacity = static_cast<size_t>(kUmaBudgetBytes / std::max<qint64>(1, bytesPerFrame));
+    return std::clamp<size_t>(capacity, 15, 30);
 }
 
 } // namespace vedit::gpu
