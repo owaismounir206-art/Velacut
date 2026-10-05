@@ -448,18 +448,76 @@ struct StickerClipData
     friend bool operator==(const StickerClipData &, const StickerClipData &) = default;
 };
 
-// Payload of clip kinds whose editing features arrive in later phases (subtitle,
-// effect): the kind-specific JSON fields are kept verbatim and written back unchanged,
-// so no data is ever lost (docs/FILE_FORMAT.md §1). Each kind gets a typed struct when implemented.
+// A word of a subtitle with its time, from the start of the clip (word-by-word styles, karaoke; FILE_FORMAT §5.5).
+struct TimedWord
+{
+    QString text;
+    RationalTime start;
+    RationalTime end;
+
+    friend bool operator==(const TimedWord &, const TimedWord &) = default;
+};
+
+// A subtitle line (docs/FILE_FORMAT.md §5.5 "subtitle", only on caption tracks): its text, the words with their times
+// (empty: spread over the clip by length when shown), an optional style of its own over the track's captionStyle.
+struct SubtitleClipData
+{
+    QString text;
+    std::vector<TimedWord> words;
+    std::optional<TextStyle> styleOverride;
+    QJsonObject fields; // unknown keys, kept verbatim
+
+    friend bool operator==(const SubtitleClipData &, const SubtitleClipData &) = default;
+};
+
+// How the active word of a caption is shown.
+enum class CaptionHighlight
+{
+    None,     // the whole line the same
+    Color,    // the word in the highlight colour
+    Scale,    // the word bigger, in the highlight colour
+    Box,      // a coloured box behind the word
+    Karaoke,  // the words already said in the highlight colour
+};
+
+// How each new group of words appears.
+enum class CaptionAnimation
+{
+    None,
+    Pop,    // a quick zoom in
+    Fade,
+    Bounce,
+};
+
+// The look of a caption track (FILE_FORMAT §5.3 "captionStyle"): the text style, how many words are shown at once, where,
+// and how the active word is highlighted (SPEC §5.8 social styles).
+struct CaptionStyle
+{
+    TextStyle text;
+    QString preset;            // id of the library style it comes from ("" = custom)
+    int maxWordsPerLine = 0;   // words shown at once; 0 = the whole line
+    double position = 0.32;    // vertical position of the text's centre from the canvas centre, in canvas heights
+    CaptionHighlight highlight = CaptionHighlight::None;
+    Color highlightColor{255, 214, 0, 255};
+    CaptionAnimation animation = CaptionAnimation::None;
+    bool uppercase = false;
+
+    friend bool operator==(const CaptionStyle &, const CaptionStyle &) = default;
+};
+
+// Payload of clip kinds whose editing features arrive in later phases (effect): the kind-specific JSON fields are
+// kept verbatim and written back unchanged, so no data is ever lost (docs/FILE_FORMAT.md §1). Each kind gets a typed
+// struct when implemented.
 struct PreservedClipData
 {
-    ClipKind kind = ClipKind::Subtitle;
+    ClipKind kind = ClipKind::Effect;
     QJsonObject fields;
 
     friend bool operator==(const PreservedClipData &, const PreservedClipData &) = default;
 };
 
-using ClipPayload = std::variant<MediaClipData, ColorClipData, CompoundClipData, TextClipData, AdjustmentClipData, StickerClipData, PreservedClipData>;
+using ClipPayload = std::variant<MediaClipData, ColorClipData, CompoundClipData, TextClipData, AdjustmentClipData, StickerClipData,
+                                 SubtitleClipData, PreservedClipData>;
 
 // A slot of a template (docs/FILE_FORMAT.md §5.5): the clip is waiting for the user's media, which replaces it keeping
 // its place, length and look ("Replace").
@@ -513,6 +571,7 @@ struct Clip
     const CompoundClipData *compound() const { return std::get_if<CompoundClipData>(&payload); }
     CompoundClipData *compound() { return std::get_if<CompoundClipData>(&payload); }
     const StickerClipData *sticker() const { return std::get_if<StickerClipData>(&payload); }
+    const SubtitleClipData *subtitle() const { return std::get_if<SubtitleClipData>(&payload); }
     StickerClipData *sticker() { return std::get_if<StickerClipData>(&payload); }
 
     friend bool operator==(const Clip &, const Clip &) = default;

@@ -8,158 +8,161 @@ using namespace Qt::StringLiterals;
 
 namespace vedit {
 
-std::optional<RationalTime> SubtitleFormat::parseTimecode(const QString &timecode, const Rational &rate)
+namespace {
+
+const Rational kMilliseconds(1000);
+
+// Lines of a file from any system (Windows line ends, byte order mark).
+QStringList linesOf(QString content)
 {
-    static const QRegularExpression re(uR"((\d{2}):(\d{2}):(\d{2})[,.](\d{3}))"_s);
-    const QRegularExpressionMatch match = re.match(timecode);
+    if (content.startsWith(QChar(0xFEFF))) {
+        content.remove(0, 1);
+    }
+    content.replace(u"\r\n"_s, u"\n"_s);
+    content.replace(u'\r', u'\n');
+    return content.split(u'\n');
+}
+
+// "00:01:02,500" (SRT), "00:01:02.500" or "01:02.500" (WebVTT, hours optional) → milliseconds.
+std::optional<std::int64_t> milliseconds(const QString &timecode)
+{
+    static const QRegularExpression re(uR"(^(?:(\d+):)?(\d{1,2}):(\d{1,2})[,.](\d{1,3})$)"_s);
+    const QRegularExpressionMatch match = re.match(timecode.trimmed());
     if (!match.hasMatch()) {
         return std::nullopt;
     }
-    
-    const int hours = match.captured(1).toInt();
-    const int minutes = match.captured(2).toInt();
-    const int seconds = match.captured(3).toInt();
-    const int milliseconds = match.captured(4).toInt();
-    
-    const double totalSeconds = hours * 3600.0 + minutes * 60.0 + seconds + milliseconds / 1000.0;
-    return RationalTime::fromSeconds(Rational(static_cast<int>(totalSeconds * 1000), 1000), rate, Rounding::NearestEven);
+    const std::int64_t hours = match.captured(1).toLongLong();
+    const std::int64_t minutes = match.captured(2).toLongLong();
+    const std::int64_t seconds = match.captured(3).toLongLong();
+    QString fraction = match.captured(4);
+    while (fraction.size() < 3) {
+        fraction += u'0'; // ",5" is half a second
+    }
+    if (minutes > 59 || seconds > 59) {
+        return std::nullopt;
+    }
+    return ((hours * 60 + minutes) * 60 + seconds) * 1000 + fraction.toLongLong();
 }
 
-QString SubtitleFormat::formatTimecode(const RationalTime &time, bool vtt)
+// The two times of a cue line "start --> end [settings]".
+std::optional<std::pair<RationalTime, RationalTime>> cueTimes(const QString &line, const Rational &rate)
 {
-    const Rational secondsRat = time.seconds();
-    const double seconds = static_cast<double>(secondsRat.num()) / secondsRat.den();
-    
-    const int hours = static_cast<int>(seconds / 3600);
-    const int minutes = static_cast<int>((seconds - hours * 3600) / 60);
-    const int secs = static_cast<int>(seconds - hours * 3600 - minutes * 60);
-    const int millis = static_cast<int>((seconds - static_cast<int>(seconds)) * 1000);
-    
-    const QChar separator = vtt ? u'.' : u',';
-    return u"%1:%2:%3%4%5"_s
-        .arg(hours, 2, 10, u'0')
-        .arg(minutes, 2, 10, u'0')
-        .arg(secs, 2, 10, u'0')
-        .arg(separator)
-        .arg(millis, 3, 10, u'0');
+    const qsizetype arrow = line.indexOf(u"-->"_s);
+    if (arrow < 0) {
+        return std::nullopt;
+    }
+    const QString endPart = line.mid(arrow + 3).trimmed();
+    const auto start = milliseconds(line.left(arrow));
+    const auto end = milliseconds(endPart.section(u' ', 0, 0, QString::SectionSkipEmpty));
+    if (!start || !end || *end < *start) {
+        return std::nullopt;
+    }
+    return std::pair{RationalTime::fromSeconds(Rational(*start, 1000), rate, Rounding::NearestEven),
+                     RationalTime::fromSeconds(Rational(*end, 1000), rate, Rounding::NearestEven)};
 }
+
+// Plain text of a cue: formatting tags (<i>, <b>, <c.yellow>, <v Anna>, WebVTT word times <00:01.200>, SSA
+// overrides {\an8}) and entities removed.
+QString plainText(QString text)
+{
+    static const QRegularExpression tags(uR"(<[^>]*>|\{\\[^}]*\})"_s);
+    text.remove(tags);
+    text.replace(u"&lt;"_s, u"<"_s);
+    text.replace(u"&gt;"_s, u">"_s);
+    text.replace(u"&nbsp;"_s, u" "_s);
+    text.replace(u"&lrm;"_s, QString());
+    text.replace(u"&rlm;"_s, QString());
+    text.replace(u"&amp;"_s, u"&"_s);
+    return text.trimmed();
+}
+
+// Cues of SRT and WebVTT alike: a time line, then text lines up to an empty line. Anything else (numbers, cue
+// identifiers, NOTE/STYLE/REGION blocks of WebVTT) is skipped.
+std::vector<SubtitleEntry> cues(const QStringList &lines, const Rational &rate)
+{
+    std::vector<SubtitleEntry> entries;
+    for (qsizetype i = 0; i < lines.size(); ++i) {
+        const auto times = cueTimes(lines[i], rate);
+        if (!times) {
+            continue;
+        }
+        QStringList text;
+        qsizetype next = i + 1;
+        while (next < lines.size() && !lines[next].trimmed().isEmpty() && !cueTimes(lines[next], rate)) {
+            text << lines[next];
+            ++next;
+        }
+        i = next - 1;
+        const QString plain = plainText(text.join(u'\n'));
+        if (!plain.isEmpty()) {
+            entries.push_back(SubtitleEntry{times->first, times->second, plain});
+        }
+    }
+    return entries;
+}
+
+QString timecode(const RationalTime &time, QChar separator)
+{
+    const std::int64_t total = std::max<std::int64_t>(0, time.rescaled(kMilliseconds, Rounding::NearestEven).value());
+    return u"%1:%2:%3%4%5"_s.arg(total / 3'600'000, 2, 10, u'0')
+        .arg(total / 60'000 % 60, 2, 10, u'0')
+        .arg(total / 1000 % 60, 2, 10, u'0')
+        .arg(separator)
+        .arg(total % 1000, 3, 10, u'0');
+}
+
+} // namespace
 
 std::optional<std::vector<SubtitleEntry>> SubtitleFormat::parseSRT(const QString &content, const Rational &rate)
 {
-    std::vector<SubtitleEntry> entries;
-    const QStringList blocks = content.split(u"\n\n"_s, Qt::SkipEmptyParts);
-    
-    for (const QString &block : blocks) {
-        const QStringList lines = block.split(u'\n', Qt::SkipEmptyParts);
-        if (lines.size() < 3) {
-            continue;
-        }
-        
-        static const QRegularExpression timeRe(uR"((.+?)\s+-->\s+(.+))"_s);
-        const QRegularExpressionMatch match = timeRe.match(lines[1]);
-        if (!match.hasMatch()) {
-            continue;
-        }
-        
-        const std::optional<RationalTime> start = parseTimecode(match.captured(1).trimmed(), rate);
-        const std::optional<RationalTime> end = parseTimecode(match.captured(2).trimmed(), rate);
-        
-        if (!start || !end) {
-            continue;
-        }
-        
-        QString text;
-        for (int i = 2; i < lines.size(); ++i) {
-            if (i > 2) {
-                text += u'\n';
-            }
-            text += lines[i];
-        }
-        
-        entries.push_back(SubtitleEntry{*start, *end, text});
+    std::vector<SubtitleEntry> entries = cues(linesOf(content), rate);
+    if (entries.empty() && !content.trimmed().isEmpty()) {
+        return std::nullopt; // not a subtitle file
     }
-    
     return entries;
 }
 
 std::optional<std::vector<SubtitleEntry>> SubtitleFormat::parseVTT(const QString &content, const Rational &rate)
 {
-    if (!content.startsWith(u"WEBVTT"_s)) {
+    const QStringList lines = linesOf(content);
+    if (lines.isEmpty() || !lines.front().startsWith(u"WEBVTT"_s)) {
         return std::nullopt;
     }
-    
-    std::vector<SubtitleEntry> entries;
-    const QStringList blocks = content.split(u"\n\n"_s, Qt::SkipEmptyParts);
-    
-    for (const QString &block : blocks) {
-        if (block.startsWith(u"WEBVTT"_s) || block.startsWith(u"NOTE"_s)) {
-            continue;
-        }
-        
-        const QStringList lines = block.split(u'\n', Qt::SkipEmptyParts);
-        if (lines.isEmpty()) {
-            continue;
-        }
-        
-        int timeLineIndex = 0;
-        if (!lines[0].contains(u"-->"_s)) {
-            timeLineIndex = 1;
-        }
-        
-        if (timeLineIndex >= lines.size()) {
-            continue;
-        }
-        
-        static const QRegularExpression timeRe(uR"((.+?)\s+-->\s+(.+))"_s);
-        const QRegularExpressionMatch match = timeRe.match(lines[timeLineIndex]);
-        if (!match.hasMatch()) {
-            continue;
-        }
-        
-        const std::optional<RationalTime> start = parseTimecode(match.captured(1).trimmed(), rate);
-        const std::optional<RationalTime> end = parseTimecode(match.captured(2).trimmed(), rate);
-        
-        if (!start || !end) {
-            continue;
-        }
-        
-        QString text;
-        for (int i = timeLineIndex + 1; i < lines.size(); ++i) {
-            if (i > timeLineIndex + 1) {
-                text += u'\n';
-            }
-            text += lines[i];
-        }
-        
-        entries.push_back(SubtitleEntry{*start, *end, text});
+    return cues(lines.mid(1), rate);
+}
+
+std::optional<std::vector<SubtitleEntry>> SubtitleFormat::parse(const QString &content, const Rational &rate)
+{
+    QString start = content.left(16);
+    if (start.startsWith(QChar(0xFEFF))) {
+        start.remove(0, 1);
     }
-    
-    return entries;
+    return start.startsWith(u"WEBVTT"_s) ? parseVTT(content, rate) : parseSRT(content, rate);
 }
 
 QString SubtitleFormat::formatSRT(const std::vector<SubtitleEntry> &entries)
 {
     QString result;
     int index = 1;
-    
     for (const SubtitleEntry &entry : entries) {
         result += QString::number(index++) + u'\n';
-        result += formatTimecode(entry.start, false) + u" --> "_s + formatTimecode(entry.end, false) + u'\n';
+        result += timecode(entry.start, u',') + u" --> "_s + timecode(entry.end, u',') + u'\n';
         result += entry.text + u"\n\n"_s;
     }
-    
     return result;
 }
 
 QString SubtitleFormat::formatVTT(const std::vector<SubtitleEntry> &entries)
 {
     QString result = u"WEBVTT\n\n"_s;
-    
     for (const SubtitleEntry &entry : entries) {
-        result += formatTimecode(entry.start, true) + u" --> "_s + formatTimecode(entry.end, true) + u'\n';
-        result += entry.text + u"\n\n"_s;
+        QString text = entry.text;
+        text.replace(u'&', u"&amp;"_s);
+        text.replace(u'<', u"&lt;"_s);
+        text.replace(u'>', u"&gt;"_s);
+        result += timecode(entry.start, u'.') + u" --> "_s + timecode(entry.end, u'.') + u'\n';
+        result += text + u"\n\n"_s;
     }
-    
     return result;
 }
 

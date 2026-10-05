@@ -4351,7 +4351,7 @@
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/app/main.cpp" line="+99"/>
+        <location filename="../src/app/main.cpp" line="+100"/>
         <source>Offline video editor</source>
         <translation>Editor video offline</translation>
     </message>
@@ -4381,7 +4381,12 @@
         <translation>Video, foto o musica con cui iniziare un nuovo progetto.</translation>
     </message>
     <message>
-        <location line="-12"/>
+        <location line="+83"/>
+        <source>The graphics card had a problem with the transitions: the processor draws them now (%1).</source>
+        <translation>La scheda video ha avuto un problema con le transizioni: ora le disegna il processore (%1).</translation>
+    </message>
+    <message>
+        <location line="-95"/>
         <source>With --smoke-test: save an image of the window.</source>
         <translation>Con --smoke-test: salva un’immagine della finestra.</translation>
     </message>
@@ -4404,16 +4409,16 @@
 <context>
     <name>vedit::TimelineEditor</name>
     <message>
-        <location filename="../src/core/edit/TimelineEditor.cpp" line="+315"/>
+        <location filename="../src/core/edit/TimelineEditor.cpp" line="+331"/>
         <location line="+74"/>
         <location line="+58"/>
         <location line="+80"/>
         <location line="+76"/>
-        <location line="+59"/>
+        <location line="+65"/>
         <location line="+33"/>
         <location line="+74"/>
         <location line="+45"/>
-        <location line="+59"/>
+        <location line="+58"/>
         <location line="+23"/>
         <location line="+29"/>
         <location line="+31"/>
@@ -4443,11 +4448,12 @@
         <location line="+90"/>
         <location line="+121"/>
         <location line="+21"/>
+        <location line="+67"/>
         <source>The sequence does not exist.</source>
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-1693"/>
+        <location line="-1765"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -4463,23 +4469,23 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1413"/>
+        <location line="+1418"/>
         <source>The media is too short to be used.</source>
         <translation>Il file è troppo corto per essere usato.</translation>
     </message>
     <message>
-        <location line="-1390"/>
+        <location line="-1395"/>
         <source>Add audio</source>
         <translation>Aggiungi audio</translation>
     </message>
     <message>
         <location line="+5"/>
-        <location line="+1338"/>
+        <location line="+1343"/>
         <source>The main track is locked.</source>
         <translation>La traccia principale è bloccata.</translation>
     </message>
     <message>
-        <location line="-1333"/>
+        <location line="-1338"/>
         <location line="+4"/>
         <location line="+4"/>
         <source>Add clip</source>
@@ -4490,11 +4496,11 @@
         <location line="+58"/>
         <location line="+80"/>
         <location line="+76"/>
-        <location line="+63"/>
+        <location line="+69"/>
         <location line="+34"/>
         <location line="+74"/>
         <location line="+40"/>
-        <location line="+115"/>
+        <location line="+114"/>
         <location line="+27"/>
         <location line="+43"/>
         <location line="+50"/>
@@ -4509,16 +4515,16 @@
         <translation>La clip non esiste.</translation>
     </message>
     <message>
-        <location line="-1338"/>
+        <location line="-1343"/>
         <location line="+10"/>
         <location line="+49"/>
         <location line="+80"/>
         <location line="+76"/>
-        <location line="+62"/>
+        <location line="+68"/>
         <location line="+34"/>
         <location line="+74"/>
         <location line="+40"/>
-        <location line="+115"/>
+        <location line="+114"/>
         <location line="+27"/>
         <location line="+43"/>
         <location line="+50"/>
@@ -4531,30 +4537,31 @@
         <location line="+26"/>
         <location line="+64"/>
         <location line="+286"/>
+        <location line="+101"/>
         <source>The track is locked.</source>
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-1620"/>
-        <location line="+812"/>
+        <location line="-1726"/>
+        <location line="+817"/>
         <location line="+47"/>
         <location line="+14"/>
         <source>The track does not exist.</source>
         <translation>La traccia non esiste.</translation>
     </message>
     <message>
-        <location line="-867"/>
+        <location line="-872"/>
         <source>This clip cannot be placed on that track.</source>
         <translation>Questa clip non può andare su quella traccia.</translation>
     </message>
     <message>
         <location line="+31"/>
-        <location line="+402"/>
+        <location line="+407"/>
         <source>Move clip</source>
         <translation>Sposta clip</translation>
     </message>
     <message>
-        <location line="-322"/>
+        <location line="-327"/>
         <source>Trim clip</source>
         <translation>Accorcia clip</translation>
     </message>
@@ -4574,7 +4581,7 @@
         <translation>Porta la testina dentro la clip per dividerla.</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+45"/>
         <source>Split clip</source>
         <translation>Dividi clip</translation>
     </message>
@@ -4609,7 +4616,7 @@
         <translation>Duplica clip</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+81"/>
         <source>Add text</source>
         <translation>Aggiungi testo</translation>
     </message>
@@ -4913,6 +4920,21 @@
         <source>Cut and switch camera angle</source>
         <translation>Taglia e cambia angolo</translation>
     </message>
+    <message>
+        <location line="+49"/>
+        <source>There are no captions to add.</source>
+        <translation>Non ci sono sottotitoli da aggiungere.</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>Captions</source>
+        <translation>Sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Add captions</source>
+        <translation>Aggiungi sottotitoli</translation>
+    </message>
 </context>
 <context>
     <name>vedit::document::Document</name>
@@ -4985,7 +5007,7 @@
 <context>
     <name>vedit::engine::MediaProducerCache</name>
     <message>
-        <location filename="../src/engine/timeline/MediaProducerCache.cpp" line="+62"/>
+        <location filename="../src/engine/timeline/MediaProducerCache.cpp" line="+67"/>
         <source>The file is missing: %1</source>
         <translation>Il file non c&apos;è più: %1</translation>
     </message>
@@ -5022,7 +5044,7 @@
 <context>
     <name>vedit::engine::RenderJob</name>
     <message>
-        <location filename="../src/engine/render/RenderJob.cpp" line="+72"/>
+        <location filename="../src/engine/render/RenderJob.cpp" line="+74"/>
         <source>The video engine could not be started.</source>
         <translation>Impossibile avviare il motore video.</translation>
     </message>
@@ -5057,7 +5079,7 @@
         <translation>Non c&apos;è abbastanza spazio libero in questa cartella: servono circa %1 MB, ne restano %2 MB.</translation>
     </message>
     <message>
-        <location line="+122"/>
+        <location line="+125"/>
         <source>The export stopped unexpectedly.</source>
         <translation>L&apos;esportazione si è interrotta in modo imprevisto.</translation>
     </message>
@@ -5065,7 +5087,7 @@
 <context>
     <name>vedit::engine::TimelinePlayer</name>
     <message>
-        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+128"/>
+        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+130"/>
         <source>No audio output is available (SDL2).</source>
         <translation>Nessuna uscita audio disponibile (SDL2).</translation>
     </message>
@@ -5189,12 +5211,12 @@
 <context>
     <name>vedit::projectjson</name>
     <message>
-        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1603"/>
+        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1642"/>
         <source>The project file is damaged (%1).</source>
         <translation>Il file del progetto è danneggiato (%1).</translation>
     </message>
     <message>
-        <location line="+101"/>
+        <location line="+147"/>
         <source>This file is not a vedit project.</source>
         <translation>Questo file non è un progetto vedit.</translation>
     </message>

@@ -196,6 +196,46 @@ ProjectData richProject()
     circle.graphic->drawSeconds = 1.25;
     stickers.clips.push_back(sticker(160, circle));
     sequence.visualTracks.push_back(stickers);
+
+    // Captions: a line with timed words, one without (imported from SRT) and one with its own style.
+    Track captionTrack;
+    captionTrack.id = TrackId::create();
+    captionTrack.kind = TrackKind::Text;
+    captionTrack.captions = true;
+    CaptionStyle captionStyle;
+    captionStyle.preset = u"neon-karaoke"_s;
+    captionStyle.text.size = Param(0.07);
+    captionStyle.text.color = Param(Color{255, 255, 255, 255});
+    captionStyle.maxWordsPerLine = 3;
+    captionStyle.position = 0.25;
+    captionStyle.highlight = CaptionHighlight::Karaoke;
+    captionStyle.highlightColor = Color{0, 230, 118, 255};
+    captionStyle.animation = CaptionAnimation::Pop;
+    captionStyle.uppercase = true;
+    projectjson::setCaptionStyle(captionTrack, captionStyle);
+    const auto line = [](int start, int duration, SubtitleClipData data) {
+        Clip clip;
+        clip.id = ClipId::create();
+        clip.start = frames(start);
+        clip.duration = frames(duration);
+        clip.payload = std::move(data);
+        return clip;
+    };
+    SubtitleClipData timed;
+    timed.text = u"Ciao a tutti"_s;
+    timed.words = {TimedWord{u"Ciao"_s, frames(0), frames(10)}, TimedWord{u"a"_s, frames(10), frames(14)},
+                   TimedWord{u"tutti"_s, frames(14), frames(30)}};
+    captionTrack.clips.push_back(line(0, 30, timed));
+    SubtitleClipData plain;
+    plain.text = u"Benvenuti!"_s;
+    captionTrack.clips.push_back(line(30, 45, plain));
+    SubtitleClipData styled;
+    styled.text = u"Importante"_s;
+    styled.styleOverride = TextStyle{};
+    styled.styleOverride->color = Param(Color{255, 0, 0, 255});
+    styled.fields.insert(u"futureSubtitleField"_s, true);
+    captionTrack.clips.push_back(line(75, 20, styled));
+    sequence.visualTracks.push_back(captionTrack);
     // Last: this push_back invalidates the `sequence` reference.
     data.sequences.push_back(nested);
 
@@ -269,6 +309,45 @@ private slots:
         QCOMPARE(anim.value(u"cursor"_s).toBool(), true);
         QCOMPARE(text.value(u"spans"_s).toArray().size(), 1);
         QCOMPARE(tracks[0].toObject().value(u"gainDb"_s).toDouble(), -6.0);
+    }
+
+    void captionsAreWrittenAsDocumented()
+    {
+        const QJsonObject json = projectjson::toJson(richProject());
+        const QJsonArray tracks = json.value(u"sequences"_s).toArray()[0].toObject().value(u"visualTracks"_s).toArray();
+        const QJsonObject track = tracks.last().toObject();
+        QCOMPARE(track.value(u"kind"_s).toString(), u"text"_s);
+        QVERIFY(track.value(u"captions"_s).toBool());
+        const QJsonObject style = track.value(u"captionStyle"_s).toObject();
+        QCOMPARE(style.value(u"preset"_s).toString(), u"neon-karaoke"_s);
+        QCOMPARE(style.value(u"highlight"_s).toString(), u"karaoke"_s);
+        QCOMPARE(style.value(u"animation"_s).toString(), u"pop"_s);
+        QCOMPARE(style.value(u"maxWordsPerLine"_s).toInt(), 3);
+        const QJsonObject first = track.value(u"clips"_s).toArray()[0].toObject();
+        QCOMPARE(first.value(u"kind"_s).toString(), u"subtitle"_s);
+        QCOMPARE(first.value(u"text"_s).toString(), u"Ciao a tutti"_s);
+        const QJsonObject word = first.value(u"words"_s).toArray()[2].toObject();
+        QCOMPARE(word.value(u"w"_s).toString(), u"tutti"_s);
+        QCOMPARE(word.value(u"t0"_s).toString(), u"14@30"_s);
+        QCOMPARE(word.value(u"t1"_s).toString(), u"30@30"_s);
+        QVERIFY(track.value(u"clips"_s).toArray()[1].toObject().value(u"styleOverride"_s).isNull());
+    }
+
+    void captionStyleDefaultsAndInvalidValues()
+    {
+        Track track;
+        track.kind = TrackKind::Text;
+        track.captions = true;
+        // No style: readable default with an outline.
+        const CaptionStyle fallback = projectjson::captionStyleOf(track);
+        QVERIFY(fallback.text.stroke.has_value());
+        QCOMPARE(fallback.highlight, CaptionHighlight::None);
+        // Unknown names and out-of-range values fall back to defaults.
+        const CaptionStyle odd = projectjson::captionStyleFromJson(QJsonObject{
+            {u"highlight"_s, u"sparkles"_s}, {u"position"_s, 7.0}, {u"maxWordsPerLine"_s, -4}});
+        QCOMPARE(odd.highlight, CaptionHighlight::None);
+        QCOMPARE(odd.position, 0.5); // a share of the canvas height from its centre
+        QCOMPARE(odd.maxWordsPerLine, 0);
     }
 
     void exampleFromTheSpecificationLoads()

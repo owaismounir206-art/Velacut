@@ -3,6 +3,7 @@
 
 #include "core/project/ClipTime.h"
 #include "core/project/SpeedCurve.h"
+#include "core/serialization/ProjectJson.h"
 
 #include <QSignalSpy>
 
@@ -918,6 +919,84 @@ private slots:
         clipC = session.data().findClip(c);
         QCOMPARE(clipB->duration, frames(120));
         QCOMPARE(clipC->start, frames(420));
+    }
+
+    void captionsGoOnTheirOwnTrack()
+    {
+        auto owner = threeClips();
+        Session &session = *owner;
+        const std::vector<captions::CaptionLine> lines{
+            {frames(0), frames(40), u"Ciao a tutti"_s,
+             {TimedWord{u"Ciao"_s, frames(0), frames(15)}, TimedWord{u"a"_s, frames(15), frames(20)},
+              TimedWord{u"tutti"_s, frames(20), frames(40)}}},
+            // Overlaps the next line: it is shortened to end where the next one starts.
+            {frames(50), frames(120), u"  secondo\n riga "_s, {}},
+            {frames(100), frames(130), u"terzo"_s, {}},
+            {frames(200), frames(200), u"vuoto"_s, {}},
+        };
+        EditResult result = session.editor().insertCaptions(lines);
+        QVERIFY(result.ok());
+        const ClipId first = result.primaryClip;
+        QVERIFY(session.apply(std::move(result)));
+        const Track &track = session.sequence().visualTracks.back();
+        QVERIFY(track.captions);
+        QCOMPARE(track.kind, TrackKind::Text);
+        QCOMPARE(track.clips.size(), 3u);
+        QCOMPARE(track.clips[0].id, first);
+        QCOMPARE(track.clips[0].subtitle()->words.size(), 3u);
+        QCOMPARE(track.clips[1].subtitle()->text, u"secondo riga"_s);
+        QCOMPARE(track.clips[1].end(), frames(100));
+        QCOMPARE(track.clips[2].start, frames(100));
+
+        // A new text never goes on the caption track, even where it is free.
+        TextClipData text;
+        text.text = u"Titolo"_s;
+        QVERIFY(session.apply(session.editor().insertText(frames(300), text, frames(30))));
+        const Track &textTrack = session.sequence().visualTracks.back();
+        QVERIFY(!textTrack.captions);
+        // …and cannot be moved there.
+        const ClipId textId = textTrack.clips.front().id;
+        const TrackId captionTrack = session.sequence().visualTracks[session.sequence().visualTracks.size() - 2].id;
+        QVERIFY(!session.editor().moveClip(textId, frames(300), captionTrack).ok());
+
+        // More lines that fit join the same track; replacing swaps them all.
+        QVERIFY(session.apply(session.editor().insertCaptions({{frames(400), frames(430), u"dopo"_s, {}}})));
+        QCOMPARE(session.sequence().visualTracks.size(), 3u);
+        CaptionStyle style;
+        style.highlight = CaptionHighlight::Box;
+        QVERIFY(session.apply(session.editor().insertCaptions({{frames(5), frames(25), u"nuovo"_s, {}}}, style, true)));
+        const Track &replaced = session.sequence().visualTracks[1];
+        QVERIFY(replaced.captions);
+        QCOMPARE(replaced.clips.size(), 1u);
+        QCOMPARE(projectjson::captionStyleOf(replaced).highlight, CaptionHighlight::Box);
+        QVERIFY(!session.editor().insertCaptions({{frames(5), frames(5), u"x"_s, {}}}).ok());
+    }
+
+    void splittingACaptionSplitsItsWords()
+    {
+        auto owner = threeClips();
+        Session &session = *owner;
+        QVERIFY(session.apply(session.editor().insertCaptions(
+            {{frames(30), frames(60), u"uno due tre"_s,
+              {TimedWord{u"uno"_s, frames(30), frames(40)}, TimedWord{u"due"_s, frames(40), frames(50)},
+               TimedWord{u"tre"_s, frames(50), frames(60)}}}})));
+        const ClipId line = session.sequence().visualTracks.back().clips.front().id;
+        QVERIFY(session.apply(session.editor().splitClip(line, frames(52))));
+        const Track &track = session.sequence().visualTracks.back();
+        QCOMPARE(track.clips.size(), 2u);
+        QCOMPARE(track.clips[0].subtitle()->text, u"uno due"_s);
+        QCOMPARE(track.clips[1].subtitle()->text, u"tre"_s);
+        QCOMPARE(track.clips[1].subtitle()->words.front().start, frames(0));
+        QCOMPARE(track.clips[1].subtitle()->words.front().end, frames(8));
+        const ClipId tail = track.clips[1].id;
+        // Trimming the start keeps the words where they are said.
+        QVERIFY(session.apply(session.editor().trimClip(line, ClipEdge::Start, frames(35))));
+        const Clip &trimmed = session.sequence().visualTracks.back().clips.front();
+        QCOMPARE(trimmed.subtitle()->words[1].start, frames(5));
+        // A caption moved where its track has no room goes on a new caption track, with the same style.
+        QVERIFY(session.apply(session.editor().moveClip(tail, frames(40))));
+        QCOMPARE(session.sequence().visualTracks.size(), 3u);
+        QVERIFY(session.sequence().visualTracks.back().captions);
     }
 };
 

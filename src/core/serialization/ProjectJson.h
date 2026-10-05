@@ -42,6 +42,12 @@ AudioVisualizerSettings visualizerFromJson(const QJsonObject &json);
 QJsonObject visualizerToJson(const AudioVisualizerSettings &settings);
 // The settings of an animated graphic element (sticker clips, library presets).
 GraphicSettings graphicFromJson(const QJsonObject &json);
+// The look of a caption track (FILE_FORMAT §5.3 "captionStyle", also the caption style presets of the library).
+CaptionStyle captionStyleFromJson(const QJsonObject &json);
+QJsonObject captionStyleToJson(const CaptionStyle &style);
+// The caption style of a track (kept in Track::extras["captionStyle"]); defaults when it has none.
+CaptionStyle captionStyleOf(const Track &track);
+void setCaptionStyle(Track &track, const CaptionStyle &style);
 // One media item (the probe process sends them to the editor in this form).
 QJsonObject mediaToJson(const Media &media);
 std::optional<Media> mediaFromJson(const QJsonObject &json, QString *error = nullptr);

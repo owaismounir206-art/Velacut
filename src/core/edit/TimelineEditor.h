@@ -2,6 +2,7 @@
 #pragma once
 
 #include "core/commands/Edit.h"
+#include "core/project/Captions.h"
 #include "core/project/ProjectData.h"
 
 #include <QString>
@@ -132,6 +133,14 @@ public:
     // (transform, effects, masks, animations, transitions). A shorter video shortens the clip (on the main track the
     // rest follows); a photo keeps the length. The clip is no longer a placeholder.
     EditResult replaceClipMedia(const ClipId &clipId, const MediaId &mediaId);
+
+    // ---- Phase 6 ----
+    // Caption lines (from a subtitle file, a transcription or a script; absolute times) on the caption track: with
+    // `replace` its lines are replaced, otherwise they join it when they fit, else they go on a new caption track on
+    // top. A new track gets `style` (default style when empty). Overlapping lines are shortened so that each one
+    // ends where the next starts.
+    EditResult insertCaptions(const std::vector<captions::CaptionLine> &lines,
+                              const std::optional<CaptionStyle> &style = std::nullopt, bool replace = false);
 
     // ---- Phase 4 ----
     using AudioOffsetFn = std::function<std::optional<double>(const Clip &ref, const Clip &target)>;

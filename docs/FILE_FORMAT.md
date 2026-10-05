@@ -334,8 +334,22 @@ traccia, sovrascrivibile riga per riga con `styleOverride`), più le parole temp
 { "text": "ciao a tutti", "styleOverride": null,
   "words": [ { "w": "ciao", "t0": "0@30", "t1": "9@30" }, { "w": "a", "t0": "9@30", "t1": "12@30" } ] }
 ```
-La traccia `captions` aggiunge `captionStyle` (stesso schema di `style` + `preset`, `maxWordsPerLine`, `position`,
-`highlight`).
+I tempi delle parole partono dall'inizio della clip (si spostano con lei; tagliando una riga ogni metà tiene le parole
+dette nella sua parte). Se `words` manca o non corrisponde più al testo (riga modificata, importata da SRT/VTT), le parole
+vengono distribuite sulla durata della riga in proporzione alla loro lunghezza.
+
+La traccia `captions` aggiunge `captionStyle` (assente = stile predefinito: bianco con contorno, in basso):
+```json
+"captionStyle": { "style": { …come `style` dei testi… }, "preset": "neon-karaoke", "maxWordsPerLine": 3,
+                  "position": 0.32, "highlight": "karaoke", "highlightColor": "#FFD600FF",
+                  "animation": "pop", "uppercase": false }
+```
+- `preset`: id dello stile della libreria da cui viene (solo informativo, lo stile è tutto nei campi).
+- `maxWordsPerLine`: 0 = la riga intera; N = la riga viene mostrata a gruppi di N parole, seguendo il parlato (0–20).
+- `position`: posizione verticale del centro del testo, come frazione dell'altezza del canvas dal centro (−0,5…0,5).
+- `highlight`: parola pronunciata `"none"`, `"color"` (colorata), `"scale"` (ingrandita), `"box"` (riquadro),
+  `"karaoke"` (riempimento progressivo); `highlightColor` è il suo colore.
+- `animation`: entrata di ogni riga o gruppo `"none"`, `"pop"`, `"fade"`, `"bounce"`; `uppercase`: tutto maiuscolo.
 
 **`sticker`** (tracce `sticker`): esattamente una sorgente fra
 - `"source": AssetRef` — uno sticker della libreria (immagine SVG/PNG/GIF del pacchetto, o emoji);

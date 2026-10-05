@@ -4,6 +4,7 @@
 #include "core/edit/SequenceDiff.h"
 #include "core/project/ClipTime.h"
 #include "core/project/SpeedCurve.h"
+#include "core/serialization/ProjectJson.h"
 
 #include <QCoreApplication>
 
@@ -152,6 +153,15 @@ Track makeTrack(TrackKind kind)
     return track;
 }
 
+// A new track for clips coming from `other` (a caption track stays a caption track, with its style).
+Track makeTrackLike(const Track &other)
+{
+    Track track = makeTrack(other.kind);
+    track.captions = other.captions;
+    track.extras = other.extras;
+    return track;
+}
+
 void removeEmptyTracks(Sequence &sequence)
 {
     if (sequence.visualTracks.size() > 1) {
@@ -184,7 +194,7 @@ Track &overlayTrackFor(Sequence &sequence, TrackKind kind, const TimeRange &rang
 {
     for (size_t i = 1; i < sequence.visualTracks.size(); ++i) {
         Track &track = sequence.visualTracks[i];
-        if (track.kind == kind && !track.locked && hasRoom(track, range)) {
+        if (track.kind == kind && !track.captions && !track.locked && hasRoom(track, range)) {
             return track;
         }
     }
@@ -252,6 +262,12 @@ void shiftClipLocalTime(Clip &clip, const RationalTime &delta)
     }
     if (auto *color = std::get_if<ColorClipData>(&clip.payload)) {
         shiftParam(color->color);
+    }
+    if (auto *line = std::get_if<SubtitleClipData>(&clip.payload)) {
+        for (TimedWord &word : line->words) {
+            word.start -= delta.rescaled(word.start.rate(), Rounding::NearestEven);
+            word.end -= delta.rescaled(word.end.rate(), Rounding::NearestEven);
+        }
     }
     for (Marker &marker : clip.markers) {
         marker.time -= delta;
@@ -406,7 +422,7 @@ EditResult TimelineEditor::moveClip(const ClipId &clipId, const RationalTime &re
         if (target->track->locked) {
             return fail(tr("The track is locked."));
         }
-        if (!clipAllowedOnTrack(source->clip(), target->track->kind)) {
+        if (!clipAllowedOnTrack(source->clip(), *target->track)) {
             return fail(tr("This clip cannot be placed on that track."));
         }
     }
@@ -432,7 +448,7 @@ EditResult TimelineEditor::moveClip(const ClipId &clipId, const RationalTime &re
     } else {
         // Never overwrite: create a new track right above (visual) or below (audio) the target.
         auto &tracks = target->audio ? modified.audioTracks : modified.visualTracks;
-        Track fresh = makeTrack(target->track->kind);
+        Track fresh = makeTrackLike(*target->track);
         insertSorted(fresh, std::move(clip));
         tracks.insert(tracks.begin() + target->index + 1, std::move(fresh));
     }
@@ -640,6 +656,12 @@ EditResult TimelineEditor::splitClip(const ClipId &clipId, const RationalTime &r
     } else {
         shiftClipLocalTime(second, offset);
     }
+    if (const SubtitleClipData *line = first.subtitle()) {
+        // Each half keeps the words said in it.
+        auto [before, after] = captions::split(*line, first.duration, offset);
+        first.payload = std::move(before);
+        second.payload = std::move(after);
+    }
     first.duration = offset;
     // A transition that left the original clip now leaves its second half.
     for (Transition &transition : track.transitions) {
@@ -800,7 +822,7 @@ EditResult TimelineEditor::duplicateClips(const std::vector<ClipId> &clipIds)
             insertSorted(track, std::move(copy));
         } else {
             auto &tracks = ref->audio ? modified.audioTracks : modified.visualTracks;
-            Track fresh = makeTrack(track.kind);
+            Track fresh = makeTrackLike(track);
             insertSorted(fresh, std::move(copy));
             tracks.insert(tracks.begin() + ref->trackIndex + 1, std::move(fresh));
         }
@@ -825,7 +847,7 @@ EditResult TimelineEditor::moveClipToNewTrack(const ClipId &clipId, const Ration
     auto &tracks = audio ? modified.audioTracks : modified.visualTracks;
     const int lowest = audio ? 0 : 1; // nothing goes below the main track
     index = std::clamp(index, lowest, static_cast<int>(tracks.size()));
-    const TrackKind kind = source->track->kind;
+    Track fresh = makeTrackLike(*source->track);
     const bool sourceMagnetic = isMagneticMain(modified, *source->track);
     Clip clip = takeClip(*source->track, source->index);
     if (sourceMagnetic) {
@@ -835,7 +857,6 @@ EditResult TimelineEditor::moveClipToNewTrack(const ClipId &clipId, const Ration
     if (clip.start.isNegative()) {
         clip.start = RationalTime(0, m_rate);
     }
-    Track fresh = makeTrack(kind);
     insertSorted(fresh, std::move(clip));
     tracks.insert(tracks.begin() + index, std::move(fresh));
     removeEmptyTracks(modified);
@@ -2070,6 +2091,86 @@ EditResult TimelineEditor::cutAndSwitchAngle(const ClipId &clipId, int angle, co
     }
     compound->activeAngle = angle;
     return finish(std::move(modified), tr("Set camera angle"), clipId);
+}
+
+EditResult TimelineEditor::insertCaptions(const std::vector<captions::CaptionLine> &lines,
+                                          const std::optional<CaptionStyle> &style, bool replace)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    std::vector<captions::CaptionLine> sorted = lines;
+    std::stable_sort(sorted.begin(), sorted.end(),
+                     [](const captions::CaptionLine &a, const captions::CaptionLine &b) { return a.start < b.start; });
+    std::vector<Clip> clips;
+    RationalTime previousEnd(0, m_rate);
+    for (size_t i = 0; i < sorted.size(); ++i) {
+        const captions::CaptionLine &line = sorted[i];
+        RationalTime start = std::max(line.start.rescaled(m_rate, Rounding::NearestEven), previousEnd);
+        RationalTime end = line.end.rescaled(m_rate, Rounding::NearestEven);
+        if (i + 1 < sorted.size()) {
+            end = std::min(end, std::max(start, sorted[i + 1].start.rescaled(m_rate, Rounding::NearestEven)));
+        }
+        const QString text = captions::splitWords(line.text).join(u' ');
+        if (end <= start || text.isEmpty()) {
+            continue;
+        }
+        Clip clip;
+        clip.id = ClipId::create();
+        clip.start = start;
+        clip.duration = end - start;
+        SubtitleClipData data;
+        data.text = text;
+        for (const TimedWord &word : line.words) {
+            const RationalTime from = std::clamp(word.start.rescaled(m_rate, Rounding::NearestEven), start, end) - start;
+            const RationalTime to = std::clamp(word.end.rescaled(m_rate, Rounding::NearestEven), start, end) - start;
+            data.words.push_back(TimedWord{word.text, from, std::max(from, to)});
+        }
+        clip.payload = std::move(data);
+        clips.push_back(std::move(clip));
+        previousEnd = end;
+    }
+    if (clips.empty()) {
+        return fail(tr("There are no captions to add."));
+    }
+
+    Sequence modified = *m_sequence;
+    Track *target = nullptr;
+    for (size_t i = 1; i < modified.visualTracks.size() && !target; ++i) {
+        Track &track = modified.visualTracks[i];
+        if (!track.captions) {
+            continue;
+        }
+        if (replace) {
+            if (track.locked) {
+                return fail(tr("The track is locked."));
+            }
+            track.clips.clear();
+            track.transitions.clear();
+            if (style) {
+                projectjson::setCaptionStyle(track, *style);
+            }
+            target = &track;
+        } else if (!track.locked && std::all_of(clips.begin(), clips.end(),
+                                                [&track](const Clip &clip) { return hasRoom(track, clip.range()); })) {
+            target = &track;
+        }
+    }
+    if (!target) {
+        Track track = makeTrack(TrackKind::Text);
+        track.captions = true;
+        track.name = tr("Captions");
+        if (style) {
+            projectjson::setCaptionStyle(track, *style); // otherwise the default style (projectjson::captionStyleOf)
+        }
+        modified.visualTracks.push_back(std::move(track));
+        target = &modified.visualTracks.back();
+    }
+    const ClipId first = clips.front().id;
+    for (Clip &clip : clips) {
+        insertSorted(*target, std::move(clip));
+    }
+    return finish(std::move(modified), tr("Add captions"), first);
 }
 
 } // namespace vedit

@@ -27,6 +27,8 @@ ClipKind Clip::kind() const
                 return ClipKind::Adjustment;
             } else if constexpr (std::is_same_v<T, StickerClipData>) {
                 return ClipKind::Sticker;
+            } else if constexpr (std::is_same_v<T, SubtitleClipData>) {
+                return ClipKind::Subtitle;
             } else {
                 return data.kind;
             }
@@ -213,6 +215,14 @@ bool clipAllowedOnTrack(const Clip &clip, TrackKind trackKind)
     return false;
 }
 
+bool clipAllowedOnTrack(const Clip &clip, const Track &track)
+{
+    if (track.kind == TrackKind::Text && (clip.kind() == ClipKind::Subtitle) != track.captions) {
+        return false; // caption lines only on caption tracks, texts only on the others
+    }
+    return clipAllowedOnTrack(clip, track.kind);
+}
+
 namespace {
 
 class InvariantChecker
@@ -371,7 +381,7 @@ private:
         if (clip.duration.isNegative() || clip.duration.isZero()) {
             fail(where + u": duration must be positive"_s);
         }
-        if (!clipAllowedOnTrack(clip, track.kind)) {
+        if (!clipAllowedOnTrack(clip, track)) {
             fail(where + u": clip kind not allowed on this track kind"_s);
         }
         for (const Marker &marker : clip.markers) {

@@ -128,6 +128,13 @@ constexpr EnumName<TextAnimationScope> kTextAnimationScopes[] = {
     {TextAnimationScope::Word, "word"_L1},
     {TextAnimationScope::Line, "line"_L1},
     {TextAnimationScope::All, "all"_L1}};
+constexpr EnumName<CaptionHighlight> kCaptionHighlights[] = {
+    {CaptionHighlight::None, "none"_L1}, {CaptionHighlight::Color, "color"_L1}, {CaptionHighlight::Scale, "scale"_L1},
+    {CaptionHighlight::Box, "box"_L1},   {CaptionHighlight::Karaoke, "karaoke"_L1}};
+constexpr EnumName<CaptionAnimation> kCaptionAnimations[] = {{CaptionAnimation::None, "none"_L1},
+                                                             {CaptionAnimation::Pop, "pop"_L1},
+                                                             {CaptionAnimation::Fade, "fade"_L1},
+                                                             {CaptionAnimation::Bounce, "bounce"_L1}};
 
 template<typename E, size_t N>
 QString nameOf(const EnumName<E> (&table)[N], E value)
@@ -165,6 +172,8 @@ const QSet<QString> kClipCommonKeys{u"id"_s,        u"kind"_s,        u"start"_s
                                     u"opacity"_s,   u"blendMode"_s,   u"effects"_s,    u"masks"_s,
                                     u"animations"_s, u"markers"_s,    u"background"_s, u"placeholder"_s};
 const QSet<QString> kTextClipKeys{u"text"_s, u"style"_s, u"stylePreset"_s, u"box"_s, u"animation"_s};
+const QSet<QString> kSubtitleClipKeys{u"text"_s, u"words"_s, u"styleOverride"_s};
+
 const QSet<QString> kTextStyleKeys{u"font"_s,          u"size"_s,       u"color"_s, u"stroke"_s,   u"shadow"_s,
                                    u"background"_s,    u"letterSpacing"_s, u"lineHeight"_s, u"align"_s,
                                    u"underline"_s};
@@ -547,6 +556,15 @@ QJsonObject clipJson(const Clip &clip)
                 if (data.animation) {
                     object.insert(u"animation"_s, textAnimationJson(*data.animation));
                 }
+                mergeInto(object, data.fields);
+            } else if constexpr (std::is_same_v<T, SubtitleClipData>) {
+                object.insert(u"text"_s, data.text);
+                QJsonArray words;
+                for (const TimedWord &word : data.words) {
+                    words.append(QJsonObject{{u"w"_s, word.text}, {u"t0"_s, timeValue(word.start)}, {u"t1"_s, timeValue(word.end)}});
+                }
+                object.insert(u"words"_s, words);
+                object.insert(u"styleOverride"_s, data.styleOverride ? QJsonValue(textStyleJson(*data.styleOverride)) : QJsonValue::Null);
                 mergeInto(object, data.fields);
             } else if constexpr (std::is_same_v<T, AdjustmentClipData>) {
                 // Effects are serialized at the clip level
@@ -1374,6 +1392,27 @@ public:
             clip.payload = std::move(data);
             break;
         }
+        case ClipKind::Subtitle: {
+            SubtitleClipData data;
+            data.text = string(object, u"text"_s, path);
+            const QString wordsPath = join(path, u"words"_s);
+            for (const QJsonValue &value : object.value(u"words"_s).toArray()) {
+                const QJsonObject word = value.toObject();
+                const std::optional<RationalTime> t0 = timeFrom(word.value(u"t0"_s), join(wordsPath, u"t0"_s), false);
+                const std::optional<RationalTime> t1 = timeFrom(word.value(u"t1"_s), join(wordsPath, u"t1"_s), false);
+                if (!t0 || !t1 || *t1 < *t0 || word.value(u"w"_s).toString().isEmpty()) {
+                    warn(wordsPath, u"invalid word ignored"_s);
+                    continue;
+                }
+                data.words.push_back(TimedWord{word.value(u"w"_s).toString(), *t0, *t1});
+            }
+            if (object.value(u"styleOverride"_s).isObject()) {
+                data.styleOverride = textStyle(object.value(u"styleOverride"_s).toObject(), join(path, u"styleOverride"_s));
+            }
+            data.fields = unknownKeys(object, kClipCommonKeys, kSubtitleClipKeys);
+            clip.payload = std::move(data);
+            break;
+        }
         default:
             // Kinds implemented in later phases: every non-common field is kept verbatim.
             clip.payload = PreservedClipData{*kind, unknownKeys(object, kClipCommonKeys)};
@@ -1655,6 +1694,52 @@ std::optional<TextAnimation> textAnimationFromJson(const QJsonObject &json)
 {
     Reader reader;
     return reader.textAnimation(json, u"animation"_s);
+}
+
+CaptionStyle captionStyleFromJson(const QJsonObject &json)
+{
+    CaptionStyle style;
+    style.text = textStyleFromJson(json.value(u"style"_s).toObject());
+    style.preset = json.value(u"preset"_s).toString();
+    style.maxWordsPerLine = std::clamp(json.value(u"maxWordsPerLine"_s).toInt(0), 0, 20);
+    style.position = std::clamp(json.value(u"position"_s).toDouble(0.32), -0.5, 0.5);
+    style.highlight = valueOf(kCaptionHighlights, json.value(u"highlight"_s).toString()).value_or(CaptionHighlight::None);
+    if (const auto color = Color::fromString(json.value(u"highlightColor"_s).toString())) {
+        style.highlightColor = *color;
+    }
+    style.animation = valueOf(kCaptionAnimations, json.value(u"animation"_s).toString()).value_or(CaptionAnimation::None);
+    style.uppercase = json.value(u"uppercase"_s).toBool(false);
+    return style;
+}
+
+QJsonObject captionStyleToJson(const CaptionStyle &style)
+{
+    return {{u"style"_s, textStyleToJson(style.text)},
+            {u"preset"_s, style.preset},
+            {u"maxWordsPerLine"_s, style.maxWordsPerLine},
+            {u"position"_s, style.position},
+            {u"highlight"_s, nameOf(kCaptionHighlights, style.highlight)},
+            {u"highlightColor"_s, style.highlightColor.toString()},
+            {u"animation"_s, nameOf(kCaptionAnimations, style.animation)},
+            {u"uppercase"_s, style.uppercase}};
+}
+
+CaptionStyle captionStyleOf(const Track &track)
+{
+    const QJsonValue value = track.extras.value(u"captionStyle"_s);
+    if (value.isObject()) {
+        return captionStyleFromJson(value.toObject());
+    }
+    // Default: readable white text with an outline, low in the picture (SPEC 0bis rule 6).
+    CaptionStyle style;
+    style.text.size = Param(0.055);
+    style.text.stroke = TextStroke{};
+    return style;
+}
+
+void setCaptionStyle(Track &track, const CaptionStyle &style)
+{
+    track.extras.insert(u"captionStyle"_s, captionStyleToJson(style));
 }
 
 GraphicSettings graphicFromJson(const QJsonObject &json)

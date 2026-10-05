@@ -51,6 +51,8 @@ struct TrackLocation
 
 // Whether a clip of this kind (and streams) may live on a track of this kind.
 bool clipAllowedOnTrack(const Clip &clip, TrackKind trackKind);
+// Also checks that caption lines go on caption tracks (Track::captions) and texts on the other text tracks.
+bool clipAllowedOnTrack(const Clip &clip, const Track &track);
 
 // The whole project as a plain value: copyable (snapshots for export and tests), comparable,
 // serializable. Mutations go through ProjectMutator so that every change is recorded.
