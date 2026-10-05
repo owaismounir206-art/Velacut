@@ -141,6 +141,11 @@ public:
     // ends where the next starts.
     EditResult insertCaptions(const std::vector<captions::CaptionLine> &lines,
                               const std::optional<CaptionStyle> &style = std::nullopt, bool replace = false);
+    // A caption line and the next one on its track become one line (from the start of the first to the end of the
+    // second, words kept where they are said).
+    EditResult mergeCaptionLines(const ClipId &first);
+    // Every line of a caption track earlier (negative) or later by `delta`, never before 0 (sync with the speech).
+    EditResult shiftCaptions(const TrackId &trackId, const RationalTime &delta);
 
     // ---- Phase 4 ----
     using AudioOffsetFn = std::function<std::optional<double>(const Clip &ref, const Clip &target)>;

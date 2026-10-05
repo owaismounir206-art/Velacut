@@ -76,6 +76,71 @@ std::pair<SubtitleClipData, SubtitleClipData> split(const SubtitleClipData &line
     return {first, second};
 }
 
+SubtitleClipData withText(const SubtitleClipData &line, const QString &text)
+{
+    SubtitleClipData result = line;
+    const QStringList words = splitWords(text);
+    result.text = words.join(u' ');
+    if (static_cast<size_t>(words.size()) == line.words.size()) {
+        for (size_t i = 0; i < result.words.size(); ++i) {
+            result.words[i].text = words[static_cast<qsizetype>(i)];
+        }
+    } else {
+        result.words.clear();
+    }
+    return result;
+}
+
+SubtitleClipData merged(const SubtitleClipData &first, const RationalTime &firstDuration, const SubtitleClipData &second,
+                        const RationalTime &secondDuration, const RationalTime &gap)
+{
+    SubtitleClipData result = first;
+    result.words = timedWords(first, firstDuration);
+    const RationalTime offset = firstDuration + gap.rescaled(firstDuration.rate(), Rounding::NearestEven);
+    for (const TimedWord &word : timedWords(second, secondDuration)) {
+        result.words.push_back(TimedWord{word.text, word.start.rescaled(offset.rate(), Rounding::NearestEven) + offset,
+                                         word.end.rescaled(offset.rate(), Rounding::NearestEven) + offset});
+    }
+    result.text = QStringList{first.text, second.text}.join(u' ').trimmed();
+    return result;
+}
+
+std::vector<WordGroup> groupsOf(const std::vector<TimedWord> &words, int maxWords, const RationalTime &duration)
+{
+    std::vector<WordGroup> groups;
+    if (words.empty()) {
+        return groups;
+    }
+    const auto sentenceEnd = [](const QString &word) {
+        static const QRegularExpression end(u"[.!?\u2026][\"'\u201D\u00BB)]*$"_s);
+        return end.match(word).hasMatch();
+    };
+    const int count = static_cast<int>(words.size());
+    for (int i = 0; i < count; ++i) {
+        const bool full = maxWords > 0 && !groups.empty() && groups.back().count >= maxWords;
+        const bool afterSentence = maxWords > 0 && i > 0 && sentenceEnd(words[static_cast<size_t>(i - 1)].text);
+        if (groups.empty() || full || afterSentence) {
+            groups.push_back(WordGroup{i, 0, words[static_cast<size_t>(i)].start, duration});
+        }
+        ++groups.back().count;
+    }
+    groups.front().start = RationalTime(0, duration.rate());
+    for (size_t i = 0; i + 1 < groups.size(); ++i) {
+        groups[i + 1].start = std::clamp(groups[i + 1].start, groups[i].start, duration);
+        groups[i].end = groups[i + 1].start;
+    }
+    return groups;
+}
+
+int activeWord(const std::vector<TimedWord> &words, const RationalTime &time)
+{
+    int active = -1;
+    for (size_t i = 0; i < words.size() && words[i].start <= time; ++i) {
+        active = static_cast<int>(i);
+    }
+    return active;
+}
+
 std::vector<SubtitleEntry> entriesOf(const Track &track)
 {
     std::vector<SubtitleEntry> entries;

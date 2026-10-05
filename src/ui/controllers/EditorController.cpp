@@ -2,6 +2,7 @@
 #include "EditorController.h"
 
 #include "ActionRegistry.h"
+#include "CaptionsController.h"
 #include "ClipInspector.h"
 #include "RecordController.h"
 #include "common/Paths.h"
@@ -118,6 +119,7 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     connect(&stack, &QUndoStack::redoTextChanged, this, &EditorController::undoChanged);
     connect(m_player.get(), &engine::TimelinePlayer::positionChanged, this, &EditorController::splitAvailableChanged);
     m_inspector = new ClipInspector(*this);
+    m_captions = new CaptionsController(*this);
     m_actions = new ActionRegistry(*this);
     m_recorder = std::make_unique<RecordController>(*this);
 }

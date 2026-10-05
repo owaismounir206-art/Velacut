@@ -40,6 +40,7 @@ class MediaImporter;
 namespace vedit::ui {
 
 class ActionRegistry;
+class CaptionsController;
 class ClipInspector;
 
 // The open project in the editor: every user action becomes one command on the undo stack (docs/ARCHITECTURE.md §9).
@@ -64,6 +65,7 @@ class EditorController : public QObject
     Q_PROPERTY(vedit::ui::TimelineModel *timeline READ timeline CONSTANT FINAL)
     Q_PROPERTY(vedit::engine::RenderJob *exportJob READ exportJob CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::ClipInspector *inspector READ inspector CONSTANT FINAL)
+    Q_PROPERTY(vedit::ui::CaptionsController *captions READ captions CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::ActionRegistry *actions READ actions CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::RecordController *recorder READ recorder CONSTANT FINAL)
     Q_PROPERTY(QStringList selection READ selection NOTIFY selectionChanged FINAL)
@@ -126,6 +128,7 @@ public:
     TimelineModel *timeline() const { return m_timeline.get(); }
     engine::RenderJob *exportJob() const { return m_exportJob.get(); }
     ClipInspector *inspector() const { return m_inspector; }
+    CaptionsController *captions() const { return m_captions; }
     ActionRegistry *actions() const { return m_actions; }
     RecordController *recorder() const;
     Q_INVOKABLE void startRecord(int mode = 0);
@@ -384,6 +387,7 @@ private:
     TransitionId m_transition;
     ClipId m_cut;
     ClipInspector *m_inspector = nullptr; // child
+    CaptionsController *m_captions = nullptr; // child
     quint64 m_trackGesture = 1;
     ActionRegistry *m_actions = nullptr;  // child
     quint64 m_importBatch = 0;

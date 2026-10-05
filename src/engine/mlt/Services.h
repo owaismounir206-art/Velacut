@@ -269,6 +269,9 @@ fx::GraphicParams graphicParams(const GraphicSettings &settings);
 fx::GraphicGlyphs makeGraphicGlyphs(const GraphicSettings &settings, int canvasHeight);
 // `length`: frames of the clip (the animation spans it).
 std::unique_ptr<Mlt::Producer> makeGraphicProducer(Mlt::Profile &profile, const GraphicSettings &settings, int length);
+// A caption line `length` frames long in the style of its track (engine/text/CaptionRenderer.h).
+std::unique_ptr<Mlt::Producer> makeCaptionProducer(Mlt::Profile &profile, const SubtitleClipData &line,
+                                                   const CaptionStyle &style, int length);
 
 struct VideoEffectSettings
 {

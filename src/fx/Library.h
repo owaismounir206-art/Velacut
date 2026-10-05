@@ -65,6 +65,16 @@ struct TextStylePreset
     LocalizedText sampleText; // what a new text in this style says (templates); empty: "Your text"
 };
 
+// A look for captions (FILE_FORMAT §5.5 "captionStyle"): text style, highlight of the word being said, animation.
+struct CaptionStylePreset
+{
+    QString id; // "captions/karaoke-yellow"
+    int version = 1;
+    QString category;
+    LocalizedText name;
+    QJsonObject style; // a "captionStyle" object
+};
+
 struct AnimationPreset
 {
     QString id; // "animations/in/fade"
@@ -171,6 +181,9 @@ public:
     const std::vector<Category> &textStyleCategories() const { return m_textCategories; }
     const std::vector<TextStylePreset> &textStyles() const { return m_textStyles; }
     const TextStylePreset *textStyle(const QString &id) const;
+    const std::vector<Category> &captionStyleCategories() const { return m_captionCategories; }
+    const std::vector<CaptionStylePreset> &captionStyles() const { return m_captionStyles; }
+    const CaptionStylePreset *captionStyle(const QString &id) const;
     const std::vector<Category> &animationCategories() const { return m_animationCategories; }
     const std::vector<AnimationPreset> &animations() const { return m_animations; }
     const AnimationPreset *animation(const QString &id) const;
@@ -199,6 +212,8 @@ private:
     std::vector<TransitionPreset> m_transitions;
     std::vector<Category> m_textCategories;
     std::vector<TextStylePreset> m_textStyles;
+    std::vector<Category> m_captionCategories;
+    std::vector<CaptionStylePreset> m_captionStyles;
     std::vector<Category> m_animationCategories;
     std::vector<AnimationPreset> m_animations;
     std::vector<Category> m_stickerCategories;

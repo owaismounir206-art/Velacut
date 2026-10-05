@@ -4,7 +4,7 @@
 <context>
     <name>EditorScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+368"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+372"/>
         <source>Choose %n video(s) or photo(s) for the template</source>
         <translation>
             <numerusform>Choose %n video or photo for the template</numerusform>
@@ -48,7 +48,7 @@
 <context>
     <name>PropertiesPanel</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+185"/>
+        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+193"/>
         <source>%n clip(s) selected: changes apply to all of them.</source>
         <translation>
             <numerusform>%n clip selected: changes apply to it.</numerusform>
@@ -56,7 +56,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+395"/>
+        <location line="+579"/>
         <source>%n keyframe(s)</source>
         <translation>
             <numerusform>%n keyframe</numerusform>
@@ -87,9 +87,28 @@
     </message>
 </context>
 <context>
+    <name>vedit::ui::CaptionsController</name>
+    <message numerus="yes">
+        <location filename="../src/ui/controllers/CaptionsController.cpp" line="+221"/>
+        <source>%n caption line(s) added</source>
+        <translation>
+            <numerusform>%n caption line added</numerusform>
+            <numerusform>%n caption lines added</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+275"/>
+        <source>Replaced in %n line(s)</source>
+        <translation>
+            <numerusform>Replaced in %n line</numerusform>
+            <numerusform>Replaced in %n lines</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>vedit::ui::ClipInspector</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+1989"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+1996"/>
         <location line="+454"/>
         <source>Transition on %n cut(s)</source>
         <translation>
@@ -109,7 +128,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+954"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+956"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>

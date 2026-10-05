@@ -60,6 +60,7 @@ QVariantList AssetLibraryModel::categories() const
                                             : m_kind == Stickers    ? library.stickerCategories()
                                             : m_kind == VideoEffects ? library.videoEffectCategories()
                                             : m_kind == Templates   ? library.templateCategories()
+                                            : m_kind == CaptionStyles ? library.captionStyleCategories()
                                                                     : library.textStyleCategories();
     QVariantList result;
     for (const fx::Category &category : list) {
@@ -89,6 +90,12 @@ std::vector<AssetLibraryModel::Item> AssetLibraryModel::itemsOfKind() const
     case TextStyles:
         for (const fx::TextStylePreset &preset : library.textStyles()) {
             add(preset);
+        }
+        break;
+    case CaptionStyles:
+        for (const fx::CaptionStylePreset &preset : library.captionStyles()) {
+            add(preset);
+            items.back().animated = true; // the words light up one after the other under the pointer
         }
         break;
     case Animations:

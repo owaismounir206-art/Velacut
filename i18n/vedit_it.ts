@@ -396,6 +396,149 @@
     </message>
 </context>
 <context>
+    <name>CaptionsPanel</name>
+    <message>
+        <location filename="../src/ui/qml/CaptionsPanel.qml" line="+29"/>
+        <source>Import captions</source>
+        <translation>Importa sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Subtitles (%1)</source>
+        <translation>Sottotitoli (%1)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>All files (*)</source>
+        <translation>Tutti i file (*)</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Save the captions</source>
+        <translation>Salva i sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>SubRip (%1)</source>
+        <translation>SubRip (%1)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>WebVTT (%1)</source>
+        <translation>WebVTT (%1)</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Captions</source>
+        <translation>Sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Import a subtitle file (SRT, WebVTT)</source>
+        <translation>Importa un file di sottotitoli (SRT, WebVTT)</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Save the captions as a file (SRT, WebVTT)</source>
+        <translation>Salva i sottotitoli come file (SRT, WebVTT)</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Lines</source>
+        <translation>Righe</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Styles</source>
+        <translation>Stili</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Bring a subtitle file, or type the captions line by line: each word lights up while it is said.</source>
+        <translation>Porta un file di sottotitoli, o scrivi i sottotitoli riga per riga: ogni parola si illumina mentre viene detta.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Import a subtitle file</source>
+        <translation>Importa un file di sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Type the captions</source>
+        <translation>Scrivi i sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Find in the captions</source>
+        <translation>Cerca nei sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Replace</source>
+        <translation>Sostituisci</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Replace with</source>
+        <translation>Sostituisci con</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Replace all (%1)</source>
+        <translation>Sostituisci tutto (%1)</translation>
+    </message>
+    <message>
+        <location line="+63"/>
+        <source>Caption line %1</source>
+        <translation>Riga di sottotitoli %1</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>Split the line at the playhead</source>
+        <translation>Dividi la riga all&apos;indicatore di riproduzione</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Join with the next line</source>
+        <translation>Unisci alla riga successiva</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Delete the line</source>
+        <translation>Elimina la riga</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Add a line</source>
+        <translation>Aggiungi una riga</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Timing</source>
+        <translation>Tempi</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>All the captions 0.1 s earlier</source>
+        <translation>Tutti i sottotitoli 0,1 s prima</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>All the captions 0.1 s later</source>
+        <translation>Tutti i sottotitoli 0,1 s dopo</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>All</source>
+        <translation>Tutti</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Choose the look now: the captions you add get it.</source>
+        <translation>Scegli ora l&apos;aspetto: i sottotitoli che aggiungi lo avranno.</translation>
+    </message>
+</context>
+<context>
     <name>ColorCurvesEditor</name>
     <message>
         <location filename="../src/ui/qml/ColorCurvesEditor.qml" line="+31"/>
@@ -618,47 +761,52 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+24"/>
+        <location line="+25"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-23"/>
-        <location line="+28"/>
+        <location line="-24"/>
+        <source>Captions</source>
+        <translation>Sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+31"/>
         <source>Stickers</source>
         <translation>Sticker</translation>
     </message>
     <message>
-        <location line="-27"/>
-        <location line="+32"/>
+        <location line="-30"/>
+        <location line="+35"/>
         <source>Effects</source>
         <translation>Effetti</translation>
     </message>
     <message>
-        <location line="-31"/>
-        <location line="+36"/>
+        <location line="-34"/>
+        <location line="+39"/>
         <source>Transitions</source>
         <translation>Transizioni</translation>
     </message>
     <message>
-        <location line="-35"/>
-        <location line="+40"/>
+        <location line="-38"/>
+        <location line="+43"/>
         <source>Filters</source>
         <translation>Filtri</translation>
     </message>
     <message>
-        <location line="-39"/>
-        <location line="+44"/>
+        <location line="-42"/>
+        <location line="+47"/>
         <source>Animations</source>
         <translation>Animazioni</translation>
     </message>
     <message>
-        <location line="-43"/>
+        <location line="-46"/>
         <source>Brand</source>
         <translation>Marchio</translation>
     </message>
     <message>
-        <location line="+148"/>
+        <location line="+151"/>
         <source>Choose a video or a photo for “%1”</source>
         <translation>Scegli un video o una foto per «%1»</translation>
     </message>
@@ -2266,30 +2414,30 @@
 <context>
     <name>PropertiesPanel</name>
     <message>
-        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+42"/>
-        <location line="+207"/>
+        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+44"/>
+        <location line="+397"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-205"/>
-        <location line="+729"/>
+        <location line="-395"/>
+        <location line="+919"/>
         <source>Visualizer</source>
         <translation>Visualizzatore</translation>
     </message>
     <message>
-        <location line="-728"/>
+        <location line="-918"/>
         <source>Sticker</source>
         <translation>Sticker</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+729"/>
+        <location line="+919"/>
         <source>Element</source>
         <translation>Elemento</translation>
     </message>
     <message>
-        <location line="-727"/>
+        <location line="-917"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
@@ -2305,13 +2453,13 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1217"/>
+        <location line="+1407"/>
         <location line="+19"/>
         <source>Speed</source>
         <translation>Velocità</translation>
     </message>
     <message>
-        <location line="-1234"/>
+        <location line="-1424"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -2327,12 +2475,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1682"/>
+        <location line="+1872"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
     <message>
-        <location line="-1583"/>
+        <location line="-1767"/>
         <source>Select a clip on the timeline to change it here.</source>
         <translation>Seleziona una clip sulla timeline per modificarla qui.</translation>
     </message>
@@ -2347,12 +2495,12 @@
     <message>
         <location line="-83"/>
         <location line="+114"/>
-        <location line="+322"/>
+        <location line="+506"/>
         <source>Duration</source>
         <translation>Durata</translation>
     </message>
     <message>
-        <location line="-311"/>
+        <location line="-495"/>
         <source>Apply to all cuts</source>
         <translation>Applica a tutti i tagli</translation>
     </message>
@@ -2362,7 +2510,8 @@
         <translation>Rimuovi transizione</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+68"/>
+        <location line="+132"/>
         <source>Write here</source>
         <translation>Scrivi qui</translation>
     </message>
@@ -2382,7 +2531,8 @@
         <translation>Carattere</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="-46"/>
+        <location line="+53"/>
         <source>Bold</source>
         <translation>Grassetto</translation>
     </message>
@@ -2412,15 +2562,16 @@
         <translation>Allinea a destra</translation>
     </message>
     <message>
-        <location line="-201"/>
-        <location line="+216"/>
+        <location line="-385"/>
+        <location line="+268"/>
+        <location line="+132"/>
         <location line="+330"/>
         <location line="+206"/>
         <source>Size</source>
         <translation>Dimensione</translation>
     </message>
     <message>
-        <location line="-757"/>
+        <location line="-941"/>
         <source>Project</source>
         <translation>Progetto</translation>
     </message>
@@ -2450,7 +2601,8 @@
         <translation>Formato</translation>
     </message>
     <message>
-        <location line="+196"/>
+        <location line="+275"/>
+        <location line="+105"/>
         <location line="+375"/>
         <location line="+43"/>
         <location line="+34"/>
@@ -2460,12 +2612,14 @@
         <translation>Colore</translation>
     </message>
     <message>
-        <location line="-626"/>
+        <location line="-731"/>
+        <location line="+105"/>
         <source>Text colour</source>
         <translation>Colore del testo</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-99"/>
+        <location line="+105"/>
         <location line="+4"/>
         <source>Outline</source>
         <translation>Contorno</translation>
@@ -2483,7 +2637,8 @@
         <translation>Ombra</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-125"/>
+        <location line="+131"/>
         <location line="+369"/>
         <source>Background</source>
         <translation>Sfondo</translation>
@@ -2494,7 +2649,8 @@
         <translation>Sfondo del testo</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="-129"/>
+        <location line="+137"/>
         <location line="+378"/>
         <source>Background colour</source>
         <translation>Colore dello sfondo</translation>
@@ -2653,12 +2809,110 @@
         <translation>Scorri in giù</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-295"/>
+        <location line="+296"/>
         <source>Bounce</source>
         <translation>Rimbalzo</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-657"/>
+        <source>Captions</source>
+        <translation>Sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+291"/>
+        <source>Split</source>
+        <translation>Dividi</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Join with next</source>
+        <translation>Unisci alla successiva</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Look of all the captions</source>
+        <translation>Aspetto di tutti i sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Choose a style</source>
+        <translation>Scegli uno stile</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Words at a time</source>
+        <translation>Parole alla volta</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Whole line</source>
+        <translation>Riga intera</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Height</source>
+        <translation>Altezza</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <location line="+7"/>
+        <source>Word being said</source>
+        <translation>Parola pronunciata</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Not highlighted</source>
+        <translation>Non evidenziata</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Coloured</source>
+        <translation>Colorata</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Bigger</source>
+        <translation>Più grande</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>In a box</source>
+        <translation>In un riquadro</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Karaoke fill</source>
+        <translation>Riempimento karaoke</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Highlight colour</source>
+        <translation>Colore di evidenziazione</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+7"/>
+        <source>Entrance</source>
+        <translation>Entrata</translation>
+    </message>
+    <message>
+        <location line="-3"/>
+        <source>Pop</source>
+        <translation>Pop</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Fade</source>
+        <translation>Dissolvenza</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Capital letters</source>
+        <translation>Tutto maiuscolo</translation>
+    </message>
+    <message>
+        <location line="+282"/>
         <source>Pop in</source>
         <translation>Comparsa</translation>
     </message>
@@ -3140,8 +3394,8 @@
         <translation>Dissolvenza in entrata</translation>
     </message>
     <message>
-        <location line="-863"/>
-        <location line="+644"/>
+        <location line="-1047"/>
+        <location line="+828"/>
         <location line="+222"/>
         <location line="+8"/>
         <location line="+370"/>
@@ -3149,12 +3403,12 @@
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-1425"/>
+        <location line="-1617"/>
         <source>Transition</source>
         <translation>Transizione</translation>
     </message>
     <message>
-        <location line="+1052"/>
+        <location line="+1244"/>
         <source>Fade out</source>
         <translation>Dissolvenza in uscita</translation>
     </message>
@@ -3242,7 +3496,8 @@
         <translation>Maschera</translation>
     </message>
     <message>
-        <location line="-1081"/>
+        <location line="-1277"/>
+        <location line="+196"/>
         <location line="+95"/>
         <location line="+651"/>
         <location line="+342"/>
@@ -3250,7 +3505,8 @@
         <translation>Nessuna</translation>
     </message>
     <message>
-        <location line="-969"/>
+        <location line="-1378"/>
+        <location line="+409"/>
         <location line="+969"/>
         <source>Line</source>
         <translation>Linea</translation>
@@ -3267,7 +3523,7 @@
         <translation>Cerchio</translation>
     </message>
     <message>
-        <location line="-1476"/>
+        <location line="-1668"/>
         <source>Choose 3D LUT (.cube)</source>
         <translation>Scegli una LUT 3D (.cube)</translation>
     </message>
@@ -3282,7 +3538,7 @@
         <translation>Tutti i file (*)</translation>
     </message>
     <message>
-        <location line="+361"/>
+        <location line="+553"/>
         <location line="+1114"/>
         <source>Rectangle</source>
         <translation>Rettangolo</translation>
@@ -4120,12 +4376,12 @@
         <translation>Clip %1</translation>
     </message>
     <message>
-        <location line="+87"/>
+        <location line="+89"/>
         <source>Replace</source>
         <translation>Sostituisci</translation>
     </message>
     <message>
-        <location line="+143"/>
+        <location line="+144"/>
         <source>Group into a compound clip</source>
         <translation>Raggruppa in una clip composta</translation>
     </message>
@@ -4449,11 +4705,13 @@
         <location line="+121"/>
         <location line="+21"/>
         <location line="+67"/>
+        <location line="+79"/>
+        <location line="+27"/>
         <source>The sequence does not exist.</source>
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-1765"/>
+        <location line="-1871"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -4538,19 +4796,22 @@
         <location line="+64"/>
         <location line="+286"/>
         <location line="+101"/>
+        <location line="+42"/>
+        <location line="+27"/>
         <source>The track is locked.</source>
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-1726"/>
+        <location line="-1795"/>
         <location line="+817"/>
         <location line="+47"/>
         <location line="+14"/>
+        <location line="+913"/>
         <source>The track does not exist.</source>
         <translation>La traccia non esiste.</translation>
     </message>
     <message>
-        <location line="-872"/>
+        <location line="-1785"/>
         <source>This clip cannot be placed on that track.</source>
         <translation>Questa clip non può andare su quella traccia.</translation>
     </message>
@@ -4935,6 +5196,36 @@
         <source>Add captions</source>
         <translation>Aggiungi sottotitoli</translation>
     </message>
+    <message>
+        <location line="+11"/>
+        <source>Select a caption line first.</source>
+        <translation>Seleziona prima una riga di sottotitoli.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>This is the last line: there is no next line to join.</source>
+        <translation>Questa è l&apos;ultima riga: non c&apos;è una riga successiva da unire.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Join caption lines</source>
+        <translation>Unisci righe di sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>This track has no captions.</source>
+        <translation>Questa traccia non ha sottotitoli.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>The captions already start at the beginning.</source>
+        <translation>I sottotitoli iniziano già dall&apos;inizio.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Move captions</source>
+        <translation>Sposta sottotitoli</translation>
+    </message>
 </context>
 <context>
     <name>vedit::document::Document</name>
@@ -5224,7 +5515,7 @@
 <context>
     <name>vedit::ui::ActionRegistry</name>
     <message>
-        <location filename="../src/ui/controllers/ActionRegistry.cpp" line="+79"/>
+        <location filename="../src/ui/controllers/ActionRegistry.cpp" line="+80"/>
         <source>Split</source>
         <translation>Dividi</translation>
     </message>
@@ -5245,12 +5536,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+274"/>
+        <location line="+275"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-273"/>
+        <location line="-274"/>
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
@@ -5351,6 +5642,12 @@
     </message>
     <message>
         <location line="+1"/>
+        <location line="+230"/>
+        <source>Captions</source>
+        <translation>Sottotitoli</translation>
+    </message>
+    <message>
+        <location line="-229"/>
         <source>Add a sticker</source>
         <translation>Aggiungi uno sticker</translation>
     </message>
@@ -5567,7 +5864,12 @@
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
+        <source>Caption style</source>
+        <translation>Stile sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <location line="+1"/>
         <source>Effect</source>
         <translation>Effetto</translation>
@@ -5594,8 +5896,8 @@
         <translation>Animazione in ciclo</translation>
     </message>
     <message>
-        <location line="-275"/>
-        <location line="+276"/>
+        <location line="-280"/>
+        <location line="+281"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -5642,7 +5944,12 @@
 <context>
     <name>vedit::ui::AssetThumbnail</name>
     <message>
-        <location filename="../src/ui/items/AssetThumbnail.cpp" line="+321"/>
+        <location filename="../src/ui/items/AssetThumbnail.cpp" line="+228"/>
+        <source>Hi everyone here</source>
+        <translation>Ciao a tutti</translation>
+    </message>
+    <message>
+        <location line="+117"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
@@ -5671,16 +5978,100 @@
     </message>
 </context>
 <context>
+    <name>vedit::ui::CaptionsController</name>
+    <message>
+        <location filename="../src/ui/controllers/CaptionsController.cpp" line="+205"/>
+        <source>The file %1 cannot be read.</source>
+        <translation>Il file %1 non può essere letto.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 has no captions vedit can read (SRT or WebVTT).</source>
+        <translation>%1 non contiene sottotitoli che vedit sa leggere (SRT o WebVTT).</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+10"/>
+        <source>%n caption line(s) added</source>
+        <translation>
+            <numerusform>%n riga di sottotitoli aggiunta</numerusform>
+            <numerusform>%n righe di sottotitoli aggiunte</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Captions</source>
+        <translation>Sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>There are no captions to save yet.</source>
+        <translation>Non ci sono ancora sottotitoli da salvare.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>The captions cannot be saved in %1.</source>
+        <translation>Impossibile salvare i sottotitoli in %1.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Captions saved: %1</source>
+        <translation>Sottotitoli salvati: %1</translation>
+    </message>
+    <message>
+        <location line="+36"/>
+        <source>Style chosen: your captions will have it.</source>
+        <translation>Stile scelto: i tuoi sottotitoli lo avranno.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Apply caption style</source>
+        <translation>Applica stile sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+58"/>
+        <source>Change captions</source>
+        <translation>Modifica sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Edit caption</source>
+        <translation>Modifica sottotitolo</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>There is already a caption here: move the playhead to a moment without one.</source>
+        <translation>Qui c&apos;è già un sottotitolo: sposta l&apos;indicatore in un momento senza.</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>New caption</source>
+        <translation>Nuovo sottotitolo</translation>
+    </message>
+    <message>
+        <location line="+55"/>
+        <source>Replace in captions</source>
+        <translation>Sostituisci nei sottotitoli</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+5"/>
+        <source>Replaced in %n line(s)</source>
+        <translation>
+            <numerusform>Sostituito in %n riga</numerusform>
+            <numerusform>Sostituito in %n righe</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>vedit::ui::ClipInspector</name>
     <message>
         <location filename="../src/ui/controllers/ClipInspector.cpp" line="+366"/>
-        <location line="+1027"/>
+        <location line="+1034"/>
         <location line="+26"/>
         <source>Change mask</source>
         <translation>Modifica maschera</translation>
     </message>
     <message>
-        <location line="-1027"/>
+        <location line="-1034"/>
         <source>Click on the clip to pick the colour to remove.</source>
         <translation>Fai clic sulla clip per scegliere il colore da rimuovere.</translation>
     </message>
@@ -5715,7 +6106,7 @@
         <translation>Cambia la curva del keyframe</translation>
     </message>
     <message>
-        <location line="+617"/>
+        <location line="+624"/>
         <source>Colour</source>
         <translation>Colore</translation>
     </message>
@@ -6280,7 +6671,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+204"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+206"/>
         <location line="+960"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
@@ -6641,7 +7032,7 @@
 <context>
     <name>vedit::ui::TimelineModel</name>
     <message>
-        <location filename="../src/ui/models/TimelineModel.cpp" line="+188"/>
+        <location filename="../src/ui/models/TimelineModel.cpp" line="+193"/>
         <source>Sticker</source>
         <translation>Sticker</translation>
     </message>

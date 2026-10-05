@@ -13,6 +13,7 @@
 #include "theme/ThemeManager.h"
 #include "ui/controllers/ActionRegistry.h"
 #include "ui/controllers/AppController.h"
+#include "ui/controllers/CaptionsController.h"
 #include "ui/controllers/ClipInspector.h"
 #include "ui/controllers/EditorController.h"
 #include "ui/controllers/RecordController.h"
@@ -933,6 +934,67 @@ private slots:
                                     });
                                 }));
         click(byText(u"Media"_s));
+        click(byName(u"backButton"_s));
+        QTRY_VERIFY(!editor());
+    }
+
+    void captionsPanel()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        editor()->importAndInsert({QUrl::fromLocalFile(m_files.landscape)}, 0, editor()->timeline()->mainRow());
+        QTRY_VERIFY(!mainTrack().clips.empty());
+        ui::CaptionsController *captions = editor()->captions();
+        // Nothing selected: "Captions" in the toolbar opens the library tab; nothing yet, a style can be chosen first.
+        editor()->clearSelection();
+        QTRY_VERIFY(byName(u"captionsButton"_s));
+        click(byName(u"captionsButton"_s));
+        QTRY_VERIFY(byName(u"captionImportEmpty"_s));
+        QVERIFY(!captions->hasCaptions());
+        click(byText(u"Styles"_s));
+        click(byText(u"Word in a box"_s));
+        QTRY_VERIFY(byName(u"captionStyle_captions/box-purple"_s));
+        click(byName(u"captionStyle_captions/box-purple"_s));
+        QCOMPARE(captions->styleId(), u"captions/box-purple"_s);
+
+        // A subtitle file: its lines in that style.
+        QFile srt(m_dir.filePath(u"captions.srt"_s));
+        QVERIFY(srt.open(QIODevice::WriteOnly));
+        srt.write("1\r\n00:00:00,200 --> 00:00:01,400\r\nCiao a tutti\r\n\r\n2\r\n00:00:01,500 --> 00:00:02,600\r\n"
+                  "questo \xc3\xa8 vedit\r\n\r\n3\r\n00:00:02,700 --> 00:00:03,800\r\nbuona visione\r\n");
+        srt.close();
+        QVERIFY(captions->importFile(QUrl::fromLocalFile(srt.fileName())));
+        QTRY_COMPARE(captions->lines().size(), 3);
+        QCOMPARE(captions->lines()[1].toMap().value(u"text"_s).toString(), u"questo è vedit"_s);
+        QCOMPARE(captions->style().value(u"highlight"_s).toInt(), int(CaptionHighlight::Box));
+        editor()->player()->seek(25);
+        click(byText(u"Lines"_s));
+        QTRY_VERIFY(byName(u"captionLine_2"_s));
+        shot(u"19-captions-lines"_s);
+
+        // Find and replace in every line, one undo step.
+        QVERIFY(captions->replaceAll(u"vedit"_s, u"Velacut"_s) == 1);
+        QCOMPARE(captions->lines()[1].toMap().value(u"text"_s).toString(), u"questo è Velacut"_s);
+        // Another style from the library, then values of its own.
+        click(byText(u"Styles"_s));
+        click(byText(u"Karaoke"_s));
+        QTRY_VERIFY(byName(u"captionStyle_captions/karaoke-yellow"_s));
+        click(byName(u"captionStyle_captions/karaoke-yellow"_s));
+        QCOMPARE(captions->style().value(u"highlight"_s).toInt(), int(CaptionHighlight::Karaoke));
+        QVERIFY(captions->setStyleValue(u"wordsPerLine"_s, 2));
+        captions->endGesture();
+        shot(u"20-captions-styles"_s);
+
+        // A line selected: its text and the look of all the lines in the properties.
+        captions->seekToLine(0);
+        QTRY_VERIFY(byName(u"captionText"_s));
+        shot(u"21-captions-properties"_s);
+        QVERIFY(captions->joinWithNext(0));
+        QCOMPARE(captions->lines().size(), 2);
+        QCOMPARE(captions->lines()[0].toMap().value(u"text"_s).toString(), u"Ciao a tutti questo è Velacut"_s);
+        editor()->undo();
+        QCOMPARE(captions->lines().size(), 3);
         click(byName(u"backButton"_s));
         QTRY_VERIFY(!editor());
     }

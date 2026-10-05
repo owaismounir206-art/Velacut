@@ -174,6 +174,15 @@ Library Library::load(const QString &folder)
                                         sampleTextOf(item.value(u"sampleText"_s))});
     }
 
+    const QJsonObject captions = read(u"caption-styles.json"_s);
+    library.m_captionCategories = categories(captions);
+    for (const QJsonValue &value : captions.value(u"items"_s).toArray()) {
+        const QJsonObject item = value.toObject();
+        library.m_captionStyles.push_back({item.value(u"id"_s).toString(), item.value(u"version"_s).toInt(1),
+                                           item.value(u"category"_s).toString(), localized(item.value(u"name"_s)),
+                                           item.value(u"captionStyle"_s).toObject()});
+    }
+
     const QJsonObject animations = read(u"animations.json"_s);
     library.m_animationCategories = categories(animations);
     for (const QJsonValue &value : animations.value(u"items"_s).toArray()) {
@@ -309,7 +318,8 @@ QString Library::userPacksFolder()
 
 int Library::itemCount() const
 {
-    return static_cast<int>(m_filters.size() + m_transitions.size() + m_textStyles.size() + m_animations.size() +
+    return static_cast<int>(m_filters.size() + m_transitions.size() + m_textStyles.size() + m_captionStyles.size() +
+                            m_animations.size() +
                             m_stickers.size() + m_videoEffects.size() + m_templates.size());
 }
 
@@ -335,6 +345,8 @@ void Library::merge(const Library &other)
     mergeItems(m_transitions, other.m_transitions);
     mergeItems(m_textCategories, other.m_textCategories);
     mergeItems(m_textStyles, other.m_textStyles);
+    mergeItems(m_captionCategories, other.m_captionCategories);
+    mergeItems(m_captionStyles, other.m_captionStyles);
     mergeItems(m_animationCategories, other.m_animationCategories);
     mergeItems(m_animations, other.m_animations);
     mergeItems(m_stickerCategories, other.m_stickerCategories);
@@ -369,6 +381,16 @@ const TransitionPreset *Library::transition(const QString &id) const
 const TextStylePreset *Library::textStyle(const QString &id) const
 {
     for (const TextStylePreset &preset : m_textStyles) {
+        if (preset.id == id) {
+            return &preset;
+        }
+    }
+    return nullptr;
+}
+
+const CaptionStylePreset *Library::captionStyle(const QString &id) const
+{
+    for (const CaptionStylePreset &preset : m_captionStyles) {
         if (preset.id == id) {
             return &preset;
         }

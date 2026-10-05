@@ -25,6 +25,7 @@ qt_add_qml_module(vedit_ui
         controllers/EngineTypes.h
         controllers/AppController.h controllers/AppController.cpp
         controllers/EditorController.h controllers/EditorController.cpp
+        controllers/CaptionsController.h controllers/CaptionsController.cpp
         controllers/ClipInspector.h controllers/ClipInspector.cpp
         controllers/ActionRegistry.h controllers/ActionRegistry.cpp
         controllers/RecordController.h controllers/RecordController.cpp
@@ -68,6 +69,7 @@ qt_add_qml_module(vedit_ui
         qml/PreferencesDialog.qml
         qml/SlideshowDialog.qml
         qml/BrandKitPanel.qml
+        qml/CaptionsPanel.qml
         qml/FullScreenPreview.qml
 )
 qt_add_shaders(vedit_ui "vedit_preview_shaders"

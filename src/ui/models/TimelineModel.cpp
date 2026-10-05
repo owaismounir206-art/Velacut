@@ -36,6 +36,9 @@ QString kindOf(const Clip &clip, const ProjectData &project)
     if (clip.text()) {
         return u"text"_s;
     }
+    if (clip.subtitle()) {
+        return u"caption"_s;
+    }
     if (clip.sticker()) {
         return u"sticker"_s;
     }
@@ -182,6 +185,8 @@ void TimelineModel::rebuild()
                     }
                 } else if (const TextClipData *text = clip.text(); text && clip.name.isEmpty()) {
                     entry.name = text->text.section(u'\n', 0, 0); // what the text says
+                } else if (const SubtitleClipData *line = clip.subtitle(); line && clip.name.isEmpty()) {
+                    entry.name = line->text;
                 } else if (const StickerClipData *sticker = clip.sticker(); sticker && clip.name.isEmpty()) {
                     const fx::StickerPreset *preset = sticker->source ? fx::Library::core().sticker(sticker->source->id) : nullptr;
                     const Media *item = sticker->mediaId.isNull() ? nullptr : project.findMedia(sticker->mediaId);

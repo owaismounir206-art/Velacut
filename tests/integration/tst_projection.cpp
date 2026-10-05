@@ -4,14 +4,18 @@
 #include "../unit/ProjectFixture.h"
 #include "TestMedia.h"
 
+#include "core/serialization/ProjectJson.h"
+#include "fx/Library.h"
 #include "engine/mlt/MltRuntime.h"
 #include "engine/timeline/ClipPlacement.h"
 #include "engine/timeline/MediaProducerCache.h"
 #include "engine/analysis/AudioSync.h"
+#include "engine/text/CaptionRenderer.h"
 #include "engine/timeline/TimelineProjection.h"
 
 #include <QCryptographicHash>
 #include <QFile>
+#include <QPainter>
 #include <QTemporaryDir>
 
 #include <mlt++/Mlt.h>
@@ -369,6 +373,129 @@ private slots:
         QCOMPARE(rgbHash(renderFresh1(session.data(), 90)), rgbHash(renderFresh1(Session(baseProjectWithClip()).data(), 90)));
     }
 
+    void captionsHighlightTheWordBeingSaid()
+    {
+        // Over the black background: the test video has coloured parts of its own.
+        Session session(baseProject());
+        CaptionStyle style;
+        style.text.size = Param(0.22);
+        style.text.color = Param(Color{255, 0, 0, 255});
+        style.text.fontWeight = 900;
+        style.position = 0.0;
+        style.highlight = CaptionHighlight::Color;
+        style.highlightColor = Color{0, 255, 0, 255};
+        const std::vector<captions::CaptionLine> lines{
+            {frames(0), frames(60), u"MMM MMM"_s,
+             {TimedWord{u"MMM"_s, frames(0), frames(30)}, TimedWord{u"MMM"_s, frames(30), frames(60)}}},
+            {frames(80), frames(100), u"MMM"_s, {}}};
+        QVERIFY(session.apply(session.editor().insertCaptions(lines, style)));
+        // Green (the word being said) on the left at first, then on the right; red for the other word.
+        const auto count = [](const QImage &image, QRgb color, bool left) {
+            int n = 0;
+            for (int y = 40; y < 140; ++y) {
+                for (int x = left ? 0 : 160; x < (left ? 160 : 320); ++x) {
+                    const QColor c = image.pixelColor(x, y);
+                    const bool match = color == qRgb(0, 255, 0) ? (c.green() > 200 && c.red() < 60 && c.blue() < 60)
+                                                                : (c.red() > 200 && c.green() < 60 && c.blue() < 60);
+                    n += match ? 1 : 0;
+                }
+            }
+            return n;
+        };
+        const QImage first = renderFresh1(session.data(), 10);
+        QVERIFY2(count(first, qRgb(0, 255, 0), true) > 100, "the first word is highlighted");
+        QCOMPARE(count(first, qRgb(0, 255, 0), false), 0);
+        QVERIFY(count(first, qRgb(255, 0, 0), false) > 100);
+        const QImage second = renderFresh1(session.data(), 40);
+        QCOMPARE(count(second, qRgb(0, 255, 0), true), 0);
+        QVERIFY2(count(second, qRgb(0, 255, 0), false) > 100, "then the second");
+
+        // One word at a time: the second word replaces the first in the middle.
+        style.maxWordsPerLine = 1;
+        QVERIFY(session.apply(session.editor().insertCaptions(lines, style, true)));
+        const QImage alone = renderFresh1(session.data(), 10);
+        QCOMPARE(count(alone, qRgb(255, 0, 0), false) + count(alone, qRgb(255, 0, 0), true), 0);
+        QVERIFY(count(alone, qRgb(0, 255, 0), true) > 50 && count(alone, qRgb(0, 255, 0), false) > 50);
+        QCOMPARE(rgbHash(renderFresh1(session.data(), 59)), rgbHash(renderFresh1(session.data(), 10)));
+        // Between the lines: nothing.
+        const QImage between = renderFresh1(session.data(), 70);
+        QImage black(between.size(), between.format());
+        black.fill(Qt::black);
+        QCOMPARE(between, black);
+    }
+
+    void captionFramesAreReusedBetweenChanges()
+    {
+        SubtitleClipData line;
+        line.text = u"uno due tre"_s;
+        line.words = {TimedWord{u"uno"_s, frames(0), frames(20)}, TimedWord{u"due"_s, frames(20), frames(40)},
+                      TimedWord{u"tre"_s, frames(40), frames(60)}};
+        CaptionStyle style;
+        style.highlight = CaptionHighlight::Box;
+        auto layout = CaptionRenderer::layout(line, style, 60, QSize(320, 180), Rational(30));
+        QCOMPARE(layout->groups.size(), 1u);
+        // Same word, no animation: same picture (the producer reuses it).
+        QCOMPARE(CaptionRenderer::stateKey(*layout, 5), CaptionRenderer::stateKey(*layout, 15));
+        QVERIFY(CaptionRenderer::stateKey(*layout, 15) != CaptionRenderer::stateKey(*layout, 25));
+        QCOMPARE(CaptionRenderer::stateKey(*layout, 60), std::int64_t(-1));
+        QCOMPARE(rgbHash(CaptionRenderer::render(*layout, 5, QSize(320, 180))),
+                 rgbHash(CaptionRenderer::render(*layout, 15, QSize(320, 180))));
+        // A pop animation changes the picture during its first frames only.
+        style.animation = CaptionAnimation::Pop;
+        style.maxWordsPerLine = 2;
+        layout = CaptionRenderer::layout(line, style, 60, QSize(320, 180), Rational(30));
+        QCOMPARE(layout->groups.size(), 2u);
+        QCOMPARE(layout->groups[1].start, std::int64_t(40));
+        QVERIFY(CaptionRenderer::stateKey(*layout, 1) != CaptionRenderer::stateKey(*layout, 2));
+        QCOMPARE(CaptionRenderer::stateKey(*layout, 12), CaptionRenderer::stateKey(*layout, 18));
+        // Drawn at half size: the same picture, smaller.
+        const QImage half = CaptionRenderer::render(*layout, 12, QSize(160, 90));
+        QCOMPARE(half.size(), QSize(160, 90));
+        QVERIFY(!CaptionRenderer::bounds(*layout, 12).isEmpty());
+    }
+
+    // Every caption style of the library draws its words, in a vertical video (VEDIT_UI_SHOTS=<folder> saves a contact
+    // sheet to look at them).
+    void everyCaptionStyleDraws()
+    {
+        SubtitleClipData line;
+        line.text = u"Questo è il momento migliore della giornata!"_s;
+        const fx::Library &library = fx::Library::core();
+        const QSize canvas(540, 960);
+        const int columns = 8;
+        const int rows = static_cast<int>((library.captionStyles().size() + columns - 1) / columns);
+        QImage sheet(canvas.width() / 2 * columns, canvas.height() / 2 * rows, QImage::Format_RGB888);
+        sheet.fill(QColor(70, 90, 110));
+        QPainter painter(&sheet);
+        int index = 0;
+        for (const fx::CaptionStylePreset &preset : library.captionStyles()) {
+            const CaptionStyle style = projectjson::captionStyleFromJson(preset.style);
+            const auto layout = CaptionRenderer::layout(line, style, 150, canvas, Rational(30));
+            QVERIFY2(!layout->groups.empty(), qPrintable(preset.id));
+            // Late in the line, after any entry animation: the words are on screen.
+            const std::int64_t frame = layout->groups.front().start + 20;
+            const QImage image = CaptionRenderer::render(*layout, frame, canvas);
+            int opaque = 0;
+            for (int y = 0; y < image.height(); y += 2) {
+                for (int x = 0; x < image.width(); x += 2) {
+                    opaque += qAlpha(image.pixel(x, y)) > 200 ? 1 : 0;
+                }
+            }
+            QVERIFY2(opaque > 200, qPrintable(preset.id + u' ' + QString::number(opaque)));
+            const QRect cell(index % columns * canvas.width() / 2, index / columns * canvas.height() / 2, canvas.width() / 2,
+                             canvas.height() / 2);
+            painter.drawImage(cell, image);
+            painter.setPen(Qt::white);
+            painter.drawText(cell.adjusted(8, 8, -8, -8), Qt::AlignTop | Qt::AlignLeft, preset.id.section(u'/', 1));
+            ++index;
+        }
+        painter.end();
+        const QString folder = qEnvironmentVariable("VEDIT_UI_SHOTS");
+        if (!folder.isEmpty()) {
+            sheet.save(folder + u"/caption-styles.png"_s);
+        }
+    }
+
     // The box the preview's handles draw (ClipPlacement) is where vedit.transform renders the clip.
     void canvasBoxMatchesTheRender()
     {
@@ -578,7 +705,7 @@ private slots:
         Clip previewed = session.mainTrack().clips.front();
         previewed.effects.push_back(filterEffect(u"filters/bw"_s));
         const ProjectData before = session.data();
-        projection.setPreview(session.data(), TimelineProjection::Preview{previewed, std::nullopt, std::nullopt});
+        projection.setPreview(session.data(), TimelineProjection::Preview{previewed, std::nullopt, std::nullopt, std::nullopt, std::nullopt});
         const QImage grey = projection.renderFrame(10);
         QVERIFY(rgbHash(grey) != original);
         QVERIFY(std::abs(qRed(grey.pixel(160, 90)) - qGreen(grey.pixel(160, 90))) <= 2);

@@ -38,6 +38,8 @@ Rectangle {
         const list = []
         if (sections.includes("transition"))
             list.push({ text: qsTr("Transition"), page: "transition" })
+        if (sections.includes("caption"))
+            list.push({ text: qsTr("Captions"), page: "caption" })
         if (sections.includes("text"))
             list.push({ text: qsTr("Text"), page: "text" })
         if (sections.includes("sticker"))
@@ -61,14 +63,20 @@ Rectangle {
         return list
     }
     // The page chosen by the user, kept while the selection changes when the new clip has it too.
+    // It applies to clips of the kind it was chosen for (a text or a caption opens on its words, a video on Video).
     property string wantedPage: "video"
+    property int wantedKind: Inspector.Video
     readonly property string page: {
-        for (const tab of tabs)
-            if (tab.page === wantedPage)
-                return wantedPage
+        if (inspector.kind === wantedKind)
+            for (const tab of tabs)
+                if (tab.page === wantedPage)
+                    return wantedPage
         return tabs.length > 0 ? tabs[0].page : ""
     }
-    function showPage(name) { wantedPage = name }
+    function showPage(name) {
+        wantedPage = name
+        wantedKind = inspector.kind
+    }
 
     // On the Cutout page with a mask, gestures on the player move and resize the mask (not the clip).
     readonly property bool maskEditing: page === "cutout" && (values["mask.shape"] ?? -1) >= 0
@@ -233,6 +241,190 @@ Rectangle {
                         iconName: "delete"
                         text: qsTr("Remove transition")
                         onClicked: panel.inspector.removeTransition()
+                    }
+                }
+
+                // ---- Caption line --------------------------------------------------------------------------
+                ColumnLayout {
+                    id: captionPage
+                    readonly property Captions captions: panel.editor.captions
+                    readonly property var style: captions.style
+                    readonly property int line: captions.lines.findIndex(l => l.clipId === panel.inspector.clipId)
+
+                    component StyleSlider: ColumnLayout {
+                        id: styleSlider
+                        required property string key
+                        property string label
+                        property real from: 0
+                        property real to: 1
+                        property real stepSize: 0
+                        property var format: v => Math.round(v * 100) + " %"
+                        Layout.fillWidth: true
+                        spacing: 0
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label { Layout.fillWidth: true; text: styleSlider.label; role: "bodyMedium" }
+                            Label {
+                                role: "labelMedium"
+                                font.features: { "tnum": 1 }
+                                color: Theme.color.onSurfaceVariant
+                                text: styleSlider.format(slider.value)
+                            }
+                        }
+                        Slider {
+                            id: slider
+                            objectName: "captionStyle_" + styleSlider.key
+                            Layout.fillWidth: true
+                            from: styleSlider.from
+                            to: styleSlider.to
+                            stepSize: styleSlider.stepSize
+                            value: captionPage.style[styleSlider.key] ?? 0
+                            Accessible.name: styleSlider.label
+                            onMoved: captionPage.captions.setStyleValue(styleSlider.key, value)
+                            onPressedChanged: if (!pressed) captionPage.captions.endGesture()
+                        }
+                    }
+                    component StyleSwitch: RowLayout {
+                        id: styleSwitch
+                        required property string key
+                        property string label
+                        Layout.fillWidth: true
+                        Label { Layout.fillWidth: true; text: styleSwitch.label; role: "bodyMedium" }
+                        Switch {
+                            objectName: "captionStyle_" + styleSwitch.key
+                            checked: captionPage.style[styleSwitch.key] ?? false
+                            Accessible.name: styleSwitch.label
+                            onToggled: captionPage.captions.setStyleValue(styleSwitch.key, checked)
+                        }
+                    }
+
+                    Layout.fillWidth: true
+                    visible: panel.page === "caption"
+                    spacing: Theme.space.md
+
+                    TextArea {
+                        id: captionText
+                        objectName: "captionText"
+                        Layout.fillWidth: true
+                        label: qsTr("Line")
+                        placeholderText: qsTr("Write here")
+                        enabled: !captionPage.captions.locked
+                        Binding on text {
+                            value: captionPage.line >= 0 ? captionPage.captions.lines[captionPage.line].text : ""
+                            when: !captionText.activeFocus
+                        }
+                        onActiveFocusChanged: if (!activeFocus && captionPage.line >= 0) captionPage.captions.setLineText(captionPage.line, text)
+                        Keys.onReturnPressed: (event) => {
+                            if (event.modifiers & Qt.ShiftModifier) {
+                                event.accepted = false
+                                return
+                            }
+                            captionPage.captions.setLineText(captionPage.line, text)
+                        }
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Theme.space.xs
+                        enabled: !captionPage.captions.locked
+                        Button {
+                            objectName: "captionSplitLine"
+                            variant: "tonal"
+                            iconName: "call_split"
+                            text: qsTr("Split")
+                            onClicked: captionPage.captions.splitLine(captionPage.line)
+                        }
+                        Button {
+                            objectName: "captionJoinLine"
+                            variant: "tonal"
+                            iconName: "merge"
+                            enabled: captionPage.line >= 0 && captionPage.line < captionPage.captions.lines.length - 1
+                            text: qsTr("Join with next")
+                            onClicked: captionPage.captions.joinWithNext(captionPage.line)
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        role: "titleSmall"
+                        text: qsTr("Look of all the captions")
+                    }
+                    Button {
+                        objectName: "captionChooseStyle"
+                        Layout.fillWidth: true
+                        variant: "outlined"
+                        iconName: "format_color_text"
+                        text: qsTr("Choose a style")
+                        onClicked: panel.editor.libraryRequested("captions")
+                    }
+                    StyleSlider {
+                        key: "wordsPerLine"
+                        label: qsTr("Words at a time")
+                        from: 0
+                        to: 8
+                        stepSize: 1
+                        format: v => v === 0 ? qsTr("Whole line") : Math.round(v)
+                    }
+                    StyleSlider {
+                        key: "position"
+                        label: qsTr("Height")
+                        from: 0.45
+                        to: -0.45
+                        format: v => Math.round((0.5 - v) * 100) + " %"
+                    }
+                    StyleSlider {
+                        key: "size"
+                        label: qsTr("Size")
+                        from: 0.03
+                        to: 0.12
+                        format: v => Math.round(v * 1000) / 10
+                    }
+                    Label { text: qsTr("Word being said"); role: "bodyMedium" }
+                    ComboBox {
+                        objectName: "captionHighlight"
+                        Layout.fillWidth: true
+                        model: [qsTr("Not highlighted"), qsTr("Coloured"), qsTr("Bigger"), qsTr("In a box"), qsTr("Karaoke fill")]
+                        currentIndex: captionPage.style.highlight ?? 0
+                        displayText: model[currentIndex] ?? ""
+                        Accessible.name: qsTr("Word being said")
+                        onActivated: (index) => captionPage.captions.setStyleValue("highlight", index)
+                    }
+                    ColorSwatches {
+                        Layout.fillWidth: true
+                        visible: (captionPage.style.highlight ?? 0) !== 0
+                        inspector: panel.inspector
+                        label: qsTr("Highlight colour")
+                        current: captionPage.style.highlightColor ?? "yellow"
+                        onPicked: (value) => captionPage.captions.setStyleValue("highlightColor", value)
+                    }
+                    Label { text: qsTr("Entrance"); role: "bodyMedium" }
+                    ComboBox {
+                        objectName: "captionAnimation"
+                        Layout.fillWidth: true
+                        model: [qsTr("None"), qsTr("Pop"), qsTr("Fade"), qsTr("Bounce")]
+                        currentIndex: captionPage.style.animation ?? 0
+                        displayText: model[currentIndex] ?? ""
+                        Accessible.name: qsTr("Entrance")
+                        onActivated: (index) => captionPage.captions.setStyleValue("animation", index)
+                    }
+                    Label { text: qsTr("Colour"); role: "bodyMedium" }
+                    ColorSwatches {
+                        Layout.fillWidth: true
+                        inspector: panel.inspector
+                        label: qsTr("Text colour")
+                        current: captionPage.style.color ?? "white"
+                        onPicked: (value) => captionPage.captions.setStyleValue("color", value)
+                    }
+                    StyleSwitch { key: "bold"; label: qsTr("Bold") }
+                    StyleSwitch { key: "uppercase"; label: qsTr("Capital letters") }
+                    StyleSwitch { key: "stroke"; label: qsTr("Outline") }
+                    StyleSwitch { key: "background"; label: qsTr("Background") }
+                    ColorSwatches {
+                        Layout.fillWidth: true
+                        visible: captionPage.style.background ?? false
+                        inspector: panel.inspector
+                        label: qsTr("Background colour")
+                        current: captionPage.style.backgroundColor ?? "black"
+                        onPicked: (value) => captionPage.captions.setStyleValue("backgroundColor", value)
                     }
                 }
 

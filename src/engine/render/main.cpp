@@ -16,6 +16,7 @@
 // Reads the metadata of media files for the import (D-07: a file that crashes the demuxer is rejected instead of
 // crashing the editor). For each file: {"event":"probing","path":"…"} then {"event":"media","path":"…","media":{…}}
 // or {"event":"media-error","path":"…","code":"…","detail":"…"}.
+#include "common/fonts/BundledFonts.h"
 #include "core/serialization/ProjectFile.h"
 #include "engine/analysis/MediaProbe.h"
 #include "engine/mlt/MltRuntime.h"
@@ -197,6 +198,7 @@ int main(int argc, char *argv[])
     if (!parser.isSet(jobOption)) {
         parser.showHelp(1);
     }
+    fonts::loadBundled(); // texts drawn with the fonts of the editor
     MltRuntime::initializeAsync();
     // Every MLT object is released by run(). The factory is deliberately not closed: this process ends here, and
     // Mlt::Factory::close() unloads the modules (and FFmpeg, x264) while their global caches are still allocated,

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ThemeManager.h"
 
+#include "common/fonts/BundledFonts.h"
+
 #include <QEasingCurve>
 #include <QFile>
 #include <QHash>
@@ -144,8 +146,10 @@ void ThemeManager::loadFonts()
         }
         return families.constFirst();
     };
-    s_fontFamily = load(u":/vedit/fonts/InterVariable.ttf"_s);
-    load(u":/vedit/fonts/InterVariable-Italic.woff2"_s);
+    s_fontFamily = fonts::loadBundled();
+    if (s_fontFamily.isEmpty()) {
+        qCWarning(lcTheme) << "cannot load the bundled Inter font";
+    }
     s_iconFontFamily = load(u":/vedit/icons/MaterialSymbolsRounded.woff2"_s);
     if (s_instance) {
         s_instance->m_typography.configure(s_instance->fontFamily(), 1.0);

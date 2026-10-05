@@ -2173,4 +2173,62 @@ EditResult TimelineEditor::insertCaptions(const std::vector<captions::CaptionLin
     return finish(std::move(modified), tr("Add captions"), first);
 }
 
+EditResult TimelineEditor::mergeCaptionLines(const ClipId &firstId)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, firstId);
+    if (!ref || !ref->clip().subtitle()) {
+        return fail(tr("Select a caption line first."));
+    }
+    Track &track = *ref->track;
+    if (track.locked) {
+        return fail(tr("The track is locked."));
+    }
+    if (ref->index + 1 >= track.clips.size()) {
+        return fail(tr("This is the last line: there is no next line to join."));
+    }
+    Clip &first = track.clips[ref->index];
+    const Clip second = track.clips[ref->index + 1];
+    const RationalTime gap = second.start - first.end();
+    first.payload = captions::merged(*first.subtitle(), first.duration, *second.subtitle(), second.duration, gap);
+    first.duration = second.end() - first.start;
+    takeClip(track, ref->index + 1);
+    cleanGroups(modified);
+    return finish(std::move(modified), tr("Join caption lines"), firstId);
+}
+
+EditResult TimelineEditor::shiftCaptions(const TrackId &trackId, const RationalTime &requestedDelta)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findTrack(modified, trackId);
+    if (!ref || !ref->track->captions) {
+        return fail(tr("The track does not exist."));
+    }
+    Track &track = *ref->track;
+    if (track.locked) {
+        return fail(tr("The track is locked."));
+    }
+    if (track.clips.empty()) {
+        return fail(tr("This track has no captions."));
+    }
+    RationalTime delta = requestedDelta.rescaled(m_rate, Rounding::NearestEven);
+    // The first line stops at 0.
+    if (track.clips.front().start + delta < RationalTime(0, m_rate)) {
+        delta = -track.clips.front().start;
+    }
+    if (delta.isZero()) {
+        return fail(tr("The captions already start at the beginning."));
+    }
+    for (Clip &clip : track.clips) {
+        clip.start += delta;
+    }
+    return finish(std::move(modified), tr("Move captions"), {});
+}
+
 } // namespace vedit

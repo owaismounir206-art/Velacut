@@ -1,0 +1,1597 @@
+{
+    "categories": [
+        {
+            "id": "basic",
+            "name": {
+                "en": "Basic",
+                "it": "Base"
+            }
+        },
+        {
+            "id": "highlight",
+            "name": {
+                "en": "Highlighted word",
+                "it": "Parola evidenziata"
+            }
+        },
+        {
+            "id": "scale",
+            "name": {
+                "en": "Growing word",
+                "it": "Parola che cresce"
+            }
+        },
+        {
+            "id": "box",
+            "name": {
+                "en": "Word in a box",
+                "it": "Parola nel riquadro"
+            }
+        },
+        {
+            "id": "karaoke",
+            "name": {
+                "en": "Karaoke",
+                "it": "Karaoke"
+            }
+        },
+        {
+            "id": "animated",
+            "name": {
+                "en": "Animated",
+                "it": "Animati"
+            }
+        },
+        {
+            "id": "blocks",
+            "name": {
+                "en": "Colour blocks",
+                "it": "Blocchi colorati"
+            }
+        },
+        {
+            "id": "neon",
+            "name": {
+                "en": "Neon",
+                "it": "Neon"
+            }
+        }
+    ],
+    "items": [
+        {
+            "kind": "captionStyle",
+            "id": "captions/classic",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Classic",
+                "it": "Classico"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 600,
+                        "italic": false
+                    },
+                    "size": 0.05,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.06
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 0,
+                "position": 0.32,
+                "highlight": "none",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/clean",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Clean",
+                "it": "Pulito"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 600,
+                        "italic": false
+                    },
+                    "size": 0.05,
+                    "color": "#FFFFFFFF",
+                    "stroke": null,
+                    "shadow": {
+                        "color": "#00000099",
+                        "offset": [
+                            0.0,
+                            0.004
+                        ],
+                        "blur": 0.06
+                    },
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 0,
+                "position": 0.32,
+                "highlight": "none",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/subtitle-box",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Subtitle box",
+                "it": "Riquadro sottotitoli"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 500,
+                        "italic": false
+                    },
+                    "size": 0.045,
+                    "color": "#FFFFFFFF",
+                    "stroke": null,
+                    "shadow": null,
+                    "background": {
+                        "color": "#000000B3",
+                        "padding": 0.3,
+                        "radius": 0.12
+                    },
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 0,
+                "position": 0.34,
+                "highlight": "none",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/classic-yellow",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Classic yellow",
+                "it": "Giallo classico"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 700,
+                        "italic": false
+                    },
+                    "size": 0.05,
+                    "color": "#FFE14DFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.06
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 0,
+                "position": 0.32,
+                "highlight": "none",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/minimal",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Minimal",
+                "it": "Minimale"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 400,
+                        "italic": false
+                    },
+                    "size": 0.042,
+                    "color": "#FFFFFFFF",
+                    "stroke": null,
+                    "shadow": {
+                        "color": "#000000CC",
+                        "offset": [
+                            0.0,
+                            0.003
+                        ],
+                        "blur": 0.05
+                    },
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 0,
+                "position": 0.36,
+                "highlight": "none",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/bold-white",
+            "version": 1,
+            "category": "basic",
+            "name": {
+                "en": "Bold white",
+                "it": "Bianco deciso"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.06,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.08
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 4,
+                "position": 0.2,
+                "highlight": "none",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/yellow-word",
+            "version": 1,
+            "category": "highlight",
+            "name": {
+                "en": "Yellow word",
+                "it": "Parola gialla"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.06,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.08
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/green-word",
+            "version": 1,
+            "category": "highlight",
+            "name": {
+                "en": "Green word",
+                "it": "Parola verde"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.06,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.08
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#2BE36BFF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/pink-word",
+            "version": 1,
+            "category": "highlight",
+            "name": {
+                "en": "Pink word",
+                "it": "Parola rosa"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.06,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.08
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#FF4FA3FF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/cyan-word",
+            "version": 1,
+            "category": "highlight",
+            "name": {
+                "en": "Cyan word",
+                "it": "Parola azzurra"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.06,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.08
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#29D3FFFF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/orange-word",
+            "version": 1,
+            "category": "highlight",
+            "name": {
+                "en": "Orange word",
+                "it": "Parola arancione"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.06,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.08
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#FF8A1FFF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/creator",
+            "version": 1,
+            "category": "highlight",
+            "name": {
+                "en": "Creator",
+                "it": "Creator"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.065,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.1
+                    },
+                    "shadow": {
+                        "color": "#000000AA",
+                        "offset": [
+                            0.0,
+                            0.006
+                        ],
+                        "blur": 0.04
+                    },
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 2,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#2BE36BFF",
+                "animation": "pop",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/story",
+            "version": 1,
+            "category": "highlight",
+            "name": {
+                "en": "Story",
+                "it": "Storia"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 700,
+                        "italic": false
+                    },
+                    "size": 0.055,
+                    "color": "#FFFFFFFF",
+                    "stroke": null,
+                    "shadow": {
+                        "color": "#000000CC",
+                        "offset": [
+                            0.0,
+                            0.004
+                        ],
+                        "blur": 0.08
+                    },
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 4,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#FFD600FF",
+                "animation": "fade",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/grow-yellow",
+            "version": 1,
+            "category": "scale",
+            "name": {
+                "en": "Grow yellow",
+                "it": "Cresce giallo"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.058,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.08
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "scale",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/grow-red",
+            "version": 1,
+            "category": "scale",
+            "name": {
+                "en": "Grow red",
+                "it": "Cresce rosso"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.058,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.08
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "scale",
+                "highlightColor": "#FF3B30FF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/grow-white",
+            "version": 1,
+            "category": "scale",
+            "name": {
+                "en": "Grow white",
+                "it": "Cresce bianco"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 800,
+                        "italic": false
+                    },
+                    "size": 0.056,
+                    "color": "#E6E6E6FF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.07
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "scale",
+                "highlightColor": "#FFFFFFFF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/punch",
+            "version": 1,
+            "category": "scale",
+            "name": {
+                "en": "Punch",
+                "it": "Pugno"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.07,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.1
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 2,
+                "position": 0.2,
+                "highlight": "scale",
+                "highlightColor": "#FFD600FF",
+                "animation": "pop",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/box-purple",
+            "version": 1,
+            "category": "box",
+            "name": {
+                "en": "Purple box",
+                "it": "Riquadro viola"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.058,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.06
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "box",
+                "highlightColor": "#7C4DFFFF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/box-green",
+            "version": 1,
+            "category": "box",
+            "name": {
+                "en": "Green box",
+                "it": "Riquadro verde"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.058,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.06
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "box",
+                "highlightColor": "#1DB954FF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/box-red",
+            "version": 1,
+            "category": "box",
+            "name": {
+                "en": "Red box",
+                "it": "Riquadro rosso"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.058,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.06
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "box",
+                "highlightColor": "#FF2D55FF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/box-blue",
+            "version": 1,
+            "category": "box",
+            "name": {
+                "en": "Blue box",
+                "it": "Riquadro blu"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.058,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.06
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "box",
+                "highlightColor": "#1E88E5FF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/box-yellow",
+            "version": 1,
+            "category": "box",
+            "name": {
+                "en": "Yellow box",
+                "it": "Riquadro giallo"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.058,
+                    "color": "#111111FF",
+                    "stroke": null,
+                    "shadow": null,
+                    "background": {
+                        "color": "#FFFFFFF2",
+                        "padding": 0.3,
+                        "radius": 0.16
+                    },
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "box",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/karaoke-yellow",
+            "version": 1,
+            "category": "karaoke",
+            "name": {
+                "en": "Karaoke yellow",
+                "it": "Karaoke giallo"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 800,
+                        "italic": false
+                    },
+                    "size": 0.055,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.07
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 0,
+                "position": 0.28,
+                "highlight": "karaoke",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/karaoke-cyan",
+            "version": 1,
+            "category": "karaoke",
+            "name": {
+                "en": "Karaoke cyan",
+                "it": "Karaoke azzurro"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 800,
+                        "italic": false
+                    },
+                    "size": 0.055,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.07
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 0,
+                "position": 0.28,
+                "highlight": "karaoke",
+                "highlightColor": "#29D3FFFF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/karaoke-pink",
+            "version": 1,
+            "category": "karaoke",
+            "name": {
+                "en": "Karaoke pink",
+                "it": "Karaoke rosa"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 800,
+                        "italic": false
+                    },
+                    "size": 0.055,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.07
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 0,
+                "position": 0.28,
+                "highlight": "karaoke",
+                "highlightColor": "#FF4FA3FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/karaoke-classic",
+            "version": 1,
+            "category": "karaoke",
+            "name": {
+                "en": "Karaoke classic",
+                "it": "Karaoke classico"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 800,
+                        "italic": false
+                    },
+                    "size": 0.055,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.07
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 0,
+                "position": 0.28,
+                "highlight": "karaoke",
+                "highlightColor": "#3D7BFFFF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/lyrics",
+            "version": 1,
+            "category": "karaoke",
+            "name": {
+                "en": "Lyrics",
+                "it": "Testo canzone"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 700,
+                        "italic": true
+                    },
+                    "size": 0.05,
+                    "color": "#FFFFFFB3",
+                    "stroke": null,
+                    "shadow": {
+                        "color": "#000000CC",
+                        "offset": [
+                            0.0,
+                            0.004
+                        ],
+                        "blur": 0.06
+                    },
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 6,
+                "position": 0.25,
+                "highlight": "karaoke",
+                "highlightColor": "#FFFFFFFF",
+                "animation": "fade",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/one-word-pop",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "One word pop",
+                "it": "Una parola pop"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.085,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.1
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 1,
+                "position": 0.12,
+                "highlight": "none",
+                "highlightColor": "#FFD600FF",
+                "animation": "pop",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/bounce",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Bounce",
+                "it": "Rimbalzo"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.062,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.08
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 2,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#FFD600FF",
+                "animation": "bounce",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/fade-line",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Fade line",
+                "it": "Riga in dissolvenza"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 600,
+                        "italic": false
+                    },
+                    "size": 0.05,
+                    "color": "#FFFFFFFF",
+                    "stroke": null,
+                    "shadow": {
+                        "color": "#00000099",
+                        "offset": [
+                            0.0,
+                            0.004
+                        ],
+                        "blur": 0.06
+                    },
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 0,
+                "position": 0.3,
+                "highlight": "none",
+                "highlightColor": "#FFD600FF",
+                "animation": "fade",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/pop-three",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Pop three",
+                "it": "Tre parole pop"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.06,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.08
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#29D3FFFF",
+                "animation": "pop",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/bounce-box",
+            "version": 1,
+            "category": "animated",
+            "name": {
+                "en": "Bounce box",
+                "it": "Riquadro che rimbalza"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.06,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#000000FF",
+                        "width": 0.05
+                    },
+                    "shadow": null,
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 2,
+                "position": 0.2,
+                "highlight": "box",
+                "highlightColor": "#FF2D55FF",
+                "animation": "bounce",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/block-black",
+            "version": 1,
+            "category": "blocks",
+            "name": {
+                "en": "Black block",
+                "it": "Blocco nero"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 800,
+                        "italic": false
+                    },
+                    "size": 0.055,
+                    "color": "#FFFFFFFF",
+                    "stroke": null,
+                    "shadow": null,
+                    "background": {
+                        "color": "#000000E6",
+                        "padding": 0.35,
+                        "radius": 0.18
+                    },
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/block-white",
+            "version": 1,
+            "category": "blocks",
+            "name": {
+                "en": "White block",
+                "it": "Blocco bianco"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 800,
+                        "italic": false
+                    },
+                    "size": 0.055,
+                    "color": "#111111FF",
+                    "stroke": null,
+                    "shadow": null,
+                    "background": {
+                        "color": "#FFFFFFFA",
+                        "padding": 0.35,
+                        "radius": 0.18
+                    },
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#FF2D55FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/block-yellow",
+            "version": 1,
+            "category": "blocks",
+            "name": {
+                "en": "Yellow block",
+                "it": "Blocco giallo"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.055,
+                    "color": "#111111FF",
+                    "stroke": null,
+                    "shadow": null,
+                    "background": {
+                        "color": "#FFD600FA",
+                        "padding": 0.35,
+                        "radius": 0.18
+                    },
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "none",
+                "highlightColor": "#FFD600FF",
+                "animation": "pop",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/block-red",
+            "version": 1,
+            "category": "blocks",
+            "name": {
+                "en": "Red block",
+                "it": "Blocco rosso"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 900,
+                        "italic": false
+                    },
+                    "size": 0.055,
+                    "color": "#FFFFFFFF",
+                    "stroke": null,
+                    "shadow": null,
+                    "background": {
+                        "color": "#E53935FA",
+                        "padding": 0.35,
+                        "radius": 0.18
+                    },
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "none",
+                "highlightColor": "#FFD600FF",
+                "animation": "pop",
+                "uppercase": true
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/block-purple",
+            "version": 1,
+            "category": "blocks",
+            "name": {
+                "en": "Purple block",
+                "it": "Blocco viola"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 800,
+                        "italic": false
+                    },
+                    "size": 0.055,
+                    "color": "#FFFFFFFF",
+                    "stroke": null,
+                    "shadow": null,
+                    "background": {
+                        "color": "#6A1B9AF2",
+                        "padding": 0.35,
+                        "radius": 0.18
+                    },
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#FFD600FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/neon-cyan",
+            "version": 1,
+            "category": "neon",
+            "name": {
+                "en": "Neon cyan",
+                "it": "Neon azzurro"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 800,
+                        "italic": false
+                    },
+                    "size": 0.058,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#29D3FFFF",
+                        "width": 0.05
+                    },
+                    "shadow": {
+                        "color": "#29D3FFE6",
+                        "offset": [
+                            0.0,
+                            0.0
+                        ],
+                        "blur": 0.35
+                    },
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#29D3FFFF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/neon-pink",
+            "version": 1,
+            "category": "neon",
+            "name": {
+                "en": "Neon pink",
+                "it": "Neon rosa"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 800,
+                        "italic": false
+                    },
+                    "size": 0.058,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#FF4FD8FF",
+                        "width": 0.05
+                    },
+                    "shadow": {
+                        "color": "#FF4FD8E6",
+                        "offset": [
+                            0.0,
+                            0.0
+                        ],
+                        "blur": 0.35
+                    },
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#FF4FD8FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        },
+        {
+            "kind": "captionStyle",
+            "id": "captions/neon-green",
+            "version": 1,
+            "category": "neon",
+            "name": {
+                "en": "Neon green",
+                "it": "Neon verde"
+            },
+            "captionStyle": {
+                "style": {
+                    "font": {
+                        "family": "Inter",
+                        "weight": 800,
+                        "italic": false
+                    },
+                    "size": 0.058,
+                    "color": "#FFFFFFFF",
+                    "stroke": {
+                        "color": "#39FF14FF",
+                        "width": 0.05
+                    },
+                    "shadow": {
+                        "color": "#39FF14E6",
+                        "offset": [
+                            0.0,
+                            0.0
+                        ],
+                        "blur": 0.35
+                    },
+                    "background": null,
+                    "letterSpacing": 0.0,
+                    "lineHeight": 1.15,
+                    "align": "center",
+                    "underline": false
+                },
+                "maxWordsPerLine": 3,
+                "position": 0.2,
+                "highlight": "color",
+                "highlightColor": "#39FF14FF",
+                "animation": "none",
+                "uppercase": false
+            }
+        }
+    ]
+}

@@ -1,8 +1,29 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-10-05 (Fasi 0-5 ✅ — criteri della Fase 5 verificati; Fase 8 🔶: preferenze reali,
-encoding hardware; Fasi 6-7 da fare. L'utente ha dato il via a proseguire con l'obiettivo "sistema tutto secondo la
-SPEC, uguale a CapCut, migliora l'estetica".)
+Ultimo aggiornamento: 2026-10-05 (Fasi 0-5 ✅ — criteri della Fase 5 verificati; Fase 6 🔶 in corso: sottotitoli
+manuali/da file completi; Fase 8 🔶: preferenze reali, encoding hardware; Fase 7 da fare. L'utente ha dato il via a
+proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migliora l'estetica".)
+
+## Sessione 2026-10-05 (pomeriggio) — Fase 6: sottotitoli
+- **Core** (`10f2f61`): clip `subtitle` tipizzate (testo, parole con tempi dall'inizio della clip, stile per riga) e
+  `captionStyle` tipizzato della traccia (evidenziazione colore/ingrandita/riquadro/karaoke, entrata pop/dissolvenza/
+  rimbalzo, parole alla volta, altezza, maiuscolo). `TimelineEditor`: `insertCaptions` (traccia sottotitoli propria,
+  righe sovrapposte accorciate), taglio e trim che tengono le parole dove vengono dette, `mergeCaptionLines`,
+  `shiftCaptions`; testi e sottotitoli non si mescolano mai su una traccia. Lettore SRT/WebVTT riscritto senza `double`
+  (accetta CRLF, BOM, tempi VTT senza ore, impostazioni dei cue, tag di formattazione, entità).
+- **Rendering** (`engine/text/CaptionRenderer`, servizio MLT `vedit.caption`): le parole diventano contorni
+  (`QPainterPath`) sul thread della proiezione, i fotogrammi si disegnano dai contorni nei thread di MLT senza font
+  (D-39); l'immagine si riusa finché non cambiano gruppo, parola detta o passo di animazione. La parola ingrandita fa
+  spazio alle vicine. Anteprima al passaggio del mouse sugli stili (`Preview.captionStyle`).
+- **40 stili social** in `caption-styles.json` (8 categorie, test: ≥ 30, valori validi, tutti disegnano testo).
+- **Interfaccia**: scheda **Sottotitoli** nella barra della libreria (righe modificabili sul posto, clic = vai alla
+  riga, dividi/unisci/elimina, cerca e sostituisci, sposta tutti ±0,1 s, aggiungi riga; stili con chip e anteprima),
+  pagina **Sottotitoli** nelle proprietà (testo della riga, stile di tutte le righe), "Sottotitoli" nella barra
+  contestuale senza selezione e nella ricerca universale; import/export SRT e WebVTT.
+- **Bug trovato e corretto**: i testi chiedevano il font "Inter" ma il font incluso si registra come "Inter Variable":
+  tutti i testi uscivano in Noto Sans, e vedit-render non caricava proprio il font. Ora `vedit_fonts` (libreria
+  comune) registra Inter in ogni processo e sostituisce "Inter" → "Inter Variable" (test in `tst_theme`).
+- Le proprietà ricordano la pagina scelta per tipo di clip (un testo o un sottotitolo si apre sulle sue parole).
 
 ## Sessione 2026-10-05 — Fine Fase 5: transizioni GPU, slideshow, kit del marchio, filtri, blocco del motore
 - **Percorso GPU delle 114 transizioni** (`92d25d6`, criterio Fase 5 seconda metà ✅): GLSL 1.00/1.10 (OpenGL 2.1 /
@@ -150,6 +171,8 @@ l'estetica". Fatto, un commit per incremento:
 - **Traduzioni**: nuove stringhe di export/anteprima estratte e tradotte (0 non tradotte in `vedit_it.ts`).
 
 ## Fase corrente
+**Fase 6 — AI locali: in corso** (sottotitoli manuali/da file fatti; prossimi passi qui sotto).
+
 **Fase 5 — Libreria creativa: completa.** Criterio SPEC §8: "uso un template, sostituisco i media e ottengo un video
 completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::templateFromTheHomeScreen` in 2 azioni);
 "ogni transizione supera il test di rendering CPU/GPU" ✅ (`tst_gputransitions`, anche su llvmpipe). Limiti onesti:
@@ -159,8 +182,9 @@ completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::t
 - il percorso GPU riguarda le transizioni; filtri ed effetti video restano solo CPU (consentito: la GPU è opzionale).
 
 ### Prossimi passi (Fase 6 — AI locali, via dato dall'utente con l'obiettivo della sessione)
-1. Sottotitoli: dati tipizzati (`subtitle` con parole temporizzate, stile della traccia `captionStyle`), import/export
-   SRT/VTT, rendering con evidenziazione parola per parola, ≥ 30 stili social, editor delle righe, scheda Sottotitoli.
+1. ✅ Sottotitoli manuali e da file (vedi sessione 2026-10-05 pomeriggio). Restano: ASS in import/export, sottotitoli
+   come traccia separata nell'export (oggi sono impressi nel video), stile per singola riga dall'interfaccia (il
+   formato lo supporta: `styleOverride`), parole chiave evidenziate automaticamente ed emoji automatiche.
 2. Sottotitoli automatici con whisper.cpp come processo esterno se installato (altrimenti disattivati con messaggio,
    `docs/MODELS.md`), gestore modelli con download solo su richiesta; sottotitoli da copione allineati al parlato.
 3. Senza modelli: rimozione silenzi, rilevamento scene con divisione, stabilizzazione (vid.stab), slow motion con
@@ -469,7 +493,7 @@ completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::t
      - Test di integrazione motore e MLT in `tst_services` (`textAnimationRendersProgressively`, `speechBubbleAndLowerThird`, 13/13);
      - 100% CTest passati (25/25) con zero compiler warnings (`-Wall -Wextra -Wpedantic -Werror`).
 
-### Prossimi passi (Fase 5 — Libreria creativa)
+### Prossimi passi della Fase 5 (storico: completati il 2026-10-05)
 3. P5.7 (continua): UI QML per template, Alt+trascina per sostituire placeholder, salva come template, slideshow foto.
 4. P5.8: kit del marchio (palette, font, loghi, intro/outro, watermark) e copertina (fotogramma + testi, export JPG/PNG).
 5. P5.9 (continua): UI QML per gestore asset, supporto ZIP completo, integrazione `fx::Library` con pacchetti utente.

@@ -90,6 +90,7 @@ public:
         Transition,
         Adjustment, // an adjustment layer: its filter and adjustments act on everything under it
         Sticker,    // a sticker or an audio visualizer
+        Caption,    // a line of captions: its text, and the look of all of them (Editor.captions)
     };
     Q_ENUM(Kind)
 

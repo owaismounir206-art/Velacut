@@ -9,6 +9,7 @@
 #include "fx/Grade.h"
 #include "fx/Library.h"
 #include "core/project/SpeedCurve.h"
+#include "core/serialization/ProjectJson.h"
 #include "fx/Mask.h"
 #include "fx/MotionBlur.h"
 #include "fx/Transform.h"
@@ -16,6 +17,7 @@
 #include "fx/VideoEffect.h"
 #include "fx/Graphic.h"
 
+#include <QJsonObject>
 #include <QSet>
 #include <QTest>
 
@@ -641,6 +643,16 @@ private slots:
         check(library.transitions(), library.transitionCategories());
         check(library.textStyles(), library.textStyleCategories());
         check(library.templates(), library.templateCategories());
+        // Social caption styles (SPEC §5.8: at least 30), every value a known one.
+        QVERIFY2(library.captionStyles().size() >= 30, qPrintable(QString::number(library.captionStyles().size())));
+        check(library.captionStyles(), library.captionStyleCategories());
+        for (const CaptionStylePreset &preset : library.captionStyles()) {
+            const QJsonObject written = vedit::projectjson::captionStyleToJson(vedit::projectjson::captionStyleFromJson(preset.style));
+            for (const char *key : {"highlight", "animation", "maxWordsPerLine", "position", "highlightColor"}) {
+                QVERIFY2(written.value(QLatin1StringView(key)) == preset.style.value(QLatin1StringView(key)),
+                         qPrintable(preset.id + u' ' + QLatin1StringView(key)));
+            }
+        }
         // Templates (SPEC §5.13): at least 8 templates in 8 categories.
         QVERIFY2(library.templates().size() >= 8, qPrintable(QString::number(library.templates().size())));
         QVERIFY2(library.templateCategories().size() >= 8, qPrintable(QString::number(library.templateCategories().size())));

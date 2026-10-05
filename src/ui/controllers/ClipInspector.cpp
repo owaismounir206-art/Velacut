@@ -670,6 +670,9 @@ int ClipInspector::kind() const
     if (clip->text()) {
         return Text;
     }
+    if (clip->subtitle()) {
+        return Caption;
+    }
     if (clip->adjustment()) {
         return Adjustment;
     }
@@ -701,6 +704,10 @@ bool ClipInspector::supports(const Clip &clip, const QString &section) const
     if (adjustmentLayer) {
         return section == u"filter"_s || section == u"adjust"_s || section == u"grade"_s || section == u"lut"_s ||
                section == u"deflicker"_s || section == u"effects"_s;
+    }
+    // A caption line: its words and the look of the captions; placed by the caption style (the transform moves it).
+    if (clip.subtitle()) {
+        return section == u"caption"_s || section == u"video"_s;
     }
     if (section == u"effects"_s) {
         return !audioOnly;
@@ -747,7 +754,7 @@ QStringList ClipInspector::sections() const
         }
         return result;
     }
-    for (const QString &section : {u"text"_s, u"sticker"_s, u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s, u"cutout"_s,
+    for (const QString &section : {u"caption"_s, u"text"_s, u"sticker"_s, u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s, u"cutout"_s,
                                    u"filter"_s, u"effects"_s, u"adjust"_s}) {
         if (supports(*clip, section)) {
             result << section;

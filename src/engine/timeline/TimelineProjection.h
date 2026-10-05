@@ -68,8 +68,10 @@ public:
         std::optional<Clip> clip;             // replaces the clip with the same id
         std::optional<TrackId> transitionTrack; // with `transition`: added or replacing the one on the same cut
         std::optional<Transition> transition;
+        std::optional<TrackId> captionTrack; // with `captionStyle`: the look of that caption track instead
+        std::optional<CaptionStyle> captionStyle;
 
-        bool isEmpty() const { return !clip && !transition; }
+        bool isEmpty() const { return !clip && !transition && !captionStyle; }
     };
 
     TimelineProjection(Mlt::Profile &profile, MediaProducerCache &cache, MediaLoading loading);
@@ -198,6 +200,7 @@ private:
     void patch(TrackSlot &slot, std::vector<Entry> desired);
     std::shared_ptr<Mlt::Producer> colorProducer(const Color &color);
     std::shared_ptr<Mlt::Producer> textProducer(const TextClipData &text);
+    std::shared_ptr<Mlt::Producer> captionProducer(const SubtitleClipData &line, const CaptionStyle &style, int length);
     std::shared_ptr<Mlt::Producer> compoundProducer(const ProjectData &project, const SequenceId &sequenceId, int activeAngle = 0);
     void retireEntries(Mlt::Playlist &playlist);
     void updateBackground();

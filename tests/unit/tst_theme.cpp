@@ -174,6 +174,8 @@ private slots:
         QCOMPARE(theme.iconFontFamily(), u"Material Symbols Rounded"_s);
         // Italic comes from the WOFF2 file: Qt must be able to load WOFF2.
         QVERIFY(QFontDatabase::styles(u"Inter Variable"_s).join(u' ').contains(u"Italic"_s));
+        // Projects and packs name it "Inter": that must be the bundled font, not whatever the system substitutes.
+        QCOMPARE(QFontInfo(QFont(u"Inter"_s)).family(), u"Inter Variable"_s);
         const QFont body = theme.type()->bodyMedium();
         QCOMPARE(body.pixelSize(), 14);
         QCOMPARE(theme.type()->bodyMediumLineHeight(), 20.0);

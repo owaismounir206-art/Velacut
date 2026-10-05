@@ -33,6 +33,7 @@ public:
         Stickers,
         VideoEffects,
         Templates,
+        CaptionStyles,
     };
     Q_ENUM(Kind)
 

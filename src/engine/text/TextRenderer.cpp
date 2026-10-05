@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "TextRenderer.h"
 
+#include "common/fonts/BundledFonts.h"
 #include "fx/Color.h"
 
 #include <QColor>
@@ -57,6 +58,7 @@ struct Layout
 
 Layout layoutText(const TextClipData &text, QSize canvas)
 {
+    fonts::loadBundled(); // "Inter" is the font shipped with vedit, in every process
     Layout layout;
     const TextStyle &style = text.style;
     layout.pixelSize = std::max(1.0, numberOf(style.size, 0.06) * canvas.height());

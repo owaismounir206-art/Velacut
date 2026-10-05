@@ -2,6 +2,7 @@
 #include "TimelineProjection.h"
 
 #include "core/project/ClipTime.h"
+#include "core/serialization/ProjectJson.h"
 #include "engine/timeline/ClipPlacement.h"
 #include "engine/timeline/MediaProducerCache.h"
 #include "fx/Library.h"
@@ -425,6 +426,29 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::textProducer(const TextClipDa
         return existing;
     }
     std::shared_ptr<Mlt::Producer> producer = makeTextProducer(m_profile, staticText(text));
+    m_texts.insert(key, producer);
+    return producer;
+}
+
+std::shared_ptr<Mlt::Producer> TimelineProjection::captionProducer(const SubtitleClipData &line, const CaptionStyle &style,
+                                                                   int length)
+{
+    QJsonArray words;
+    for (const TimedWord &word : line.words) {
+        words.append(QJsonArray{word.text, word.start.toString(), word.end.toString()});
+    }
+    QJsonObject content{{u"caption"_s, line.text},
+                        {u"words"_s, words},
+                        {u"style"_s, projectjson::captionStyleToJson(style)},
+                        {u"length"_s, length}};
+    if (line.styleOverride) {
+        content.insert(u"override"_s, projectjson::textStyleToJson(*line.styleOverride));
+    }
+    const QByteArray key = QJsonDocument(content).toJson(QJsonDocument::Compact);
+    if (auto existing = m_texts.value(key)) {
+        return existing;
+    }
+    std::shared_ptr<Mlt::Producer> producer = makeCaptionProducer(m_profile, line, style, length);
     m_texts.insert(key, producer);
     return producer;
 }
@@ -1048,6 +1072,13 @@ std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &
         placed.render = renderOf(clip, track, project, nullptr, false, 0, placed.length);
         return placed;
     }
+    if (const SubtitleClipData *line = clip.subtitle()) {
+        const bool previewed = m_preview.captionStyle && m_preview.captionTrack == track.id;
+        placed.producer = captionProducer(*line, previewed ? *m_preview.captionStyle : projectjson::captionStyleOf(track),
+                                          static_cast<int>(placed.length));
+        placed.render = renderOf(clip, track, project, nullptr, false, 0, placed.length);
+        return placed;
+    }
     if (const StickerClipData *sticker = clip.sticker()) {
         if (sticker->graphic) {
             const GraphicSettings &g = *sticker->graphic;
@@ -1577,7 +1608,8 @@ bool TimelineProjection::update(const ProjectData &project, const ChangeSet &cha
             usesChangedMedia = usesChangedMedia || slot.media.contains(media);
         }
         const bool previewed = (m_preview.clip && track->findClip(m_preview.clip->id)) ||
-                               (m_preview.transition && m_preview.transitionTrack == slot.id);
+                               (m_preview.transition && m_preview.transitionTrack == slot.id) ||
+                               (m_preview.captionStyle && m_preview.captionTrack == slot.id);
         const bool dependsOnChanges = slot.followsTimeline && !changes.tracks.isEmpty();
         if (changes.tracks.contains(slot.id) || usesChangedMedia || previewed || dependsOnChanges) {
             fillSlot(slot, *track, project, anySolo);
@@ -1616,6 +1648,9 @@ void TimelineProjection::setPreview(const ProjectData &project, Preview preview)
         }
         if (p.transition && p.transitionTrack) {
             changes.tracks.insert(*p.transitionTrack);
+        }
+        if (p.captionStyle && p.captionTrack) {
+            changes.tracks.insert(*p.captionTrack);
         }
     };
     mark(m_preview);

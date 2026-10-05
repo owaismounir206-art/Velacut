@@ -998,6 +998,44 @@ private slots:
         QCOMPARE(session.sequence().visualTracks.size(), 3u);
         QVERIFY(session.sequence().visualTracks.back().captions);
     }
+
+    void joiningAndMovingCaptions()
+    {
+        auto owner = threeClips();
+        Session &session = *owner;
+        QVERIFY(session.apply(session.editor().insertCaptions(
+            {{frames(10), frames(40), u"Ciao a"_s, {TimedWord{u"Ciao"_s, frames(10), frames(30)}, TimedWord{u"a"_s, frames(30), frames(40)}}},
+             {frames(50), frames(70), u"tutti"_s, {}}})));
+        const Track *track = &session.sequence().visualTracks.back();
+        const ClipId first = track->clips[0].id;
+        const TrackId trackId = track->id;
+        QVERIFY(!session.editor().mergeCaptionLines(track->clips[1].id).ok()); // the last line
+        QVERIFY(session.apply(session.editor().mergeCaptionLines(first)));
+        track = &session.sequence().visualTracks.back();
+        QCOMPARE(track->clips.size(), 1u);
+        const Clip &line = track->clips[0];
+        QCOMPARE(line.start, frames(10));
+        QCOMPARE(line.end(), frames(70));
+        QCOMPARE(line.subtitle()->text, u"Ciao a tutti"_s);
+        QCOMPARE(line.subtitle()->words.size(), 3u);
+        QCOMPARE(line.subtitle()->words[2].start, frames(40)); // 30 frames of the first line + 10 of pause
+        QCOMPARE(line.subtitle()->words[2].end, frames(60));
+
+        // Moving all the lines: never before 0.
+        QVERIFY(session.apply(session.editor().shiftCaptions(trackId, frames(-4))));
+        QCOMPARE(session.sequence().visualTracks.back().clips[0].start, frames(6));
+        QVERIFY(session.apply(session.editor().shiftCaptions(trackId, frames(-100))));
+        QCOMPARE(session.sequence().visualTracks.back().clips[0].start, frames(0));
+        QVERIFY(!session.editor().shiftCaptions(trackId, frames(-1)).ok());
+
+        // A corrected word keeps its timing; a different number of words is spread again.
+        SubtitleClipData corrected = captions::withText(*session.sequence().visualTracks.back().clips[0].subtitle(),
+                                                        u"Ciao a tutte"_s);
+        QCOMPARE(corrected.words.size(), 3u);
+        QCOMPARE(corrected.words[2].text, u"tutte"_s);
+        QCOMPARE(corrected.words[2].start, frames(40));
+        QVERIFY(captions::withText(corrected, u"Salve"_s).words.empty());
+    }
 };
 
 QTEST_GUILESS_MAIN(TestTimelineEditor)

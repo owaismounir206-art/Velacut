@@ -550,7 +550,7 @@ private slots:
         // SPEC 0bis rule 3: what shows for each selection.
         editor.clearSelection();
         QCOMPARE(ids(), (QStringList{u"split"_s, u"rippleTrimLeft"_s, u"rippleTrimRight"_s, u"freeze"_s, u"addText"_s,
-                                     u"addAudio"_s}));
+                                     u"addAudio"_s, u"captions"_s}));
         editor.select(mainTrack(editor).clips[0].id.toString(), false);
         QCOMPARE(ids(), (QStringList{u"split"_s, u"rippleTrimLeft"_s, u"rippleTrimRight"_s, u"delete"_s, u"duplicate"_s,
                                      u"speed"_s, u"volume"_s, u"animation"_s, u"freeze"_s, u"reverse"_s, u"mirror"_s,

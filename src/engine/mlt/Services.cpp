@@ -5,6 +5,7 @@
 
 #include "core/project/ClipTime.h"
 #include "engine/playback/AudioMeters.h"
+#include "engine/text/CaptionRenderer.h"
 #include "engine/text/TextRenderer.h"
 #include "engine/timeline/ClipPlacement.h"
 #include "fx/Animation.h"
@@ -917,6 +918,44 @@ void *createLayerProducer(mlt_profile profile, mlt_service_type, const char *, c
     return producer;
 }
 
+// ---- vedit.caption -------------------------------------------------------------------------------------------
+
+// A caption line: outlines laid out on the projection's thread, frames drawn from them here (no fonts). The image
+// only changes when the shown group, the word being said or an animation step changes: the last one is reused.
+struct CaptionState
+{
+    std::shared_ptr<CaptionLayout> layout;
+    QMutex mutex;
+    std::int64_t key = -2;
+    QImage image;
+};
+
+int captionGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
+{
+    auto producer = static_cast<mlt_producer>(mlt_frame_pop_service(frame));
+    const int position = mlt_frame_pop_service_int(frame);
+    auto *state = static_cast<CaptionState *>(mlt_properties_get_data(MLT_PRODUCER_PROPERTIES(producer), kSettings, nullptr));
+    int w = *width;
+    int h = *height;
+    profileSize(MLT_PRODUCER_SERVICE(producer), w, h);
+    if (!state || !state->layout) {
+        setTransparent(frame, image, format, width, height, w, h);
+        return 0;
+    }
+    QImage layer;
+    {
+        QMutexLocker lock(&state->mutex);
+        const std::int64_t key = CaptionRenderer::stateKey(*state->layout, position);
+        if (key != state->key || state->image.size() != QSize(w, h)) {
+            state->image = CaptionRenderer::render(*state->layout, position, QSize(w, h));
+            state->key = key;
+        }
+        layer = state->image;
+    }
+    setLayer(frame, layer, image, format, width, height);
+    return 0;
+}
+
 // ---- vedit.graphic -------------------------------------------------------------------------------------------
 
 struct GraphicState
@@ -1124,6 +1163,7 @@ void registerServices(Mlt::Repository *repository)
     repository->register_service(mlt_service_producer_type, "vedit.sticker", createLayerProducer<stickerGetImage>);
     repository->register_service(mlt_service_producer_type, "vedit.visualizer", createLayerProducer<visualizerGetImage>);
     repository->register_service(mlt_service_producer_type, "vedit.graphic", createLayerProducer<graphicGetImage>);
+    repository->register_service(mlt_service_producer_type, "vedit.caption", createLayerProducer<captionGetImage>);
     repository->register_service(mlt_service_filter_type, "vedit.beat", createFilter<beatProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.effect", createFilter<videoEffectProcess>);
 }
@@ -1594,6 +1634,17 @@ std::unique_ptr<Mlt::Producer> makeGraphicProducer(Mlt::Profile &profile, const 
     state->length = std::max(1, length);
     state->fps = profile.fps() > 0 ? profile.fps() : 30.0;
     producer->set(kSettings, state, 0, [](void *p) { delete static_cast<GraphicState *>(p); });
+    return producer;
+}
+
+std::unique_ptr<Mlt::Producer> makeCaptionProducer(Mlt::Profile &profile, const SubtitleClipData &line,
+                                                   const CaptionStyle &style, int length)
+{
+    auto producer = std::make_unique<Mlt::Producer>(profile, "vedit.caption");
+    auto *state = new CaptionState;
+    state->layout = CaptionRenderer::layout(line, style, std::max(1, length), QSize(profile.width(), profile.height()),
+                                            Rational(profile.frame_rate_num(), profile.frame_rate_den()));
+    producer->set(kSettings, state, 0, [](void *p) { delete static_cast<CaptionState *>(p); });
     return producer;
 }
 

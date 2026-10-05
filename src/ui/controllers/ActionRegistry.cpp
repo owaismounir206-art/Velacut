@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ActionRegistry.h"
 
+#include "CaptionsController.h"
 #include "ClipInspector.h"
 #include "EditorController.h"
 #include "core/project/ProjectData.h"
@@ -132,6 +133,7 @@ ActionRegistry::ActionRegistry(EditorController &editor)
          [inspector] { return inspector->applyToAll(u"transition"_s); }});
     add({u"addText"_s, tr("Add text"), u"title"_s, {}, Nothing, always, [this] { return m_editor.addText(); }});
     add({u"addAudio"_s, tr("Add audio"), u"music_note"_s, {}, Nothing, always, library(u"audio"_s)});
+    add({u"captions"_s, tr("Captions"), u"subtitles"_s, {}, Nothing, always, library(u"captions"_s)});
     add({u"addSticker"_s, tr("Add a sticker"), u"add_reaction"_s, {}, 0, always, library(u"stickers"_s)});
     add({u"addEffect"_s, tr("Add an effect"), u"auto_awesome"_s, {}, 0, always, library(u"effects"_s)});
 
@@ -360,6 +362,10 @@ QVariantList ActionRegistry::search(const QString &text, int limit) const
         consider(score(needle, {preset.name.en, preset.name.it, tr("Text")}) * 10, u"text"_s, preset.id,
                  preset.name.text(), tr("Text style"), u"title"_s, true);
     }
+    for (const fx::CaptionStylePreset &preset : library.captionStyles()) {
+        consider(score(needle, {preset.name.en, preset.name.it, tr("Captions")}) * 10, u"captionStyle"_s, preset.id,
+                 preset.name.text(), tr("Caption style"), u"subtitles"_s, true);
+    }
     for (const fx::VideoEffectPreset &preset : library.videoEffects()) {
         consider(score(needle, {preset.name.en, preset.name.it, tr("Effect")}) * 10, u"effect"_s, preset.id,
                  preset.name.text(), tr("Effect"), u"auto_awesome"_s, true);
@@ -415,6 +421,10 @@ bool ActionRegistry::activate(const QString &kind, const QString &id)
     if (kind == u"text"_s) {
         emit m_editor.libraryRequested(u"text"_s);
         return inspector->kind() == ClipInspector::Text ? inspector->applyTextStyle(id) : m_editor.addText(id);
+    }
+    if (kind == u"captionStyle"_s) {
+        emit m_editor.libraryRequested(u"captions"_s);
+        return m_editor.captions()->applyStyle(id);
     }
     if (kind == u"animation"_s) {
         emit m_editor.libraryRequested(u"animations"_s);

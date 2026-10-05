@@ -53,6 +53,7 @@ Item {
     readonly property color labelColor: placeholder !== "" ? Theme.color.primary
                                       : kind === "audio" ? Theme.color.onTertiaryContainer
                                       : kind === "text" ? Theme.color.onPrimaryContainer
+                                      : kind === "caption" ? Theme.color.onSecondary
                                       : kind === "sticker" ? Theme.color.onSecondaryContainer
                                       : pictured ? Theme.readableOn(Theme.color.scrim) : Theme.color.onSurface
 
@@ -62,6 +63,7 @@ Item {
         radius: Theme.shape.extraSmall
         color: clip.kind === "audio" ? Theme.color.tertiaryContainer
              : clip.kind === "text" ? Theme.color.primaryContainer
+             : clip.kind === "caption" ? Theme.color.secondary
              : clip.kind === "sticker" ? Theme.color.secondaryContainer
              : clip.kind === "adjustment" ? Theme.color.surfaceContainerHighest
              : clip.kind === "compound" ? Theme.color.surfaceContainerHigh
@@ -153,6 +155,7 @@ Item {
                 Icon {
                     anchors.verticalCenter: parent.verticalCenter
                     name: clip.placeholder !== "" ? "photo_library" : clip.kind === "audio" ? "music_note" : clip.kind === "text" ? "title"
+                        : clip.kind === "caption" ? "subtitles"
                         : clip.kind === "sticker" ? "add_reaction" : clip.kind === "adjustment" ? "tune"
                         : clip.kind === "compound" ? "stacks" : clip.kind === "image" ? "image" : "movie"
                     size: Theme.editor.clipLabelHeight - Theme.space.xs

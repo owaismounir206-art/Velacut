@@ -35,6 +35,29 @@ std::vector<TimedWord> timedWords(const SubtitleClipData &line, const RationalTi
 std::pair<SubtitleClipData, SubtitleClipData> split(const SubtitleClipData &line, const RationalTime &duration,
                                                     const RationalTime &offset);
 
+// The line with another text: its word timings are kept when the text still has as many words (a word corrected),
+// otherwise they are spread again over the line (timedWords).
+SubtitleClipData withText(const SubtitleClipData &line, const QString &text);
+
+// Two consecutive lines as one: `first` (of `firstDuration`) followed after `gap` by `second`.
+SubtitleClipData merged(const SubtitleClipData &first, const RationalTime &firstDuration, const SubtitleClipData &second,
+                        const RationalTime &secondDuration, const RationalTime &gap);
+
+// Words shown together on screen ("words per line" of the caption style), with their time on screen from the clip's
+// start: groups of `maxWords` words (0 = the whole line), a sentence end (. ! ? …) also closing a group. Each group
+// stays until the next one starts; the first starts with the clip, the last ends with it.
+struct WordGroup
+{
+    int first = 0;
+    int count = 0;
+    RationalTime start;
+    RationalTime end;
+};
+std::vector<WordGroup> groupsOf(const std::vector<TimedWord> &words, int maxWords, const RationalTime &duration);
+
+// The word being said at `time` (the last one started, so a pause keeps the previous word), -1 before the first.
+int activeWord(const std::vector<TimedWord> &words, const RationalTime &time);
+
 // The lines of a caption track as subtitle file entries (SRT/VTT export).
 std::vector<SubtitleEntry> entriesOf(const Track &track);
 // Entries of a subtitle file as caption lines.

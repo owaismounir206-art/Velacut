@@ -27,7 +27,7 @@ Item {
         }
         function onImportRequested() { library.importFiles() }
         function onLibraryRequested(name) {
-            const index = ["media", "audio", "text", "stickers", "effects", "transitions", "filters", "animations", "brand"].indexOf(name)
+            const index = ["media", "audio", "text", "captions", "stickers", "effects", "transitions", "filters", "animations", "brand"].indexOf(name)
             if (index >= 0)
                 rail.currentIndex = index
         }
@@ -201,6 +201,7 @@ Item {
                             model: [{ text: qsTr("Media"), iconName: "video_library" },
                                     { text: qsTr("Audio"), iconName: "music_note" },
                                     { text: qsTr("Text"), iconName: "title" },
+                                    { text: qsTr("Captions"), iconName: "subtitles" },
                                     { text: qsTr("Stickers"), iconName: "add_reaction" },
                                     { text: qsTr("Effects"), iconName: "auto_awesome" },
                                     { text: qsTr("Transitions"), iconName: "transition_fade" },
@@ -225,6 +226,9 @@ Item {
                                 editor: root.editor
                                 kind: AssetLibraryModel.TextStyles
                                 title: qsTr("Text")
+                            }
+                            CaptionsPanel {
+                                editor: root.editor
                             }
                             AssetPanel {
                                 editor: root.editor

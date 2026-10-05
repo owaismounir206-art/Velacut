@@ -5,6 +5,7 @@
 #include "core/serialization/ProjectJson.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/mlt/Services.h"
+#include "engine/text/CaptionRenderer.h"
 #include "engine/text/TextRenderer.h"
 #include "fx/Animation.h"
 #include "fx/AudioVisualizer.h"
@@ -168,7 +169,8 @@ void AssetThumbnail::request()
     const QImage frame = sample(&sampleKey);
     // Transitions and animations are drawn at a few steps of progress: smooth enough for the hover animation, cached.
     const bool animated = m_kind == AssetLibraryModel::Transitions || m_kind == AssetLibraryModel::Animations ||
-                          m_kind == AssetLibraryModel::Stickers || m_kind == AssetLibraryModel::VideoEffects;
+                          m_kind == AssetLibraryModel::Stickers || m_kind == AssetLibraryModel::VideoEffects ||
+                          m_kind == AssetLibraryModel::CaptionStyles;
     const double progress = animated ? std::round(m_progress * 24) / 24 : 0.0;
     const QString key = u"%1|%2|%3|%4|%5x%6"_s.arg(m_kind).arg(m_assetId, sampleKey).arg(progress).arg(size.width()).arg(size.height());
     if (const QImage *cached = cache().object(key)) {
@@ -207,6 +209,28 @@ QImage AssetThumbnail::render(int kind, const QString &assetId, double progress,
                 fx::vignette(viewOf(image), preset->vignette, 0.5, 0, image.height());
             }
         }
+        return image;
+    }
+    if (kind == AssetLibraryModel::CaptionStyles) {
+        // Three words over a picture, said one after the other over `progress` (the middle one at rest).
+        QImage image = scene(size, true);
+        const fx::CaptionStylePreset *preset = library.captionStyle(assetId);
+        if (!preset) {
+            return image;
+        }
+        CaptionStyle style = projectjson::captionStyleFromJson(preset->style);
+        style.text.size = Param(0.17);
+        style.position = 0.0;
+        if (style.maxWordsPerLine > 3) {
+            style.maxWordsPerLine = 3;
+        }
+        SubtitleClipData line;
+        line.text = tr("Hi everyone here");
+        constexpr int length = 90;
+        const auto layout = engine::CaptionRenderer::layout(line, style, length, size, Rational(30));
+        const auto frame = std::clamp<std::int64_t>(std::llround(progress * (length - 1)), 0, length - 1);
+        QPainter painter(&image);
+        painter.drawImage(0, 0, engine::CaptionRenderer::render(*layout, frame, size));
         return image;
     }
     if (kind == AssetLibraryModel::Transitions) {
