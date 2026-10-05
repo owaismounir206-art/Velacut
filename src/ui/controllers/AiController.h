@@ -36,6 +36,8 @@ class AiController : public QObject
     // Speech recognition (whisper.cpp): 0 = ready, 1 = whisper.cpp not installed, 2 = no speech model downloaded.
     Q_PROPERTY(int speechStatus READ speechStatus NOTIFY speechStatusChanged FINAL)
     Q_PROPERTY(QString speechInstallCommand READ speechInstallCommand CONSTANT FINAL)
+    // Text to speech can be used: Piper installed and a voice added (the name of the first voice, "" otherwise).
+    Q_PROPERTY(QString voiceName READ voiceName NOTIFY speechStatusChanged FINAL)
 
 public:
     explicit AiController(EditorController &editor);
@@ -80,6 +82,9 @@ public:
     // "Read aloud" (Piper): the selected text, spoken with the first voice added, as a sound under it.
     Q_INVOKABLE bool readAloud();
     Q_INVOKABLE bool canReadAloud() const;
+    QString voiceName() const;
+    // Speech for each text, one after the other (the busy pill shows it); `done` gets the files ("" where it failed).
+    bool synthesizeAll(const QStringList &texts, std::function<void(const QStringList &)> done);
     // "Transcribe": the speech of the main track's clips, for editing by the transcript (Editor.transcript).
     Q_INVOKABLE bool transcribe(const QString &language = QStringLiteral("auto"));
     // The transcript of a media file made in this session or found in the cache (best model first), if any.
@@ -122,6 +127,7 @@ private:
     QHash<QString, std::vector<double>> m_scenes;
     mutable QHash<QString, ai::Transcript> m_transcripts; // by fingerprint (also those read from the cache)
     bool m_rembgDownloadExplained = false;
+    void synthesizeNext(QStringList texts, QStringList done, std::function<void(const QStringList &)> finished);
 };
 
 } // namespace vedit::ui

@@ -177,6 +177,8 @@ Item {
                     Repeater {
                         model: [{ id: "montageQuickButton", icon: "movie_edit", text: qsTr("Automatic montage"),
                                   detail: qsTr("Your shots and a song become a video on the beat") },
+                                { id: "scriptQuickButton", icon: "article", text: qsTr("Script to video"),
+                                  detail: qsTr("A text becomes scenes, captions and a voice") },
                                 { id: "recordScreenQuickButton", icon: "screen_record", text: qsTr("Record screen"),
                                   detail: qsTr("Screen, webcam or both, with the teleprompter") },
                                 { id: "slideshowQuickButton", icon: "slideshow", text: qsTr("Slideshow"),
@@ -194,13 +196,14 @@ Item {
                             color: Theme.color.panel
                             Accessible.role: Accessible.Button
                             Accessible.name: modelData.text
-                            RowLayout {
+                            // Icon on top, then the name and what it does: five tools fit in a row with their names whole.
+                            ColumnLayout {
                                 id: toolRow
                                 anchors.fill: parent
                                 anchors.margins: Theme.space.lg
-                                spacing: Theme.space.md
+                                spacing: Theme.space.sm
                                 Rectangle {
-                                    implicitWidth: Theme.space.xxxl
+                                    implicitWidth: Theme.space.xxl + Theme.space.sm
                                     implicitHeight: implicitWidth
                                     radius: Theme.shape.medium
                                     color: Theme.color.secondaryContainer
@@ -210,24 +213,22 @@ Item {
                                         color: Theme.color.onSecondaryContainer
                                     }
                                 }
-                                ColumnLayout {
+                                Label {
                                     Layout.fillWidth: true
-                                    spacing: Theme.space.xxs
-                                    Label {
-                                        Layout.fillWidth: true
-                                        role: "titleSmall"
-                                        elide: Text.ElideRight
-                                        text: tool.modelData.text
-                                    }
-                                    Label {
-                                        Layout.fillWidth: true
-                                        role: "bodySmall"
-                                        color: Theme.color.onSurfaceVariant
-                                        wrapMode: Text.WordWrap
-                                        maximumLineCount: 2
-                                        elide: Text.ElideRight
-                                        text: tool.modelData.detail
-                                    }
+                                    role: "titleSmall"
+                                    elide: Text.ElideRight
+                                    text: tool.modelData.text
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    verticalAlignment: Text.AlignTop
+                                    role: "bodySmall"
+                                    color: Theme.color.onSurfaceVariant
+                                    wrapMode: Text.WordWrap
+                                    maximumLineCount: 2
+                                    elide: Text.ElideRight
+                                    text: tool.modelData.detail
                                 }
                             }
                             StateLayer {
@@ -245,6 +246,8 @@ Item {
                                 onClicked: {
                                     if (tool.modelData.id === "montageQuickButton")
                                         montage.open()
+                                    else if (tool.modelData.id === "scriptQuickButton")
+                                        scriptVideo.open()
                                     else if (tool.modelData.id === "recordScreenQuickButton")
                                         App.recordScreen()
                                     else if (tool.modelData.id === "slideshowQuickButton")
@@ -417,6 +420,12 @@ Item {
 
     SlideshowDialog {
         id: slideshow
+        anchors.centerIn: parent
+        width: Math.min(root.width - 2 * Theme.space.xl, Theme.editor.dialogWidth * 1.15)
+    }
+    ScriptVideoDialog {
+        id: scriptVideo
+        objectName: "scriptVideoDialog"
         anchors.centerIn: parent
         width: Math.min(root.width - 2 * Theme.space.xl, Theme.editor.dialogWidth * 1.15)
     }

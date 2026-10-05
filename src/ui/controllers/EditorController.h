@@ -103,6 +103,7 @@ class EditorController : public QObject
     // The automatic montage: being made, and "Shuffle" available (this session, until dismissed).
     Q_PROPERTY(bool buildingMontage READ buildingMontage NOTIFY montageChanged FINAL)
     Q_PROPERTY(bool canShuffleMontage READ canShuffleMontage NOTIFY montageChanged FINAL)
+    Q_PROPERTY(bool buildingFromScript READ buildingFromScript NOTIFY scriptVideoChanged FINAL)
 
 public:
     enum SaveState
@@ -209,6 +210,11 @@ public:
     bool canShuffleMontage() const { return m_montage && !m_montage->building; }
     // "Shuffle": another montage from the same files (other order and moments), one undo step.
     Q_INVOKABLE bool shuffleMontage();
+    // "Script to video" (SPEC §5.13bis): the script becomes scenes, each a slot for your videos ("Choose" fills
+    // them) with its text as animated captions, read aloud when a Piper voice is installed, over the music (lowered
+    // under the voice). `preset`: CanvasPreset of the video.
+    Q_INVOKABLE void buildFromScript(const QString &script, int preset, const QUrl &music);
+    bool buildingFromScript() const { return m_buildingScript; }
     Q_INVOKABLE void dismissMontage();
     // Brand kit (SPEC §5.13ter), one click each: the logo as a sticker at the playhead, or as a watermark over the whole
     // video (a corner, small, half-transparent); the intro at the start and the outro at the end of the main track;
@@ -372,6 +378,7 @@ signals:
     void askForTemplateMediaChanged();
     void slideshowChanged();
     void montageChanged();
+    void scriptVideoChanged();
     // The project changed (any command, undo or redo).
     void modelChanged();
     // For the snackbar: `undoable` shows the "Undo" action.
@@ -460,6 +467,8 @@ private:
     };
     std::optional<MontageState> m_montage;
     void layMontage(bool initial);
+    bool m_buildingScript = false;
+    void layScript(const QStringList &scenes, const QStringList &voices, const QHash<QString, MediaId> &media, const QString &music);
     struct PendingImport
     {
         QSet<QString> waiting;

@@ -400,6 +400,42 @@ bool AiController::trackMotion()
     return true;
 }
 
+QString AiController::voiceName() const
+{
+    const QStringList voices = ai::piper::voices();
+    return voices.isEmpty() || ai::piper::executable().isEmpty() ? QString() : ai::piper::voiceName(voices.front());
+}
+
+bool AiController::synthesizeAll(const QStringList &texts, std::function<void(const QStringList &)> done)
+{
+    if (busy() || voiceName().isEmpty()) {
+        return false;
+    }
+    synthesizeNext(texts, {}, std::move(done));
+    return true;
+}
+
+void AiController::synthesizeNext(QStringList texts, QStringList done, std::function<void(const QStringList &)> finished)
+{
+    if (texts.isEmpty()) {
+        finished(done);
+        return;
+    }
+    const QString text = texts.takeFirst();
+    auto task = std::make_unique<ai::SpeechSynthesis>(text.simplified(), ai::piper::voices().front());
+    ai::SpeechSynthesis *speech = task.get();
+    const auto next = [this, speech, texts, done, finished](bool ok) {
+        QStringList files = done;
+        files << (ok ? speech->outputPath() : QString());
+        // After this task is cleaned up (the next one starts from a clean state).
+        QMetaObject::invokeMethod(this, [this, texts, files, finished] { synthesizeNext(texts, files, finished); }, Qt::QueuedConnection);
+    };
+    connect(speech, &ai::AiTask::finished, this, [next] { next(true); });
+    connect(speech, &ai::AiTask::failed, this, [next] { next(false); });
+    connect(speech, &ai::AiTask::canceled, this, [finished, done] { finished(done); });
+    run(std::move(task));
+}
+
 bool AiController::canReadAloud() const
 {
     const std::optional<ClipId> focus = m_editor.focusClip();

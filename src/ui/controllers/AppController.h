@@ -86,6 +86,10 @@ public:
     Q_INVOKABLE bool newSlideshow(const QList<QUrl> &photos, const QUrl &music, int style, bool onBeat);
     // A new project made by the automatic montage (EditorController::buildMontage).
     Q_INVOKABLE bool newMontage(const QList<QUrl> &files, const QUrl &music, const QString &style, int seconds);
+    // A new project made from a script (EditorController::buildFromScript).
+    Q_INVOKABLE bool newFromScript(const QString &script, int preset, const QUrl &music);
+    // The Piper voice that reads texts aloud ("" when Piper or a voice is missing).
+    Q_INVOKABLE QString voiceName() const;
     Q_INVOKABLE bool openDraft(const QString &draftId);
     // Back to the home screen (everything is already saved; this writes the last changes).
     Q_INVOKABLE void closeEditor();

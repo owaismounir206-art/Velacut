@@ -15,6 +15,12 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   "Rimescola" nel banner del player = altro ordine e altri momenti (seme diverso), un passo di annullamento.
   Test: 16 video + 4 foto + una canzone a 120 BPM → 15 s, ogni taglio su un battito, rimescola/annulla, poi un taglio
   normale funziona (`tst_editor::automaticMontage`); dalla schermata iniziale 5 azioni (4 con i valori predefiniti).
+- **Da copione a video** (SPEC §5.13bis; `ai::splitScript`, `EditorController::buildFromScript`, `ScriptVideoDialog`):
+  il testo diventa scene (paragrafi; quelli lunghi divisi a fine frase, ≤ 30 parole), ognuna uno spazio da riempire
+  con i propri video ("Scegli" del banner dei template), lunga quanto la sua voce (Piper, se c'è una voce) o il tempo
+  di lettura; le parole come sottotitoli animati; la musica sotto, più bassa e abbassata ancora mentre parla la voce
+  (ducking esistente). Senza ricerca per contenuto (servirebbe CLIP) i media non vengono proposti in automatico.
+  Test con e senza voce (sostituto di piper-tts). Nella schermata iniziale 5 strumenti rapidi, ora a schede verticali.
 - **Tracciamento del movimento** ("Traccia" sui testi e sticker; `fx::PointTracker`, `engine::extractTrackedPath`):
   la zona del video sotto il testo/sticker (8 % della larghezza) seguita fotogramma per fotogramma (confronto a
   blocchi grossolano+fine, sub-pixel, modello aggiornato lentamente, "perso" quando nessun posto somiglia abbastanza)

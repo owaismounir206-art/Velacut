@@ -4,6 +4,7 @@ add_library(vedit_ai STATIC
     Analysis.h Analysis.cpp
     Tasks.h Tasks.cpp
     Montage.h Montage.cpp
+    Script.h Script.cpp
     Separation.h Separation.cpp
     Speech.h Speech.cpp
     Transcript.h Transcript.cpp

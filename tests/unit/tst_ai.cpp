@@ -2,6 +2,7 @@
 #include "ai/AiTask.h"
 #include "ai/Analysis.h"
 #include "ai/Montage.h"
+#include "ai/Script.h"
 #include "ai/Transcript.h"
 
 #include <QJsonArray>
@@ -42,6 +43,7 @@ private:
 
 using namespace vedit;
 using namespace vedit::ai;
+using namespace Qt::StringLiterals;
 
 class TestAi : public QObject
 {
@@ -296,6 +298,20 @@ private slots:
         QCOMPARE(all.size(), sources.size());
         QCOMPARE(all.front().source, 0);
         QCOMPARE(all.front().length, 2.0); // the style's seconds without music
+    }
+
+    void scriptBecomesScenes()
+    {
+        const QString twelve = QStringLiteral("uno due tre quattro cinque sei sette otto nove dieci undici dodici.");
+        const QString script = QStringLiteral("Benvenuti nel video.\n\n  \n") + twelve + u' ' + twelve + u' ' + twelve + u"\n\n"_s;
+        const QStringList scenes = ai::splitScript(script);
+        QCOMPARE(scenes.size(), 3);
+        QCOMPARE(scenes[0], QStringLiteral("Benvenuti nel video."));
+        QCOMPARE(captions::splitWords(scenes[1]).size(), 24); // two sentences fit in 30 words
+        QCOMPARE(captions::splitWords(scenes[2]).size(), 12);
+        QVERIFY(ai::splitScript(QStringLiteral("  \n\n ")).isEmpty());
+        QCOMPARE(ai::readingSeconds(QStringLiteral("Ciao")), 2.0);
+        QVERIFY(std::abs(ai::readingSeconds(twelve + u' ' + twelve) - (24 / 2.6 + 0.4)) < 1e-9);
     }
 };
 

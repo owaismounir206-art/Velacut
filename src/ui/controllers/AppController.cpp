@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "AppController.h"
 
+#include "ai/Speech.h"
+
 #include "ActionRegistry.h"
 #include "RecordController.h"
 #include "common/Paths.h"
@@ -233,6 +235,21 @@ bool AppController::newMontage(const QList<QUrl> &files, const QUrl &music, cons
     }
     m_editor->buildMontage(files, music, style, seconds);
     return true;
+}
+
+bool AppController::newFromScript(const QString &script, int preset, const QUrl &music)
+{
+    if (script.trimmed().isEmpty() || !newProject()) {
+        return false;
+    }
+    m_editor->buildFromScript(script, preset, music);
+    return true;
+}
+
+QString AppController::voiceName() const
+{
+    const QStringList voices = ai::piper::voices();
+    return voices.isEmpty() || ai::piper::executable().isEmpty() ? QString() : ai::piper::voiceName(voices.front());
 }
 
 bool AppController::openDraft(const QString &draftId)

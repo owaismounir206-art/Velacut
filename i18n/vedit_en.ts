@@ -15,7 +15,7 @@
 <context>
     <name>HomeScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/HomeScreen.qml" line="+360"/>
+        <location filename="../src/ui/qml/HomeScreen.qml" line="+363"/>
         <source>%n project(s)</source>
         <translation>
             <numerusform>%n project</numerusform>
@@ -119,7 +119,7 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/AiController.cpp" line="+823"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+859"/>
         <source>%n caption line(s) from the speech</source>
         <translation>
             <numerusform>%n caption line from the speech</numerusform>
@@ -169,7 +169,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+993"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+996"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>
@@ -193,7 +193,15 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+420"/>
+        <location line="+92"/>
+        <source>%n scene(s) ready: put your videos in the grey slots (Choose), change anything you like.</source>
+        <translation>
+            <numerusform>%n scene ready: put your video in the grey slot (Choose), change anything you like.</numerusform>
+            <numerusform>%n scenes ready: put your videos in the grey slots (Choose), change anything you like.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+421"/>
         <source>%n beat(s) marked on the clip</source>
         <translation>
             <numerusform>%n beat marked on the clip</numerusform>

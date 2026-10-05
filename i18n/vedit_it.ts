@@ -1822,6 +1822,16 @@
     </message>
     <message>
         <location line="+1"/>
+        <source>Script to video</source>
+        <translation>Da copione a video</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A text becomes scenes, captions and a voice</source>
+        <translation>Un testo diventa scene, sottotitoli e una voce</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Record screen</source>
         <translation>Registra schermo</translation>
     </message>
@@ -1842,17 +1852,17 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+89"/>
+        <location line="+90"/>
         <source>Templates</source>
         <translation>Template</translation>
     </message>
     <message>
-        <location line="-88"/>
+        <location line="-89"/>
         <source>Pick a ready-made video and put your own shots in it</source>
         <translation>Scegli un video già pronto e mettici le tue riprese</translation>
     </message>
     <message>
-        <location line="+95"/>
+        <location line="+96"/>
         <source>Choose one, then replace each shot with your videos and photos</source>
         <translation>Scegline uno, poi sostituisci ogni ripresa con i tuoi video e le tue foto</translation>
     </message>
@@ -1880,7 +1890,7 @@
         <translation>I tuoi progetti compaiono qui, pronti a ripartire esattamente da dove li hai lasciati.</translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+59"/>
         <source>Rename project</source>
         <translation>Rinomina il progetto</translation>
     </message>
@@ -4474,6 +4484,89 @@
     </message>
 </context>
 <context>
+    <name>ScriptVideoDialog</name>
+    <message>
+        <location filename="../src/ui/qml/ScriptVideoDialog.qml" line="+15"/>
+        <source>Script to video</source>
+        <translation>Da copione a video</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Cancel</source>
+        <translation>Annulla</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Create</source>
+        <translation>Crea</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Paste or write the script: every paragraph becomes a scene.</source>
+        <translation>Incolla o scrivi il copione: ogni paragrafo diventa una scena.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Read aloud with the voice “%1”, with animated captions.</source>
+        <translation>Letto ad alta voce con la voce «%1», con sottotitoli animati.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>No voice installed (Preferences → AI models): the words appear as animated captions.</source>
+        <translation>Nessuna voce installata (Preferenze → Modelli AI): le parole compaiono come sottotitoli animati.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Format</source>
+        <translation>Formato</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>9:16</source>
+        <translation>9:16</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>16:9</source>
+        <translation>16:9</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>1:1</source>
+        <translation>1:1</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Music</source>
+        <translation>Musica</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>None</source>
+        <translation>Nessuna</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Other…</source>
+        <translation>Altro…</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Choose the music</source>
+        <translation>Scegli la musica</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Music (%1)</source>
+        <translation>Musica (%1)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>All files (*)</source>
+        <translation>Tutti i file (*)</translation>
+    </message>
+</context>
+<context>
     <name>SearchBar</name>
     <message>
         <location filename="../src/ui/qml/components/SearchBar.qml" line="+53"/>
@@ -6791,12 +6884,12 @@
     </message>
     <message>
         <location line="+24"/>
-        <location line="+341"/>
+        <location line="+377"/>
         <source>Select a video first.</source>
         <translation>Seleziona prima un video.</translation>
     </message>
     <message>
-        <location line="-306"/>
+        <location line="-342"/>
         <source>Select a video or a sound first.</source>
         <translation>Seleziona prima un video o un audio.</translation>
     </message>
@@ -6886,7 +6979,7 @@
         <translation>Segue il movimento (keyframe in Video)</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+60"/>
         <source>Select a text first.</source>
         <translation>Seleziona prima un testo.</translation>
     </message>
@@ -6916,8 +7009,8 @@
         <translation>Stabilizza funziona sulle clip riprodotte in avanti a velocità costante.</translation>
     </message>
     <message>
-        <location line="-118"/>
-        <location line="+129"/>
+        <location line="-154"/>
+        <location line="+165"/>
         <location line="+356"/>
         <location line="+32"/>
         <source>The clip was removed meanwhile.</source>
@@ -7064,7 +7157,7 @@
 <context>
     <name>vedit::ui::AppController</name>
     <message>
-        <location filename="../src/ui/controllers/AppController.cpp" line="+126"/>
+        <location filename="../src/ui/controllers/AppController.cpp" line="+128"/>
         <source>GPU</source>
         <translation>GPU</translation>
     </message>
@@ -7079,7 +7172,7 @@
         <translation>Questo template non si può usare.</translation>
     </message>
     <message>
-        <location line="+69"/>
+        <location line="+84"/>
         <source>Project recovered: vedit did not close properly last time. Your latest changes are here.</source>
         <translation>Progetto recuperato: l&apos;ultima volta vedit non si è chiuso correttamente. Le tue ultime modifiche sono qui.</translation>
     </message>
@@ -7844,13 +7937,13 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+213"/>
-        <location line="+1216"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+216"/>
+        <location line="+1309"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
     <message>
-        <location line="-803"/>
+        <location line="-896"/>
         <source>Import media</source>
         <translation>Importa media</translation>
     </message>
@@ -7948,7 +8041,30 @@
         </translation>
     </message>
     <message>
-        <location line="+72"/>
+        <location line="+8"/>
+        <source>Write or paste the script first.</source>
+        <translation>Scrivi o incolla prima il copione.</translation>
+    </message>
+    <message>
+        <location line="+42"/>
+        <source>Scene %1: %2</source>
+        <translation>Scena %1: %2</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Music</source>
+        <translation>Musica</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+12"/>
+        <source>%n scene(s) ready: put your videos in the grey slots (Choose), change anything you like.</source>
+        <translation>
+            <numerusform>%n scena pronta: metti i tuoi video nello spazio grigio (Scegli), cambia quello che vuoi.</numerusform>
+            <numerusform>%n scene pronte: metti i tuoi video negli spazi grigi (Scegli), cambia quello che vuoi.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+73"/>
         <location line="+13"/>
         <source>Add music</source>
         <translation>Aggiungi musica</translation>

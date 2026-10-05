@@ -74,6 +74,7 @@ qt_add_qml_module(vedit_ui
         qml/BrandKitPanel.qml
         qml/CaptionsPanel.qml
         qml/MontageDialog.qml
+        qml/ScriptVideoDialog.qml
         qml/TranscriptPanel.qml
         qml/FullScreenPreview.qml
 )

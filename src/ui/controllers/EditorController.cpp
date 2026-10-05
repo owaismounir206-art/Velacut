@@ -10,6 +10,9 @@
 #include "common/Paths.h"
 #include "core/edit/ProjectFormat.h"
 #include "core/edit/TimelineEditor.h"
+#include "ui/controllers/AiController.h"
+#include "core/project/Captions.h"
+#include "ai/Script.h"
 #include "core/project/ClipTime.h"
 #include "core/effects/Easing.h"
 #include "core/serialization/ProjectJson.h"
@@ -1199,6 +1202,99 @@ void EditorController::layMontage(bool initial)
                               static_cast<int>(plan.size()))
                          : tr("Another montage: %n shot(s)", nullptr, static_cast<int>(plan.size())),
                  !initial);
+}
+
+void EditorController::buildFromScript(const QString &script, int preset, const QUrl &music)
+{
+    const QStringList scenes = ai::splitScript(script);
+    if (scenes.isEmpty()) {
+        emit message(tr("Write or paste the script first."), false);
+        return;
+    }
+    m_buildingScript = true;
+    emit scriptVideoChanged();
+    setCanvasPreset(preset);
+    const QString song = music.isLocalFile() ? QFileInfo(music.toLocalFile()).absoluteFilePath() : QString();
+    // The voice of each scene (when a Piper voice is installed), then everything in the project.
+    const auto place = [this, scenes, song](const QStringList &voices) {
+        QStringList files;
+        for (const QString &voice : voices) {
+            if (!voice.isEmpty()) {
+                files << voice;
+            }
+        }
+        if (!song.isEmpty()) {
+            files << song;
+        }
+        importThen(files, [this, scenes, voices, song](const QHash<QString, MediaId> &media) { layScript(scenes, voices, media, song); });
+    };
+    if (!m_ai->synthesizeAll(scenes, place)) {
+        place({});
+    }
+}
+
+void EditorController::layScript(const QStringList &scenes, const QStringList &voices, const QHash<QString, MediaId> &media,
+                                 const QString &music)
+{
+    const Rational rate = data().settings.frameRate;
+    const auto at = [&rate](double seconds) {
+        return RationalTime::fromSeconds(Rational(static_cast<qint64>(std::llround(seconds * 1000)), 1000), rate, Rounding::NearestEven);
+    };
+    const auto build = [this](EditResult result) { return result.ok() && m_document->apply(std::move(result)); };
+    std::vector<captions::CaptionLine> lines;
+    double time = 0.0;
+    for (qsizetype i = 0; i < scenes.size(); ++i) {
+        const QString voice = i < voices.size() ? voices[i] : QString();
+        const Media *speech = voice.isEmpty() ? nullptr : data().findMedia(media.value(voice));
+        const double spoken = speech && speech->info.duration ? speech->info.duration->toSecondsDouble() : 0.0;
+        const double length = spoken > 0.0 ? spoken + 0.4 : ai::readingSeconds(scenes[i]);
+        // A slot for the user's shot, named after what the scene says.
+        const QStringList words = captions::splitWords(scenes[i]);
+        const QString label = tr("Scene %1: %2").arg(i + 1).arg(words.mid(0, 4).join(u' ') + (words.size() > 4 ? u"…"_s : QString()));
+        build(TimelineEditor(data(), data().mainSequenceId).insertPlaceholder(Placeholder{label, PlaceholderKind::Any}, at(length)));
+        if (speech) {
+            build(TimelineEditor(data(), data().mainSequenceId).insertMedia(speech->id, at(time)));
+        }
+        lines.push_back(captions::CaptionLine{at(time), at(time + (spoken > 0.0 ? spoken : length - 0.2)), scenes[i], {}});
+        time += length;
+    }
+    // The text as animated captions, word by word.
+    std::optional<CaptionStyle> style;
+    if (const fx::CaptionStylePreset *preset = fx::Library::core().captionStyle(u"captions/pop-three"_s)) {
+        style = projectjson::captionStyleFromJson(preset->style);
+        style->preset = preset->id;
+    }
+    build(TimelineEditor(data(), data().mainSequenceId).insertCaptions(lines, style));
+    // The music under it, lowered while the voice speaks, ending with a fade.
+    const MediaId song = media.value(music);
+    if (!song.isNull()) {
+        EditResult insert = TimelineEditor(data(), data().mainSequenceId).insertMedia(song, RationalTime(0, rate));
+        const ClipId musicClip = insert.primaryClip;
+        if (build(std::move(insert))) {
+            const Clip *clip = data().findClip(musicClip);
+            if (clip && at(time) < clip->end()) {
+                build(TimelineEditor(data(), data().mainSequenceId).trimClip(musicClip, ClipEdge::End, at(time)));
+            }
+            build(TimelineEditor(data(), data().mainSequenceId).updateClips({musicClip}, [&](Clip &c) {
+                if (MediaClipData *data = std::get_if<MediaClipData>(&c.payload)) {
+                    data->audio.fadeOut = std::min(at(2.0), c.duration);
+                    data->audio.gainDb = Param(-6.0);
+                }
+            }, tr("Music")));
+            if (std::any_of(voices.begin(), voices.end(), [](const QString &v) { return !v.isEmpty(); })) {
+                setSelection({musicClip});
+                m_inspector->autoDuck(-12.0);
+                clearSelection();
+            }
+        }
+    }
+    m_document->undoStack().clear(); // the script is where the project starts
+    m_buildingScript = false;
+    m_player->seek(0);
+    emit scriptVideoChanged();
+    emit message(tr("%n scene(s) ready: put your videos in the grey slots (Choose), change anything you like.", nullptr,
+                    static_cast<int>(scenes.size())),
+                 false);
 }
 
 bool EditorController::shuffleMontage()

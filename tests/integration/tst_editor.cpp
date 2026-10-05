@@ -1044,6 +1044,87 @@ done
         QVERIFY(std::abs(later.y) < 0.02);
     }
 
+    // "Script to video": scenes as slots for the user's shots, the words as animated captions, and — with a Piper voice
+    // (a stand-in here) — the voice of each scene, the music lowered under it.
+    void scriptToVideo()
+    {
+        const QString script = u"Questo è il nostro viaggio.\n\nPrima tappa: il mare, al tramonto.\n\nPoi le montagne e la neve."_s;
+        document::DraftStore store(m_dir.filePath(u"drafts-script"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        {
+            EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+            editor.player()->setVolume(0.0);
+            editor.buildFromScript(script, int(CanvasPreset::Portrait9x16), QUrl::fromLocalFile(m_files.music));
+            QTRY_VERIFY_WITH_TIMEOUT(!editor.buildingFromScript(), 30000);
+            const Sequence &sequence = *editor.data().mainSequence();
+            QCOMPARE(sequence.canvas.preset, CanvasPreset::Portrait9x16);
+            QCOMPARE(editor.placeholderCount(), 3);
+            QCOMPARE(mainTrack(editor).clips[1].placeholder->label, u"Scene 2: Prima tappa: il mare,…"_s);
+            QCOMPARE(editor.captions()->lines().size(), 3);
+            QCOMPARE(editor.captions()->lines()[2].toMap().value(u"text"_s).toString(), u"Poi le montagne e la neve."_s);
+            QCOMPARE(editor.captions()->styleId(), u"captions/pop-three"_s);
+            QCOMPARE(sequence.audioTracks.size(), size_t(1)); // the music only (no voice installed)
+            // The song (6 s) is shorter than the scenes: it plays once, it is never longer than the video.
+            QVERIFY(sequence.audioTracks.front().clips.front().end() <= mainTrack(editor).clips.back().end());
+            QVERIFY(!editor.canUndo());
+        }
+
+        // With a voice: a stand-in piper-tts makes 1 s of speech per scene.
+        const QString bin = m_dir.filePath(u"fake-bin-piper-script"_s);
+        QDir().mkpath(bin);
+        QFile tts(bin + u"/piper-tts"_s);
+        QVERIFY(tts.open(QIODevice::WriteOnly));
+        tts.write(R"(#!/bin/sh
+out=""
+while [ $# -gt 0 ]; do [ "$1" = "--output_file" ] && { out="$2"; shift; }; shift; done
+cat > /dev/null
+ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:duration=1" "$out"
+)");
+        tts.close();
+        tts.setPermissions(tts.permissions() | QFileDevice::ExeOwner);
+        const QByteArray path = qgetenv("PATH");
+        qputenv("PATH", QByteArray(bin.toLocal8Bit() + ':' + path));
+        const QString voice = m_dir.filePath(u"it_IT-script-low.onnx"_s);
+        for (const QString &file : QStringList{voice, voice + u".json"_s}) {
+            QFile f(file);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("{}");
+        }
+        AiModelsModel models;
+        QVERIFY(models.addVoice(QUrl::fromLocalFile(voice)).isEmpty());
+        const auto restore = qScopeGuard([&] {
+            qputenv("PATH", path);
+            for (const QVariant &v : models.voices()) {
+                models.removeVoice(v.toMap().value(u"path"_s).toString());
+            }
+        });
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.buildFromScript(script, int(CanvasPreset::Portrait9x16), QUrl::fromLocalFile(m_files.music));
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.buildingFromScript(), 60000);
+        const Sequence &sequence = *editor.data().mainSequence();
+        QCOMPARE(mainTrack(editor).clips.size(), size_t(3));
+        for (const Clip &slot : mainTrack(editor).clips) {
+            QCOMPARE(slot.duration, RationalTime(42, Rational(30))); // 1 s of speech + 0.4 s
+        }
+        // Three voices and the music.
+        int voices = 0;
+        const Clip *music = nullptr;
+        for (const Track &track : sequence.audioTracks) {
+            for (const Clip &clip : track.clips) {
+                if (clip.duration == RationalTime(30, Rational(30))) {
+                    ++voices;
+                } else {
+                    music = &clip;
+                }
+            }
+        }
+        QCOMPARE(voices, 3);
+        QVERIFY(music);
+        QVERIFY(music->media()->audio.gainDb.isAnimated()); // lowered while the voice speaks
+    }
+
     // "Smooth slow motion" in the Speed page: the new frames are computed in background for the preview.
     void smoothSlowMotionInThePreview()
     {
