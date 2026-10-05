@@ -95,3 +95,19 @@ Misurati da `tests/integration/tst_ui.cpp` sull'interfaccia ridisegnata (2026-10
 
 Note: la scelta dei file nei dialoghi di sistema non si può guidare in un test headless; il test la esegue
 direttamente e la conta come l'azione che è.
+
+### Fase 6 — AI locali
+Misurati da `tests/integration/tst_editor.cpp` e `tst_ui.cpp` (2026-10-05). Le funzioni che usano programmi esterni
+sono state contate con programmi sostitutivi (whisper.cpp, rembg, Demucs, Piper non sono installati qui): il numero di
+azioni non dipende dal programma.
+
+| # | Scenario | Limite | Risultato | Percorso |
+|---|---|---|---|---|
+| 5 | Sottotitoli automatici con uno stile animato | 3 | ✅ **2** | "Sottotitoli" nella barra (nessuna selezione) → "Sottotitoli automatici" (stile animato parola per parola già applicato; un clic in più per cambiarlo, gli stili si aprono da soli) |
+| — | Tagliare una frase dalla trascrizione (criterio Fase 6) | — | **3** | scheda "Trascrizione" → clic sulla prima parola → Maiusc+clic sull'ultima → "Taglia N parole dal video" (4 con la prima trascrizione: "Trascrivi") |
+| — | Rimuovere lo sfondo di una clip (criterio Fase 6) | — | **2** | selezione della clip → "Rimuovi sfondo" nella barra (3 la prima volta: rembg scarica il modello e vedit chiede conferma) |
+| — | Rimuovere le pause | — | **2** | selezione della clip → "Rimuovi pause" |
+| — | Adattare a 9:16 seguendo il soggetto | — | **2** | formato sotto il player → "Adatta a 9:16 — segui il soggetto" |
+| 1–4, 6, 8 | Scenari delle fasi precedenti | — | ✅ | invariati |
+| 10 | Nessuna funzione principale oltre 2 livelli | 2 | ✅ | livello 1: barra contestuale (Rimuovi pause, Dividi le scene, Rimuovi sfondo, Stabilizza, Separa voce e musica, Leggi ad alta voce, Sottotitoli), menu del formato; livello 2: schede Sottotitoli e Trascrizione, pagine Velocità/Video/Ritaglio, Preferenze → Modelli AI |
+

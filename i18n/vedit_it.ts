@@ -398,7 +398,7 @@
 <context>
     <name>CaptionsPanel</name>
     <message>
-        <location filename="../src/ui/qml/CaptionsPanel.qml" line="+39"/>
+        <location filename="../src/ui/qml/CaptionsPanel.qml" line="+80"/>
         <source>Import captions</source>
         <translation>Importa sottotitoli</translation>
     </message>
@@ -453,12 +453,28 @@
         <translation>Stili</translation>
     </message>
     <message>
-        <location line="-70"/>
+        <location line="-111"/>
         <source>Find the language</source>
         <translation>Trova la lingua</translation>
     </message>
     <message>
-        <location line="+44"/>
+        <location line="+26"/>
+        <location line="+166"/>
+        <source>Captions from a script</source>
+        <translation>Sottotitoli da un copione</translation>
+    </message>
+    <message>
+        <location line="-154"/>
+        <source>Paste what is said in the video: the captions keep your words and spelling, each at the moment it is said.</source>
+        <translation>Incolla ciò che viene detto nel video: i sottotitoli tengono le tue parole e la tua grafia, ognuna nel momento in cui è detta.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Paste the script here</source>
+        <translation>Incolla qui il copione</translation>
+    </message>
+    <message>
+        <location line="+38"/>
         <source>Make the captions again from the speech</source>
         <translation>Rifai i sottotitoli dal parlato</translation>
     </message>
@@ -498,7 +514,7 @@
         <translation>Scarica un modello</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+18"/>
         <source>Import a subtitle file</source>
         <translation>Importa un file di sottotitoli</translation>
     </message>
@@ -6533,7 +6549,7 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message>
-        <location filename="../src/ui/controllers/AiController.cpp" line="+100"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+104"/>
         <source>Select a video or a sound with speech first.</source>
         <translation>Seleziona prima un video o un audio con del parlato.</translation>
     </message>
@@ -6630,13 +6646,13 @@
     </message>
     <message>
         <location line="+11"/>
-        <location line="+312"/>
+        <location line="+356"/>
         <location line="+32"/>
         <source>The clip was removed meanwhile.</source>
         <translation>Nel frattempo la clip è stata eliminata.</translation>
     </message>
     <message>
-        <location line="-319"/>
+        <location line="-363"/>
         <source>Stabilize</source>
         <translation>Stabilizza</translation>
     </message>
@@ -6672,16 +6688,22 @@
     </message>
     <message>
         <location line="+24"/>
+        <source>Paste the script first.</source>
+        <translation>Incolla prima il copione.</translation>
+    </message>
+    <message>
+        <location line="+26"/>
         <source>Transcript ready: delete words to cut them from the video</source>
         <translation>Trascrizione pronta: cancella le parole per tagliarle dal video</translation>
     </message>
     <message>
-        <location line="+56"/>
+        <location line="-20"/>
+        <location line="+76"/>
         <source>No speech was recognised on the main track.</source>
         <translation>Nessun parlato riconosciuto nella traccia principale.</translation>
     </message>
     <message numerus="yes">
-        <location line="+9"/>
+        <location line="+26"/>
         <source>%n caption line(s) from the speech</source>
         <translation>
             <numerusform>%n riga di sottotitoli dal parlato</numerusform>
@@ -6689,7 +6711,7 @@
         </translation>
     </message>
     <message>
-        <location line="+31"/>
+        <location line="+32"/>
         <source>No pauses found in this clip.</source>
         <translation>Nessuna pausa trovata in questa clip.</translation>
     </message>
@@ -7966,7 +7988,7 @@
         </translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+23"/>
         <source>Chapters need a video of at least 30 seconds with speech (YouTube wants 3 of 10 s or more).</source>
         <translation>I capitoli richiedono un video di almeno 30 secondi con parlato (YouTube ne vuole 3 da 10 s o più).</translation>
     </message>

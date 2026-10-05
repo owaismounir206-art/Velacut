@@ -226,6 +226,32 @@ private slots:
         // Too short for YouTube.
         QVERIFY(ai::findChapters(words, 25'000).empty());
     }
+
+    void scriptWordsTakeTheSpokenTimes()
+    {
+        // Heard (with the recogniser's mistakes): "ciao a tutti ben venuti nel video".
+        std::vector<ai::SpokenWord> spoken;
+        int t = 0;
+        for (const char *word : {"ciao", "a", "tutti", "ben", "venuti", "nel", "video"}) {
+            spoken.push_back(ai::SpokenWord{QString::fromUtf8(word), t, t + 300});
+            t += 400;
+        }
+        const std::vector<ai::SpokenWord> aligned = ai::alignScript(QStringLiteral("Ciao a tutti, benvenuti nel mio video!"), spoken);
+        QCOMPARE(aligned.size(), 7u);
+        QCOMPARE(aligned[0].text, QStringLiteral("Ciao"));
+        QCOMPARE(aligned[0].from, 0);
+        QCOMPARE(aligned[2].text, QStringLiteral("tutti,"));
+        QCOMPARE(aligned[2].from, 800);
+        // "mio" was not said: between "nel" and "video".
+        QCOMPARE(aligned[5].text, QStringLiteral("mio"));
+        QVERIFY(aligned[5].from >= aligned[4].to && aligned[5].to <= aligned[6].from);
+        QCOMPARE(aligned[6].text, QStringLiteral("video!"));
+        QCOMPARE(aligned[6].from, 2400);
+        // Times always go forwards.
+        for (size_t i = 1; i < aligned.size(); ++i) {
+            QVERIFY(aligned[i].from >= aligned[i - 1].from);
+        }
+    }
 };
 
 QTEST_GUILESS_MAIN(TestAi)

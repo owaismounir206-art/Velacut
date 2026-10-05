@@ -108,7 +108,7 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/AiController.cpp" line="+640"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+687"/>
         <source>%n caption line(s) from the speech</source>
         <translation>
             <numerusform>%n caption line from the speech</numerusform>
@@ -201,7 +201,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+27"/>
+        <location line="+35"/>
         <source>%n chapter(s) marked on the timeline; the list is copied for the description</source>
         <translation>
             <numerusform>%n chapter marked on the timeline; the list is copied for the description</numerusform>

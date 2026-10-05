@@ -27,10 +27,51 @@ Item {
                                       { code: "pt", text: "Português" }]
     property int language: 0
 
+    // Captions just made from the speech: their look comes next (one click to change it).
+    Connections {
+        target: panel.ai
+        function onCaptionsMade() { panel.page = 1 }
+    }
+
     component Tool: IconButton {
         implicitWidth: Theme.editor.toolButtonSize
         implicitHeight: Theme.editor.toolButtonSize
         iconSize: Theme.editor.toolIconSize
+    }
+
+    // Captions from a script: the text as written, timed by the speech.
+    Dialog {
+        id: scriptDialog
+        objectName: "captionScriptDialog"
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        width: Math.min(parent ? parent.width - 2 * Theme.space.xl : Theme.editor.dialogWidth, Theme.editor.dialogWidth)
+        modal: true
+        title: qsTr("Captions from a script")
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        onOpened: script.forceActiveFocus()
+        onAccepted: panel.ai.captionsFromScript(script.text, panel.languages[panel.language].code)
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Theme.space.sm
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                role: "bodyMedium"
+                color: Theme.color.onSurfaceVariant
+                text: qsTr("Paste what is said in the video: the captions keep your words and spelling, each at the moment it is said.")
+            }
+            ScrollView {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Theme.editor.dialogWidth / 2
+                TextArea {
+                    id: script
+                    objectName: "captionScript"
+                    wrapMode: TextEdit.Wrap
+                    placeholderText: qsTr("Paste the script here")
+                }
+            }
+        }
     }
 
     FileDialog {
@@ -164,6 +205,16 @@ Item {
                         iconName: "neurology"
                         text: panel.ai.speechStatus === 1 ? qsTr("How to install") : qsTr("Download a model")
                         onClicked: panel.setUpRequested()
+                    }
+                    Button {
+                        objectName: "captionScriptEmpty"
+                        Layout.alignment: Qt.AlignHCenter
+                        visible: panel.ai.speechStatus === 0
+                        variant: "text"
+                        iconName: "article"
+                        enabled: !panel.ai.busy
+                        text: qsTr("Captions from a script")
+                        onClicked: scriptDialog.open()
                     }
                     Button {
                         objectName: "captionImportEmpty"

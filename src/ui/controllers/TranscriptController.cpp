@@ -197,7 +197,7 @@ bool TranscriptController::deleteWords(int first, int last)
     return true;
 }
 
-QString TranscriptController::makeChapters()
+std::vector<ai::SpokenWord> TranscriptController::spokenWords() const
 {
     const Rational rate = m_editor.data().settings.frameRate;
     const auto ms = [&rate](std::int64_t frame) { return std::llround(static_cast<double>(frame) * 1000.0 / rate.toDouble()); };
@@ -205,6 +205,14 @@ QString TranscriptController::makeChapters()
     for (const Entry &entry : entries()) {
         words.push_back(ai::SpokenWord{entry.text, ms(entry.frame), ms(entry.endFrame)});
     }
+    return words;
+}
+
+QString TranscriptController::makeChapters()
+{
+    const Rational rate = m_editor.data().settings.frameRate;
+    const auto ms = [&rate](std::int64_t frame) { return std::llround(static_cast<double>(frame) * 1000.0 / rate.toDouble()); };
+    const std::vector<ai::SpokenWord> words = spokenWords();
     const std::int64_t duration = ms(m_editor.player()->duration());
     const std::vector<ai::Chapter> chapters = ai::findChapters(words, duration);
     if (chapters.empty()) {

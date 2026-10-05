@@ -55,6 +55,11 @@ struct SpokenWord
     std::int64_t from = 0;
     std::int64_t to = 0;
 };
+// The words of a script (what was meant to be said, as written) with the times they are said: the script's words are
+// aligned to the recognised ones (fewest changes, the same word in any case and punctuation counts as the same), a word
+// of the script nobody said gets a time between its neighbours. Times in the same unit as `spoken`.
+std::vector<SpokenWord> alignScript(const QString &script, const std::vector<SpokenWord> &spoken);
+
 struct Chapter
 {
     std::int64_t start = 0; // ms of the timeline

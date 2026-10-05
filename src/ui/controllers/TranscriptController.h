@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "ai/Transcript.h"
 #include "core/project/Id.h"
 
 #include <QObject>
@@ -52,6 +53,8 @@ public:
     // YouTube chapters from the transcript: chapter markers on the timeline (one undo step) and the "00:00 Title" list
     // copied for the video's description. Returns the list, empty when the video is too short.
     Q_INVOKABLE QString makeChapters();
+    // What is said on the main track, in timeline milliseconds.
+    std::vector<ai::SpokenWord> spokenWords() const;
 
 signals:
     void changed();

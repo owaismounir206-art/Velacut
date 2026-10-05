@@ -222,7 +222,14 @@ l'estetica". Fatto, un commit per incremento:
 - **Traduzioni**: nuove stringhe di export/anteprima estratte e tradotte (0 non tradotte in `vedit_it.ts`).
 
 ## Fase corrente
-**Fase 6 — AI locali: in corso** (sottotitoli manuali/da file fatti; prossimi passi qui sotto).
+**Fase 6 — AI locali: funzioni fatte, verifica con i programmi veri da fare.** Criterio SPEC §8 ("genero sottotitoli
+animati parola per parola, taglio un video cancellando frasi dalla trascrizione e rimuovo lo sfondo di una clip senza
+green screen"): tutto il percorso è implementato e provato con programmi sostitutivi che rispondono nel formato
+documentato (whisper-cli `--output-json-full`, `rembg p`), ma **whisper.cpp e rembg non sono installati su questa
+macchina**, quindi il criterio non è verificato con i programmi reali. Comandi per l'utente in `docs/MODELS.md` §3.
+Limiti onesti: stabilizzazione solo traslazione; auto reframe senza volti; RIFE non integrato (c'è il percorso CPU
+`minterpolate`); nessuna voce di Piper offerta da vedit; rembg scarica il suo modello alla prima esecuzione (vedit
+chiede conferma).
 
 **Fase 5 — Libreria creativa: completa.** Criterio SPEC §8: "uso un template, sostituisco i media e ottengo un video
 completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::templateFromTheHomeScreen` in 2 azioni);
@@ -240,8 +247,9 @@ completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::t
    (Preferenze → Modelli AI, download solo su richiesta con la dimensione). **Da verificare con il whisper-cli reale**
    quando l'utente lo installa (`yay -S whisper.cpp`): il formato `--output-json-full` è stato ricostruito dalla
    documentazione e provato con un sostituto. ✅ Editing dal testo e parole di riempimento (scheda Trascrizione).
-   ✅ Capitoli automatici (pulsante nella scheda Trascrizione). Restano: sottotitoli da copione allineati al parlato,
-   testi delle canzoni (karaoke: si fa già con "Sottotitoli automatici" + stile karaoke se whisper riconosce il canto).
+   ✅ Capitoli automatici (pulsante nella scheda Trascrizione), ✅ sottotitoli da copione allineati al parlato
+   (allineamento di Levenshtein sulle parole, parole non dette con tempi interpolati). Testi delle canzoni: si fanno con
+   "Sottotitoli automatici" + uno stile karaoke, se whisper riconosce il canto.
 3. Senza modelli: ✅ rimozione pause, ✅ divisione delle scene, ✅ stabilizzazione (traslazione), ✅ rallentatore
    fluido (percorso CPU `minterpolate`), ✅ auto reframe classico; restano rotazione nella stabilizzazione (stima più
    robusta), RIFE quando installato, volti (con un modello) per l'auto reframe.

@@ -727,6 +727,16 @@ echo "whisper_print_progress_callback: progress = 100%" >&2
         QCOMPARE(lines[0].toMap().value(u"start"_s).toInt(), 6); // 0.2 s at 30 fps
         const Track &captions = editor.data().mainSequence()->visualTracks.back();
         QCOMPARE(captions.clips[0].subtitle()->words.size(), 3u);
+        QCOMPARE(editor.captions()->styleId(), u"captions/pop-three"_s); // animated, word by word, by default
+        // From a script: the words as written, at the times they are said ("vedit" was heard, "Velacut" written).
+        QVERIFY(ai.captionsFromScript(u"Ciao a tutti!\nEcco Velacut."_s, u"it"_s));
+        QTRY_VERIFY_WITH_TIMEOUT(!ai.busy(), 20000);
+        const QVariantList scripted = editor.captions()->lines();
+        QCOMPARE(scripted.size(), 2);
+        QCOMPARE(scripted[0].toMap().value(u"text"_s).toString(), u"Ciao a tutti!"_s);
+        QCOMPARE(scripted[1].toMap().value(u"text"_s).toString(), u"Ecco Velacut."_s);
+        QCOMPARE(scripted[1].toMap().value(u"start"_s).toInt(), 60); // "Ecco" said at 2 s
+        editor.undo();
         // Again: the transcript comes from the cache (the program would fail now), the lines are replaced.
         QVERIFY(script.open(QIODevice::WriteOnly | QIODevice::Truncate));
         script.write("#!/bin/sh\necho \"error: called again\" >&2\nexit 1\n");

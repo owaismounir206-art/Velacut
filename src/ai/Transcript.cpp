@@ -168,6 +168,103 @@ std::vector<captions::CaptionLine> captionLines(const Transcript &transcript, st
     return lines;
 }
 
+namespace {
+
+// A word for comparing: lower case, without punctuation or accents.
+QString comparable(const QString &word)
+{
+    QString text = word.normalized(QString::NormalizationForm_D).toLower();
+    QString result;
+    for (const QChar c : text) {
+        if (c.isLetterOrNumber()) {
+            result += c;
+        }
+    }
+    return result;
+}
+
+} // namespace
+
+std::vector<SpokenWord> alignScript(const QString &script, const std::vector<SpokenWord> &spoken)
+{
+    const QStringList written = captions::splitWords(script);
+    std::vector<SpokenWord> result;
+    if (written.isEmpty()) {
+        return result;
+    }
+    const size_t n = static_cast<size_t>(written.size());
+    const size_t m = spoken.size();
+    std::vector<QString> a(n);
+    std::vector<QString> b(m);
+    for (size_t i = 0; i < n; ++i) {
+        a[i] = comparable(written[static_cast<qsizetype>(i)]);
+    }
+    for (size_t j = 0; j < m; ++j) {
+        b[j] = comparable(spoken[j].text);
+    }
+    // Fewest insertions, deletions and substitutions (Levenshtein on words), with the path kept.
+    std::vector<std::uint32_t> cost((n + 1) * (m + 1));
+    const auto at = [m](size_t i, size_t j) { return i * (m + 1) + j; };
+    for (size_t i = 0; i <= n; ++i) {
+        cost[at(i, 0)] = static_cast<std::uint32_t>(i);
+    }
+    for (size_t j = 0; j <= m; ++j) {
+        cost[at(0, j)] = static_cast<std::uint32_t>(j);
+    }
+    for (size_t i = 1; i <= n; ++i) {
+        for (size_t j = 1; j <= m; ++j) {
+            const std::uint32_t same = a[i - 1] == b[j - 1] ? 0 : 2; // a substitution costs as much as two gaps
+            cost[at(i, j)] = std::min({cost[at(i - 1, j - 1)] + same, cost[at(i - 1, j)] + 1, cost[at(i, j - 1)] + 1});
+        }
+    }
+    // Each written word: the spoken word it is matched or substituted with, or none.
+    std::vector<long> match(n, -1);
+    size_t i = n;
+    size_t j = m;
+    while (i > 0 && j > 0) {
+        const std::uint32_t same = a[i - 1] == b[j - 1] ? 0 : 2;
+        if (cost[at(i, j)] == cost[at(i - 1, j - 1)] + same) {
+            match[i - 1] = static_cast<long>(j - 1);
+            --i;
+            --j;
+        } else if (cost[at(i, j)] == cost[at(i - 1, j)] + 1) {
+            --i;
+        } else {
+            --j;
+        }
+    }
+    // Times: the matched word's; the others between the neighbours that have one.
+    result.resize(n);
+    for (size_t k = 0; k < n; ++k) {
+        result[k].text = written[static_cast<qsizetype>(k)];
+        if (match[k] >= 0) {
+            result[k].from = spoken[static_cast<size_t>(match[k])].from;
+            result[k].to = spoken[static_cast<size_t>(match[k])].to;
+        }
+    }
+    size_t k = 0;
+    while (k < n) {
+        if (match[k] >= 0) {
+            ++k;
+            continue;
+        }
+        size_t end = k;
+        while (end < n && match[end] < 0) {
+            ++end;
+        }
+        const std::int64_t before = k > 0 ? result[k - 1].to : (m > 0 ? spoken.front().from : 0);
+        const std::int64_t after = end < n ? result[end].from : (m > 0 ? spoken.back().to : before + static_cast<std::int64_t>(end - k) * 400);
+        const auto count = static_cast<std::int64_t>(end - k);
+        for (size_t g = k; g < end; ++g) {
+            const auto index = static_cast<std::int64_t>(g - k);
+            result[g].from = before + (after - before) * index / count;
+            result[g].to = before + (after - before) * (index + 1) / count;
+        }
+        k = end;
+    }
+    return result;
+}
+
 std::vector<Chapter> findChapters(const std::vector<SpokenWord> &words, std::int64_t durationMs)
 {
     constexpr std::int64_t kMinimum = 10'000;

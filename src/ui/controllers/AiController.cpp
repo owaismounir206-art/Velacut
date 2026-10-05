@@ -4,7 +4,10 @@
 #include "ai/Tasks.h"
 #include "core/commands/Edit.h"
 #include "core/edit/TimelineEditor.h"
+#include "core/serialization/ProjectJson.h"
+#include "fx/Library.h"
 #include "ui/controllers/CaptionsController.h"
+#include "ui/controllers/TranscriptController.h"
 #include "fx/Stabilization.h"
 #include "ui/controllers/EditorController.h"
 
@@ -15,6 +18,7 @@
 #include <QJsonDocument>
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <map>
 
 using namespace Qt::StringLiterals;
@@ -569,6 +573,32 @@ bool AiController::autoCaptions(const QString &language)
     return startTranscription(language, [this](const QHash<QString, ai::Transcript> &transcripts) { applyCaptions(transcripts); });
 }
 
+bool AiController::captionsFromScript(const QString &script, const QString &language)
+{
+    if (captions::splitWords(script).isEmpty()) {
+        emit m_editor.message(tr("Paste the script first."), false);
+        return false;
+    }
+    const auto align = [this, script] {
+        const std::vector<ai::SpokenWord> spoken = m_editor.transcript()->spokenWords();
+        if (spoken.empty()) {
+            emit m_editor.message(tr("No speech was recognised on the main track."), false);
+            return;
+        }
+        ai::Transcript written;
+        for (const ai::SpokenWord &word : ai::alignScript(script, spoken)) {
+            written.words.push_back(ai::Transcript::Word{word.text, word.from, word.to});
+        }
+        const auto toTimeline = [](std::int64_t ms) { return RationalTime(ms, Rational(1000)); };
+        placeCaptions(ai::captionLines(written, 0, std::numeric_limits<std::int64_t>::max() / 2, toTimeline));
+    };
+    if (m_editor.transcript()->available() && !m_editor.transcript()->incomplete()) {
+        align();
+        return true;
+    }
+    return startTranscription(language, [align](const QHash<QString, ai::Transcript> &) { align(); });
+}
+
 bool AiController::transcribe(const QString &language)
 {
     return startTranscription(language, [this](const QHash<QString, ai::Transcript> &) {
@@ -631,14 +661,32 @@ void AiController::applyCaptions(const QHash<QString, ai::Transcript> &transcrip
         emit m_editor.message(tr("No speech was recognised on the main track."), false);
         return;
     }
+    placeCaptions(lines);
+}
+
+void AiController::placeCaptions(const std::vector<captions::CaptionLine> &lines)
+{
+    const Sequence *sequence = m_editor.data().mainSequence();
+    if (!sequence) {
+        return;
+    }
     const bool replace = std::any_of(sequence->visualTracks.begin(), sequence->visualTracks.end(),
                                      [](const Track &track) { return track.captions; });
+    // New captions: the style chosen in the library, else an animated social one (word by word, like CapCut's).
+    std::optional<CaptionStyle> style = m_editor.captions()->nextStyle();
+    if (!replace && !style) {
+        if (const fx::CaptionStylePreset *preset = fx::Library::core().captionStyle(u"captions/pop-three"_s)) {
+            style = projectjson::captionStyleFromJson(preset->style);
+            style->preset = preset->id;
+        }
+    }
     EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
-                            .insertCaptions(lines, replace ? std::nullopt : m_editor.captions()->nextStyle(), replace);
+                            .insertCaptions(lines, replace ? std::nullopt : style, replace);
     const int count = static_cast<int>(lines.size());
     if (m_editor.push(std::move(result))) {
         emit m_editor.message(tr("%n caption line(s) from the speech", nullptr, count), true);
         emit m_editor.libraryRequested(u"captions"_s);
+        emit captionsMade();
     }
 }
 

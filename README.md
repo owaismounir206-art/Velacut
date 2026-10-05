@@ -6,8 +6,9 @@ Video editor desktop nativo per Linux, progettato per essere veloce, semplice e 
 
 **Versione**: pre-alpha, in sviluppo attivo. Stato dettagliato e verificato in `docs/PROGRESS.md`.
 **Fasi complete**: 0–5 (fondamenta, MVP, editing essenziale, keyframe e composizione, colore e audio avanzati,
-libreria creativa). **Fase 8** (rifinitura) in parte: encoding hardware, preset piattaforme, preferenze, PKGBUILD.
-**Fasi 6–7** (AI locali): da fare; richiedono componenti esterni non installati su questa macchina (`docs/MODELS.md`).
+libreria creativa). **Fase 6** (AI locali): funzioni fatte; quelle che usano programmi esterni (whisper.cpp, rembg,
+Demucs, Piper) sono provate con programmi sostitutivi e restano da verificare con quelli veri (`docs/MODELS.md`).
+**Fase 8** (rifinitura) in parte: encoding hardware, preset piattaforme, preferenze, PKGBUILD. **Fase 7**: da fare.
 
 ### Cosa c'è
 - **Interfaccia in stile CapCut** con Material You: pannelli ridimensionabili, schermata iniziale con progetti, template
@@ -23,11 +24,19 @@ libreria creativa). **Fase 8** (rifinitura) in parte: encoding hardware, preset 
 - **Colore e audio**: LUT, curve, ruote, HSL, scope; loudness LUFS, ducking, riduzione rumore, effetti voce.
 - **Export**: MP4 H.264/H.265/AV1, encoding hardware con ripiego software, preset per le piattaforme, dimensione
   massima, copertina incorporata, fotogramma come immagine.
-- **Preferenze**: tema chiaro/scuro e colori dinamici, lingua, motore grafico e accelerazioni, pacchetti di asset.
+- **Sottotitoli**: da file SRT/WebVTT, scritti, da copione o automatici dal parlato; 40 stili social con la parola
+  pronunciata evidenziata (colore, ingrandita, riquadro, karaoke) e animazioni; editor delle righe, cerca/sostituisci.
+- **AI locali**: rimuovi pause, dividi le scene, stabilizza, rallentatore fluido, adatta a 9:16 seguendo il soggetto
+  (senza modelli); con programmi facoltativi: sottotitoli automatici, editing dalla trascrizione, parole di
+  riempimento, capitoli per YouTube (whisper.cpp), rimuovi sfondo (rembg), separa voce e musica (Demucs), leggi ad
+  alta voce (Piper). Gestore modelli con download solo su richiesta.
+- **Preferenze**: tema chiaro/scuro e colori dinamici, lingua, motore grafico e accelerazioni, pacchetti di asset,
+  modelli AI.
 
 ### Cosa manca (vedi `docs/PROGRESS.md`)
-Sottotitoli automatici, TTS, rimozione sfondo e le altre funzioni AI (Fasi 6–7), montaggio automatico, coda di
-rendering ed export multi-formato, cronologia delle versioni, tour iniziale.
+Verifica delle funzioni AI con i programmi veri (non installati qui), RIFE per il rallentatore, funzioni della Fase 7
+(montaggio automatico, da copione a video, tracciamento, ritocco viso…), coda di rendering ed export multi-formato,
+cronologia delle versioni, tour iniziale.
 
 ## Requisiti
 
@@ -81,7 +90,7 @@ Vedi [SHORTCUTS.md](docs/SHORTCUTS.md) per tutte le scorciatoie.
 ## Test
 
 ```bash
-# Tutti i test (31 suite)
+# Tutti i test (32 suite)
 ctest --test-dir build --output-on-failure
 
 # Test specifici
@@ -90,7 +99,7 @@ ctest --test-dir build --output-on-failure
 ./build/tests/integration/tst_ui         # Interfaccia completa
 ```
 
-**Stato test**: 26/26 passano (100%)
+**Stato test**: 32/32 passano (100%)
 
 ## Architettura
 
