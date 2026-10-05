@@ -126,6 +126,8 @@ private:
     void placeCaptions(const std::vector<captions::CaptionLine> &lines);
     // Recognises the speech of the main track (what is not known yet), then calls `then` with every transcript.
     bool startTranscription(const QString &language, std::function<void(const QHash<QString, ai::Transcript> &)> then);
+    // The short clips as drafts, each video placed by `framing` (one transform per span) or just filling the picture.
+    void writeShortClips(const ClipId &clipId, const std::vector<ai::Span> &spans, const std::vector<Transform> &framing);
     void applyReframe(const Canvas &canvas, const std::vector<ClipId> &clips, const std::vector<ai::SubjectTracking::Path> &paths);
 
     EditorController &m_editor;

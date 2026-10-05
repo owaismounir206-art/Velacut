@@ -629,7 +629,8 @@ private slots:
         const QString file = m_dir.filePath(u"long.mp4"_s);
         QVERIFY(runFfmpeg({u"-filter_complex"_s,
                            u"color=c=red:s=160x90:r=30:d=20[r];color=c=blue:s=160x90:r=30:d=20[b];"
-                           "color=c=green:s=160x90:r=30:d=20[g];[r][b][g]concat=n=3:v=1:a=0,format=yuv420p[v];"
+                           "color=c=green:s=160x90:r=30:d=20[g];color=c=white:s=20x20:r=30:d=60[s];"
+                           "[r][b][g]concat=n=3:v=1:a=0[c];[c][s]overlay=x=115:y=35,format=yuv420p[v];"
                            "aevalsrc='(if(between(t\\,12\\,16)+between(t\\,40\\,44)\\,0.7\\,0.05))*sin(2*PI*440*t)':s=48000:d=60[a]"_s,
                            u"-map"_s, u"[v]"_s, u"-map"_s, u"[a]"_s, u"-c:v"_s, u"libx264"_s, u"-preset"_s, u"ultrafast"_s,
                            u"-c:a"_s, u"aac"_s, file}));
@@ -670,7 +671,8 @@ private slots:
         QCOMPARE(mainTrack(editor).clips.size(), size_t(1));
         QCOMPARE(mainTrack(editor).clips[0].duration.toSecondsDouble(), 60.0);
 
-        // Short clips: written by the draft maker (the home screen's drafts in the app), the editor unchanged.
+        // Short clips: written by the draft maker (the home screen's drafts in the app), the editor unchanged; each
+        // reframed to 9:16 following its subject (the white square on the right).
         std::vector<ProjectData> drafts;
         editor.setDraftMaker([&drafts](const std::vector<ProjectData> &made) {
             drafts = made;
@@ -679,7 +681,7 @@ private slots:
         editor.select(mainTrack(editor).clips[0].id.toString(), false);
         QSignalSpy messages(&editor, &EditorController::message);
         QVERIFY(ai.makeShortClips());
-        QVERIFY(!ai.busy()); // the analysis of the file is known already
+        QTRY_VERIFY_WITH_TIMEOUT(!ai.busy(), 30000); // only the subject is tracked: the file's analysis is known
         QVERIFY(!drafts.empty());
         QVERIFY(messages.last().first().toString().contains(QString::number(drafts.size())));
         QCOMPARE(mainTrack(editor).clips.size(), size_t(1));
@@ -692,6 +694,9 @@ private slots:
             const double length = main.clips[0].duration.toSecondsDouble();
             QVERIFY2(length >= 15.0 && length <= 60.0, qPrintable(QString::number(length)));
             QCOMPARE(main.clips[0].transform.fit, FitMode::Cover);
+            const Param &position = main.clips[0].transform.position;
+            const double x = std::get<Vec2>(position.isAnimated() ? position.keyframes().front().value : position.staticValue()).x;
+            QVERIFY2(x < -0.4, qPrintable(QString::number(x)));
             bool titled = false;
             for (const Track &track : draft.mainSequence()->visualTracks) {
                 for (const Clip &clip : track.clips) {

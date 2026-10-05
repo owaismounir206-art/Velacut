@@ -119,7 +119,7 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/AiController.cpp" line="+550"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+601"/>
         <source>Highlights: %n s kept from the best moments</source>
         <translation>
             <numerusform>Highlights: %n s kept from the best moments</numerusform>
@@ -127,7 +127,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+24"/>
+        <location line="+61"/>
         <source>%n short clip(s) made: they are on the home screen, ready to edit</source>
         <translation>
             <numerusform>%n short clip made: it is on the home screen, ready to edit</numerusform>
@@ -135,7 +135,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+427"/>
+        <location line="+380"/>
         <source>%n caption line(s) from the speech</source>
         <translation>
             <numerusform>%n caption line from the speech</numerusform>
@@ -217,7 +217,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+497"/>
+        <location line="+506"/>
         <source>%n beat(s) marked on the clip</source>
         <translation>
             <numerusform>%n beat marked on the clip</numerusform>

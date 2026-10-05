@@ -1298,7 +1298,8 @@ void EditorController::layScript(const QStringList &scenes, const QStringList &v
                  false);
 }
 
-int EditorController::makeShortClipDrafts(const ClipId &clipId, const std::vector<ai::Span> &spans, const ai::Transcript *transcript)
+int EditorController::makeShortClipDrafts(const ClipId &clipId, const std::vector<ai::Span> &spans, const ai::Transcript *transcript,
+                                          const std::vector<Transform> &framing)
 {
     const Clip *clip = data().findClip(clipId);
     const MediaClipData *media = clip ? clip->media() : nullptr;
@@ -1343,8 +1344,16 @@ int EditorController::makeShortClipDrafts(const ClipId &clipId, const std::vecto
         if (!apply(std::move(insert))) {
             continue;
         }
-        apply(TimelineEditor(project.data(), sequenceId).updateClips({shot}, [](Clip &c) { c.transform.fit = FitMode::Cover; },
-                                                                     tr("Fill the picture")));
+        // Following the subject when it was tracked, else just filling the picture.
+        const std::optional<Transform> placed = index <= static_cast<int>(framing.size()) ? std::optional(framing[static_cast<size_t>(index - 1)])
+                                                                                         : std::nullopt;
+        apply(TimelineEditor(project.data(), sequenceId).updateClips({shot}, [&placed](Clip &c) {
+            if (placed) {
+                c.transform = *placed;
+            } else {
+                c.transform.fit = FitMode::Cover;
+            }
+        }, tr("Fill the picture")));
         // A title: the first words said, or the clip's number.
         QString title = tr("Part %1").arg(index);
         if (transcript) {

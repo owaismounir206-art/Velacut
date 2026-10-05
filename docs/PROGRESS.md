@@ -34,8 +34,8 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   un cambio di scena +0,1). "Momenti salienti" tiene i pezzi migliori fino a circa 60 s (il 30 % se la clip dura meno
   di 2 minuti) con `removeSourceRanges`: un passo di annullamento. "Da video lungo a clip brevi" sceglie 3–10 finestre
   di circa 30 s (15–60 s, non sovrapposte) e ne fa **bozze 9:16** nella schermata iniziale (video a riempimento,
-  sottotitoli dalla trascrizione se c'è, titolo animato con le prime parole o "Parte N"), senza toccare il progetto
-  aperto. Analisi una volta per file (memorizzata nella sessione). Test: un minuto con due picchi di volume e due cambi
+  sottotitoli dalla trascrizione se c'è, titolo animato con le prime parole o "Parte N"; ogni clip reinquadrata
+  seguendo il soggetto con lo stesso tracciamento di "Auto reframe"), senza toccare il progetto aperto. Analisi una volta per file (memorizzata nella sessione). Test: un minuto con due picchi di volume e due cambi
   di scena (`tst_editor::highlightsAndShortClips`), dall'interfaccia fino alla bozza aperta in 3 azioni
   (`tst_ui::shortClipsFromTheAiTab`) e unitario (`tst_ai`). Limite: niente visione (volti, sorrisi,
   azione): il punteggio usa solo suono, scene e parlato.

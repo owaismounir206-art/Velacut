@@ -6995,12 +6995,12 @@
     </message>
     <message>
         <location line="+24"/>
-        <location line="+519"/>
+        <location line="+606"/>
         <source>Select a video first.</source>
         <translation>Seleziona prima un video.</translation>
     </message>
     <message>
-        <location line="-484"/>
+        <location line="-571"/>
         <source>Select a video or a sound first.</source>
         <translation>Seleziona prima un video o un audio.</translation>
     </message>
@@ -7100,7 +7100,7 @@
         <translation>Funziona con clip di almeno 30 secondi.</translation>
     </message>
     <message>
-        <location line="+67"/>
+        <location line="+118"/>
         <source>No highlights found in this clip.</source>
         <translation>Nessun momento saliente trovato in questa clip.</translation>
     </message>
@@ -7123,7 +7123,7 @@
         <translation>La clip è troppo corta per le clip brevi (durano 15–60 s).</translation>
     </message>
     <message numerus="yes">
-        <location line="+5"/>
+        <location line="+42"/>
         <source>%n short clip(s) made: they are on the home screen, ready to edit</source>
         <translation>
             <numerusform>%n clip breve creata: è nella schermata iniziale, pronta da modificare</numerusform>
@@ -7136,7 +7136,7 @@
         <translation>Non è stato possibile salvare le clip brevi.</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+20"/>
         <source>Select a text first.</source>
         <translation>Seleziona prima un testo.</translation>
     </message>
@@ -7166,17 +7166,18 @@
         <translation>Stabilizza funziona sulle clip riprodotte in avanti a velocità costante.</translation>
     </message>
     <message>
-        <location line="-296"/>
-        <location line="+165"/>
+        <location line="-383"/>
+        <location line="+216"/>
         <location line="+40"/>
-        <location line="+102"/>
-        <location line="+356"/>
+        <location line="+45"/>
+        <location line="+93"/>
+        <location line="+310"/>
         <location line="+32"/>
         <source>The clip was removed meanwhile.</source>
         <translation>Nel frattempo la clip è stata eliminata.</translation>
     </message>
     <message>
-        <location line="-363"/>
+        <location line="-317"/>
         <source>Stabilize</source>
         <translation>Stabilizza</translation>
     </message>
@@ -7186,7 +7187,7 @@
         <translation>Clip stabilizzata: regola quanto in Video</translation>
     </message>
     <message>
-        <location line="+117"/>
+        <location line="+71"/>
         <source>Auto reframe</source>
         <translation>Reinquadratura automatica</translation>
     </message>
@@ -8097,12 +8098,12 @@
     <name>vedit::ui::EditorController</name>
     <message>
         <location filename="../src/ui/controllers/EditorController.cpp" line="+217"/>
-        <location line="+1385"/>
+        <location line="+1394"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
     <message>
-        <location line="-972"/>
+        <location line="-981"/>
         <source>Import media</source>
         <translation>Importa media</translation>
     </message>
@@ -8223,12 +8224,12 @@
         </translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+28"/>
         <source>%1 — clip %2</source>
         <translation>%1 — clip %2</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+32"/>
         <source>Fill the picture</source>
         <translation>Riempi l&apos;immagine</translation>
     </message>

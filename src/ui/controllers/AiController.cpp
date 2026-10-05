@@ -510,6 +510,57 @@ ai::HighlightInput clipPart(const ai::HighlightInput &file, const Clip &clip, co
     return part;
 }
 
+// The transform of a video filling `canvas` with its position following the subject found along `path` (a keyframe
+// every half second, in the clip's keyframe time: seconds of the file for videos), or centred when nothing moves.
+Transform followSubject(Transform transform, const Media &item, const Canvas &canvas, const ai::SubjectTracking::Path &path,
+                        Rational rate)
+{
+    // The picture covering the new canvas, in canvas widths and heights.
+    const bool turned = item.info.video->rotation == 90 || item.info.video->rotation == 270;
+    const double width = turned ? item.info.video->height : item.info.video->width;
+    const double height = turned ? item.info.video->width : item.info.video->height;
+    const double cover = std::max(canvas.width / width, canvas.height / height);
+    const double spanX = width * cover / canvas.width;
+    const double spanY = height * cover / canvas.height;
+    const auto positionOf = [&](const fx::SubjectPoint &point) {
+        const double limitX = (spanX - 1.0) / 2.0;
+        const double limitY = (spanY - 1.0) / 2.0;
+        return Vec2{std::clamp((0.5 - point.x) * spanX, -limitX, limitX), std::clamp((0.5 - point.y) * spanY, -limitY, limitY)};
+    };
+    transform.fit = FitMode::Cover;
+    transform.scale = Param(Vec2{1.0, 1.0});
+    std::vector<Keyframe> keyframes;
+    double lastSeconds = -1e9;
+    double lowX = 1e9, highX = -1e9, lowY = 1e9, highY = -1e9;
+    for (size_t k = 0; k < path.points.size() && k < path.times.size(); ++k) {
+        if (path.times[k] - lastSeconds < 0.5 - 1e-6) {
+            continue;
+        }
+        lastSeconds = path.times[k];
+        const Vec2 position = positionOf(path.points[k]);
+        lowX = std::min(lowX, position.x);
+        highX = std::max(highX, position.x);
+        lowY = std::min(lowY, position.y);
+        highY = std::max(highY, position.y);
+        const RationalTime time = RationalTime::fromSeconds(Rational(std::llround(path.times[k] * 1000.0), 1000), rate,
+                                                            Rounding::NearestEven);
+        if (!keyframes.empty() && !(time > keyframes.back().time)) {
+            continue;
+        }
+        keyframes.push_back(Keyframe{time, position, Interpolation::Linear, Easing::preset(Easing::Preset::EaseInOut)});
+    }
+    if (keyframes.empty()) {
+        transform.position = Param(Vec2{0.0, 0.0});
+    } else if (highX - lowX < 0.01 && highY - lowY < 0.01) {
+        transform.position = Param(keyframes.front().value); // the subject stays put: no movement at all
+    } else {
+        Param position;
+        position.setKeyframes(std::move(keyframes));
+        transform.position = position;
+    }
+    return transform;
+}
+
 } // namespace
 
 bool AiController::highlights()
@@ -569,13 +620,49 @@ bool AiController::makeShortClips()
             emit m_editor.message(tr("The clip is too short for short clips (they last 15–60 s)."), false);
             return;
         }
-        const int made = m_editor.makeShortClipDrafts(clipId, spans, transcript);
-        if (made > 0) {
-            emit m_editor.message(tr("%n short clip(s) made: they are on the home screen, ready to edit", nullptr, made), false);
-        } else {
-            emit m_editor.message(tr("The short clips could not be written."), false);
+        // Each clip reframed to 9:16 following its subject (the same tracking as "Auto reframe").
+        const std::optional<Canvas> canvas = m_editor.canvasFor(static_cast<int>(CanvasPreset::Portrait9x16));
+        if (!item->info.video || item->kind != MediaKind::Video || !canvas) {
+            writeShortClips(clipId, spans, {});
+            return;
         }
+        const double from = clip->media()->sourceIn.toSecondsDouble();
+        std::vector<ai::SubjectTracking::Part> parts;
+        for (const ai::Span &span : spans) {
+            parts.push_back({item->path, std::max(0.0, from + span.from - 0.5), from + span.to + 0.5});
+        }
+        auto task = std::make_unique<ai::SubjectTracking>(parts);
+        ai::SubjectTracking *tracking = task.get();
+        const Canvas target = *canvas;
+        connect(tracking, &ai::AiTask::finished, this, [this, tracking, clipId, spans, target] {
+            const Clip *shot = m_editor.data().findClip(clipId);
+            const Media *source = shot && shot->media() ? m_editor.data().findMedia(shot->media()->mediaId) : nullptr;
+            std::vector<Transform> framing;
+            if (source) {
+                for (const ai::SubjectTracking::Path &path : tracking->paths()) {
+                    framing.push_back(followSubject(Transform{}, *source, target, path, m_editor.data().settings.frameRate));
+                }
+            }
+            writeShortClips(clipId, spans, framing);
+        });
+        run(std::move(task));
     });
+}
+
+void AiController::writeShortClips(const ClipId &clipId, const std::vector<ai::Span> &spans, const std::vector<Transform> &framing)
+{
+    const Clip *clip = m_editor.data().findClip(clipId);
+    const Media *item = clip && clip->media() ? m_editor.data().findMedia(clip->media()->mediaId) : nullptr;
+    if (!item) {
+        emit m_editor.message(tr("The clip was removed meanwhile."), false);
+        return;
+    }
+    const int made = m_editor.makeShortClipDrafts(clipId, spans, transcriptOf(*item), framing);
+    if (made > 0) {
+        emit m_editor.message(tr("%n short clip(s) made: they are on the home screen, ready to edit", nullptr, made), false);
+    } else {
+        emit m_editor.message(tr("The short clips could not be written."), false);
+    }
 }
 
 bool AiController::canReadAloud() const
@@ -749,53 +836,7 @@ void AiController::applyReframe(const Canvas &canvas, const std::vector<ClipId> 
         if (!item || !item->info.video) {
             continue;
         }
-        // The picture covering the new canvas, in canvas widths and heights.
-        const bool turned = item->info.video->rotation == 90 || item->info.video->rotation == 270;
-        const double width = turned ? item->info.video->height : item->info.video->width;
-        const double height = turned ? item->info.video->width : item->info.video->height;
-        const double cover = std::max(canvas.width / width, canvas.height / height);
-        const double spanX = width * cover / canvas.width;
-        const double spanY = height * cover / canvas.height;
-        const auto positionOf = [&](const fx::SubjectPoint &point) {
-            const double limitX = (spanX - 1.0) / 2.0;
-            const double limitY = (spanY - 1.0) / 2.0;
-            return Vec2{std::clamp((0.5 - point.x) * spanX, -limitX, limitX), std::clamp((0.5 - point.y) * spanY, -limitY, limitY)};
-        };
-        Transform transform = clip->transform;
-        transform.fit = FitMode::Cover;
-        transform.scale = Param(Vec2{1.0, 1.0});
-        const ai::SubjectTracking::Path &path = paths[i];
-        // A keyframe every half second, in the clip's keyframe time (seconds of the file for videos).
-        std::vector<Keyframe> keyframes;
-        double lastSeconds = -1e9;
-        double lowX = 1e9, highX = -1e9, lowY = 1e9, highY = -1e9;
-        for (size_t k = 0; k < path.points.size() && k < path.times.size(); ++k) {
-            if (path.times[k] - lastSeconds < 0.5 - 1e-6) {
-                continue;
-            }
-            lastSeconds = path.times[k];
-            const Vec2 position = positionOf(path.points[k]);
-            lowX = std::min(lowX, position.x);
-            highX = std::max(highX, position.x);
-            lowY = std::min(lowY, position.y);
-            highY = std::max(highY, position.y);
-            const RationalTime time = RationalTime::fromSeconds(Rational(std::llround(path.times[k] * 1000.0), 1000), rate,
-                                                                Rounding::NearestEven);
-            if (!keyframes.empty() && !(time > keyframes.back().time)) {
-                continue;
-            }
-            keyframes.push_back(Keyframe{time, position, Interpolation::Linear, Easing::preset(Easing::Preset::EaseInOut)});
-        }
-        if (keyframes.empty()) {
-            transform.position = Param(Vec2{0.0, 0.0});
-        } else if (highX - lowX < 0.01 && highY - lowY < 0.01) {
-            transform.position = Param(keyframes.front().value); // the subject stays put: no movement at all
-        } else {
-            Param position;
-            position.setKeyframes(std::move(keyframes));
-            transform.position = position;
-        }
-        transforms.emplace(clips[i], transform);
+        transforms.emplace(clips[i], followSubject(clip->transform, *item, canvas, paths[i], rate));
     }
     EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
                             .updateClips(clips,

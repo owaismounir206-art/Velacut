@@ -219,7 +219,8 @@ public:
     // "Long video to short clips": a vertical draft for each span (seconds from the start of the part of the file the
     // clip plays): the clip filling the picture, a title, captions from `transcript` if there is one. The drafts are
     // written by the draft maker (the application's draft store); the number written.
-    int makeShortClipDrafts(const ClipId &clipId, const std::vector<ai::Span> &spans, const ai::Transcript *transcript);
+    int makeShortClipDrafts(const ClipId &clipId, const std::vector<ai::Span> &spans, const ai::Transcript *transcript,
+                            const std::vector<Transform> &framing = {});
     void setDraftMaker(std::function<int(const std::vector<ProjectData> &)> maker) { m_draftMaker = std::move(maker); }
     bool buildingFromScript() const { return m_buildingScript; }
     Q_INVOKABLE void dismissMontage();
