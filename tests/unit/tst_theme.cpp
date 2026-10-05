@@ -76,7 +76,8 @@ private slots:
             for (SchemeVariant variant : kVariants) {
                 for (bool dark : {false, true}) {
                     for (ContrastLevel level : {ContrastLevel::Standard, ContrastLevel::High}) {
-                        const ColorScheme scheme = generateScheme(seed, variant, dark, level);
+                      for (bool neutral : {false, true}) {
+                        const ColorScheme scheme = generateScheme(seed, variant, dark, level, neutral);
                         const double minimum = level == ContrastLevel::High ? 7.0 : 4.5;
                         for (const Pair &pair : kTextPairs) {
                             const double ratio = contrastRatio(scheme[pair.foreground], scheme[pair.background]);
@@ -89,8 +90,29 @@ private slots:
                                                      .arg(dark)));
                             }
                         }
+                      }
                     }
                 }
+            }
+        }
+    }
+
+    // Grey surfaces (video editors): the surfaces lose their tint, the accents keep it.
+    void neutralSurfacesKeepTheAccent()
+    {
+        // How far from grey: the spread of the channels (0 = grey, 1 = a pure colour).
+        const auto chroma = [](const QColor &c) {
+            return (std::max({c.red(), c.green(), c.blue()}) - std::min({c.red(), c.green(), c.blue()})) / 255.0;
+        };
+        for (const QColor &seed : kSeeds) {
+            const ColorScheme tinted = generateScheme(seed, SchemeVariant::Vibrant, true, ContrastLevel::Standard);
+            const ColorScheme grey = generateScheme(seed, SchemeVariant::Vibrant, true, ContrastLevel::Standard, true);
+            QCOMPARE(grey[ColorRole::Primary], tinted[ColorRole::Primary]);
+            QCOMPARE(grey[ColorRole::Tertiary], tinted[ColorRole::Tertiary]);
+            for (const ColorRole role : {ColorRole::Surface, ColorRole::SurfaceContainer, ColorRole::SurfaceContainerHighest,
+                                         ColorRole::OnSurfaceVariant, ColorRole::OutlineVariant}) {
+                QVERIFY2(chroma(grey[role]) <= chroma(tinted[role]) + 1e-6, colorRoleName(role).data());
+                QVERIFY2(chroma(grey[role]) < 0.07, colorRoleName(role).data());
             }
         }
     }

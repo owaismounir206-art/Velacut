@@ -139,6 +139,11 @@ class ThemeEditor : public QObject
     Q_PROPERTY(qreal tabIndicator MEMBER m_tabIndicator CONSTANT FINAL)
     Q_PROPERTY(qreal swatchSize MEMBER m_swatchSize CONSTANT FINAL)
     Q_PROPERTY(qreal valueWidth MEMBER m_valueWidth CONSTANT FINAL)
+    // A property as one row (name · slider · value box) when the panel is at least this wide; the name's width there,
+    // and the height of the value box
+    Q_PROPERTY(qreal inlinePropertyWidth MEMBER m_inlinePropertyWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal propertyLabelWidth MEMBER m_propertyLabelWidth CONSTANT FINAL)
+    Q_PROPERTY(qreal valueFieldHeight MEMBER m_valueFieldHeight CONSTANT FINAL)
     Q_PROPERTY(qreal textAreaHeight MEMBER m_textAreaHeight CONSTANT FINAL)
     Q_PROPERTY(qreal assetTileWidth MEMBER m_assetTileWidth CONSTANT FINAL)
     Q_PROPERTY(qreal assetTileHeight MEMBER m_assetTileHeight CONSTANT FINAL)
@@ -213,10 +218,13 @@ private:
     qreal m_badgeHeight = 20;
     qreal m_panelMinimumWidth = 220;
     qreal m_playButtonSize = 40;
-    qreal m_propertiesWidth = 312;
+    qreal m_propertiesWidth = 352;
     qreal m_tabIndicator = 3;
     qreal m_swatchSize = 24;
     qreal m_valueWidth = 56;
+    qreal m_inlinePropertyWidth = 272;
+    qreal m_propertyLabelWidth = 96;
+    qreal m_valueFieldHeight = 28;
     qreal m_textAreaHeight = 88;
     qreal m_assetTileWidth = 96;
     qreal m_assetTileHeight = 72;

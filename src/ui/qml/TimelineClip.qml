@@ -60,7 +60,7 @@ Item {
     Rectangle {
         id: body
         anchors.fill: parent
-        radius: Theme.shape.extraSmall
+        radius: Theme.shape.small
         color: clip.kind === "audio" ? Theme.color.tertiaryContainer
              : clip.kind === "text" ? Theme.color.primaryContainer
              : clip.kind === "caption" ? Theme.color.secondary
@@ -145,7 +145,11 @@ Item {
             width: parent.width
             height: Theme.editor.clipLabelHeight
             visible: clip.width > Theme.space.xl
-            color: clip.pictured ? Theme.alpha(Theme.color.scrim, 0.45) : "transparent"
+            // Over pictures, a shade that fades down into them (the frames stay visible under the name).
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: clip.pictured ? Theme.alpha(Theme.color.scrim, 0.6) : "transparent" }
+                GradientStop { position: 1.0; color: clip.pictured ? Theme.alpha(Theme.color.scrim, 0.15) : "transparent" }
+            }
             Row {
                 anchors.fill: parent
                 anchors.leftMargin: Theme.space.xs + (clip.selected ? Theme.editor.trimHandleWidth : 0)
@@ -435,10 +439,10 @@ Item {
         Rectangle {
             anchors.fill: parent
             visible: handle.containsMouse || handle.pressed || clip.selected
-            topLeftRadius: handle.startEdge ? Theme.shape.extraSmall : 0
-            bottomLeftRadius: handle.startEdge ? Theme.shape.extraSmall : 0
-            topRightRadius: handle.startEdge ? 0 : Theme.shape.extraSmall
-            bottomRightRadius: handle.startEdge ? 0 : Theme.shape.extraSmall
+            topLeftRadius: handle.startEdge ? Theme.shape.small : 0
+            bottomLeftRadius: handle.startEdge ? Theme.shape.small : 0
+            topRightRadius: handle.startEdge ? 0 : Theme.shape.small
+            bottomRightRadius: handle.startEdge ? 0 : Theme.shape.small
             color: clip.selected || handle.pressed ? Theme.color.primary : Theme.alpha(Theme.color.primary, 0.6)
             Rectangle {
                 anchors.centerIn: parent

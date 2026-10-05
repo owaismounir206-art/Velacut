@@ -51,6 +51,7 @@ qt_add_qml_module(vedit_ui
         qml/PropertiesPanel.qml
         qml/PropertySection.qml
         qml/PropertySlider.qml
+        qml/SliderRow.qml
         qml/EffectSlider.qml
         qml/ColorSwatches.qml
         qml/AssetPanel.qml

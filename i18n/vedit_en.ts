@@ -37,7 +37,7 @@
 <context>
     <name>PreferencesDialog</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/PreferencesDialog.qml" line="+434"/>
+        <location filename="../src/ui/qml/PreferencesDialog.qml" line="+440"/>
         <source>%n item(s)</source>
         <translation>
             <numerusform>%n item</numerusform>

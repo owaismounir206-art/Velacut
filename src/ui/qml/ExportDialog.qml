@@ -164,8 +164,11 @@ Dialog {
             CheckBox {
                 id: normalizeAudio
                 objectName: "normalizeAudioCheck"
-                text: qsTr("Normalize loudness to −14 LUFS (EBU R128)")
+                // Plain words here (SPEC 0bis rule 7); the measure is in the tooltip: −14 LUFS, EBU R128.
+                text: qsTr("Even out the volume, as social networks want it")
                 checked: false
+                ToolTip.visible: hovered
+                ToolTip.text: qsTr("Loudness normalized to −14 LUFS (EBU R128), the level of YouTube, TikTok and Instagram.")
             }
 
             // ---- advanced (closed by default, SPEC 0bis rules 7 and 8) ----

@@ -12,6 +12,7 @@
 #include "cpp/scheme/scheme_vibrant.h"
 #include "cpp/score/score.h"
 
+#include <algorithm>
 #include <memory>
 
 using namespace Qt::StringLiterals;
@@ -165,10 +166,19 @@ std::optional<ContrastLevel> contrastLevelFromName(QStringView name)
     return std::nullopt;
 }
 
-ColorScheme generateScheme(const QColor &seed, SchemeVariant variant, bool dark, ContrastLevel contrast)
+ColorScheme generateScheme(const QColor &seed, SchemeVariant variant, bool dark, ContrastLevel contrast,
+                           bool neutralSurfaces)
 {
     const mcu::Hct source(static_cast<mcu::Argb>(seed.rgb() | 0xff000000u));
     const auto scheme = makeScheme(source, variant, dark, contrastValue(contrast));
+    if (neutralSurfaces) {
+        constexpr double kNeutralChroma = 2.0;
+        constexpr double kNeutralVariantChroma = 3.0;
+        const double hue = source.get_hue();
+        scheme->neutral_palette = mcu::TonalPalette(hue, std::min(kNeutralChroma, scheme->neutral_palette.get_chroma()));
+        scheme->neutral_variant_palette =
+            mcu::TonalPalette(hue, std::min(kNeutralVariantChroma, scheme->neutral_variant_palette.get_chroma()));
+    }
     ColorScheme result;
     for (const RoleBinding &binding : kBindings) {
         const mcu::Argb argb = binding.color().GetArgb(*scheme);

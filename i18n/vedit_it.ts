@@ -1145,12 +1145,12 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+185"/>
+        <location line="+188"/>
         <source>Export</source>
         <translation>Esporta</translation>
     </message>
     <message>
-        <location line="-165"/>
+        <location line="-168"/>
         <source>Choose where to save the video</source>
         <translation>Scegli dove salvare il video</translation>
     </message>
@@ -1195,12 +1195,17 @@
         <translation>Alta</translation>
     </message>
     <message>
-        <location line="+33"/>
-        <source>Normalize loudness to −14 LUFS (EBU R128)</source>
-        <translation>Normalizza il volume a −14 LUFS (EBU R128)</translation>
+        <location line="+34"/>
+        <source>Even out the volume, as social networks want it</source>
+        <translation>Volume uniforme, come lo vogliono i social</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+3"/>
+        <source>Loudness normalized to −14 LUFS (EBU R128), the level of YouTube, TikTok and Instagram.</source>
+        <translation>Loudness normalizzata a −14 LUFS (EBU R128), il livello di YouTube, TikTok e Instagram.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Advanced</source>
         <translation>Avanzate</translation>
     </message>
@@ -2267,12 +2272,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+346"/>
+        <location line="+352"/>
         <source>Asset packs</source>
         <translation>Pacchetti di asset</translation>
     </message>
     <message>
-        <location line="-345"/>
+        <location line="-351"/>
         <source>AI models</source>
         <translation>Modelli AI</translation>
     </message>
@@ -2303,13 +2308,13 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+104"/>
+        <location line="+110"/>
         <location line="+23"/>
         <source>Automatic</source>
         <translation>Automatico</translation>
     </message>
     <message>
-        <location line="-126"/>
+        <location line="-132"/>
         <source>Light</source>
         <translation>Chiaro</translation>
     </message>
@@ -2402,6 +2407,11 @@
         <location line="+0"/>
         <source>Monochrome</source>
         <translation>Monocromatico</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Grey panels around the video: the colours of the video are easier to judge</source>
+        <translation>Pannelli grigi attorno al video: i colori del video si giudicano meglio</translation>
     </message>
     <message>
         <location line="+6"/>

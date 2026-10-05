@@ -26,7 +26,13 @@ Generati da **material-color-utilities** (spazio HCT) a partire da un **colore s
 1. accento di sistema: portale `org.freedesktop.appearance accent-color` (aggiornato dal vivo), poi GNOME
    `gsettings … accent-color`, poi KDE `kdeglobals` `AccentColor`;
 2. sfondo del desktop (GNOME, Plasma, hyprpaper, swww) → quantizzatore Celebi + score di MCU;
-3. copertina del progetto; 4. colore manuale; 5. predefinito `#4f5bd5`.
+3. copertina del progetto; 4. colore manuale; 5. predefinito `#00b4c4` (il ciano degli editor video; era `#4f5bd5`).
+
+**Superfici neutre** (`Theme.neutralSurfaces`, attive di default, interruttore in Preferenze → Aspetto): le palette
+neutral e neutral variant dello schema prendono la tinta del seme con croma 2 e 3 invece di quello della variante, così
+pannelli, contorni e testi secondari sono grigi come negli editor video (CapCut, DaVinci) e l'occhio resta neutro nel
+giudicare i colori del video; primary, secondary, tertiary ed error restano dinamici. Stessi toni, quindi stesso
+contrasto (verificato da `tst_theme` per ogni seme, variante, modalità e livello di contrasto, con e senza).
 
 **49 ruoli**, accessibili come `Theme.color.<ruolo>`:
 primary, onPrimary, primaryContainer, onPrimaryContainer, inversePrimary, secondary, onSecondary, secondaryContainer,
@@ -86,6 +92,7 @@ e scrive un avviso nel log, invece di disegnare il nome come testo. Asse FILL pe
 |---|---|---|
 | Style | `Button` | `variant`: filled, tonal, outlined, text, elevated; `iconName` |
 | Style | `Slider` | indicatore del valore durante il trascinamento (`valueText`) |
+| UI | `SliderRow` | proprietà su una riga come negli editor video: nome · cursore · riquadro del valore scrivibile (Invio applica, Esc annulla, doppio clic sul nome = valore neutro); sotto `inlinePropertyWidth` il cursore va sotto il nome. Base di `PropertySlider` ed `EffectSlider` |
 | Style | `Switch`, `CheckBox` (anche tristate), `RadioButton` | |
 | Style | `TextField` | `variant` filled/outlined, `label` flottante, `supportingText`, `error`, `leadingIconName`, placeholder |
 | Style | `ProgressBar` (lineare), `BusyIndicator` (circolare, `progress` per il determinato) | movimento essenziale |

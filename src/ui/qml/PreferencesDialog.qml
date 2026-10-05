@@ -285,6 +285,12 @@ Dialog {
                                 current: Theme.variant
                                 onChosen: (value) => Theme.variant = value
                             }
+                            SwitchRow {
+                                objectName: "neutralSurfaces"
+                                text: qsTr("Grey panels around the video: the colours of the video are easier to judge")
+                                checked: Theme.neutralSurfaces
+                                onToggled: (on) => Theme.neutralSurfaces = on
+                            }
                         }
                         Group {
                             title: qsTr("Contrast")

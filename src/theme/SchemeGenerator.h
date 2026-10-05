@@ -36,7 +36,11 @@ QString contrastLevelName(ContrastLevel level);
 std::optional<ContrastLevel> contrastLevelFromName(QStringView name);
 
 // Generates the full Material 3 scheme from a seed color with material-color-utilities (HCT space).
-ColorScheme generateScheme(const QColor &seed, SchemeVariant variant, bool dark, ContrastLevel contrast);
+// `neutralSurfaces`: the surfaces, outlines and text greys come from nearly grey palettes (the seed's hue at a chroma
+// of 2–3 instead of the variant's), as the grey surroundings of video editors that keep the eye neutral to judge the
+// video's colours; primary, secondary, tertiary and error stay dynamic. Same tones, so the same contrast.
+ColorScheme generateScheme(const QColor &seed, SchemeVariant variant, bool dark, ContrastLevel contrast,
+                           bool neutralSurfaces = false);
 
 // Most suitable seed color of an image (wallpaper, project cover), using the MCU quantizer and scorer.
 // Returns nullopt for an empty image.

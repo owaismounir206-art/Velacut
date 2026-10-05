@@ -193,6 +193,15 @@ void ThemeManager::setVariant(Variant variant)
     }
 }
 
+void ThemeManager::setNeutralSurfaces(bool neutral)
+{
+    if (neutral != m_neutralSurfaces) {
+        m_neutralSurfaces = neutral;
+        emit settingsChanged();
+        update(true);
+    }
+}
+
 void ThemeManager::setSeedSource(SeedSource source)
 {
     if (source != m_seedSource) {
@@ -316,7 +325,7 @@ void ThemeManager::update(bool animate)
     m_motion.setReduced(reduced);
 
     const auto [seed, source] = resolveSeed();
-    const ColorScheme target = generateScheme(seed, toSchemeVariant(m_variant), dark, contrast);
+    const ColorScheme target = generateScheme(seed, toSchemeVariant(m_variant), dark, contrast, m_neutralSurfaces);
     const bool changed = !m_initialized || target != m_target || dark != m_dark || seed != m_seed ||
                          source != m_effectiveSource;
     m_dark = dark;
@@ -389,7 +398,7 @@ QVariantList ThemeManager::seedSuggestions()
 {
     // The built-in seed first, then a hue wheel of seeds that give distinct schemes in every variant.
     QVariantList seeds;
-    for (const QRgb rgb : {kDefaultSeed, QRgb(0xff0b8fa3), QRgb(0xff1e8e3e), QRgb(0xffa8870b), QRgb(0xffe8710a),
+    for (const QRgb rgb : {kDefaultSeed, QRgb(0xff4f5bd5), QRgb(0xff1e8e3e), QRgb(0xffa8870b), QRgb(0xffe8710a),
                            QRgb(0xffd93025), QRgb(0xffc2185b), QRgb(0xff7b1fa2), QRgb(0xff777777)}) {
         seeds.append(QColor::fromRgba(rgb));
     }
@@ -437,6 +446,7 @@ void ThemeManager::loadSettings()
     m_mode = enumFromKey(settings.value(u"mode"_s).toString(), Mode::Auto);
     m_contrast = enumFromKey(settings.value(u"contrast"_s).toString(), Contrast::System);
     m_variant = enumFromKey(settings.value(u"variant"_s).toString(), Variant::TonalSpot);
+    m_neutralSurfaces = settings.value(u"neutralSurfaces"_s, true).toBool();
     m_seedSource = enumFromKey(settings.value(u"seedSource"_s).toString(), SeedSource::System);
     const QColor manual(settings.value(u"manualSeed"_s).toString());
     if (manual.isValid()) {
@@ -460,6 +470,7 @@ void ThemeManager::saveSettings() const
     settings.setValue(u"mode"_s, enumKey(m_mode));
     settings.setValue(u"contrast"_s, enumKey(m_contrast));
     settings.setValue(u"variant"_s, enumKey(m_variant));
+    settings.setValue(u"neutralSurfaces"_s, m_neutralSurfaces);
     settings.setValue(u"seedSource"_s, enumKey(m_seedSource));
     settings.setValue(u"manualSeed"_s, m_manualSeed.name(QColor::HexRgb));
     settings.setValue(u"density"_s, enumKey(m_density));

@@ -1,82 +1,35 @@
-// A property of the selected clip as a slider with its name and value: a drag is one undo step, a double click on
-// the name puts back the neutral value.
+// A property of the selected clip as a slider with its name and value (SliderRow): a drag is one undo step, a double
+// click on the name puts back the neutral value, the value can be typed in.
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
 import Vedit.Theme
 import Vedit.UI
 
-ColumnLayout {
+SliderRow {
     id: root
 
     required property Inspector inspector
     required property string key
-    property string label
-    property real from: 0
-    property real to: 1
-    property real stepSize: 0
     // The value that changes nothing (double click on the name).
     property real neutral: 0
-    // Equal steps multiply the value (speed): the slider works on the logarithm.
-    property bool logarithmic: false
     // The keyframe diamond of the parameter ("position", "scale", "rotation", "opacity"), "" = none.
     property string keyframeKey: ""
-    // The value as shown to the user.
-    property var format: function (v) { return (Math.round(v * 100) / 100).toLocaleString(Qt.locale()) }
 
-    readonly property real value: inspector.values[key] ?? neutral
-
-    function toSlider(v) { return logarithmic ? Math.log(Math.max(v, from)) : v }
-    function fromSlider(v) { return logarithmic ? Math.exp(v) : v }
-
-    Layout.fillWidth: true
-    spacing: 0
     objectName: "property_" + key
-
-    RowLayout {
-        Layout.fillWidth: true
-        Label {
-            Layout.fillWidth: true
-            text: root.label
-            role: "bodyMedium"
-            elide: Text.ElideRight
-            TapHandler {
-                onDoubleTapped: {
-                    root.inspector.set(root.key, root.neutral)
-                    root.inspector.endGesture()
-                }
-            }
-        }
-        Label {
-            Layout.preferredWidth: Theme.editor.valueWidth
-            horizontalAlignment: Text.AlignRight
-            text: root.format(root.value)
-            role: "labelLarge"
-            font.features: { "tnum": 1 }
-            color: Theme.color.onSurfaceVariant
-        }
-        KeyframeButton {
-            visible: root.keyframeKey !== ""
-            inspector: root.inspector
-            key: root.keyframeKey
-        }
+    trailingWidth: diamond.implicitWidth
+    slider.objectName: "slider_" + key
+    value: inspector.values[key] ?? neutral
+    onMoved: (v) => root.inspector.set(root.key, v)
+    onCommitted: root.inspector.endGesture()
+    onResetRequested: {
+        root.inspector.set(root.key, root.neutral)
+        root.inspector.endGesture()
     }
-    Slider {
-        id: slider
-        objectName: "slider_" + root.key
-        Layout.fillWidth: true
-        from: root.toSlider(root.from)
-        to: root.toSlider(root.to)
-        stepSize: root.logarithmic ? 0 : root.stepSize
-        valueText: root.format(root.fromSlider(value))
-        Accessible.name: root.label
-        onMoved: root.inspector.set(root.key, root.fromSlider(value))
-        onPressedChanged: if (!pressed) root.inspector.endGesture()
-        onActiveFocusChanged: if (!activeFocus) root.inspector.endGesture()
-        Binding on value {
-            value: root.toSlider(root.value)
-            when: !slider.pressed
-        }
+
+    KeyframeButton {
+        id: diamond
+        visible: root.keyframeKey !== ""
+        inspector: root.inspector
+        key: root.keyframeKey
     }
 }

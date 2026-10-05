@@ -41,6 +41,8 @@ class ThemeManager : public QObject
     Q_PROPERTY(Mode mode READ mode WRITE setMode NOTIFY settingsChanged FINAL)
     Q_PROPERTY(Contrast contrast READ contrast WRITE setContrast NOTIFY settingsChanged FINAL)
     Q_PROPERTY(Variant variant READ variant WRITE setVariant NOTIFY settingsChanged FINAL)
+    // Grey surfaces around the video (the accents stay dynamic): on by default, as video editors (SchemeGenerator).
+    Q_PROPERTY(bool neutralSurfaces READ neutralSurfaces WRITE setNeutralSurfaces NOTIFY settingsChanged FINAL)
     Q_PROPERTY(SeedSource seedSource READ seedSource WRITE setSeedSource NOTIFY settingsChanged FINAL)
     Q_PROPERTY(QColor manualSeed READ manualSeed WRITE setManualSeed NOTIFY settingsChanged FINAL)
     Q_PROPERTY(Density density READ density WRITE setDensity NOTIFY settingsChanged FINAL)
@@ -109,7 +111,7 @@ public:
     Q_ENUM(Motion)
 
     // Built-in fallback seed (SPEC §4, source 5).
-    static constexpr QRgb kDefaultSeed = 0xff4f5bd5;
+    static constexpr QRgb kDefaultSeed = 0xff00b4c4; // the cyan of video editors
 
     // `appearance` may be null (tests): then the system provides nothing.
     explicit ThemeManager(SystemAppearance *appearance, QObject *parent = nullptr);
@@ -138,6 +140,8 @@ public:
     void setContrast(Contrast contrast);
     Variant variant() const { return m_variant; }
     void setVariant(Variant variant);
+    bool neutralSurfaces() const { return m_neutralSurfaces; }
+    void setNeutralSurfaces(bool neutral);
     SeedSource seedSource() const { return m_seedSource; }
     void setSeedSource(SeedSource source);
     QColor manualSeed() const { return m_manualSeed; }
@@ -209,6 +213,7 @@ private:
     Mode m_mode = Mode::Auto;
     Contrast m_contrast = Contrast::System;
     Variant m_variant = Variant::TonalSpot;
+    bool m_neutralSurfaces = true;
     SeedSource m_seedSource = SeedSource::System;
     QColor m_manualSeed = QColor::fromRgb(kDefaultSeed);
     Density m_density = Density::Comfortable;

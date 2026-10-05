@@ -1,6 +1,6 @@
 // Material 3 secondary tabs: model = list of { text }, currentIndex (set by the owner); the active tab is underlined.
 // The tabs share the width equally, each at least as wide as its label: when they do not fit they scroll sideways
-// (M3 scrollable tabs) and the active one is kept in view. Labels are never cut.
+// (M3 scrollable tabs) and the active one is kept in view; the side with more tabs fades out. Labels are never cut.
 import QtQuick
 import Vedit.Theme
 
@@ -9,6 +9,8 @@ FocusScope {
 
     property var model: []
     property int currentIndex: 0
+    // The colour under the tabs, for the fades at the scrolling sides.
+    property color fadeColor: Theme.color.panel
     signal activated(int index)
 
     implicitHeight: Theme.space.control(Theme.space.xxxl)
@@ -56,7 +58,7 @@ FocusScope {
                 readonly property bool selected: index === root.currentIndex
 
                 objectName: "tab_" + index
-                width: Math.max(root.width / Math.max(1, root.model.length), label.implicitWidth + 2 * Theme.space.md)
+                width: Math.max(root.width / Math.max(1, root.model.length), label.implicitWidth + 2 * Theme.space.sm + Theme.space.xs)
                 height: root.height
                 Accessible.role: Accessible.PageTab
                 Accessible.name: modelData.text ?? ""
@@ -97,6 +99,25 @@ FocusScope {
         }
     }
     }
+
+    // More tabs on a side: the tabs fade out there (it takes no clicks: a tab half hidden is still clicked, and then
+    // scrolled into view).
+    component Scroller: Rectangle {
+        id: scroller
+        property bool atStart: true
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Theme.editor.tabIndicator
+        width: Theme.space.xxl
+        visible: flick.interactive && (atStart ? flick.contentX > 1 : flick.contentX + flick.width < flick.contentWidth - 1)
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: scroller.atStart ? root.fadeColor : Theme.alpha(root.fadeColor, 0) }
+            GradientStop { position: 1.0; color: scroller.atStart ? Theme.alpha(root.fadeColor, 0) : root.fadeColor }
+        }
+    }
+    Scroller { anchors.left: parent.left; atStart: true }
+    Scroller { anchors.right: parent.right; atStart: false }
 
     // The active tab stays in view.
     function reveal() {
