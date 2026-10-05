@@ -58,6 +58,7 @@ ApplicationWindow {
             onMessage: (text, undoable) => window.showMessage(text, undoable)
             onInfoRequested: infoDialog.open()
             onPreferencesRequested: preferences.open()
+            onAiModelsRequested: preferences.openSection(preferences.aiModelsSection)
         }
     }
 
@@ -68,6 +69,8 @@ ApplicationWindow {
         anchors.centerIn: parent
         width: Math.min(window.width - 2 * Theme.space.xl, Theme.editor.dialogWidth * 1.4)
         height: Math.min(window.height - 2 * Theme.space.xl, Theme.editor.dialogWidth * 1.25)
+        // A component or a model may have been installed meanwhile.
+        onClosed: if (App.editor) App.editor.ai.refreshSpeech()
     }
     Shortcut { sequence: "Ctrl+,"; onActivated: preferences.open() }
 

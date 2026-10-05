@@ -4,6 +4,7 @@
 #include "ai/Tasks.h"
 #include "core/commands/Edit.h"
 #include "core/edit/TimelineEditor.h"
+#include "ui/controllers/CaptionsController.h"
 #include "fx/Stabilization.h"
 #include "ui/controllers/EditorController.h"
 
@@ -320,6 +321,106 @@ void AiController::applyReframe(const Canvas &canvas, const std::vector<ClipId> 
     }
     if (m_editor.push(std::move(result))) {
         emit m_editor.message(tr("Reframed: the videos follow their subject (keyframes in Video)"), true);
+    }
+}
+
+int AiController::speechStatus() const
+{
+    if (ai::whisper::executable().isEmpty()) {
+        return 1;
+    }
+    return ai::whisper::bestInstalled().isEmpty() ? 2 : 0;
+}
+
+QString AiController::speechInstallCommand() const
+{
+    return ai::whisper::installCommand();
+}
+
+void AiController::refreshSpeech()
+{
+    emit speechStatusChanged();
+}
+
+bool AiController::autoCaptions(const QString &language)
+{
+    if (busy()) {
+        return false;
+    }
+    switch (speechStatus()) {
+    case 1:
+        emit m_editor.message(tr("Automatic captions need whisper.cpp: install it with “%1”.").arg(ai::whisper::installCommand()), false);
+        return false;
+    case 2:
+        emit m_editor.message(tr("Download a speech model first (Preferences → AI models)."), false);
+        return false;
+    default:
+        break;
+    }
+    const Sequence *sequence = m_editor.data().mainSequence();
+    std::vector<ai::Transcription::File> files;
+    QSet<QString> seen;
+    for (const Clip &clip : sequence ? sequence->visualTracks.front().clips : std::vector<Clip>{}) {
+        const MediaClipData *media = clip.media();
+        const Media *item = media ? m_editor.data().findMedia(media->mediaId) : nullptr;
+        if (!item || !item->info.audio || media->streams == Streams::VideoOnly || media->audio.muted) {
+            continue;
+        }
+        if (!seen.contains(item->fingerprint.value)) {
+            seen.insert(item->fingerprint.value);
+            files.push_back({item->path, item->fingerprint.value});
+        }
+    }
+    if (files.empty()) {
+        emit m_editor.message(tr("There is no sound on the main track to make captions from."), false);
+        return false;
+    }
+    auto task = std::make_unique<ai::Transcription>(files, ai::whisper::bestInstalled(), language);
+    ai::Transcription *transcription = task.get();
+    connect(transcription, &ai::AiTask::finished, this, [this, transcription] { applyCaptions(transcription->transcripts()); });
+    run(std::move(task));
+    return true;
+}
+
+void AiController::applyCaptions(const QHash<QString, ai::Transcript> &transcripts)
+{
+    const Sequence *sequence = m_editor.data().mainSequence();
+    if (!sequence) {
+        return;
+    }
+    const Rational rate = m_editor.data().settings.frameRate;
+    std::vector<captions::CaptionLine> lines;
+    for (const Clip &clip : sequence->visualTracks.front().clips) {
+        const MediaClipData *media = clip.media();
+        const Media *item = media ? m_editor.data().findMedia(media->mediaId) : nullptr;
+        if (!item || media->reversed || media->curve || !transcripts.contains(item->fingerprint.value)) {
+            continue;
+        }
+        const std::int64_t sourceInMs = media->sourceIn.rescaled(Rational(1000), Rounding::NearestEven).value();
+        const std::int64_t lengthMs = std::llround(clip.duration.toSecondsDouble() * media->speed * 1000.0);
+        const double speed = media->speed;
+        const RationalTime start = clip.start;
+        const auto toTimeline = [&](std::int64_t ms) {
+            const double frames = static_cast<double>(ms - sourceInMs) / speed * rate.toDouble() / 1000.0;
+            return start + RationalTime(std::llround(frames), rate);
+        };
+        for (captions::CaptionLine &line : ai::captionLines(transcripts.value(item->fingerprint.value), sourceInMs,
+                                                            sourceInMs + lengthMs, toTimeline)) {
+            lines.push_back(std::move(line));
+        }
+    }
+    if (lines.empty()) {
+        emit m_editor.message(tr("No speech was recognised on the main track."), false);
+        return;
+    }
+    const bool replace = std::any_of(sequence->visualTracks.begin(), sequence->visualTracks.end(),
+                                     [](const Track &track) { return track.captions; });
+    EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                            .insertCaptions(lines, replace ? std::nullopt : m_editor.captions()->nextStyle(), replace);
+    const int count = static_cast<int>(lines.size());
+    if (m_editor.push(std::move(result))) {
+        emit m_editor.message(tr("%n caption line(s) from the speech", nullptr, count), true);
+        emit m_editor.libraryRequested(u"captions"_s);
     }
 }
 

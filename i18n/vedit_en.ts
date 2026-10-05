@@ -4,7 +4,7 @@
 <context>
     <name>EditorScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+372"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+375"/>
         <source>Choose %n video(s) or photo(s) for the template</source>
         <translation>
             <numerusform>Choose %n video or photo for the template</numerusform>
@@ -26,7 +26,7 @@
 <context>
     <name>PreferencesDialog</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/PreferencesDialog.qml" line="+428"/>
+        <location filename="../src/ui/qml/PreferencesDialog.qml" line="+434"/>
         <source>%n item(s)</source>
         <translation>
             <numerusform>%n item</numerusform>
@@ -83,6 +83,17 @@
         <translation>
             <numerusform>%1 · %n shot · %2 s</numerusform>
             <numerusform>%1 · %n shots · %2 s</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ui::AiController</name>
+    <message numerus="yes">
+        <location filename="../src/ui/controllers/AiController.cpp" line="+422"/>
+        <source>%n caption line(s) from the speech</source>
+        <translation>
+            <numerusform>%n caption line from the speech</numerusform>
+            <numerusform>%n caption lines from the speech</numerusform>
         </translation>
     </message>
 </context>

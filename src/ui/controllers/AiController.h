@@ -2,6 +2,7 @@
 #pragma once
 
 #include "ai/Tasks.h"
+#include "ai/Whisper.h"
 #include "core/project/Id.h"
 #include "core/project/Sequence.h"
 
@@ -28,6 +29,9 @@ class AiController : public QObject
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged FINAL)
     Q_PROPERTY(QString title READ title NOTIFY busyChanged FINAL)
     Q_PROPERTY(double progress READ progress NOTIFY progressChanged FINAL)
+    // Speech recognition (whisper.cpp): 0 = ready, 1 = whisper.cpp not installed, 2 = no speech model downloaded.
+    Q_PROPERTY(int speechStatus READ speechStatus NOTIFY speechStatusChanged FINAL)
+    Q_PROPERTY(QString speechInstallCommand READ speechInstallCommand CONSTANT FINAL)
 
 public:
     explicit AiController(EditorController &editor);
@@ -51,11 +55,19 @@ public:
     // "Adapt to 9:16" (any CanvasPreset): the format changes and every video of the main track fills it, following its
     // subject with position keyframes (editable) — one undo step.
     Q_INVOKABLE bool autoReframe(int preset);
+    // "Auto captions": the speech of the main track's clips, recognised by whisper.cpp (`language`: ISO 639-1 or
+    // "auto"), becomes caption lines word by word on the caption track (replacing the lines there) — one undo step.
+    Q_INVOKABLE bool autoCaptions(const QString &language = QStringLiteral("auto"));
+    int speechStatus() const;
+    QString speechInstallCommand() const;
+    // Looks again for whisper.cpp and the models (installed while vedit runs).
+    Q_INVOKABLE void refreshSpeech();
     Q_INVOKABLE void cancel();
 
 signals:
     void busyChanged();
     void progressChanged();
+    void speechStatusChanged();
 
 private:
     struct Target
@@ -68,6 +80,7 @@ private:
     void run(std::unique_ptr<ai::AiTask> task);
     void applyPauses(const ClipId &clipId, const std::vector<ai::SourceRange> &pauses);
     void applyScenes(const ClipId &clipId, const std::vector<double> &cuts);
+    void applyCaptions(const QHash<QString, ai::Transcript> &transcripts);
     void applyReframe(const Canvas &canvas, const std::vector<ClipId> &clips, const std::vector<ai::SubjectTracking::Path> &paths);
 
     EditorController &m_editor;

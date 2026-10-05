@@ -4,6 +4,7 @@
 #include "../unit/ProjectFixture.h"
 #include "TestMedia.h"
 
+#include "ai/Whisper.h"
 #include "core/serialization/ProjectJson.h"
 #include "document/Document.h"
 #include "document/DraftStore.h"
@@ -14,14 +15,17 @@
 #include "fx/Library.h"
 #include "ui/controllers/ActionRegistry.h"
 #include "ui/controllers/AiController.h"
+#include "ui/controllers/CaptionsController.h"
 #include "ui/controllers/ClipInspector.h"
 #include "ui/items/AssetThumbnail.h"
+#include "ui/models/AiModelsModel.h"
 #include "ui/models/AssetLibraryModel.h"
 #include "ui/models/BrandKitModel.h"
 #include "ui/controllers/EditorController.h"
 
 #include <QElapsedTimer>
 #include <QImage>
+#include <QScopeGuard>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTextStream>
@@ -631,6 +635,97 @@ private slots:
         editor.undo();
         QCOMPARE(editor.data().mainSequence()->canvas.preset, CanvasPreset::Landscape16x9);
         QCOMPARE(mainTrack(editor).clips[0].transform.fit, FitMode::Contain);
+    }
+
+    // "Auto captions" with whisper.cpp — here a stand-in program that answers like `whisper-cli --output-json-full`
+    // (the real one is not installed on the test machines) — and the model manager downloading a model.
+    void autoCaptionsFromSpeech()
+    {
+        // A model, downloaded by the model manager (from a local file instead of Hugging Face).
+        QDir().mkpath(m_dir.filePath(u"models-source"_s));
+        QFile source(m_dir.filePath(u"models-source/ggml-base.bin"_s));
+        QVERIFY(source.open(QIODevice::WriteOnly));
+        source.write(QByteArray(2'000'000, 'x'));
+        source.close();
+        QFile::remove(ai::whisper::modelPath(u"base"_s));
+        AiModelsModel models;
+        models.setSourceOverride(QUrl::fromLocalFile(m_dir.filePath(u"models-source"_s) + u'/'));
+        QSignalSpy downloaded(&models, &AiModelsModel::message);
+        models.download(u"base"_s);
+        QVERIFY(downloaded.wait(10000));
+        QVERIFY2(ai::whisper::installed(u"base"_s), qPrintable(downloaded.first().first().toString()));
+
+        // The stand-in whisper-cli, first on the PATH.
+        const QString bin = m_dir.filePath(u"fake-bin"_s);
+        QDir().mkpath(bin);
+        QFile script(bin + u"/whisper-cli"_s);
+        QVERIFY(script.open(QIODevice::WriteOnly));
+        script.write(R"(#!/bin/sh
+out=""; model=""; language=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -of) out="$2"; shift ;;
+    -m) model="$2"; shift ;;
+    -l) language="$2"; shift ;;
+  esac
+  shift
+done
+[ -f "$model" ] || { echo "error: no model" >&2; exit 1; }
+echo "whisper_print_progress_callback: progress =  50%" >&2
+cat > "$out.json" <<JSON
+{"result": {"language": "$language"}, "transcription": [
+ {"offsets": {"from": 200, "to": 1500}, "text": " Ciao a tutti.", "tokens": [
+  {"text": "[_BEG_]", "offsets": {"from": 200, "to": 200}},
+  {"text": " Ciao", "offsets": {"from": 200, "to": 600}}, {"text": " a", "offsets": {"from": 600, "to": 700}},
+  {"text": " tut", "offsets": {"from": 700, "to": 1000}}, {"text": "ti", "offsets": {"from": 1000, "to": 1200}},
+  {"text": ".", "offsets": {"from": 1200, "to": 1200}}]},
+ {"offsets": {"from": 2000, "to": 3000}, "text": " Ecco vedit.", "tokens": [
+  {"text": " Ecco", "offsets": {"from": 2000, "to": 2400}}, {"text": " ved", "offsets": {"from": 2400, "to": 2700}},
+  {"text": "it.", "offsets": {"from": 2700, "to": 3000}}]}]}
+JSON
+echo "whisper_print_progress_callback: progress = 100%" >&2
+)");
+        script.close();
+        script.setPermissions(script.permissions() | QFileDevice::ExeOwner);
+        const QByteArray path = qgetenv("PATH");
+        qputenv("PATH", QByteArray(bin.toLocal8Bit() + ':' + path));
+        const auto restore = qScopeGuard([&path] { qputenv("PATH", path); });
+
+        document::DraftStore store(m_dir.filePath(u"drafts-speech"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        AiController &ai = *editor.ai();
+        QCOMPARE(ai.speechStatus(), 0);
+        editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        QVERIFY(ai.autoCaptions(u"it"_s));
+        QTRY_VERIFY_WITH_TIMEOUT(!ai.busy(), 20000);
+        const QVariantList lines = editor.captions()->lines();
+        QCOMPARE(lines.size(), 2);
+        QCOMPARE(lines[0].toMap().value(u"text"_s).toString(), u"Ciao a tutti."_s);
+        QCOMPARE(lines[1].toMap().value(u"text"_s).toString(), u"Ecco vedit."_s);
+        QCOMPARE(lines[0].toMap().value(u"start"_s).toInt(), 6); // 0.2 s at 30 fps
+        const Track &captions = editor.data().mainSequence()->visualTracks.back();
+        QCOMPARE(captions.clips[0].subtitle()->words.size(), 3u);
+        // Again: the transcript comes from the cache (the program would fail now), the lines are replaced.
+        QVERIFY(script.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        script.write("#!/bin/sh\necho \"error: called again\" >&2\nexit 1\n");
+        script.close();
+        QVERIFY(ai.autoCaptions(u"it"_s));
+        QTRY_VERIFY_WITH_TIMEOUT(!ai.busy(), 20000);
+        QCOMPARE(editor.captions()->lines().size(), 2);
+        editor.undo();
+        QCOMPARE(editor.captions()->lines().size(), 2);
+        editor.undo();
+        QVERIFY(!editor.captions()->hasCaptions());
+        // Without the program: disabled, with the command to install it.
+        QFile::remove(script.fileName());
+        QCOMPARE(ai.speechStatus(), 1);
+        QVERIFY(!ai.autoCaptions(u"it"_s));
+        QVERIFY(models.remove(u"base"_s).isEmpty());
+        QVERIFY(!ai::whisper::installed(u"base"_s));
     }
 
     // "Smooth slow motion" in the Speed page: the new frames are computed in background for the preview.

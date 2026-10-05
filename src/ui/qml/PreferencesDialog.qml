@@ -21,10 +21,16 @@ Dialog {
     padding: 0
 
     property int section: 0
+    readonly property int aiModelsSection: 4
+    function openSection(index) {
+        section = index
+        open()
+    }
     readonly property var sections: [{ text: qsTr("Appearance"), icon: "palette" },
                                      { text: qsTr("Language"), icon: "translate" },
                                      { text: qsTr("Performance"), icon: "speed" },
                                      { text: qsTr("Asset packs"), icon: "inventory_2" },
+                                     { text: qsTr("AI models"), icon: "neurology" },
                                      { text: qsTr("About"), icon: "info" }]
 
     // A labelled group of the page.
@@ -447,6 +453,133 @@ Dialog {
                             color: Theme.color.onSurfaceVariant
                             elide: Text.ElideMiddle
                             text: qsTr("Installed in %1").arg(packs.folder)
+                        }
+                    }
+
+                    // ---- AI models (SPEC §1: optional components, models downloaded only on request) ----------------
+                    ColumnLayout {
+                        spacing: Theme.space.md
+                        AiModelsModel {
+                            id: aiModels
+                            onMessage: (text) => App.message(text)
+                        }
+                        Group {
+                            title: qsTr("Speech recognition")
+                            detail: aiModels.whisperInstalled
+                                    ? qsTr("whisper.cpp is installed (%1): automatic captions and editing by the transcript work offline.").arg(aiModels.whisperPath)
+                                    : qsTr("Automatic captions and editing by the transcript need whisper.cpp, which is not installed. Install it with this command, then press “Check again”:")
+                            RowLayout {
+                                visible: !aiModels.whisperInstalled
+                                spacing: Theme.space.sm
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    implicitHeight: command.implicitHeight + 2 * Theme.space.sm
+                                    radius: Theme.shape.small
+                                    color: Theme.color.surfaceContainerHighest
+                                    Label {
+                                        id: command
+                                        anchors.fill: parent
+                                        anchors.margins: Theme.space.sm
+                                        font.family: "monospace"
+                                        text: aiModels.whisperInstallCommand
+                                    }
+                                }
+                                IconButton {
+                                    iconName: "content_copy"
+                                    label: qsTr("Copy the command")
+                                    onClicked: {
+                                        App.copyText(aiModels.whisperInstallCommand)
+                                        App.message(qsTr("Command copied"))
+                                    }
+                                }
+                                Button {
+                                    objectName: "checkWhisperAgain"
+                                    variant: "tonal"
+                                    iconName: "refresh"
+                                    text: qsTr("Check again")
+                                    onClicked: aiModels.refresh()
+                                }
+                            }
+                        }
+                        Repeater {
+                            model: aiModels
+                            delegate: Rectangle {
+                                id: aiModel
+                                required property string modelId
+                                required property string name
+                                required property string detail
+                                required property string size
+                                required property bool installed
+                                required property bool downloading
+                                required property real progress
+                                Layout.fillWidth: true
+                                implicitHeight: aiRow.implicitHeight + 2 * Theme.space.md
+                                radius: Theme.shape.medium
+                                color: Theme.color.surfaceContainerHighest
+                                RowLayout {
+                                    id: aiRow
+                                    anchors.fill: parent
+                                    anchors.margins: Theme.space.md
+                                    spacing: Theme.space.md
+                                    Icon {
+                                        name: aiModel.installed ? "download_done" : "neurology"
+                                        color: aiModel.installed ? Theme.color.primary : Theme.color.onSurfaceVariant
+                                    }
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: Theme.space.xxs
+                                        Label {
+                                            Layout.fillWidth: true
+                                            role: "titleSmall"
+                                            elide: Text.ElideRight
+                                            text: aiModel.name
+                                        }
+                                        Label {
+                                            Layout.fillWidth: true
+                                            role: "bodySmall"
+                                            color: Theme.color.onSurfaceVariant
+                                            wrapMode: Text.WordWrap
+                                            text: aiModel.detail + " · " + aiModel.size
+                                        }
+                                        ProgressBar {
+                                            Layout.fillWidth: true
+                                            visible: aiModel.downloading
+                                            value: aiModel.progress
+                                        }
+                                    }
+                                    Button {
+                                        objectName: "downloadModel_" + aiModel.modelId
+                                        visible: !aiModel.installed && !aiModel.downloading
+                                        variant: "tonal"
+                                        iconName: "download"
+                                        text: qsTr("Download (%1)").arg(aiModel.size)
+                                        onClicked: aiModels.download(aiModel.modelId)
+                                    }
+                                    IconButton {
+                                        visible: aiModel.downloading
+                                        iconName: "close"
+                                        label: qsTr("Stop the download")
+                                        onClicked: aiModels.cancel(aiModel.modelId)
+                                    }
+                                    IconButton {
+                                        objectName: "removeModel_" + aiModel.modelId
+                                        visible: aiModel.installed
+                                        iconName: "delete"
+                                        label: qsTr("Remove the model")
+                                        onClicked: {
+                                            const error = aiModels.remove(aiModel.modelId)
+                                            App.message(error !== "" ? error : qsTr("Model removed"))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            role: "bodySmall"
+                            color: Theme.color.onSurfaceVariant
+                            wrapMode: Text.WordWrap
+                            text: qsTr("Models are downloaded only when you ask, from huggingface.co (whisper.cpp project, MIT licence), and saved in %1.").arg(aiModels.folder)
                         }
                     }
 

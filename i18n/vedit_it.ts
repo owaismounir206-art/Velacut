@@ -398,7 +398,7 @@
 <context>
     <name>CaptionsPanel</name>
     <message>
-        <location filename="../src/ui/qml/CaptionsPanel.qml" line="+29"/>
+        <location filename="../src/ui/qml/CaptionsPanel.qml" line="+39"/>
         <source>Import captions</source>
         <translation>Importa sottotitoli</translation>
     </message>
@@ -433,7 +433,7 @@
         <translation>Sottotitoli</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+14"/>
         <source>Import a subtitle file (SRT, WebVTT)</source>
         <translation>Importa un file di sottotitoli (SRT, WebVTT)</translation>
     </message>
@@ -453,12 +453,52 @@
         <translation>Stili</translation>
     </message>
     <message>
-        <location line="+30"/>
-        <source>Bring a subtitle file, or type the captions line by line: each word lights up while it is said.</source>
-        <translation>Porta un file di sottotitoli, o scrivi i sottotitoli riga per riga: ogni parola si illumina mentre viene detta.</translation>
+        <location line="-70"/>
+        <source>Find the language</source>
+        <translation>Trova la lingua</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+44"/>
+        <source>Make the captions again from the speech</source>
+        <translation>Rifai i sottotitoli dal parlato</translation>
+    </message>
+    <message>
+        <location line="+56"/>
+        <source>Captions from the speech, from a subtitle file, or typed line by line: each word lights up while it is said.</source>
+        <translation>Sottotitoli dal parlato, da un file di sottotitoli o scritti riga per riga: ogni parola si illumina mentre viene detta.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Language of the speech</source>
+        <translation>Lingua del parlato</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Auto captions</source>
+        <translation>Sottotitoli automatici</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Auto captions need whisper.cpp, which is not installed: “%1”.</source>
+        <translation>I sottotitoli automatici richiedono whisper.cpp, che non è installato: «%1».</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Auto captions need a speech model: download one once, it stays on this computer.</source>
+        <translation>I sottotitoli automatici richiedono un modello del parlato: scaricalo una volta, resta su questo computer.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>How to install</source>
+        <translation>Come installarlo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Download a model</source>
+        <translation>Scarica un modello</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Import a subtitle file</source>
         <translation>Importa un file di sottotitoli</translation>
     </message>
@@ -745,7 +785,7 @@
 <context>
     <name>EditorScreen</name>
     <message>
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+37"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+39"/>
         <source>Video exported</source>
         <translation>Video esportato</translation>
     </message>
@@ -782,41 +822,41 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+31"/>
+        <location line="+32"/>
         <source>Stickers</source>
         <translation>Sticker</translation>
     </message>
     <message>
-        <location line="-30"/>
-        <location line="+35"/>
+        <location line="-31"/>
+        <location line="+36"/>
         <source>Effects</source>
         <translation>Effetti</translation>
     </message>
     <message>
-        <location line="-34"/>
-        <location line="+39"/>
+        <location line="-35"/>
+        <location line="+40"/>
         <source>Transitions</source>
         <translation>Transizioni</translation>
     </message>
     <message>
-        <location line="-38"/>
-        <location line="+43"/>
+        <location line="-39"/>
+        <location line="+44"/>
         <source>Filters</source>
         <translation>Filtri</translation>
     </message>
     <message>
-        <location line="-42"/>
-        <location line="+47"/>
+        <location line="-43"/>
+        <location line="+48"/>
         <source>Animations</source>
         <translation>Animazioni</translation>
     </message>
     <message>
-        <location line="-46"/>
+        <location line="-47"/>
         <source>Brand</source>
         <translation>Marchio</translation>
     </message>
     <message>
-        <location line="+151"/>
+        <location line="+152"/>
         <source>Choose a video or a photo for “%1”</source>
         <translation>Scegli un video o una foto per «%1»</translation>
     </message>
@@ -1858,17 +1898,17 @@
         <translation>%1 — vedit</translation>
     </message>
     <message>
-        <location line="+68"/>
+        <location line="+71"/>
         <source>System information</source>
         <translation>Informazioni di sistema</translation>
     </message>
     <message>
-        <location line="-55"/>
+        <location line="-58"/>
         <source>Undo</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+84"/>
         <source>Copy system information</source>
         <translation>Copia informazioni di sistema</translation>
     </message>
@@ -1967,7 +2007,7 @@
         <translation>Preferenze</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+12"/>
         <source>Appearance</source>
         <translation>Aspetto</translation>
     </message>
@@ -1983,12 +2023,17 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+345"/>
+        <location line="+346"/>
         <source>Asset packs</source>
         <translation>Pacchetti di asset</translation>
     </message>
     <message>
-        <location line="-344"/>
+        <location line="-345"/>
+        <source>AI models</source>
+        <translation>Modelli AI</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>About</source>
         <translation>Informazioni</translation>
     </message>
@@ -2287,6 +2332,61 @@
         <location line="+11"/>
         <source>Installed in %1</source>
         <translation>Installati in %1</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Speech recognition</source>
+        <translation>Riconoscimento del parlato</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>whisper.cpp is installed (%1): automatic captions and editing by the transcript work offline.</source>
+        <translation>whisper.cpp è installato (%1): sottotitoli automatici e modifica dalla trascrizione funzionano offline.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Automatic captions and editing by the transcript need whisper.cpp, which is not installed. Install it with this command, then press “Check again”:</source>
+        <translation>Sottotitoli automatici e modifica dalla trascrizione richiedono whisper.cpp, che non è installato. Installalo con questo comando, poi premi «Controlla di nuovo»:</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Copy the command</source>
+        <translation>Copia il comando</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Command copied</source>
+        <translation>Comando copiato</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Check again</source>
+        <translation>Controlla di nuovo</translation>
+    </message>
+    <message>
+        <location line="+56"/>
+        <source>Download (%1)</source>
+        <translation>Scarica (%1)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Stop the download</source>
+        <translation>Ferma il download</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Remove the model</source>
+        <translation>Rimuovi il modello</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Model removed</source>
+        <translation>Modello rimosso</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Models are downloaded only when you ask, from huggingface.co (whisper.cpp project, MIT licence), and saved in %1.</source>
+        <translation>I modelli si scaricano solo quando lo chiedi, da huggingface.co (progetto whisper.cpp, licenza MIT), e restano in %1.</translation>
     </message>
     <message>
         <location line="+16"/>
@@ -5380,6 +5480,49 @@
     </message>
 </context>
 <context>
+    <name>vedit::ai::Transcription</name>
+    <message>
+        <location filename="../src/ai/Whisper.cpp" line="+106"/>
+        <source>Recognising the speech</source>
+        <translation>Riconoscimento del parlato</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Speech recognition needs whisper.cpp: install it with “%1”.</source>
+        <translation>Il riconoscimento del parlato richiede whisper.cpp: installalo con «%1».</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Download a speech model first (Preferences → AI models).</source>
+        <translation>Scarica prima un modello del parlato (Preferenze → Modelli AI).</translation>
+    </message>
+    <message>
+        <location line="+36"/>
+        <source>No room for temporary files.</source>
+        <translation>Non c&apos;è spazio per i file temporanei.</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>The sound of %1 cannot be read.</source>
+        <translation>L&apos;audio di %1 non può essere letto.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>whisper.cpp could not be started.</source>
+        <translation>Impossibile avviare whisper.cpp.</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>whisper.cpp could not recognise the speech of %1: %2</source>
+        <translation>whisper.cpp non è riuscito a riconoscere il parlato di %1: %2</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>whisper.cpp gave an answer vedit cannot read (%1).</source>
+        <translation>whisper.cpp ha dato una risposta che vedit non sa leggere (%1).</translation>
+    </message>
+</context>
+<context>
     <name>vedit::document::Document</name>
     <message>
         <location filename="../src/document/Document.cpp" line="+71"/>
@@ -6088,7 +6231,7 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message>
-        <location filename="../src/ui/controllers/AiController.cpp" line="+94"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+95"/>
         <source>Select a video or a sound with speech first.</source>
         <translation>Seleziona prima un video o un audio con del parlato.</translation>
     </message>
@@ -6105,13 +6248,13 @@
     </message>
     <message>
         <location line="+11"/>
-        <location line="+169"/>
+        <location line="+269"/>
         <location line="+32"/>
         <source>The clip was removed meanwhile.</source>
         <translation>Nel frattempo la clip è stata eliminata.</translation>
     </message>
     <message>
-        <location line="-176"/>
+        <location line="-276"/>
         <source>Stabilize</source>
         <translation>Stabilizza</translation>
     </message>
@@ -6131,7 +6274,35 @@
         <translation>Reinquadrato: i video seguono il soggetto (keyframe in Video)</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+29"/>
+        <source>Automatic captions need whisper.cpp: install it with “%1”.</source>
+        <translation>I sottotitoli automatici richiedono whisper.cpp: installalo con «%1».</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Download a speech model first (Preferences → AI models).</source>
+        <translation>Scarica prima un modello del parlato (Preferenze → Modelli AI).</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>There is no sound on the main track to make captions from.</source>
+        <translation>Nella traccia principale non c&apos;è audio da cui fare i sottotitoli.</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>No speech was recognised on the main track.</source>
+        <translation>Nessun parlato riconosciuto nella traccia principale.</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+9"/>
+        <source>%n caption line(s) from the speech</source>
+        <translation>
+            <numerusform>%n riga di sottotitoli dal parlato</numerusform>
+            <numerusform>%n righe di sottotitoli dal parlato</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+31"/>
         <source>No pauses found in this clip.</source>
         <translation>Nessuna pausa trovata in questa clip.</translation>
     </message>
@@ -6154,6 +6325,59 @@
         <location line="+4"/>
         <source>Clip split at each scene</source>
         <translation>Clip divisa a ogni scena</translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ui::AiModelsModel</name>
+    <message>
+        <location filename="../src/ui/models/AiModelsModel.cpp" line="+116"/>
+        <source>Speech — very fast</source>
+        <translation>Parlato — molto veloce</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Speech — fast</source>
+        <translation>Parlato — veloce</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Speech — accurate</source>
+        <translation>Parlato — preciso</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Speech — most accurate</source>
+        <translation>Parlato — il più preciso</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>For a quick draft of the captions.</source>
+        <translation>Per una bozza rapida dei sottotitoli.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Good for clear speech; the suggested one.</source>
+        <translation>Buono per un parlato chiaro; quello consigliato.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Better with accents, noise and fast speech.</source>
+        <translation>Migliore con accenti, rumore e parlato veloce.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The best result, slowly: for long work done once.</source>
+        <translation>Il risultato migliore, lentamente: per lavori lunghi fatti una volta.</translation>
+    </message>
+    <message>
+        <location line="+70"/>
+        <source>Model downloaded: speech recognition is ready.</source>
+        <translation>Modello scaricato: il riconoscimento del parlato è pronto.</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>The model cannot be removed.</source>
+        <translation>Impossibile rimuovere il modello.</translation>
     </message>
 </context>
 <context>
@@ -7280,6 +7504,30 @@
         <location line="+31"/>
         <source>Select at least 2 clips to create a multicam clip.</source>
         <translation>Seleziona almeno 2 clip per creare una clip multicamera.</translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ui::FileDownload</name>
+    <message>
+        <location filename="../src/ui/models/AiModelsModel.cpp" line="-189"/>
+        <location line="+61"/>
+        <source>%1 cannot be written.</source>
+        <translation>Impossibile scrivere %1.</translation>
+    </message>
+    <message>
+        <location line="-14"/>
+        <source>Download cancelled.</source>
+        <translation>Download annullato.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The download failed: %1</source>
+        <translation>Download non riuscito: %1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The download is empty.</source>
+        <translation>Il download è vuoto.</translation>
     </message>
 </context>
 <context>

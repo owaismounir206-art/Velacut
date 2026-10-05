@@ -16,6 +16,7 @@ qt_add_qml_module(vedit_ui
         items/WaveformView.h items/WaveformView.cpp
         items/ScopeView.h items/ScopeView.cpp
         models/AudioLibraryModel.h models/AudioLibraryModel.cpp
+        models/AiModelsModel.h models/AiModelsModel.cpp
         models/AssetLibraryModel.h models/AssetLibraryModel.cpp
         models/DraftsModel.h models/DraftsModel.cpp
         models/PackagesModel.h models/PackagesModel.cpp
@@ -84,6 +85,6 @@ target_include_directories(vedit_ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/.." "${C
                                    # the generated QML registration includes headers by file name
                                    PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/items" "${CMAKE_CURRENT_SOURCE_DIR}/controllers"
                                            "${CMAKE_CURRENT_SOURCE_DIR}/models")
-target_link_libraries(vedit_ui PUBLIC vedit_engine vedit_ai vedit_document vedit_gpu vedit_theme Qt6::Quick Qt6::QuickControls2 Qt6::DBus
+target_link_libraries(vedit_ui PUBLIC Qt6::Network vedit_engine vedit_ai vedit_document vedit_gpu vedit_theme Qt6::Quick Qt6::QuickControls2 Qt6::DBus
                                PRIVATE Qt6::GuiPrivate)
 vedit_target_options(vedit_ui)

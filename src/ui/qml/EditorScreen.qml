@@ -15,6 +15,8 @@ Item {
     signal message(string text, bool undoable)
     signal infoRequested()
     signal preferencesRequested()
+    // Preferences → AI models (from "Auto captions" when a component or model is missing).
+    signal aiModelsRequested()
 
     Connections {
         target: root.editor
@@ -229,6 +231,7 @@ Item {
                             }
                             CaptionsPanel {
                                 editor: root.editor
+                                onSetUpRequested: root.aiModelsRequested()
                             }
                             AssetPanel {
                                 editor: root.editor

@@ -25,7 +25,7 @@ set(VEDIT_DEV_HOME "${CMAKE_BINARY_DIR}/dev-home")
 # GuiPrivate: QRhi headers (<rhi/qrhi.h>) for the video preview, a semi-public API with limited
 # compatibility guarantees (docs/ARCHITECTURE.md D-17). The warning is known and accepted.
 set(QT_NO_PRIVATE_MODULE_WARNING ON)
-find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui GuiPrivate OpenGL DBus Qml Quick QuickControls2 ShaderTools LinguistTools Test Svg)
+find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui GuiPrivate OpenGL DBus Network Qml Quick QuickControls2 ShaderTools LinguistTools Test Svg)
 qt_standard_project_setup(REQUIRES 6.7)
 qt_policy(SET QTP0004 NEW)
 # QML modules are laid out as <build>/qml/Vedit/<Module> so that qmllint and the QML engine find them.

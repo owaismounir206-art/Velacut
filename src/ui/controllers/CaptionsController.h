@@ -82,6 +82,8 @@ public:
     // Lines that contain `text` (any case), and replacing it in all of them at once: the number of lines changed.
     Q_INVOKABLE int countMatches(const QString &text) const;
     Q_INVOKABLE int replaceAll(const QString &text, const QString &replacement);
+    // The style for new caption lines when there is no caption track yet (the last one chosen), if any.
+    std::optional<CaptionStyle> nextStyle() const { return m_nextStyle; }
 
 signals:
     void changed();

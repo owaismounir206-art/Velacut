@@ -874,6 +874,10 @@ private slots:
         shot(u"14-preferences-packs"_s);
         click(byName(u"preferencesSection_2"_s));
         shot(u"15-preferences-performance"_s);
+        // AI models: what is installed, the size of each model before downloading it.
+        click(byName(u"preferencesSection_4"_s));
+        QTRY_VERIFY(byName(u"downloadModel_base"_s) || byName(u"removeModel_base"_s));
+        shot(u"16-preferences-ai-models"_s);
         key(Qt::Key_Escape);
         QObject *dialog = m_window->findChild<QObject *>(u"preferencesDialog"_s);
         QVERIFY(dialog);
@@ -953,6 +957,7 @@ private slots:
         click(byName(u"captionsButton"_s));
         QTRY_VERIFY(byName(u"captionImportEmpty"_s));
         QVERIFY(!captions->hasCaptions());
+        shot(u"19a-captions-empty"_s);
         click(byText(u"Styles"_s));
         click(byText(u"Word in a box"_s));
         QTRY_VERIFY(byName(u"captionStyle_captions/box-purple"_s));

@@ -15,7 +15,17 @@ Item {
 
     required property Editor editor
     readonly property Captions captions: editor.captions
+    readonly property AiTools ai: editor.ai
     property int page: 0 // 0 = lines, 1 = styles
+    // Speech recognition is missing something: Preferences → AI models.
+    signal setUpRequested()
+
+    // Languages offered for automatic captions (whisper.cpp codes); "auto" finds it.
+    readonly property var languages: [{ code: "auto", text: qsTr("Find the language") }, { code: "it", text: "Italiano" },
+                                      { code: "en", text: "English" }, { code: "es", text: "Español" },
+                                      { code: "fr", text: "Français" }, { code: "de", text: "Deutsch" },
+                                      { code: "pt", text: "Português" }]
+    property int language: 0
 
     component Tool: IconButton {
         implicitWidth: Theme.editor.toolButtonSize
@@ -49,6 +59,15 @@ Item {
         LibraryHeader {
             Layout.fillWidth: true
             title: qsTr("Captions")
+            Tool {
+                objectName: "autoCaptionsHeaderButton"
+                anchors.verticalCenter: parent.verticalCenter
+                visible: panel.captions.hasCaptions
+                enabled: panel.ai.speechStatus === 0 && !panel.ai.busy
+                iconName: "auto_awesome"
+                label: qsTr("Make the captions again from the speech")
+                onClicked: panel.ai.autoCaptions(panel.languages[panel.language].code)
+            }
             Tool {
                 objectName: "captionImportButton"
                 anchors.verticalCenter: parent.verticalCenter
@@ -102,12 +121,54 @@ Item {
                         wrapMode: Text.WordWrap
                         role: "bodyMedium"
                         color: Theme.color.onSurfaceVariant
-                        text: qsTr("Bring a subtitle file, or type the captions line by line: each word lights up while it is said.")
+                        text: qsTr("Captions from the speech, from a subtitle file, or typed line by line: each word lights up while it is said.")
+                    }
+                    // Automatic captions (SPEC §5.8): the language, one click.
+                    ComboBox {
+                        objectName: "captionLanguage"
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: Theme.editor.panelMinimumWidth
+                        visible: panel.ai.speechStatus === 0
+                        model: panel.languages.map(l => l.text)
+                        currentIndex: panel.language
+                        displayText: model[currentIndex] ?? ""
+                        Accessible.name: qsTr("Language of the speech")
+                        onActivated: (index) => panel.language = index
+                    }
+                    Button {
+                        objectName: "autoCaptionsButton"
+                        Layout.alignment: Qt.AlignHCenter
+                        variant: "filled"
+                        iconName: "auto_awesome"
+                        enabled: panel.ai.speechStatus === 0 && !panel.ai.busy
+                        text: qsTr("Auto captions")
+                        onClicked: panel.ai.autoCaptions(panel.languages[panel.language].code)
+                    }
+                    // What is missing, and where to get it (never a button that does nothing).
+                    Label {
+                        Layout.fillWidth: true
+                        visible: panel.ai.speechStatus !== 0
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                        role: "bodySmall"
+                        color: Theme.color.onSurfaceVariant
+                        text: panel.ai.speechStatus === 1
+                              ? qsTr("Auto captions need whisper.cpp, which is not installed: “%1”.").arg(panel.ai.speechInstallCommand)
+                              : qsTr("Auto captions need a speech model: download one once, it stays on this computer.")
+                    }
+                    Button {
+                        objectName: "speechSetUp"
+                        Layout.alignment: Qt.AlignHCenter
+                        visible: panel.ai.speechStatus !== 0
+                        variant: "text"
+                        iconName: "neurology"
+                        text: panel.ai.speechStatus === 1 ? qsTr("How to install") : qsTr("Download a model")
+                        onClicked: panel.setUpRequested()
                     }
                     Button {
                         objectName: "captionImportEmpty"
                         Layout.alignment: Qt.AlignHCenter
-                        variant: "filled"
+                        variant: "tonal"
                         iconName: "upload_file"
                         text: qsTr("Import a subtitle file")
                         onClicked: importDialog.open()
@@ -115,7 +176,7 @@ Item {
                     Button {
                         objectName: "captionTypeEmpty"
                         Layout.alignment: Qt.AlignHCenter
-                        variant: "tonal"
+                        variant: "text"
                         iconName: "add_comment"
                         text: qsTr("Type the captions")
                         onClicked: panel.captions.addLine()

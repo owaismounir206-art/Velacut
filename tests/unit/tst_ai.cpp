@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ai/AiTask.h"
 #include "ai/Analysis.h"
+#include "ai/Transcript.h"
 
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QSignalSpy>
 #include <QTest>
 #include <QThread>
@@ -129,6 +132,75 @@ private slots:
         // Two cuts closer than the minimum: only the first.
         differences[50] = 0.7f;
         QCOMPARE(findSceneCuts(differences, times).size(), 2u);
+    }
+
+    void whisperOutputBecomesWords()
+    {
+        // The shape of `whisper-cli --output-json-full`: segments, tokens with offsets in ms, special tokens.
+        const auto token = [](const char *text, int from, int to) {
+            return QJsonObject{{QStringLiteral("text"), QString::fromUtf8(text)},
+                               {QStringLiteral("offsets"), QJsonObject{{QStringLiteral("from"), from}, {QStringLiteral("to"), to}}}};
+        };
+        const QJsonObject json{
+            {QStringLiteral("result"), QJsonObject{{QStringLiteral("language"), QStringLiteral("it")}}},
+            {QStringLiteral("transcription"),
+             QJsonArray{QJsonObject{{QStringLiteral("text"), QStringLiteral(" Ciao a tutti, benvenuti.")},
+                                    {QStringLiteral("offsets"), QJsonObject{{QStringLiteral("from"), 0}, {QStringLiteral("to"), 2000}}},
+                                    {QStringLiteral("tokens"),
+                                     QJsonArray{token("[_BEG_]", 0, 0), token(" Ciao", 0, 400), token(" a", 400, 500),
+                                                token(" tut", 500, 700), token("ti", 700, 900), token(",", 900, 900),
+                                                token(" benven", 1200, 1500), token("uti", 1500, 1800), token(".", 1800, 1800),
+                                                token("[_TT_100]", 2000, 2000)}}},
+                        // A segment without tokens: words spread over its time.
+                        QJsonObject{{QStringLiteral("text"), QStringLiteral(" Eccoci qui")},
+                                    {QStringLiteral("offsets"), QJsonObject{{QStringLiteral("from"), 3000}, {QStringLiteral("to"), 4000}}}}}}};
+        const ai::Transcript transcript = ai::parseWhisperJson(json, 10000);
+        QCOMPARE(transcript.language, QStringLiteral("it"));
+        QCOMPARE(transcript.words.size(), 6u);
+        QCOMPARE(transcript.words[2].text, QStringLiteral("tutti,"));
+        QCOMPARE(transcript.words[2].from, 10500);
+        QCOMPARE(transcript.words[2].to, 10900);
+        QCOMPARE(transcript.words[3].text, QStringLiteral("benvenuti."));
+        QCOMPARE(transcript.words[4].text, QStringLiteral("Eccoci"));
+        QCOMPARE(transcript.words[4].from, 13000);
+        QCOMPARE(transcript.words[5].to, 14000);
+        // Kept in the cache and read back.
+        QCOMPARE(ai::Transcript::fromJson(QJsonDocument::fromJson(QJsonDocument(transcript.toJson()).toJson()).object()), transcript);
+        QVERIFY(!ai::Transcript::fromJson(QJsonObject{}).has_value());
+    }
+
+    void captionLinesFollowSentencesAndPauses()
+    {
+        ai::Transcript transcript;
+        const auto word = [&transcript](const char *text, int from, int to) {
+            transcript.words.push_back(ai::Transcript::Word{QString::fromUtf8(text), from, to});
+        };
+        word("Ciao", 0, 300);
+        word("a", 300, 400);
+        word("tutti.", 400, 800);          // a sentence ends
+        word("Oggi", 900, 1200);
+        word("parliamo", 1200, 1700);
+        word("di", 3000, 3100);            // after a pause of 1.3 s
+        word("video", 3100, 3500);
+        word("ehm", 3600, 3900);
+        const auto toTimeline = [](std::int64_t ms) { return RationalTime(ms * 30 / 1000, Rational(30)); };
+        const std::vector<captions::CaptionLine> lines = ai::captionLines(transcript, 0, 5000, toTimeline);
+        QCOMPARE(lines.size(), 3u);
+        QCOMPARE(lines[0].text, QStringLiteral("Ciao a tutti."));
+        QCOMPARE(lines[0].end, toTimeline(900)); // until the next line
+        QCOMPARE(lines[1].text, QStringLiteral("Oggi parliamo"));
+        QCOMPARE(lines[1].end, toTimeline(2500)); // 0.8 s after its last word, before the pause ends
+        QCOMPARE(lines[2].words.size(), 3u);
+        QCOMPARE(lines[2].words[0].start, toTimeline(3000));
+        // Only the part of the file a clip plays.
+        QCOMPARE(ai::captionLines(transcript, 1000, 3200, toTimeline).size(), 2u);
+        // Filler words.
+        QVERIFY(ai::isFillerWord(QStringLiteral("ehm")));
+        QVERIFY(ai::isFillerWord(QStringLiteral("Uhmm,")));
+        QVERIFY(ai::isFillerWord(QStringLiteral("um")));
+        QVERIFY(!ai::isFillerWord(QStringLiteral("e")));
+        QVERIFY(!ai::isFillerWord(QStringLiteral("umano")));
+        QVERIFY(!ai::isFillerWord(QStringLiteral("video")));
     }
 };
 

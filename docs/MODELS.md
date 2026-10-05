@@ -14,7 +14,7 @@ la libreria rnnoise. Non installo pacchetti di sistema (regola del progetto): i 
 ## 2. Componenti previsti
 | Funzione | Componente | Licenza codice | Licenza pesi | Pacchetto Arch | Stato in vedit |
 |---|---|---|---|---|---|
-| Sottotitoli automatici, testi delle canzoni, editing dal testo, parole di riempimento | whisper.cpp + modelli ggml di Whisper | MIT | MIT (OpenAI Whisper) | AUR `whisper.cpp` | da integrare (processo esterno `whisper-cli`); senza: funzioni disattivate con messaggio |
+| Sottotitoli automatici, testi delle canzoni, editing dal testo, parole di riempimento | whisper.cpp + modelli ggml di Whisper | MIT | MIT (OpenAI Whisper) | AUR `whisper.cpp` | **integrato** (processo esterno `whisper-cli … -ojf`, trascrizioni in cache per file); senza programma o modello: funzioni disattivate con il comando o il pulsante per il modello. Verificato con un programma sostitutivo nei test, **non ancora con il whisper-cli reale** (non installato qui) |
 | Text-to-speech | Piper + voci | MIT | variabile per voce (molte CC BY 4.0 / MIT; da verificare voce per voce prima di offrirla) | AUR `piper-tts-bin` | da integrare; senza: disattivato |
 | Rimozione sfondo, segmentazione persona | ONNX Runtime + modello di segmentazione | MIT | dipende dal modello (es. MODNet Apache 2.0) | `onnxruntime` | da integrare; senza: disattivato |
 | Riduzione rumore / isolamento voce | RNNoise (già usato da MLT/FFmpeg) | BSD-3 | BSD-3 (modello incluso) | `rnnoise` (presente) | **già attivo** (Fase 4, pannello Audio) |
@@ -36,5 +36,19 @@ yay -S piper-tts-bin
 # slow motion con interpolazione su GPU Vulkan
 yay -S rife-ncnn-vulkan
 ```
-I pesi dei modelli non si installano con questi comandi: si scaricano dal gestore modelli dell'app, quando c'è, su
-richiesta, con la dimensione mostrata prima del download.
+I pesi dei modelli non si installano con questi comandi: si scaricano dal gestore modelli dell'app (Preferenze →
+Modelli AI), su richiesta, con la dimensione mostrata prima del download.
+
+## 4. Modelli del parlato (whisper.cpp)
+Scaricati da `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/<file>` in `<XDG data>/vedit/models/whisper/`
+(file `.part` rinominato a download completo). Licenza dei pesi: MIT (OpenAI Whisper), del formato ggml: MIT.
+
+| Modello | File | Dimensione | Uso |
+|---|---|---|---|
+| tiny | `ggml-tiny.bin` | ~78 MB | bozza rapida |
+| base | `ggml-base.bin` | ~148 MB | consigliato, parlato chiaro |
+| small | `ggml-small.bin` | ~488 MB | accenti, rumore |
+| medium | `ggml-medium.bin` | ~1,5 GB | il più preciso, lento |
+
+vedit usa il migliore installato. La trascrizione si fa una volta per file, modello e lingua ed è in cache
+(`<cache>/media/<fingerprint>/transcript-<modello>-<lingua>.json`).

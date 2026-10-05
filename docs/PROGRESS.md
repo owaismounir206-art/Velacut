@@ -48,6 +48,14 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   della traccia principale riempie il canvas (Riempi) con keyframe di posizione ogni 0,5 s nel tempo della sorgente,
   limitati ai bordi dell'immagine; nessun keyframe se il soggetto sta fermo. Un passo di annullamento (formato +
   posizioni). Limite: niente riconoscimento dei volti (servirebbe un modello ONNX); test con un quadrato che si muove.
+- **Sottotitoli automatici** (`ai/Whisper`, `ai/Transcript`): audio 16 kHz mono con ffmpeg → `whisper-cli -m … -l
+  <lingua|auto> -pp -ojf` (avanzamento letto da `progress = N%`) → parole dai token (lo spazio iniziale apre una
+  parola, i pezzi e la punteggiatura si attaccano, i token speciali `[_…]` si scartano; segmenti senza token: parole
+  distribuite) → righe (fine frase, pausa > 0,6 s, ≤ 42 caratteri) sulla traccia sottotitoli, sostituendo quelle
+  presenti; un passo di annullamento. Lingua scelta nella scheda Sottotitoli. Trascrizioni in cache per file.
+  **Gestore modelli** (`AiModelsModel`, `FileDownload`): quattro modelli con dimensione, scarica/ferma/rimuovi;
+  stato di whisper.cpp con il comando da copiare e "Controlla di nuovo". Test: download da `file://`, sostituto di
+  `whisper-cli` nel PATH (cache riusata, sostituzione, annullamento, stato disattivato senza programma).
 
 ## Sessione 2026-10-05 — Fine Fase 5: transizioni GPU, slideshow, kit del marchio, filtri, blocco del motore
 - **Percorso GPU delle 114 transizioni** (`92d25d6`, criterio Fase 5 seconda metà ✅): GLSL 1.00/1.10 (OpenGL 2.1 /
@@ -209,8 +217,11 @@ completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::t
 1. ✅ Sottotitoli manuali e da file (vedi sessione 2026-10-05 pomeriggio). Restano: ASS in import/export, sottotitoli
    come traccia separata nell'export (oggi sono impressi nel video), stile per singola riga dall'interfaccia (il
    formato lo supporta: `styleOverride`), parole chiave evidenziate automaticamente ed emoji automatiche.
-2. Sottotitoli automatici con whisper.cpp come processo esterno se installato (altrimenti disattivati con messaggio,
-   `docs/MODELS.md`), gestore modelli con download solo su richiesta; sottotitoli da copione allineati al parlato.
+2. ✅ Sottotitoli automatici con whisper.cpp (processo esterno, disattivati con il comando se manca) e gestore modelli
+   (Preferenze → Modelli AI, download solo su richiesta con la dimensione). **Da verificare con il whisper-cli reale**
+   quando l'utente lo installa (`yay -S whisper.cpp`): il formato `--output-json-full` è stato ricostruito dalla
+   documentazione e provato con un sostituto. Restano: sottotitoli da copione allineati al parlato, editing dal testo,
+   parole di riempimento, capitoli.
 3. Senza modelli: ✅ rimozione pause, ✅ divisione delle scene, ✅ stabilizzazione (traslazione), ✅ rallentatore
    fluido (percorso CPU `minterpolate`), ✅ auto reframe classico; restano rotazione nella stabilizzazione (stima più
    robusta), RIFE quando installato, volti (con un modello) per l'auto reframe.
