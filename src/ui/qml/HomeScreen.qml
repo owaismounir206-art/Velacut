@@ -175,7 +175,9 @@ Item {
                     Layout.fillWidth: true
                     spacing: Theme.space.md
                     Repeater {
-                        model: [{ id: "recordScreenQuickButton", icon: "screen_record", text: qsTr("Record screen"),
+                        model: [{ id: "montageQuickButton", icon: "movie_edit", text: qsTr("Automatic montage"),
+                                  detail: qsTr("Your shots and a song become a video on the beat") },
+                                { id: "recordScreenQuickButton", icon: "screen_record", text: qsTr("Record screen"),
                                   detail: qsTr("Screen, webcam or both, with the teleprompter") },
                                 { id: "slideshowQuickButton", icon: "slideshow", text: qsTr("Slideshow"),
                                   detail: qsTr("Photos and music become a video, on the beat") },
@@ -186,7 +188,7 @@ Item {
                             required property var modelData
                             objectName: modelData.id
                             Layout.fillWidth: true
-                            Layout.preferredWidth: 1 // equal thirds
+                            Layout.preferredWidth: 1 // equal parts
                             implicitHeight: toolRow.implicitHeight + 2 * Theme.space.lg
                             radius: Theme.shape.large
                             color: Theme.color.panel
@@ -241,7 +243,9 @@ Item {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    if (tool.modelData.id === "recordScreenQuickButton")
+                                    if (tool.modelData.id === "montageQuickButton")
+                                        montage.open()
+                                    else if (tool.modelData.id === "recordScreenQuickButton")
                                         App.recordScreen()
                                     else if (tool.modelData.id === "slideshowQuickButton")
                                         slideshow.open()
@@ -413,6 +417,12 @@ Item {
 
     SlideshowDialog {
         id: slideshow
+        anchors.centerIn: parent
+        width: Math.min(root.width - 2 * Theme.space.xl, Theme.editor.dialogWidth * 1.15)
+    }
+    MontageDialog {
+        id: montage
+        objectName: "montageDialog"
         anchors.centerIn: parent
         width: Math.min(root.width - 2 * Theme.space.xl, Theme.editor.dialogWidth * 1.15)
     }

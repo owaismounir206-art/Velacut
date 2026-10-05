@@ -1812,6 +1812,16 @@
     </message>
     <message>
         <location line="+25"/>
+        <source>Automatic montage</source>
+        <translation>Montaggio automatico</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Your shots and a song become a video on the beat</source>
+        <translation>Le tue riprese e una canzone diventano un video a ritmo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Record screen</source>
         <translation>Registra schermo</translation>
     </message>
@@ -1832,17 +1842,17 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+87"/>
+        <location line="+89"/>
         <source>Templates</source>
         <translation>Template</translation>
     </message>
     <message>
-        <location line="-86"/>
+        <location line="-88"/>
         <source>Pick a ready-made video and put your own shots in it</source>
         <translation>Scegli un video già pronto e mettici le tue riprese</translation>
     </message>
     <message>
-        <location line="+93"/>
+        <location line="+95"/>
         <source>Choose one, then replace each shot with your videos and photos</source>
         <translation>Scegline uno, poi sostituisci ogni ripresa con i tuoi video e le tue foto</translation>
     </message>
@@ -1870,7 +1880,7 @@
         <translation>I tuoi progetti compaiono qui, pronti a ripartire esattamente da dove li hai lasciati.</translation>
     </message>
     <message>
-        <location line="+47"/>
+        <location line="+53"/>
         <source>Rename project</source>
         <translation>Rinomina il progetto</translation>
     </message>
@@ -2018,6 +2028,194 @@
         <location line="+8"/>
         <source>Add to the timeline at the playhead</source>
         <translation>Aggiungi alla timeline, al playhead</translation>
+    </message>
+</context>
+<context>
+    <name>MontageDialog</name>
+    <message>
+        <location filename="../src/ui/qml/MontageDialog.qml" line="+15"/>
+        <source>Automatic montage</source>
+        <translation>Montaggio automatico</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Cancel</source>
+        <translation>Annulla</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Create</source>
+        <translation>Crea</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>Change the videos and photos</source>
+        <translation>Cambia video e foto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+153"/>
+        <source>Choose videos and photos</source>
+        <translation>Scegli video e foto</translation>
+    </message>
+    <message numerus="yes">
+        <location line="-145"/>
+        <source>%n file(s): the best moments of each are used</source>
+        <translation>
+            <numerusform>%n file: si usano i suoi momenti migliori</numerusform>
+            <numerusform>%n file: si usano i momenti migliori di ognuno</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>As many as you like: vedit picks the best moments.</source>
+        <translation>Quanti ne vuoi: vedit sceglie i momenti migliori.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Music</source>
+        <translation>Musica</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>None</source>
+        <translation>Nessuna</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Other…</source>
+        <translation>Altro…</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The shots change on its beat.</source>
+        <translation>Le riprese cambiano sul suo ritmo.</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Without music the shots change at a steady pace.</source>
+        <translation>Senza musica le riprese cambiano a passo regolare.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Style</source>
+        <translation>Stile</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Vlog</source>
+        <translation>Vlog</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Natural colours, quick cuts</source>
+        <translation>Colori naturali, tagli rapidi</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Travel</source>
+        <translation>Viaggio</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Vivid colours, whip pans</source>
+        <translation>Colori vivaci, panoramiche a frusta</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sport</source>
+        <translation>Sport</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Very quick cuts, zooms</source>
+        <translation>Tagli rapidissimi, zoom</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cinematic</source>
+        <translation>Cinematico</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Long shots, dissolves, teal and orange</source>
+        <translation>Inquadrature lunghe, dissolvenze, ottanio e arancio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Party</source>
+        <translation>Festa</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Flashes on every beat, neon</source>
+        <translation>Flash a ogni battito, neon</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Meme</source>
+        <translation>Meme</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Punchy cuts, comic title</source>
+        <translation>Tagli secchi, titolo a fumetto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Product</source>
+        <translation>Prodotto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Clean look, slides, call to action</source>
+        <translation>Aspetto pulito, scorrimenti, invito all&apos;azione</translation>
+    </message>
+    <message>
+        <location line="+60"/>
+        <source>Length</source>
+        <translation>Durata</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>15 s</source>
+        <translation>15 s</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>30 s</source>
+        <translation>30 s</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>60 s</source>
+        <translation>60 s</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>All</source>
+        <translation>Tutto</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Videos and photos (%1)</source>
+        <translation>Video e foto (%1)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+11"/>
+        <source>All files (*)</source>
+        <translation>Tutti i file (*)</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>Choose the music</source>
+        <translation>Scegli la musica</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Music (%1)</source>
+        <translation>Musica (%1)</translation>
     </message>
 </context>
 <context>
@@ -2536,6 +2734,26 @@
         <location line="+7"/>
         <source>Choose</source>
         <translation>Scegli</translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>Making the montage: looking for the best moments…</source>
+        <translation>Montaggio in corso: ricerca dei momenti migliori…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Automatic montage</source>
+        <translation>Montaggio automatico</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Shuffle</source>
+        <translation>Rimescola</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Keep this montage</source>
+        <translation>Tieni questo montaggio</translation>
     </message>
     <message>
         <location line="+35"/>
@@ -6807,7 +7025,7 @@
         <translation>Questo template non si può usare.</translation>
     </message>
     <message>
-        <location line="+60"/>
+        <location line="+69"/>
         <source>Project recovered: vedit did not close properly last time. Your latest changes are here.</source>
         <translation>Progetto recuperato: l&apos;ultima volta vedit non si è chiuso correttamente. Le tue ultime modifiche sono qui.</translation>
     </message>
@@ -7572,13 +7790,13 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+212"/>
-        <location line="+990"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+213"/>
+        <location line="+1216"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
     <message>
-        <location line="-577"/>
+        <location line="-803"/>
         <source>Import media</source>
         <translation>Importa media</translation>
     </message>
@@ -7615,26 +7833,29 @@
     </message>
     <message>
         <location line="+77"/>
+        <location line="+143"/>
         <source>None of the chosen files is a photo or a video.</source>
         <translation>Nessuno dei file scelti è una foto o un video.</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="-100"/>
         <source>Slideshow</source>
         <translation>Slideshow</translation>
     </message>
     <message>
         <location line="+17"/>
+        <location line="+199"/>
         <source>Apply filter</source>
         <translation>Applica filtro</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="-176"/>
+        <location line="+202"/>
         <source>Fades</source>
         <translation>Dissolvenze</translation>
     </message>
     <message numerus="yes">
-        <location line="+6"/>
+        <location line="-196"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow pronto: %n foto. Cambia quello che vuoi.</numerusform>
@@ -7642,7 +7863,38 @@
         </translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+16"/>
+        <source>Choose some videos or photos for the montage.</source>
+        <translation>Scegli qualche video o foto per il montaggio.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Making the montage: looking for the best moments…</source>
+        <translation>Montaggio in corso: ricerca dei momenti migliori…</translation>
+    </message>
+    <message>
+        <location line="+128"/>
+        <source>Automatic montage</source>
+        <translation>Montaggio automatico</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+52"/>
+        <source>Montage ready: %n shot(s) on the beat. Change anything you like, or shuffle.</source>
+        <translation>
+            <numerusform>Montaggio pronto: %n ripresa a ritmo. Cambia quello che vuoi, o rimescola.</numerusform>
+            <numerusform>Montaggio pronto: %n riprese a ritmo. Cambia quello che vuoi, o rimescola.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>Another montage: %n shot(s)</source>
+        <translation>
+            <numerusform>Un altro montaggio: %n ripresa</numerusform>
+            <numerusform>Un altro montaggio: %n riprese</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+72"/>
         <location line="+13"/>
         <source>Add music</source>
         <translation>Aggiungi musica</translation>

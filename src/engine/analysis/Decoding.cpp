@@ -862,4 +862,52 @@ std::optional<std::vector<fx::SubjectPoint>> extractSubjectPath(const QString &p
     return points;
 }
 
+std::optional<std::vector<ShotSample>> extractShotSamples(const QString &path, int samplesPerSecond, double *seconds,
+                                                          const std::atomic<bool> *cancel)
+{
+    constexpr int kWidth = 160;
+    constexpr int kHeight = 90;
+    std::vector<uint8_t> previous;
+    std::vector<ShotSample> samples;
+    double next = 0.0;
+    double last = 0.0;
+    const double step = 1.0 / std::max(1, samplesPerSecond);
+    const bool ok = decodeGreyFrames(path, kWidth, kHeight, 0.0, std::numeric_limits<double>::infinity(), cancel, {}, nullptr,
+                                     [&](const std::vector<uint8_t> &current, double time) {
+        last = time;
+        if (time + 1e-6 < next) {
+            return;
+        }
+        next += step;
+        double gradient = 0.0;
+        double sum = 0.0;
+        for (int y = 1; y < kHeight - 1; ++y) {
+            for (int x = 1; x < kWidth - 1; ++x) {
+                const int at = y * kWidth + x;
+                gradient += std::abs(int(current[static_cast<size_t>(at + 1)]) - int(current[static_cast<size_t>(at - 1)])) +
+                            std::abs(int(current[static_cast<size_t>(at + kWidth)]) - int(current[static_cast<size_t>(at - kWidth)]));
+                sum += current[static_cast<size_t>(at)];
+            }
+        }
+        const double pixels = (kWidth - 2.0) * (kHeight - 2.0);
+        double motion = 0.0;
+        if (previous.size() == current.size()) {
+            for (size_t i = 0; i < current.size(); ++i) {
+                motion += std::abs(int(current[i]) - int(previous[i]));
+            }
+            motion /= 255.0 * static_cast<double>(current.size());
+        }
+        samples.push_back(ShotSample{time, static_cast<float>(std::min(1.0, gradient / pixels / 64.0)),
+                                     static_cast<float>(sum / pixels / 255.0), static_cast<float>(motion)});
+        previous = current;
+    });
+    if (!ok || samples.empty()) {
+        return std::nullopt;
+    }
+    if (seconds) {
+        *seconds = last + step;
+    }
+    return samples;
+}
+
 } // namespace vedit::engine

@@ -15,11 +15,22 @@
 <context>
     <name>HomeScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/HomeScreen.qml" line="+356"/>
+        <location filename="../src/ui/qml/HomeScreen.qml" line="+360"/>
         <source>%n project(s)</source>
         <translation>
             <numerusform>%n project</numerusform>
             <numerusform>%n projects</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>MontageDialog</name>
+    <message numerus="yes">
+        <location filename="../src/ui/qml/MontageDialog.qml" line="+79"/>
+        <source>%n file(s): the best moments of each are used</source>
+        <translation>
+            <numerusform>%n file: its best moments are used</numerusform>
+            <numerusform>%n files: the best moments of each are used</numerusform>
         </translation>
     </message>
 </context>
@@ -158,7 +169,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+992"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+993"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>
@@ -166,7 +177,23 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+401"/>
+        <location line="+205"/>
+        <source>Montage ready: %n shot(s) on the beat. Change anything you like, or shuffle.</source>
+        <translation>
+            <numerusform>Montage ready: %n shot on the beat. Change anything you like, or shuffle.</numerusform>
+            <numerusform>Montage ready: %n shots on the beat. Change anything you like, or shuffle.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>Another montage: %n shot(s)</source>
+        <translation>
+            <numerusform>Another montage: %n shot</numerusform>
+            <numerusform>Another montage: %n shots</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+420"/>
         <source>%n beat(s) marked on the clip</source>
         <translation>
             <numerusform>%n beat marked on the clip</numerusform>

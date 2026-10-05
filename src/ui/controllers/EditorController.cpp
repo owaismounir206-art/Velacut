@@ -33,6 +33,7 @@
 #include <QFile>
 #include <QPainter>
 #include <QLocale>
+#include <QDateTime>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QLoggingCategory>
@@ -990,6 +991,232 @@ void EditorController::finishSlideshow(const std::vector<double> &beats)
     m_player->seek(0);
     emit slideshowChanged();
     emit message(tr("Slideshow ready: %n photo(s). Change anything you like.", nullptr, static_cast<int>(photos.size())), false);
+}
+
+namespace {
+TextClipData textInStyle(const QString &styleId, const QString &fallbackText); // below, with the texts
+} // namespace
+
+void EditorController::buildMontage(const QList<QUrl> &files, const QUrl &music, const QString &style, int seconds)
+{
+    QStringList paths;
+    for (const QUrl &url : files) {
+        if (url.isLocalFile()) {
+            paths << QFileInfo(url.toLocalFile()).absoluteFilePath();
+        }
+    }
+    if (paths.isEmpty()) {
+        emit message(tr("Choose some videos or photos for the montage."), false);
+        return;
+    }
+    const QString song = music.isLocalFile() ? QFileInfo(music.toLocalFile()).absoluteFilePath() : QString();
+    MontageState state;
+    state.style = ai::montageStyle(style) ? style : u"vlog"_s;
+    state.seconds = std::max(0, seconds);
+    m_montage = std::move(state);
+    emit montageChanged();
+    emit message(tr("Making the montage: looking for the best moments…"), false);
+    QStringList all = paths;
+    if (!song.isEmpty()) {
+        all << song;
+    }
+    importThen(all, [this, paths, song](const QHash<QString, MediaId> &imported) {
+        if (!m_montage) {
+            return;
+        }
+        struct Job
+        {
+            MediaId id;
+            QString path;
+            bool photo;
+            double seconds;
+        };
+        std::vector<Job> jobs;
+        for (const QString &path : paths) {
+            const MediaId id = imported.value(path);
+            const Media *media = id.isNull() ? nullptr : data().findMedia(id);
+            if (!media || media->kind == MediaKind::Audio) {
+                continue;
+            }
+            jobs.push_back({id, media->path, media->kind == MediaKind::Image,
+                            media->info.duration ? media->info.duration->toSecondsDouble() : 0.0});
+        }
+        if (jobs.empty()) {
+            m_montage.reset();
+            emit montageChanged();
+            emit message(tr("None of the chosen files is a photo or a video."), false);
+            return;
+        }
+        m_montage->music = imported.value(song);
+        const Media *songMedia = m_montage->music.isNull() ? nullptr : data().findMedia(m_montage->music);
+        // The moments of every video and the beats of the song, in background.
+        QPointer<EditorController> self(this);
+        QThreadPool::globalInstance()->start([self, jobs, songMedia = songMedia ? std::optional<Media>(*songMedia) : std::nullopt] {
+            std::vector<ai::MontageSource> sources;
+            for (const Job &job : jobs) {
+                ai::MontageSource source;
+                source.photo = job.photo;
+                source.seconds = job.seconds;
+                if (!job.photo) {
+                    double measured = 0.0;
+                    if (auto samples = engine::extractShotSamples(job.path, 4, &measured)) {
+                        source.samples = std::move(*samples);
+                    }
+                    if (source.seconds <= 0.0) {
+                        source.seconds = measured;
+                    }
+                }
+                sources.push_back(std::move(source));
+            }
+            std::vector<double> beats;
+            if (songMedia) {
+                if (const std::optional<engine::Spectrum> spectrum = engine::cachedSpectrum(*songMedia)) {
+                    beats = engine::detectBeats(*spectrum);
+                }
+            }
+            QMetaObject::invokeMethod(qApp, [self, jobs, sources = std::move(sources), beats = std::move(beats)] {
+                if (!self || !self->m_montage) {
+                    return;
+                }
+                for (const Job &job : jobs) {
+                    self->m_montage->media.push_back(job.id);
+                }
+                self->m_montage->sources = sources;
+                self->m_montage->beats = beats;
+                self->layMontage(true);
+            });
+        });
+    });
+}
+
+void EditorController::layMontage(bool initial)
+{
+    if (!m_montage || m_montage->sources.empty()) {
+        return;
+    }
+    const MontageState &state = *m_montage;
+    const ai::MontageStyle &style = *ai::montageStyle(state.style);
+    const std::vector<ai::MontagePiece> plan = ai::planMontage(state.sources, state.beats, style, state.seconds, state.seed);
+    const MergeKey step{u"montage"_s, static_cast<quint64>(QDateTime::currentMSecsSinceEpoch())};
+    // A first montage starts the project (no undo below it); a shuffle is one undo step.
+    const auto build = [this, initial, &step](EditResult result) {
+        if (!result.ok()) {
+            return false;
+        }
+        return initial ? m_document->apply(std::move(result)) : m_document->apply(std::move(result), step);
+    };
+    if (!initial) {
+        std::vector<ClipId> everything;
+        const Sequence &sequence = *data().mainSequence();
+        for (const auto *tracks : {&sequence.visualTracks, &sequence.audioTracks}) {
+            for (const Track &track : *tracks) {
+                for (const Clip &clip : track.clips) {
+                    everything.push_back(clip.id);
+                }
+            }
+        }
+        build(TimelineEditor(data(), data().mainSequenceId).deleteClips(everything));
+    }
+    const auto at = [](double seconds, const Rational &rate) {
+        return RationalTime::fromSeconds(Rational(static_cast<qint64>(std::llround(seconds * 1000)), 1000), rate, Rounding::NearestEven);
+    };
+    static const QString moves[] = {u"animations/loop/ken_burns"_s, u"animations/loop/ken_burns_out"_s,
+                                    u"animations/loop/ken_burns_left"_s, u"animations/loop/ken_burns_right"_s};
+    double time = 0.0;
+    int photos = 0;
+    for (const ai::MontagePiece &piece : plan) {
+        const MediaId media = state.media[static_cast<size_t>(piece.source)];
+        const Rational rate = data().settings.frameRate;
+        const TimeRange range{at(piece.from, rate), at(piece.length, rate)};
+        EditResult insert = insertMediaAdoptingFormat(data(), data().mainSequenceId, media, at(time, rate), Placement::Auto, range);
+        const ClipId clipId = insert.primaryClip;
+        if (!build(std::move(insert))) {
+            continue;
+        }
+        const bool photo = state.sources[static_cast<size_t>(piece.source)].photo;
+        const QString move = moves[photos % 4];
+        photos += photo ? 1 : 0;
+        build(TimelineEditor(data(), data().mainSequenceId).updateClips({clipId}, [photo, &move](Clip &clip) {
+            clip.transform.fit = FitMode::Cover; // every shot fills the picture
+            if (photo) {
+                ClipAnimation animation = TimelineEditor::kenBurns();
+                animation.type.id = move;
+                clip.animations.loop = animation;
+            }
+        }, tr("Automatic montage")));
+        time += piece.length;
+    }
+    const Rational rate = data().settings.frameRate;
+    const Track &main = data().mainSequence()->visualTracks.front();
+    std::vector<ClipId> clips;
+    for (const Clip &clip : main.clips) {
+        clips.push_back(clip.id);
+    }
+    if (const fx::FilterPreset *filter = style.filter.isEmpty() ? nullptr : fx::Library::core().filter(style.filter)) {
+        const AssetRef ref{QString::fromLatin1(fx::Library::kCorePack), filter->id, filter->version};
+        build(TimelineEditor(data(), data().mainSequenceId).updateClips(clips, [&ref](Clip &clip) {
+            Effect effect;
+            effect.id = EffectId::create();
+            effect.type = u"vedit.filter"_s;
+            effect.preset = ref;
+            clip.effects.insert(clip.effects.begin(), std::move(effect));
+        }, tr("Apply filter")));
+    }
+    if (const fx::TransitionPreset *transition = style.transition.isEmpty() ? nullptr : fx::Library::core().transition(style.transition);
+        transition && clips.size() > 1) {
+        build(TimelineEditor(data(), data().mainSequenceId)
+                  .applyTransitionToAll(main.id, AssetRef{QString::fromLatin1(fx::Library::kCorePack), transition->id, transition->version},
+                                        at(style.transitionSeconds, rate)));
+    }
+    // The title, in the style's look, at the start.
+    TextClipData title = textInStyle(style.titleStyle, name());
+    title.text = name();
+    build(TimelineEditor(data(), data().mainSequenceId).insertText(RationalTime(0, rate), std::move(title), at(std::min(2.5, std::max(1.0, time)), rate)));
+    // The music under it all, as long as the montage, ending with a fade.
+    if (!state.music.isNull()) {
+        EditResult insert = TimelineEditor(data(), data().mainSequenceId).insertMedia(state.music, RationalTime(0, rate));
+        const ClipId musicClip = insert.primaryClip;
+        if (build(std::move(insert))) {
+            const RationalTime videoEnd = data().mainSequence()->visualTracks.front().clips.back().end();
+            const Clip *clip = data().findClip(musicClip);
+            if (clip && videoEnd < clip->end()) {
+                build(TimelineEditor(data(), data().mainSequenceId).trimClip(musicClip, ClipEdge::End, videoEnd));
+            }
+            build(TimelineEditor(data(), data().mainSequenceId).updateClips({musicClip}, [&](Clip &c) {
+                if (MediaClipData *media = std::get_if<MediaClipData>(&c.payload)) {
+                    media->audio.fadeOut = std::min(at(1.5, rate), c.duration);
+                }
+            }, tr("Fades")));
+        }
+    }
+    if (initial) {
+        m_document->undoStack().clear();
+    }
+    m_montage->building = false;
+    m_player->seek(0);
+    emit montageChanged();
+    emit message(initial ? tr("Montage ready: %n shot(s) on the beat. Change anything you like, or shuffle.", nullptr,
+                              static_cast<int>(plan.size()))
+                         : tr("Another montage: %n shot(s)", nullptr, static_cast<int>(plan.size())),
+                 !initial);
+}
+
+bool EditorController::shuffleMontage()
+{
+    if (!canShuffleMontage()) {
+        return false;
+    }
+    ++m_montage->seed;
+    layMontage(false);
+    return true;
+}
+
+void EditorController::dismissMontage()
+{
+    if (m_montage && !m_montage->building) {
+        m_montage.reset();
+        emit montageChanged();
+    }
 }
 
 bool EditorController::addMedia(const QString &mediaId)

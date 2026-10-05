@@ -918,6 +918,40 @@ private slots:
         QTRY_VERIFY(!editor());
     }
 
+    // "Automatic montage" from the home screen (Phase 7 criterion: under 5 actions): the files, a style, "Create";
+    // then "Shuffle" in the editor.
+    void montageFromTheHomeScreen()
+    {
+        QTRY_VERIFY(!editor());
+        m_actions = 0;
+        click(byName(u"montageQuickButton"_s));                                        // 1
+        QTRY_VERIFY(byName(u"chooseMontageFiles"_s));
+        QObject *dialog = byName(u"chooseMontageFiles"_s);
+        while (dialog && !dialog->property("files").isValid()) {
+            dialog = dialog->parent();
+        }
+        QVERIFY(dialog);
+        // The files chosen in the file dialog (not drivable headless): set directly, counted as the action it is.
+        dialog->setProperty("files", QVariant::fromValue(QList<QUrl>{QUrl::fromLocalFile(m_files.landscape),
+                                                                     QUrl::fromLocalFile(m_files.vertical),
+                                                                     QUrl::fromLocalFile(m_files.photo)}));
+        ++m_actions;                                                                    // 2
+        click(byName(u"montageStyle_travel"_s));                                       // 3
+        click(byName(u"montageLength_15"_s));                                          // 4
+        shot(u"24-montage-dialog"_s);
+        click(byName(u"createMontage"_s));                                             // 5 (4 with the defaults)
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        QTRY_VERIFY_WITH_TIMEOUT(!editor()->buildingMontage() && !mainTrack().clips.empty(), 60000);
+        QTRY_VERIFY(byName(u"shuffleMontage"_s));
+        shot(u"25-montage-project"_s);
+        qInfo("automatic montage from the home screen: %d actions", m_actions);
+        click(byName(u"shuffleMontage"_s));
+        QTRY_VERIFY(editor()->canUndo());
+        click(byName(u"backButton"_s));
+        QTRY_VERIFY(!editor());
+    }
+
     // The Brand tab (SPEC §5.13ter): a kit made with one click, its colours and a text in the brand's style.
     void brandKitPanel()
     {

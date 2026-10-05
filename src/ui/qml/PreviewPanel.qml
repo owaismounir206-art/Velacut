@@ -134,6 +134,64 @@ Item {
                 }
             }
 
+            // The automatic montage: being made, then "Shuffle" for another version (SPEC §5.13bis).
+            Rectangle {
+                objectName: "montageBanner"
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.topMargin: Theme.space.sm
+                visible: panel.editor.buildingMontage || panel.editor.canShuffleMontage
+                width: Math.min(parent.width - 2 * Theme.space.md, montageRow.implicitWidth + 2 * Theme.space.md)
+                height: montageRow.implicitHeight + 2 * Theme.space.sm
+                radius: Theme.shape.medium
+                color: Theme.color.inverseSurface
+                RowLayout {
+                    id: montageRow
+                    anchors.fill: parent
+                    anchors.leftMargin: Theme.space.md
+                    anchors.rightMargin: Theme.space.sm
+                    spacing: Theme.space.md
+                    BusyIndicator {
+                        visible: panel.editor.buildingMontage
+                        running: visible
+                        implicitWidth: Theme.editor.toolIconSize
+                        implicitHeight: implicitWidth
+                    }
+                    Icon {
+                        visible: !panel.editor.buildingMontage
+                        name: "movie_edit"
+                        size: Theme.editor.toolIconSize
+                        color: Theme.color.inversePrimary
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        role: "bodyMedium"
+                        elide: Text.ElideRight
+                        color: Theme.color.inverseOnSurface
+                        text: panel.editor.buildingMontage ? qsTr("Making the montage: looking for the best moments…")
+                                                           : qsTr("Automatic montage")
+                    }
+                    Button {
+                        objectName: "shuffleMontage"
+                        visible: panel.editor.canShuffleMontage
+                        implicitHeight: Theme.editor.toolButtonSize
+                        variant: "filled"
+                        iconName: "shuffle"
+                        text: qsTr("Shuffle")
+                        onClicked: panel.editor.shuffleMontage()
+                    }
+                    IconButton {
+                        visible: panel.editor.canShuffleMontage
+                        implicitWidth: Theme.editor.toolButtonSize
+                        implicitHeight: Theme.editor.toolButtonSize
+                        iconSize: Theme.editor.toolIconSize
+                        iconName: "close"
+                        label: qsTr("Keep this montage")
+                        onClicked: panel.editor.dismissMontage()
+                    }
+                }
+            }
+
             ScopePanel {
                 id: scopeOverlay
                 objectName: "scopePanel"

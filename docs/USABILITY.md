@@ -111,3 +111,8 @@ azioni non dipende dal programma.
 | 1–4, 6, 8 | Scenari delle fasi precedenti | — | ✅ | invariati |
 | 10 | Nessuna funzione principale oltre 2 livelli | 2 | ✅ | livello 1: barra contestuale (Rimuovi pause, Dividi le scene, Rimuovi sfondo, Stabilizza, Separa voce e musica, Leggi ad alta voce, Sottotitoli), menu del formato; livello 2: schede Sottotitoli e Trascrizione, pagine Velocità/Video/Ritaglio, Preferenze → Modelli AI |
 
+### Fase 7 — AI avanzate e creazione rapida (in corso)
+| # | Scenario | Limite | Risultato | Percorso |
+|---|---|---|---|---|
+| — | Da 20 clip e una canzone, un video sul ritmo con il montaggio automatico (criterio Fase 7) | < 5 | ✅ **4** (5 cambiando stile e durata) | "Montaggio automatico" nella schermata iniziale → scelta dei file → (canzone, stile, durata) → "Crea"; "Rimescola" per un'altra versione |
+

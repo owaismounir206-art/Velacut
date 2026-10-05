@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "ai/Montage.h"
 #include "core/commands/EditCommand.h"
 #include "core/project/ChangeSet.h"
 #include "core/project/Id.h"
@@ -99,6 +100,9 @@ class EditorController : public QObject
     // Set when the project was just made from a template: the interface asks at once for the media of its slots.
     Q_PROPERTY(bool askForTemplateMedia MEMBER m_askForTemplateMedia NOTIFY askForTemplateMediaChanged FINAL)
     Q_PROPERTY(bool buildingSlideshow READ buildingSlideshow NOTIFY slideshowChanged FINAL)
+    // The automatic montage: being made, and "Shuffle" available (this session, until dismissed).
+    Q_PROPERTY(bool buildingMontage READ buildingMontage NOTIFY montageChanged FINAL)
+    Q_PROPERTY(bool canShuffleMontage READ canShuffleMontage NOTIFY montageChanged FINAL)
 
 public:
     enum SaveState
@@ -197,6 +201,15 @@ public:
     // Styles: 0 soft, 1 dynamic, 2 memories, 3 cinematic.
     Q_INVOKABLE void buildSlideshow(const QList<QUrl> &photos, const QUrl &music, int style, bool onBeat);
     bool buildingSlideshow() const { return m_slideshow.has_value(); }
+    // "Automatic montage" (SPEC §5.13bis): videos and photos, an optional song, a style (ai::montageStyles ids) and a
+    // length in seconds (0 = free). The best moments of each video, cut on the beat, with the style's transitions,
+    // filter and title, the music fitted to the length. An ordinary project afterwards.
+    Q_INVOKABLE void buildMontage(const QList<QUrl> &files, const QUrl &music, const QString &style, int seconds);
+    bool buildingMontage() const { return m_montage && m_montage->building; }
+    bool canShuffleMontage() const { return m_montage && !m_montage->building; }
+    // "Shuffle": another montage from the same files (other order and moments), one undo step.
+    Q_INVOKABLE bool shuffleMontage();
+    Q_INVOKABLE void dismissMontage();
     // Brand kit (SPEC §5.13ter), one click each: the logo as a sticker at the playhead, or as a watermark over the whole
     // video (a corner, small, half-transparent); the intro at the start and the outro at the end of the main track;
     // a song under the video; a text in the brand's font and colour.
@@ -358,6 +371,7 @@ signals:
     void coverChanged();
     void askForTemplateMediaChanged();
     void slideshowChanged();
+    void montageChanged();
     // The project changed (any command, undo or redo).
     void modelChanged();
     // For the snackbar: `undoable` shows the "Undo" action.
@@ -433,6 +447,19 @@ private:
         QSet<QString> failed;
     };
     std::optional<PendingSlideshow> m_slideshow;
+    struct MontageState
+    {
+        std::vector<MediaId> media;            // one per source
+        std::vector<ai::MontageSource> sources;
+        std::vector<double> beats;
+        MediaId music;
+        QString style;
+        double seconds = 0.0;
+        std::uint32_t seed = 0;
+        bool building = true;
+    };
+    std::optional<MontageState> m_montage;
+    void layMontage(bool initial);
     struct PendingImport
     {
         QSet<QString> waiting;

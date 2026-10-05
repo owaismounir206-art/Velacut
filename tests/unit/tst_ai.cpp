@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ai/AiTask.h"
 #include "ai/Analysis.h"
+#include "ai/Montage.h"
 #include "ai/Transcript.h"
 
 #include <QJsonArray>
@@ -251,6 +252,50 @@ private slots:
         for (size_t i = 1; i < aligned.size(); ++i) {
             QVERIFY(aligned[i].from >= aligned[i - 1].from);
         }
+    }
+
+    void montageCutsTheBestMomentsOnTheBeat()
+    {
+        // 15 videos of 6 s, sharp and lively only between 2 s and 4 s (dark and blurred elsewhere), and 5 photos.
+        std::vector<ai::MontageSource> sources;
+        for (int v = 0; v < 15; ++v) {
+            ai::MontageSource video;
+            video.seconds = 6.0;
+            for (int k = 0; k < 24; ++k) {
+                const double t = k * 0.25;
+                const bool good = t >= 2.0 && t < 4.0;
+                video.samples.push_back(ai::ShotSample{t, good ? 0.9f : 0.1f, good ? 0.5f : 0.05f, good ? 0.05f : 0.0f});
+            }
+            sources.push_back(video);
+        }
+        for (int p = 0; p < 5; ++p) {
+            sources.push_back(ai::MontageSource{true, 0.0, {}});
+        }
+        std::vector<double> beats; // 120 BPM
+        for (int b = 1; b < 200; ++b) {
+            beats.push_back(b * 0.5);
+        }
+        const ai::MontageStyle &vlog = *ai::montageStyle(QStringLiteral("vlog"));
+        const std::vector<ai::MontagePiece> plan = ai::planMontage(sources, beats, vlog, 30.0, 1);
+        double time = 0.0;
+        for (const ai::MontagePiece &piece : plan) {
+            QVERIFY(piece.length >= 0.99 && piece.length <= 2.01); // 2–4 beats
+            if (!sources[static_cast<size_t>(piece.source)].photo) {
+                QVERIFY2(piece.from >= 1.5 && piece.from + piece.length <= 4.5, qPrintable(QString::number(piece.from)));
+            }
+            time += piece.length;
+            // Every cut on a beat.
+            QVERIFY2(std::abs(time * 2.0 - std::round(time * 2.0)) < 1e-6, qPrintable(QString::number(time)));
+        }
+        QVERIFY2(time >= 29.5 && time <= 30.01, qPrintable(QString::number(time)));
+        // Another seed, another montage; the same seed, the same one.
+        QVERIFY(ai::planMontage(sources, beats, vlog, 30.0, 2) != plan);
+        QCOMPARE(ai::planMontage(sources, beats, vlog, 30.0, 1), plan);
+        // Free length: every file once, in order with seed 0.
+        const std::vector<ai::MontagePiece> all = ai::planMontage(sources, {}, vlog, 0.0, 0);
+        QCOMPARE(all.size(), sources.size());
+        QCOMPARE(all.front().source, 0);
+        QCOMPARE(all.front().length, 2.0); // the style's seconds without music
     }
 };
 

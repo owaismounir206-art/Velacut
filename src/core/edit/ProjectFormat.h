@@ -18,6 +18,7 @@ std::optional<Rational> frameRateForMedia(const Media &media);
 // Inserts a media item; when the sequence is still empty, the project frame rate and the canvas first follow that
 // media, in the same command (SPEC 0bis rule 1: no questions on "New project").
 EditResult insertMediaAdoptingFormat(const ProjectData &project, const SequenceId &sequenceId, const MediaId &mediaId,
-                                     const RationalTime &position, Placement placement = Placement::Auto);
+                                     const RationalTime &position, Placement placement = Placement::Auto,
+                                     std::optional<TimeRange> sourceRange = std::nullopt);
 
 } // namespace vedit

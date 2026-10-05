@@ -96,12 +96,12 @@ std::optional<Rational> frameRateForMedia(const Media &media)
 }
 
 EditResult insertMediaAdoptingFormat(const ProjectData &project, const SequenceId &sequenceId, const MediaId &mediaId,
-                                     const RationalTime &position, Placement placement)
+                                     const RationalTime &position, Placement placement, std::optional<TimeRange> sourceRange)
 {
     const Sequence *sequence = project.findSequence(sequenceId);
     const Media *media = project.findMedia(mediaId);
     if (!sequence || !media || !isEmpty(*sequence)) {
-        return TimelineEditor(project, sequenceId).insertMedia(mediaId, position, std::nullopt, placement);
+        return TimelineEditor(project, sequenceId).insertMedia(mediaId, position, sourceRange, placement);
     }
     const std::optional<Canvas> canvas = canvasForMedia(*media);
     const std::optional<Rational> rate = frameRateForMedia(*media);
@@ -118,7 +118,7 @@ EditResult insertMediaAdoptingFormat(const ProjectData &project, const SequenceI
         adopted.sequences[static_cast<size_t>(adopted.sequenceIndex(sequenceId))].canvas = *canvas;
     }
     EditResult insert = TimelineEditor(adopted, sequenceId)
-                            .insertMedia(mediaId, RationalTime(0, adopted.settings.frameRate), std::nullopt, placement);
+                            .insertMedia(mediaId, RationalTime(0, adopted.settings.frameRate), sourceRange, placement);
     if (!insert.ok() || script.empty()) {
         return insert;
     }

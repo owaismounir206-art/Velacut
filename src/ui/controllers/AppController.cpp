@@ -226,6 +226,15 @@ bool AppController::newSlideshow(const QList<QUrl> &photos, const QUrl &music, i
     return true;
 }
 
+bool AppController::newMontage(const QList<QUrl> &files, const QUrl &music, const QString &style, int seconds)
+{
+    if (files.isEmpty() || !newProject()) {
+        return false;
+    }
+    m_editor->buildMontage(files, music, style, seconds);
+    return true;
+}
+
 bool AppController::openDraft(const QString &draftId)
 {
     const std::optional<ProjectId> id = ProjectId::fromString(draftId);

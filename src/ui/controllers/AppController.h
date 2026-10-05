@@ -84,6 +84,8 @@ public:
     Q_INVOKABLE bool newProjectWithFiles(const QList<QUrl> &files);
     // "Slideshow from photos" (SPEC §5.13bis): a new project made from the photos, the music and the style.
     Q_INVOKABLE bool newSlideshow(const QList<QUrl> &photos, const QUrl &music, int style, bool onBeat);
+    // A new project made by the automatic montage (EditorController::buildMontage).
+    Q_INVOKABLE bool newMontage(const QList<QUrl> &files, const QUrl &music, const QString &style, int seconds);
     Q_INVOKABLE bool openDraft(const QString &draftId);
     // Back to the home screen (everything is already saved; this writes the last changes).
     Q_INVOKABLE void closeEditor();

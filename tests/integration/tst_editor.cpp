@@ -1821,6 +1821,82 @@ done
         }
     }
 
+    // The automatic montage (Phase 7 criterion): 20 clips and photos and a song become a video on the beat, which stays
+    // an ordinary project; "Shuffle" gives another version in one undo step.
+    void automaticMontage()
+    {
+        QList<QUrl> files;
+        const QStringList patterns{u"testsrc"_s, u"testsrc2"_s, u"smptebars"_s, u"rgbtestsrc"_s};
+        for (int i = 0; i < 16; ++i) {
+            const QString path = m_dir.filePath(u"shot-%1.mp4"_s.arg(i, 2, 10, QLatin1Char('0')));
+            if (!QFileInfo::exists(path)) {
+                QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s, u"%1=s=160x90:r=30:d=%2"_s.arg(patterns[i % 4]).arg(2 + i % 3),
+                                   u"-c:v"_s, u"libx264"_s, u"-pix_fmt"_s, u"yuv420p"_s, path}));
+            }
+            files << QUrl::fromLocalFile(path);
+        }
+        for (int i = 0; i < 4; ++i) {
+            QImage image(320, 180, QImage::Format_RGB32);
+            image.fill(QColor::fromHsv(i * 80, 200, 220));
+            const QString path = m_dir.filePath(u"still-%1.png"_s.arg(i));
+            QVERIFY(image.save(path));
+            files << QUrl::fromLocalFile(path);
+        }
+        // A song with a beat every 0.5 s.
+        const QString song = m_dir.filePath(u"beat.wav"_s);
+        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s, u"aevalsrc='if(lt(mod(t\\,0.5)\\,0.03)\\,sin(2*PI*1500*t)\\,0)':s=44100:d=40"_s,
+                           song}));
+        document::DraftStore store(m_dir.filePath(u"drafts-montage"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.buildMontage(files, QUrl::fromLocalFile(song), u"vlog"_s, 15);
+        QVERIFY(editor.buildingMontage());
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.buildingMontage(), 90000);
+        QVERIFY(editor.canShuffleMontage());
+        const Sequence &sequence = *editor.data().mainSequence();
+        const Track &main = sequence.visualTracks.front();
+        QVERIFY2(main.clips.size() >= 7, qPrintable(QString::number(main.clips.size())));
+        const double total = main.clips.back().end().toSecondsDouble();
+        QVERIFY2(total >= 14.4 && total <= 15.1, qPrintable(QString::number(total)));
+        for (const Clip &clip : main.clips) {
+            QCOMPARE(clip.transform.fit, FitMode::Cover);
+            QVERIFY(std::any_of(clip.effects.begin(), clip.effects.end(),
+                                [](const Effect &e) { return e.preset && e.preset->id == u"filters/natural"_s; }));
+            // Every cut on (or within a frame of) a beat.
+            const double end = clip.end().toSecondsDouble();
+            QVERIFY2(std::abs(end * 2.0 - std::round(end * 2.0)) < 0.08, qPrintable(u"cut at %1 s"_s.arg(end)));
+        }
+        QVERIFY(std::any_of(sequence.visualTracks.begin(), sequence.visualTracks.end(), [](const Track &track) {
+            return std::any_of(track.clips.begin(), track.clips.end(), [](const Clip &clip) { return clip.text() != nullptr; });
+        })); // the title
+        QCOMPARE(sequence.audioTracks.size(), size_t(1));
+        QCOMPARE(sequence.audioTracks.front().clips.front().end(), main.clips.back().end());
+        QVERIFY(!editor.canUndo()); // the montage is where the project starts
+
+        // Shuffle: another arrangement, one undo step back to the first.
+        std::vector<std::pair<MediaId, std::int64_t>> before;
+        for (const Clip &clip : main.clips) {
+            before.emplace_back(clip.media()->mediaId, clip.media()->sourceIn.value());
+        }
+        QVERIFY(editor.shuffleMontage());
+        std::vector<std::pair<MediaId, std::int64_t>> after;
+        for (const Clip &clip : editor.data().mainSequence()->visualTracks.front().clips) {
+            after.emplace_back(clip.media()->mediaId, clip.media()->sourceIn.value());
+        }
+        QVERIFY(after != before);
+        editor.undo();
+        std::vector<std::pair<MediaId, std::int64_t>> back;
+        for (const Clip &clip : editor.data().mainSequence()->visualTracks.front().clips) {
+            back.emplace_back(clip.media()->mediaId, clip.media()->sourceIn.value());
+        }
+        QCOMPARE(back, before);
+        // Freely editable: an ordinary split works on it.
+        editor.player()->seek(10);
+        QVERIFY(editor.split());
+    }
+
     // Brand kits (SPEC §5.13ter): saved once, kept between sessions, used with a click; their colours first in every
     // colour picker.
     void brandKit()

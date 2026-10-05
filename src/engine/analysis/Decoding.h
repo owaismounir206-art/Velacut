@@ -66,6 +66,19 @@ std::optional<std::vector<fx::SubjectPoint>> extractSubjectPath(const QString &p
                                                                 const std::atomic<bool> *cancel = nullptr,
                                                                 const DecodeProgress &progress = {});
 
+// How a shot looks, a few times a second: what makes a good moment for the automatic montage (SPEC §5.13bis:
+// movement, quality, no blurred or dark frames).
+struct ShotSample
+{
+    double seconds = 0.0;
+    float sharpness = 0.0f;  // detail (gradient energy), 0…1
+    float brightness = 0.0f; // mean, 0…1
+    float motion = 0.0f;     // change since the previous sample, 0…1
+};
+// `samplesPerSecond` samples a second of a video; `seconds` gets its length.
+std::optional<std::vector<ShotSample>> extractShotSamples(const QString &path, int samplesPerSecond, double *seconds,
+                                                              const std::atomic<bool> *cancel = nullptr);
+
 // Integrated and peak loudness measured via ITU-R BS.1770-4 / EBU R128.
 std::optional<fx::LoudnessResult> extractLoudness(const QString &path,
                                                   const std::atomic<bool> *cancel = nullptr);

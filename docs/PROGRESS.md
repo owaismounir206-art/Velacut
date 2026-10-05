@@ -4,6 +4,18 @@ Ultimo aggiornamento: 2026-10-05 (Fasi 0-5 ✅ — criteri della Fase 5 verifica
 manuali/da file completi; Fase 8 🔶: preferenze reali, encoding hardware; Fase 7 da fare. L'utente ha dato il via a
 proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migliora l'estetica".)
 
+## Sessione 2026-10-05 (sera) — Fase 7: montaggio automatico
+- **Montaggio automatico** (SPEC §5.13bis, criterio della Fase 7; `ai/Montage`, `engine::extractShotSamples`,
+  `EditorController::buildMontage/shuffleMontage`, `MontageDialog`): video, foto e una canzone facoltativa, uno stile
+  (vlog, viaggio, sport, cinematico, festa, meme, prodotto) e una durata (15/30/60 s o tutto). Ogni video è
+  campionato 4 volte al secondo (nitidezza, luce, movimento); per ogni ripresa si sceglie la finestra migliore non
+  ancora usata (nitida, illuminata, con un po' di movimento ma non mossa), le riprese durano 1–8 battiti secondo lo
+  stile e finiscono sui battiti della canzone (rilevatore esistente), riempiono il canvas, con filtro, transizioni e
+  titolo dello stile e la musica tagliata alla durata con dissolvenza. Progetto normale (lo storico parte da lì);
+  "Rimescola" nel banner del player = altro ordine e altri momenti (seme diverso), un passo di annullamento.
+  Test: 16 video + 4 foto + una canzone a 120 BPM → 15 s, ogni taglio su un battito, rimescola/annulla, poi un taglio
+  normale funziona (`tst_editor::automaticMontage`); dalla schermata iniziale 5 azioni (4 con i valori predefiniti).
+
 ## Sessione 2026-10-05 (pomeriggio) — Fase 6: sottotitoli
 - **Core** (`10f2f61`): clip `subtitle` tipizzate (testo, parole con tempi dall'inizio della clip, stile per riga) e
   `captionStyle` tipizzato della traccia (evidenziazione colore/ingrandita/riquadro/karaoke, entrata pop/dissolvenza/
