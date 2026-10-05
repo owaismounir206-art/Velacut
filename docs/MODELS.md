@@ -22,7 +22,7 @@ la libreria rnnoise. Non installo pacchetti di sistema (regola del progetto): i 
 | Stabilizzazione | stima del movimento propria (4 regioni, corrispondenza a blocchi, mediana) + levigatura gaussiana | GPL-3 (vedit) | — | — | **attivo**: "Stabilizza" (traslazione; la rotazione è misurata ma non corretta) |
 | Rilevamento scene | differenza tra fotogrammi (propria, libavcodec) | GPL-3 (vedit) | — | — | **attivo**: "Dividi le scene" (barra della clip video) |
 | Rimozione silenzi | livelli RMS dell'audio (propria, libavcodec) | GPL-3 (vedit) | — | — | **attivo**: "Rimuovi pause" (barra della clip video/audio) |
-| Slow motion fluido | RIFE ncnn-vulkan → `minterpolate` (CPU) → frame blending | MIT / LGPL | MIT | AUR `rife-ncnn-vulkan` | da integrare; senza RIFE: ripiego CPU |
+| Slow motion fluido | RIFE ncnn-vulkan → `minterpolate` (CPU) → frame blending | MIT / LGPL | MIT | AUR `rife-ncnn-vulkan` | **attivo il percorso CPU**: `minterpolate` di FFmpeg (copia in cache della parte usata); RIFE da integrare quando installato |
 | Separazione voce/musica | Demucs (ONNX) | MIT | MIT | — | da integrare; senza: disattivato |
 
 ## 3. Comandi per l'utente (non eseguiti da vedit né dall'assistente)

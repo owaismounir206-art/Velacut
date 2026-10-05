@@ -3,6 +3,7 @@
 
 #include "core/project/ClipTime.h"
 #include "core/serialization/ProjectJson.h"
+#include "engine/analysis/SmoothMotion.h"
 #include "engine/timeline/ClipPlacement.h"
 #include "engine/timeline/MediaProducerCache.h"
 #include "fx/Library.h"
@@ -1068,6 +1069,24 @@ std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &
         if (!media) {
             return placed;
         }
+        // Smooth slow motion: the copy with new frames between the real ones, once made (the export makes it now).
+        std::optional<Media> smooth;
+        RationalTime smoothFrom;
+        if (const std::optional<SmoothCopy> copy = smoothCopyFor(clip, *media)) {
+            if (!copy->ready() && m_loading == MediaLoading::Wait) {
+                if (const QString error = makeSmoothCopy(*copy); !error.isEmpty()) {
+                    m_warnings << error;
+                }
+            }
+            if (copy->ready()) {
+                smooth = copy->asMedia();
+                smoothFrom = copy->from.rescaled(data->sourceIn.rate(), Rounding::NearestEven);
+                usedMedia.insert(smooth->id);
+            }
+        }
+        if (smooth) {
+            media = &*smooth;
+        }
         const bool image = media->kind == MediaKind::Image;
         if (data->curve && !image) {
             auto base = producerFor(*media, 1.0, data->preservePitch);
@@ -1093,7 +1112,7 @@ std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &
             }
             return placed;
         }
-        const std::int64_t sourceIn = toFrames(data->sourceIn);
+        const std::int64_t sourceIn = toFrames(smooth ? data->sourceIn - smoothFrom : data->sourceIn);
         if (image) {
             placed.in = 0;
         } else if (!data->reversed) {
@@ -1106,6 +1125,13 @@ std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &
                 0, warpedLength - std::llround(static_cast<double>(sourceIn) / speed) - placed.length));
         }
         placed.render = renderOf(clip, track, project, media, mainTrack, placed.in, placed.length);
+        if (smooth && placed.render->stabilize) {
+            // The copy starts later in the file than the analysis of "Stabilize" does.
+            auto shifted = std::make_shared<ClipRender>(*placed.render);
+            shifted->stabilize->analysisStart -= smoothFrom.toSecondsDouble();
+            shifted->key += "smooth" + QByteArray::number(smoothFrom.toSecondsDouble());
+            placed.render = shifted;
+        }
         return placed;
     }
     if (const auto *color = std::get_if<ColorClipData>(&clip.payload)) {

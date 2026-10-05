@@ -12,10 +12,12 @@
 #include "engine/timeline/MediaProducerCache.h"
 #include "engine/analysis/AudioSync.h"
 #include "engine/analysis/Decoding.h"
+#include "engine/analysis/SmoothMotion.h"
 #include "engine/text/CaptionRenderer.h"
 #include "engine/timeline/TimelineProjection.h"
 
 #include <QCryptographicHash>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QPainter>
 #include <QTemporaryDir>
@@ -456,6 +458,45 @@ private slots:
         const QImage half = CaptionRenderer::render(*layout, 12, QSize(160, 90));
         QCOMPARE(half.size(), QSize(160, 90));
         QVERIFY(!CaptionRenderer::bounds(*layout, 12).isEmpty());
+    }
+
+    // Slow motion at half speed: frames repeat in pairs; with "smooth", every frame is a different picture (new ones
+    // computed between the real ones), and the clip still shows the same moment at the same time.
+    void smoothSlowMotionMakesNewFrames()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const ClipId clip = session.mainTrack().clips.front().id;
+        QVERIFY(session.apply(session.editor().setSpeed(clip, 0.5)));
+        const auto repeats = [this](const ProjectData &data) {
+            auto profile = makeProfile(data, data.mainSequenceId);
+            MediaProducerCache cache(*profile);
+            TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+            projection.build(data, data.mainSequenceId);
+            int same = 0;
+            QByteArray previous = rgbHash(projection.renderFrame(20));
+            for (int position = 21; position < 41; ++position) {
+                const QByteArray current = rgbHash(projection.renderFrame(position));
+                same += current == previous ? 1 : 0;
+                previous = current;
+            }
+            return same;
+        };
+        const int plain = repeats(session.data());
+        QVERIFY2(plain >= 8, qPrintable(QString::number(plain)));
+        const QImage plainFrame = renderFresh1(session.data(), 40);
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [](Clip &c) { c.media()->smooth = true; }, u"Smooth"_s)));
+        QElapsedTimer timer;
+        timer.start();
+        const int smooth = repeats(session.data()); // the export path: the copy is made now
+        qInfo("smooth slow motion: %d repeated frames of 20 (%d without), copy made in %lld ms", smooth, plain, timer.elapsed());
+        QCOMPARE(smooth, 0);
+        // At a real frame (frame 40 = source frame 20) the picture is the same as without.
+        QVERIFY2(meanDifference(renderFresh1(session.data(), 40), plainFrame) < 6.0,
+                 qPrintable(QString::number(meanDifference(renderFresh1(session.data(), 40), plainFrame))));
+        const std::optional<SmoothCopy> copy = smoothCopyFor(session.mainTrack().clips.front(), m_landscape);
+        QVERIFY(copy && copy->ready());
+        QCOMPARE(copy->frameRate, Rational(60));
     }
 
     // A shaky shot (a textured picture seen through a jittering window) is steadied: the picture moves much less from one

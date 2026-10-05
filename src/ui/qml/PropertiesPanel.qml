@@ -1605,6 +1605,38 @@ Rectangle {
                             format: v => Math.round(v * 100) + " %"
                         }
 
+                        // Slower than 1×: new frames computed between the real ones instead of repeating them.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: (panel.values["speed"] ?? 1) < 1 && !(panel.values["reversed"] ?? false)
+                                     && !(panel.values["speed.isCurve"] ?? false) && panel.inspector.kind === Inspector.Video
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Smooth slow motion")
+                                role: "bodyMedium"
+                                wrapMode: Text.WordWrap
+                            }
+                            Switch {
+                                objectName: "smoothSwitch"
+                                checked: panel.values["smooth"] ?? false
+                                Accessible.name: qsTr("Smooth slow motion")
+                                onToggled: panel.inspector.set("smooth", checked)
+                            }
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            visible: panel.editor.player.preparingSmooth
+                            spacing: Theme.space.xs
+                            Label {
+                                text: qsTr("Computing the new frames… %1%").arg(Math.round(panel.editor.player.smoothProgress * 100))
+                                role: "bodySmall"
+                                color: Theme.color.onSurfaceVariant
+                            }
+                            ProgressBar {
+                                Layout.fillWidth: true
+                                value: panel.editor.player.smoothProgress
+                            }
+                        }
                         RowLayout {
                             Layout.fillWidth: true
                             Label { Layout.fillWidth: true; text: qsTr("Keep the voice natural"); role: "bodyMedium"; wrapMode: Text.WordWrap }

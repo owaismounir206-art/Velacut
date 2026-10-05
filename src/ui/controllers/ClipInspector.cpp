@@ -1003,6 +1003,7 @@ QVariantMap ClipInspector::values() const
         map[u"speed"_s] = media->speed;
         map[u"reversed"_s] = media->reversed;
         map[u"preservePitch"_s] = media->preservePitch;
+        map[u"smooth"_s] = media->smooth;
         map[u"speed.isCurve"_s] = media->curve.has_value();
         map[u"speed.curvePreset"_s] = media->curve ? media->curve->preset : QString();
         QVariantList pointsList;
@@ -1254,7 +1255,7 @@ QString ClipInspector::sectionOf(const QString &key) const
     static const QStringList video{u"x"_s,     u"y"_s,     u"scale"_s, u"rotation"_s, u"opacity"_s,
                                    u"flipH"_s, u"flipV"_s, u"fit"_s,   u"blend"_s};
     static const QStringList audio{u"volume"_s, u"fadeIn"_s, u"fadeOut"_s};
-    static const QStringList speed{u"speed"_s, u"reversed"_s, u"preservePitch"_s};
+    static const QStringList speed{u"speed"_s, u"reversed"_s, u"preservePitch"_s, u"smooth"_s};
     if (video.contains(key)) {
         return u"video"_s;
     }
@@ -1578,6 +1579,10 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
     }
     if (key == u"preservePitch"_s) {
         return update(clips, [&](Clip &c) { c.media()->preservePitch = flag; }, tr("Change pitch"), {});
+    }
+    if (key == u"smooth"_s) {
+        return update(clips, [&](Clip &c) { c.media()->smooth = flag; },
+                      flag ? tr("Smooth slow motion") : tr("Normal slow motion"), {});
     }
     if (key == u"speed.isCurve"_s) {
         if (!supports(*clip, u"speed"_s)) {

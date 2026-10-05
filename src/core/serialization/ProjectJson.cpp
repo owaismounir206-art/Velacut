@@ -178,7 +178,7 @@ const QSet<QString> kTextStyleKeys{u"font"_s,          u"size"_s,       u"color"
                                    u"background"_s,    u"letterSpacing"_s, u"lineHeight"_s, u"align"_s,
                                    u"underline"_s};
 const QSet<QString> kMediaClipKeys{u"mediaId"_s,       u"streams"_s,  u"sourceIn"_s, u"speed"_s,
-                                   u"preservePitch"_s, u"reversed"_s, u"audio"_s};
+                                   u"preservePitch"_s, u"reversed"_s, u"smooth"_s,  u"audio"_s};
 const QSet<QString> kColorClipKeys{u"color"_s};
 const QSet<QString> kCompoundClipKeys{u"sequenceId"_s, u"sourceIn"_s, u"activeAngle"_s};
 const QSet<QString> kStickerClipKeys{u"source"_s, u"mediaId"_s, u"emoji"_s, u"loop"_s, u"speed"_s, u"tint"_s, u"visualizer"_s,
@@ -535,6 +535,9 @@ QJsonObject clipJson(const Clip &clip)
                 }
                 object.insert(u"preservePitch"_s, data.preservePitch);
                 object.insert(u"reversed"_s, data.reversed);
+                if (data.smooth) {
+                    object.insert(u"smooth"_s, true); // absent = false (files of before keep their bytes)
+                }
                 object.insert(u"audio"_s, QJsonObject{{u"gainDb"_s, paramJson(data.audio.gainDb)},
                                                       {u"muted"_s, data.audio.muted},
                                                       {u"pan"_s, paramJson(data.audio.pan)},
@@ -1339,6 +1342,7 @@ public:
             }
             data.preservePitch = boolean(object, u"preservePitch"_s, path, true);
             data.reversed = boolean(object, u"reversed"_s, path, false);
+            data.smooth = boolean(object, u"smooth"_s, path, false);
             const QJsonObject audio = this->object(object, u"audio"_s, path, false);
             const QString a = join(path, u"audio"_s);
             data.audio.gainDb = param(audio.value(u"gainDb"_s), join(a, u"gainDb"_s), Param(0.0));

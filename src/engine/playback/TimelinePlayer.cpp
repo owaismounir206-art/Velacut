@@ -3,6 +3,7 @@
 
 #include "core/project/Project.h"
 #include "engine/analysis/ReverseProxy.h"
+#include "engine/analysis/SmoothMotion.h"
 #include "engine/playback/AudioMeters.h"
 #include "engine/playback/PreviewConsumer.h"
 #include "engine/timeline/MediaProducerCache.h"
@@ -26,8 +27,14 @@ constexpr double kMaxShuttleRate = 8.0;
 TimelinePlayer::TimelinePlayer(QObject *parent)
     : QObject(parent)
     , m_reverse(std::make_unique<ReverseProxyQueue>())
+    , m_smooth(std::make_unique<SmoothCopyQueue>())
 {
     m_seekClock.start();
+    connect(m_smooth.get(), &SmoothCopyQueue::busyChanged, this, &TimelinePlayer::smoothChanged);
+    connect(m_smooth.get(), &SmoothCopyQueue::progressChanged, this, &TimelinePlayer::smoothChanged);
+    connect(m_smooth.get(), &SmoothCopyQueue::ready, this, &TimelinePlayer::onMediaReady);
+    connect(m_smooth.get(), &SmoothCopyQueue::failed, this,
+            [this](const MediaId &, const QString &error) { emit smoothFailed(error); });
     connect(m_reverse.get(), &ReverseProxyQueue::busyChanged, this, &TimelinePlayer::reverseChanged);
     connect(m_reverse.get(), &ReverseProxyQueue::progressChanged, this, &TimelinePlayer::reverseChanged);
     connect(m_reverse.get(), &ReverseProxyQueue::ready, this, [this](const MediaId &mediaId) {
@@ -162,14 +169,30 @@ void TimelinePlayer::requestReverseProxies()
     for (const auto *tracks : {&sequence->visualTracks, &sequence->audioTracks}) {
         for (const Track &track : *tracks) {
             for (const Clip &clip : track.clips) {
-                if (const MediaClipData *media = clip.media(); media && media->reversed) {
-                    if (const Media *item = data.findMedia(media->mediaId)) {
-                        m_reverse->request(*item);
-                    }
+                const MediaClipData *media = clip.media();
+                const Media *item = media ? data.findMedia(media->mediaId) : nullptr;
+                if (!item) {
+                    continue;
+                }
+                if (media->reversed) {
+                    m_reverse->request(*item);
+                }
+                if (const std::optional<SmoothCopy> copy = smoothCopyFor(clip, *item); copy && !copy->ready()) {
+                    m_smooth->request(*copy);
                 }
             }
         }
     }
+}
+
+bool TimelinePlayer::preparingSmooth() const
+{
+    return m_smooth->busy();
+}
+
+double TimelinePlayer::smoothProgress() const
+{
+    return m_smooth->progress();
 }
 
 bool TimelinePlayer::preparingReverse() const
@@ -236,6 +259,7 @@ void TimelinePlayer::onProjectChanged(const ChangeSet &changes)
     if (!m_consumer) {
         m_projection->update(data, changes);
         updateWarnings();
+        requestReverseProxies();
         return;
     }
     if (m_projection->needsRebuild(data, changes)) {

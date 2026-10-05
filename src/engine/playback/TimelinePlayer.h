@@ -32,6 +32,7 @@ namespace vedit::engine {
 
 class MediaProducerCache;
 class ReverseProxyQueue;
+class SmoothCopyQueue;
 class TimelineProjection;
 
 // Plays a sequence of the live project in the preview (docs/ARCHITECTURE.md §5.3). The MLT graph is a projection
@@ -59,6 +60,9 @@ class TimelinePlayer : public QObject
     // A backwards copy of a reversed clip is being prepared (the clip plays, slowly, meanwhile).
     Q_PROPERTY(bool preparingReverse READ preparingReverse NOTIFY reverseChanged FINAL)
     Q_PROPERTY(double reverseProgress READ reverseProgress NOTIFY reverseChanged FINAL)
+    // Smooth slow motion being computed for the preview (SmoothCopyQueue).
+    Q_PROPERTY(bool preparingSmooth READ preparingSmooth NOTIFY smoothChanged FINAL)
+    Q_PROPERTY(double smoothProgress READ smoothProgress NOTIFY smoothChanged FINAL)
 
 public:
     explicit TimelinePlayer(QObject *parent = nullptr);
@@ -87,6 +91,8 @@ public:
     QStringList warnings() const { return m_warnings; }
     bool preparingReverse() const;
     double reverseProgress() const;
+    bool preparingSmooth() const;
+    double smoothProgress() const;
     // vedit-render, for the backwards copies (default: next to the running executable).
     void setHelperExecutable(const QString &path);
     // Preview rendered with at most this short side (0 = the canvas size). The frames get smaller, not the
@@ -131,6 +137,9 @@ signals:
     void volumeChanged();
     void warningsChanged();
     void reverseChanged();
+    void smoothChanged();
+    // A smooth slow motion could not be computed (for the snackbar).
+    void smoothFailed(const QString &error);
 
 private:
     void createGraph();
@@ -158,6 +167,7 @@ private:
     std::unique_ptr<Mlt::Event> m_frameShowEvent;
     QTimer m_retiredTimer;
     std::unique_ptr<ReverseProxyQueue> m_reverse;
+    std::unique_ptr<SmoothCopyQueue> m_smooth;
     // Frames queued from the consumer thread before a graph change are ignored.
     std::atomic<quint64> m_generation{0};
     double m_rate = 0.0;

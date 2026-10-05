@@ -283,6 +283,10 @@ vengono ignorati e riscritti invariati.
 }
 ```
 - `streams`: `"av"` (video con audio), `"video"` (audio scollegato o estratto), `"audio"` (sulle tracce audio).
+- `smooth` (facoltativo, assente = `false`): rallentatore fluido, con fotogrammi nuovi calcolati tra quelli veri
+  invece di ripeterli (solo con `speed` < 1, in avanti, senza curva). Il calcolo è una copia in cache della parte
+  usata del file (interpolazione a compensazione di movimento di FFmpeg, `minterpolate`); finché non c'è, la clip si
+  vede con i fotogrammi ripetuti.
 - `sourceIn`: primo fotogramma usato della sorgente, nel tempo del contenuto a velocità 1×, sulla griglia del progetto.
   Intervallo di sorgente usato = `[sourceIn, sourceIn + duration × speed)`, arrotondato al fotogramma dall'engine.
   Con `reversed: true` la riproduzione va dalla fine dell'intervallo verso `sourceIn`.

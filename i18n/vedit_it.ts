@@ -2485,12 +2485,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1908"/>
+        <location line="+1940"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
     <message>
-        <location line="-1803"/>
+        <location line="-1835"/>
         <source>Select a clip on the timeline to change it here.</source>
         <translation>Seleziona una clip sulla timeline per modificarla qui.</translation>
     </message>
@@ -3068,12 +3068,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+861"/>
+        <location line="+893"/>
         <source>Rotation</source>
         <translation>Rotazione</translation>
     </message>
     <message>
-        <location line="-851"/>
+        <location line="-883"/>
         <source>Opacity</source>
         <translation>Opacità</translation>
     </message>
@@ -3154,18 +3154,18 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+1154"/>
+        <location line="+1186"/>
         <source>Hue</source>
         <translation>Tonalità</translation>
     </message>
     <message>
-        <location line="-1154"/>
-        <location line="+1163"/>
+        <location line="-1186"/>
+        <location line="+1195"/>
         <source>Saturation</source>
         <translation>Saturazione</translation>
     </message>
     <message>
-        <location line="-1161"/>
+        <location line="-1193"/>
         <source>Blend mode</source>
         <translation>Modalità di fusione</translation>
     </message>
@@ -3270,7 +3270,18 @@
         <translation>Intensità della sfocatura di movimento</translation>
     </message>
     <message>
-        <location line="+309"/>
+        <location line="+13"/>
+        <location line="+7"/>
+        <source>Smooth slow motion</source>
+        <translation>Rallentatore fluido</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Computing the new frames… %1%</source>
+        <translation>Calcolo dei nuovi fotogrammi… %1%</translation>
+    </message>
+    <message>
+        <location line="+312"/>
         <source>Filter and LUT</source>
         <translation>Filtro e LUT</translation>
     </message>
@@ -3400,7 +3411,7 @@
         <translation>Curve colore</translation>
     </message>
     <message>
-        <location line="-1406"/>
+        <location line="-1438"/>
         <location line="+265"/>
         <location line="+16"/>
         <source>Blur</source>
@@ -3423,12 +3434,12 @@
         <location line="+864"/>
         <location line="+222"/>
         <location line="+8"/>
-        <location line="+370"/>
+        <location line="+402"/>
         <source>%1 s</source>
         <translation>%1 s</translation>
     </message>
     <message>
-        <location line="-1653"/>
+        <location line="-1685"/>
         <source>Transition</source>
         <translation>Transizione</translation>
     </message>
@@ -3438,18 +3449,18 @@
         <translation>Dissolvenza in uscita</translation>
     </message>
     <message>
-        <location line="+537"/>
+        <location line="+569"/>
         <source>Auto enhance</source>
         <translation>Migliora automaticamente</translation>
     </message>
     <message>
-        <location line="-336"/>
+        <location line="-368"/>
         <location line="+9"/>
         <source>%1×</source>
         <translation>%1×</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="+112"/>
         <location line="+3"/>
         <source>Keep the voice natural</source>
         <translation>Mantieni la voce naturale</translation>
@@ -3521,18 +3532,18 @@
         <translation>Maschera</translation>
     </message>
     <message>
-        <location line="-1313"/>
+        <location line="-1345"/>
         <location line="+196"/>
         <location line="+95"/>
         <location line="+687"/>
-        <location line="+342"/>
+        <location line="+374"/>
         <source>None</source>
         <translation>Nessuna</translation>
     </message>
     <message>
-        <location line="-1414"/>
+        <location line="-1446"/>
         <location line="+409"/>
-        <location line="+1005"/>
+        <location line="+1037"/>
         <source>Line</source>
         <translation>Linea</translation>
     </message>
@@ -3542,13 +3553,13 @@
         <translation>Fascia</translation>
     </message>
     <message>
-        <location line="-622"/>
-        <location line="+622"/>
+        <location line="-654"/>
+        <location line="+654"/>
         <source>Circle</source>
         <translation>Cerchio</translation>
     </message>
     <message>
-        <location line="-1704"/>
+        <location line="-1736"/>
         <source>Choose 3D LUT (.cube)</source>
         <translation>Scegli una LUT 3D (.cube)</translation>
     </message>
@@ -3564,12 +3575,12 @@
     </message>
     <message>
         <location line="+553"/>
-        <location line="+1150"/>
+        <location line="+1182"/>
         <source>Rectangle</source>
         <translation>Rettangolo</translation>
     </message>
     <message>
-        <location line="-624"/>
+        <location line="-656"/>
         <location line="+44"/>
         <source>Bars</source>
         <translation>Barre</translation>
@@ -3737,7 +3748,7 @@
         <translation>Sfocatura di movimento</translation>
     </message>
     <message>
-        <location line="+131"/>
+        <location line="+163"/>
         <source>Heart</source>
         <translation>Cuore</translation>
     </message>
@@ -3798,8 +3809,8 @@
         <translation>Colore da rimuovere</translation>
     </message>
     <message>
-        <location line="-569"/>
-        <location line="+577"/>
+        <location line="-601"/>
+        <location line="+609"/>
         <source>Strength</source>
         <translation>Intensità</translation>
     </message>
@@ -3865,6 +3876,29 @@
         <location line="+14"/>
         <source>Advanced</source>
         <translation>Avanzate</translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <location filename="../src/engine/analysis/SmoothMotion.cpp" line="+103"/>
+        <source>The ffmpeg program is needed for smooth slow motion.</source>
+        <translation>Per il rallentatore fluido serve il programma ffmpeg.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Cancelled.</source>
+        <translation>Annullato.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>The smooth slow motion of %1 could not be made: %2</source>
+        <translation>Il rallentatore fluido di %1 non è stato possibile: %2</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The smooth slow motion could not be saved in the cache.</source>
+        <translation>Il rallentatore fluido non è stato salvato nella cache.</translation>
     </message>
 </context>
 <context>
@@ -5473,7 +5507,7 @@
 <context>
     <name>vedit::engine::TimelinePlayer</name>
     <message>
-        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+130"/>
+        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+137"/>
         <source>No audio output is available (SDL2).</source>
         <translation>Nessuna uscita audio disponibile (SDL2).</translation>
     </message>
@@ -5597,7 +5631,7 @@
 <context>
     <name>vedit::projectjson</name>
     <message>
-        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1642"/>
+        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1646"/>
         <source>The project file is damaged (%1).</source>
         <translation>Il file del progetto è danneggiato (%1).</translation>
     </message>
@@ -6236,13 +6270,13 @@
     <name>vedit::ui::ClipInspector</name>
     <message>
         <location filename="../src/ui/controllers/ClipInspector.cpp" line="+367"/>
-        <location line="+1041"/>
+        <location line="+1042"/>
         <location line="+26"/>
         <source>Change mask</source>
         <translation>Modifica maschera</translation>
     </message>
     <message>
-        <location line="-1041"/>
+        <location line="-1042"/>
         <source>Click on the clip to pick the colour to remove.</source>
         <translation>Fai clic sulla clip per scegliere il colore da rimuovere.</translation>
     </message>
@@ -6277,7 +6311,7 @@
         <translation>Cambia la curva del keyframe</translation>
     </message>
     <message>
-        <location line="+628"/>
+        <location line="+629"/>
         <source>Colour</source>
         <translation>Colore</translation>
     </message>
@@ -6440,6 +6474,16 @@
         <location line="+3"/>
         <source>Change pitch</source>
         <translation>Cambia intonazione</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Smooth slow motion</source>
+        <translation>Rallentatore fluido</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Normal slow motion</source>
+        <translation>Rallentatore normale</translation>
     </message>
     <message>
         <location line="+64"/>
@@ -6852,7 +6896,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+208"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+209"/>
         <location line="+960"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>

@@ -108,7 +108,7 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+2017"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+2022"/>
         <location line="+454"/>
         <source>Transition on %n cut(s)</source>
         <translation>
@@ -128,7 +128,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+958"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+959"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>

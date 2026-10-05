@@ -9,6 +9,7 @@
 #include "document/DraftStore.h"
 #include "engine/analysis/Decoding.h"
 #include "engine/analysis/MediaAnalysis.h"
+#include "engine/analysis/SmoothMotion.h"
 #include "engine/mlt/MltRuntime.h"
 #include "fx/Library.h"
 #include "ui/controllers/ActionRegistry.h"
@@ -596,6 +597,33 @@ private slots:
         QCOMPARE(inspector.values().value(u"stabilize.strength"_s).toDouble(), 0.9);
         QVERIFY(inspector.set(u"stabilize.on"_s, false));
         QVERIFY(!inspector.values().value(u"stabilize.on"_s).toBool());
+    }
+
+    // "Smooth slow motion" in the Speed page: the new frames are computed in background for the preview.
+    void smoothSlowMotionInThePreview()
+    {
+        document::DraftStore store(m_dir.filePath(u"drafts-smooth"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.importAndInsertPaths({m_files.vertical}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        ClipInspector &inspector = *editor.inspector();
+        QVERIFY(inspector.set(u"speed"_s, 0.25));
+        inspector.endGesture();
+        QVERIFY(inspector.set(u"smooth"_s, true));
+        QVERIFY(mainTrack(editor).clips[0].media()->smooth);
+        const Media *media = editor.data().findMedia(mainTrack(editor).clips[0].media()->mediaId);
+        QVERIFY(media);
+        const std::optional<engine::SmoothCopy> copy = engine::smoothCopyFor(mainTrack(editor).clips[0], *media);
+        QVERIFY(copy);
+        QCOMPARE(copy->frameRate, Rational(120)); // a quarter of the speed: four times the frames
+        QTRY_VERIFY_WITH_TIMEOUT(copy->ready(), 60000);
+        QTRY_VERIFY(!editor.player()->preparingSmooth());
+        editor.undo();
+        QVERIFY(!mainTrack(editor).clips[0].media()->smooth);
     }
 
     // The actions of the selection (toolbar, right-click menu), the universal search, the freeze frame.

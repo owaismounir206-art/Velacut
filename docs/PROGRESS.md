@@ -36,6 +36,12 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   li ha. Filtro CPU `vedit.stabilize` per primo nella catena. Test: tremolio 12,8 → 1,8 px/fotogramma su un video
   generato. **Limite**: corretta solo la traslazione; la stima della rotazione su immagini piccole è troppo rumorosa
   (≈ 0,4°/fotogramma) e sommata dava un'inclinazione visibile, quindi è misurata ma non applicata.
+- **Rallentatore fluido** (`smooth` nelle clip media, FILE_FORMAT §5.5; `engine/analysis/SmoothMotion`): sotto 1× un
+  interruttore nella pagina Velocità; la parte usata del file (arrotondata a 2 s) viene ricalcolata da `ffmpeg
+  minterpolate` (compensazione di movimento, bidirezionale) a fps × ⌈1/velocità⌉ (max 240) con l'audio copiato, in
+  cache; la clip la riproduce alla sua velocità (stessa mappatura dei tempi; verificato con un programma di prova che
+  il fotogramma 0 della copia è l'inizio dell'intervallo e i dispari sono quelli nuovi). Anteprima: coda in background
+  con avanzamento; export: la copia si fa al momento se manca. Test: a ½× da 10 fotogrammi ripetuti su 20 a 0.
 
 ## Sessione 2026-10-05 — Fine Fase 5: transizioni GPU, slideshow, kit del marchio, filtri, blocco del motore
 - **Percorso GPU delle 114 transizioni** (`92d25d6`, criterio Fase 5 seconda metà ✅): GLSL 1.00/1.10 (OpenGL 2.1 /
@@ -199,9 +205,9 @@ completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::t
    formato lo supporta: `styleOverride`), parole chiave evidenziate automaticamente ed emoji automatiche.
 2. Sottotitoli automatici con whisper.cpp come processo esterno se installato (altrimenti disattivati con messaggio,
    `docs/MODELS.md`), gestore modelli con download solo su richiesta; sottotitoli da copione allineati al parlato.
-3. Senza modelli: ✅ rimozione pause, ✅ divisione delle scene, ✅ stabilizzazione (traslazione); restano slow motion
-   fluido (`minterpolate`), auto reframe classico (soggetto stimato da movimento/contrasto), rotazione nella
-   stabilizzazione (stima più robusta, es. su più regioni o immagini più grandi).
+3. Senza modelli: ✅ rimozione pause, ✅ divisione delle scene, ✅ stabilizzazione (traslazione), ✅ rallentatore
+   fluido (percorso CPU `minterpolate`); restano auto reframe classico (soggetto stimato da movimento/contrasto),
+   rotazione nella stabilizzazione (stima più robusta), RIFE quando installato.
 4. ✅ Interfaccia comune `ai::AiTask` (progresso, annullamento, risultato modificabile).
 
 ### Sessione 2026-10-01

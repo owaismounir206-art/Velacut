@@ -119,6 +119,7 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     connect(&stack, &QUndoStack::undoTextChanged, this, &EditorController::undoChanged);
     connect(&stack, &QUndoStack::redoTextChanged, this, &EditorController::undoChanged);
     connect(m_player.get(), &engine::TimelinePlayer::positionChanged, this, &EditorController::splitAvailableChanged);
+    connect(m_player.get(), &engine::TimelinePlayer::smoothFailed, this, [this](const QString &error) { emit message(error, false); });
     m_inspector = new ClipInspector(*this);
     m_captions = new CaptionsController(*this);
     m_ai = new AiController(*this);
