@@ -4,40 +4,30 @@ Video editor desktop nativo per Linux, progettato per essere veloce, semplice e 
 
 ## Stato del Progetto
 
-**Versione**: Pre-alpha (in sviluppo attivo)  
-**Fasi completate**: 0–4 (Fondamenta, MVP, Editing essenziale, Keyframe, Colore e audio)  
-**Fase corrente**: 5 (Libreria creativa — in corso)
+**Versione**: pre-alpha, in sviluppo attivo. Stato dettagliato e verificato in `docs/PROGRESS.md`.
+**Fasi complete**: 0–5 (fondamenta, MVP, editing essenziale, keyframe e composizione, colore e audio avanzati,
+libreria creativa). **Fase 8** (rifinitura) in parte: encoding hardware, preset piattaforme, preferenze, PKGBUILD.
+**Fasi 6–7** (AI locali): da fare; richiedono componenti esterni non installati su questa macchina (`docs/MODELS.md`).
 
-### Funzionalità Implementate
+### Cosa c'è
+- **Interfaccia in stile CapCut** con Material You: pannelli ridimensionabili, schermata iniziale con progetti, template
+  e strumenti rapidi, barra contestuale a icone, timeline magnetica, copertina, anteprima a schermo intero (F11).
+- **Montaggio**: dividi, elimina a sinistra/destra (Q/W), ripple, trim, duplica, sostituisci, congela, inverti,
+  clip composte, multicamera, marker, entrata/uscita, aggancio, asse di anteprima.
+- **Libreria creativa**: 114 transizioni (CPU e GPU, verificate identiche), 66 filtri, 101 effetti video, 77 stili di
+  testo (53 animati), 93 animazioni, 109 sticker ed elementi animati, visualizzatori ed effetti a ritmo, curve di
+  velocità, motion blur.
+- **Creazione rapida**: template con segnaposto (scegli → metti i tuoi video → fatto), slideshow dalle foto sul ritmo
+  della musica, registrazione di schermo/webcam/voce con gobbo.
+- **Kit del marchio**: colori, font, loghi (anche come filigrana), intro/outro, musiche.
+- **Colore e audio**: LUT, curve, ruote, HSL, scope; loudness LUFS, ducking, riduzione rumore, effetti voce.
+- **Export**: MP4 H.264/H.265/AV1, encoding hardware con ripiego software, preset per le piattaforme, dimensione
+  massima, copertina incorporata, fotogramma come immagine.
+- **Preferenze**: tema chiaro/scuro e colori dinamici, lingua, motore grafico e accelerazioni, pacchetti di asset.
 
-#### ✅ Core (Fasi 0-4)
-- **Editing base**: trim, split, ripple, duplica, riordina clip
-- **Timeline**: traccia magnetica, snapping, tracce automatiche
-- **Trasformazioni**: posizione, scala, rotazione con maniglie su canvas
-- **Testo**: stili pronti, animazioni, modifica diretta sul canvas
-- **Keyframe**: animazione di tutti i parametri con curve di easing
-- **Audio**: volume, fade, mixer, normalizzazione loudness LUFS
-- **Transizioni**: libreria di 100+ transizioni (rendering CPU)
-- **Effetti**: 101 effetti video su 48 kernel CPU
-- **Filtri e colore**: HSL, curve, LUT, scope, correzione colore
-- **Maschere**: forme base con feather, tracciamento manuale
-- **Chroma key**: rimozione sfondo verde/blu con tolleranza
-- **Velocità**: costante, reverse, freeze frame, curve di velocità
-- **Export**: MP4 H.264/H.265, preset qualità, stima dimensione
-
-#### 🔨 In Corso (Fase 5)
-- **Template**: 8 template pronti con placeholder sostituibili
-- **Sticker**: libreria di emoji, forme, badge
-- **Elementi grafici animati**: contatori, barre progresso, frecce
-- **Visualizzatori audio**: spettro, onde, pulsanti sul ritmo
-- **Effetti sul beat**: flash, zoom, glitch sincronizzati
-- **Gestore asset**: installazione pacchetti utente da cartelle
-
-#### ⏳ Pianificate (Fasi 6-8)
-- AI locali (sottotitoli auto, TTS, rimozione sfondo) - **richiede modelli esterni**
-- Montaggio automatico sul ritmo
-- Encoding hardware (VA-API, QSV, NVENC)
-- Packaging (PKGBUILD per Arch Linux)
+### Cosa manca (vedi `docs/PROGRESS.md`)
+Sottotitoli automatici, TTS, rimozione sfondo e le altre funzioni AI (Fasi 6–7), montaggio automatico, coda di
+rendering ed export multi-formato, cronologia delle versioni, tour iniziale.
 
 ## Requisiti
 
@@ -91,7 +81,7 @@ Vedi [SHORTCUTS.md](docs/SHORTCUTS.md) per tutte le scorciatoie.
 ## Test
 
 ```bash
-# Tutti i test (26 suite)
+# Tutti i test (31 suite)
 ctest --test-dir build --output-on-failure
 
 # Test specifici

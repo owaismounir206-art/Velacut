@@ -1,7 +1,26 @@
 # vedit — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-10-04 sera (Fasi 0-4 ✅; Fase 5 🔶 ~90%: template completi, gestore asset, copertina;
-rifacimento dell'interfaccia in stile CapCut; Fase 8 🔶: preferenze reali)
+Ultimo aggiornamento: 2026-10-05 (Fasi 0-5 ✅ — criteri della Fase 5 verificati; Fase 8 🔶: preferenze reali,
+encoding hardware; Fasi 6-7 da fare. L'utente ha dato il via a proseguire con l'obiettivo "sistema tutto secondo la
+SPEC, uguale a CapCut, migliora l'estetica".)
+
+## Sessione 2026-10-05 — Fine Fase 5: transizioni GPU, slideshow, kit del marchio, filtri, blocco del motore
+- **Percorso GPU delle 114 transizioni** (`92d25d6`, criterio Fase 5 seconda metà ✅): GLSL 1.00/1.10 (OpenGL 2.1 /
+  ES 2.0) tradotto riga per riga dai kernel CPU; `engine::GpuTransitions` (contesto offscreen su un thread suo,
+  texture premoltiplicate, rumore della CPU come texture, autocontrollo al primo uso, ripiego CPU con avviso).
+  `tst_gputransitions`: 342 confronti, PSNR peggiore 52,1 dB (Radeon 740M) e 55,3 dB (llvmpipe), soglia 40 dB.
+  Dettagli in `docs/GPU_COMPATIBILITY.md` §7. Prestazioni del percorso GPU **non ancora misurate**.
+- **Blocco del motore risolto** (`afc4c26`): `tst_editor` restava fermo per sempre alla chiusura dell'editor. Con gdb:
+  un worker della cache era bloccato in `producer_timewarp_init` su un mutex dentro memoria già liberata
+  (use-after-free) — il thread dell'interfaccia costruiva producer colore passando dal loader di MLT mentre il worker
+  costruiva un producer di file. Ora i colori usano il servizio `color` diretto con i normalizzatori del loader aggiunti
+  a mano (misurati con un programma di prova: senza quelli audio l'export falliva, "error with audio encode: -22"), i
+  worker costruiscono i producer uno alla volta, il producer delle clip al contrario si apre in background. Il lock
+  globale della sessione precedente, preso anche sul thread dell'interfaccia, è stato tolto (bloccava l'anteprima).
+- **Slideshow dalle foto** (`2403bc6`, §5.13bis), **kit del marchio** (`8ba685c`, §5.13ter), **copertina nel file
+  MP4** (`bf5217b`), **66 filtri** (`05b95a4`: erano 32, la SPEC ne chiede 60; un test verifica che siano tutti
+  diversi), varianti del Ken Burns.
+- Test: 31 suite, verdi su tre esecuzioni consecutive della suite completa.
 
 ## Sessione 2026-10-04 (sera) — Interfaccia stile CapCut, template, preferenze, gestore asset
 Obiettivo dell'utente: "sistemare tutto secondo la SPEC, renderlo il più possibile uguale a CapCut e migliorare
@@ -131,8 +150,22 @@ l'estetica". Fatto, un commit per incremento:
 - **Traduzioni**: nuove stringhe di export/anteprima estratte e tradotte (0 non tradotte in `vedit_it.ts`).
 
 ## Fase corrente
-**Fase 5 — Libreria creativa: ~80%** (fondamenta tecniche complete; mancano percorso GPU transazioni+PSNR, UI QML del
-gestore asset, brand kit, slideshow automatica — vedi "Note oneste" in fondo)
+**Fase 5 — Libreria creativa: completa.** Criterio SPEC §8: "uso un template, sostituisco i media e ottengo un video
+completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::templateFromTheHomeScreen` in 2 azioni);
+"ogni transizione supera il test di rendering CPU/GPU" ✅ (`tst_gputransitions`, anche su llvmpipe). Limiti onesti:
+- copertina: da fotogramma o immagine (con testi, sticker e filtri presenti in quel fotogramma); non c'è un editor
+  della copertina separato dalla timeline;
+- gestore asset: pacchetti da cartella o `.zip`; le LUT non fanno ancora parte del formato dei pacchetti;
+- il percorso GPU riguarda le transizioni; filtri ed effetti video restano solo CPU (consentito: la GPU è opzionale).
+
+### Prossimi passi (Fase 6 — AI locali, via dato dall'utente con l'obiettivo della sessione)
+1. Sottotitoli: dati tipizzati (`subtitle` con parole temporizzate, stile della traccia `captionStyle`), import/export
+   SRT/VTT, rendering con evidenziazione parola per parola, ≥ 30 stili social, editor delle righe, scheda Sottotitoli.
+2. Sottotitoli automatici con whisper.cpp come processo esterno se installato (altrimenti disattivati con messaggio,
+   `docs/MODELS.md`), gestore modelli con download solo su richiesta; sottotitoli da copione allineati al parlato.
+3. Senza modelli: rimozione silenzi, rilevamento scene con divisione, stabilizzazione (vid.stab), slow motion con
+   `minterpolate`, auto reframe classico (soggetto stimato da movimento/contrasto).
+4. Interfaccia `IAiTask` comune (progresso, annullamento, risultato modificabile).
 
 ### Sessione 2026-10-01
 - **P5.7 — Template di progetto con segnaposto (fondamenta complete)**:
@@ -566,6 +599,11 @@ Gli smoke test verificano fotogrammi **decodificati e mostrati** dall'anteprima 
 - `tst_theme` impiega ~90 s nella build Debug con sanitizer (140 schemi generati); ~1 s in RelWithDebInfo.
 
 ## Bug noti / avvisi
+- **Anteprima nera a player fermo, raro, solo con la macchina satura**: il consumer `sdl2_audio` di MLT in pausa a
+  volte non mostra più fotogrammi dopo il primo (riprodotto con 4 test pesanti in parallelo: anche con il codice di
+  prima di questa sessione, 3 volte su 5). Lo stack mostra tutti i thread di MLT in attesa; né ripetere il refresh né
+  purge/seek lo sbloccano, la riproduzione (Play) sì. `tst_timelineplayer` gira da solo in CTest. Da valutare nella
+  Fase 8: un consumer dell'anteprima proprio (rendering dei fotogrammi fermi senza `sdl2_audio`).
 - Se vedit viene chiuso a forza durante un export, i file del job (`~/.cache/vedit/render/<id>.json/.vproj`) restano
   nella cache: da ripulire all'avvio (piccoli, ma si accumulano).
 - Avviso Qt "Failed to register with host portal … App info not found for 'vedit'": manca il file `.desktop`

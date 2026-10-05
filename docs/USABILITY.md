@@ -77,3 +77,21 @@ Criterio della Fase 3 verificato dall'interfaccia: `phaseThreeCriterionTitle` (t
 andamento "Morbido") e `phaseThreeCriterionGreenScreen` (colore scelto col contagocce sul player, maschera a cerchio
 ridimensionata dal suo angolo, fotogramma renderizzato controllato).
 
+
+### Fase 5 — Libreria creativa (e rifacimento in stile CapCut)
+Misurati da `tests/integration/tst_ui.cpp` sull'interfaccia ridisegnata (2026-10-05).
+
+| # | Scenario | Limite | Risultato | Percorso |
+|---|---|---|---|---|
+| 1 | Dall'avvio al primo taglio | 4 | ✅ **4** | invariato |
+| 2 | Musica dalla libreria locale | 2 | ✅ **2** | invariato |
+| 3 | Filtro su tutte le clip | 3 | ✅ **3** | invariato |
+| 4 | Testo scritto con animazione di ingresso | 5 + digitazione | ✅ **4** | invariato |
+| 6 | Transizione tra tutte le clip | 3 | ✅ **3** | invariato |
+| 8 | Esportare con le impostazioni consigliate | 2 | ✅ **2** | invariato |
+| — | Da un template a un video completo (criterio Fase 5) | — | **2** | clic sul template nella schermata iniziale → scelta dei file nella finestra che si apre da sola |
+| — | Slideshow dalle foto | — | **4** | "Slideshow" → scelta delle foto → stile → "Crea" |
+| 10 | Nessuna funzione principale oltre 2 livelli | 2 | ✅ | livello 1: barra contestuale a icone (anche Sostituisci, Q/W), interruttori della timeline, copertina, formato e schermo intero sotto il player, strumenti rapidi in home; livello 2: schede del rail (anche Marchio), menu in alto (Preferenze, Scorciatoie), menu della copertina |
+
+Note: la scelta dei file nei dialoghi di sistema non si può guidare in un test headless; il test la esegue
+direttamente e la conta come l'azione che è.
