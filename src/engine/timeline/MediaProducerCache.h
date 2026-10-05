@@ -29,10 +29,6 @@ class MediaProducerCache : public QObject
     Q_OBJECT
 
 public:
-    // Held while a worker builds a producer through MLT's loader (see the .cpp). Never take it on the interface
-    // thread.
-    static QMutex &constructionMutex();
-
     explicit MediaProducerCache(Mlt::Profile &profile, QObject *parent = nullptr);
     ~MediaProducerCache() override;
 

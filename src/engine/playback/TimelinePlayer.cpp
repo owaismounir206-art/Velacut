@@ -42,7 +42,9 @@ TimelinePlayer::TimelinePlayer(QObject *parent)
                                     if (const MediaClipData *data = clip.media();
                                         data && data->mediaId == mediaId && data->reversed) {
                                         const double speed = media->kind == MediaKind::Image ? 1.0 : data->speed;
-                                        m_cache->open(*media, -speed, data->preservePitch);
+                                        // In background, like every file (never MLT's loader on this thread):
+                                        // the cache's ready() refreshes the picture when it is open.
+                                        m_cache->producerOrRequest(*media, -speed, data->preservePitch);
                                     }
                                 }
                             }

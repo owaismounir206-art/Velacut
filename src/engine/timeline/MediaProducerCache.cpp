@@ -16,15 +16,19 @@ using namespace Qt::StringLiterals;
 
 namespace vedit::engine {
 
-// MLT's loader and timewarp producers are not safe to construct concurrently: a test run under load once left a
-// worker spinning forever inside producer_timewarp_init (mlt_properties_get) while another producer was being built,
-// and the editor hung when it closed (waiting for that worker). The workers of every cache build their producers
-// one at a time; the interface thread never takes this lock (it would wait for a slow file).
-QMutex &MediaProducerCache::constructionMutex()
+namespace {
+
+// MLT's loader (used for every file, and inside "timewarp") is not safe to run on two threads at once: its shared state
+// was seen freed under one producer construction by another. Producers of files are built only here, on the workers of
+// the caches, one at a time across the process. The interface thread never builds loader producers (colours use the
+// "color" service directly) and never takes this lock, so it never waits for a slow file.
+QMutex &loaderMutex()
 {
     static QMutex mutex;
     return mutex;
 }
+
+} // namespace
 
 MediaProducerCache::MediaProducerCache(Mlt::Profile &profile, QObject *parent)
     : QObject(parent)
@@ -35,6 +39,7 @@ MediaProducerCache::MediaProducerCache(Mlt::Profile &profile, QObject *parent)
 
 MediaProducerCache::~MediaProducerCache()
 {
+    m_pool.clear(); // files not started yet are not opened any more
     m_pool.waitForDone();
     clear();
 }
@@ -74,7 +79,7 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media, doub
             resource = "timewarp:" + QByteArray::number(warp, 'g', 12) + ':' + resource;
         }
         {
-            QMutexLocker construction(&constructionMutex());
+            QMutexLocker loader(&loaderMutex());
             producer = std::make_shared<Mlt::Producer>(m_profile, resource.constData());
         }
         if (!producer->is_valid()) {

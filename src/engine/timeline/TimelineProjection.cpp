@@ -34,9 +34,36 @@ const Sequence *sequenceOf(const ProjectData &project, const SequenceId &sequenc
 }
 
 // MLT colour strings with alpha are "#AARRGGBB" (mlt_property.c), our model's are "#RRGGBBAA".
+// MLT's colour notation (#AARRGGBB).
 QByteArray mltColor(const Color &color)
 {
-    return QByteArray("color:") + QString::asprintf("#%02X%02X%02X%02X", color.a, color.r, color.g, color.b).toLatin1();
+    return QString::asprintf("#%02X%02X%02X%02X", color.a, color.r, color.g, color.b).toLatin1();
+}
+
+// A solid colour, made with MLT's "color" service directly. Not through the "loader" (resource "color:…"): the loader
+// keeps shared state that a producer built at the same time on a worker (MediaProducerCache) also uses, and doing both
+// at once freed a property under the worker's feet (use-after-free seen in a hung test: the worker blocked on a mutex
+// inside freed memory). This runs on the interface thread, so it must not use the loader nor wait for the workers.
+// It gets the loader's normalizers by hand (measured with a probe: color_transform, deinterlace, fieldorder, crop,
+// swscale, resize, swresample, resample, avcolor_space, audioconvert): without the audio ones the background's silence
+// reached the encoder in a format it refused ("error with audio encode: -22").
+void attachNormalizers(Mlt::Profile &profile, Mlt::Producer &producer)
+{
+    for (const char *service : {"swscale", "resize", "swresample", "resample", "avcolor_space", "audioconvert"}) {
+        Mlt::Filter filter(profile, service);
+        if (filter.is_valid()) {
+            filter.set("_loader", 1);
+            producer.attach(filter);
+        }
+    }
+}
+
+std::shared_ptr<Mlt::Producer> makeColorProducer(Mlt::Profile &profile, const Color &color)
+{
+    auto producer = std::make_shared<Mlt::Producer>(profile, "color", mltColor(color).constData());
+    attachNormalizers(profile, *producer);
+    producer->set("length", 0x7fffffff);
+    return producer;
 }
 
 // MLT "hide" flags of a track producer: 1 = video, 2 = audio.
@@ -232,7 +259,8 @@ void TimelineProjection::build(const ProjectData &project, const SequenceId &seq
     m_compounds.clear();
     m_adjustmentFilters.clear();
     m_tractor = std::make_unique<Mlt::Tractor>(m_profile);
-    m_black = std::make_unique<Mlt::Producer>(m_profile, mltColor(Color{0, 0, 0, 255}).constData());
+    m_black = std::make_unique<Mlt::Producer>(m_profile, "color", mltColor(Color{0, 0, 0, 255}).constData());
+    attachNormalizers(m_profile, *m_black);
     m_black->set("length", 0x7fffffff);
     m_background = std::make_unique<Mlt::Playlist>(m_profile);
     m_tractor->set_track(*m_background, 0);
@@ -385,8 +413,7 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::colorProducer(const Color &co
     if (auto existing = m_colors.value(resource)) {
         return existing;
     }
-    auto producer = std::make_shared<Mlt::Producer>(m_profile, resource.constData());
-    producer->set("length", 0x7fffffff);
+    auto producer = makeColorProducer(m_profile, color);
     m_colors.insert(resource, producer);
     return producer;
 }
