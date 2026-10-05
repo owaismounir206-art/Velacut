@@ -18,6 +18,7 @@ extern "C" {
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
 #include <memory>
 
 namespace vedit::engine {
@@ -680,50 +681,106 @@ std::optional<std::vector<float>> extractLevels(const QString &path, int windows
     return levels;
 }
 
+namespace {
+
+// Decodes the video of `path` from `fromSeconds` to `toSeconds` (file time) as grey pictures of `width` × `height`,
+// calling `take` with each picture and its time. False if the file has no readable video or the work was cancelled.
+bool decodeGreyFrames(const QString &path, int width, int height, double fromSeconds, double toSeconds,
+                      const std::atomic<bool> *cancel, const DecodeProgress &progress, AVRational *frameRate,
+                      const std::function<void(const std::vector<uint8_t> &, double)> &take)
+{
+    Input input = openInput(path);
+    if (!input) {
+        return false;
+    }
+    const int streamIndex = av_find_best_stream(input.get(), AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
+    if (streamIndex < 0) {
+        return false;
+    }
+    AVStream *stream = input->streams[streamIndex];
+    Codec codec = openDecoder(stream);
+    if (!codec) {
+        return false;
+    }
+    if (frameRate) {
+        const AVRational rate = stream->avg_frame_rate.num > 0 ? stream->avg_frame_rate : stream->r_frame_rate;
+        *frameRate = rate.num > 0 && rate.den > 0 ? rate : AVRational{30, 1};
+    }
+    const int64_t start = stream->start_time == AV_NOPTS_VALUE ? 0 : stream->start_time;
+    if (fromSeconds > 0.0) {
+        const auto target = static_cast<int64_t>(fromSeconds / av_q2d(stream->time_base)) + start;
+        av_seek_frame(input.get(), streamIndex, target, AVSEEK_FLAG_BACKWARD);
+        avcodec_flush_buffers(codec.get());
+    }
+    const double span = std::max(1e-3, (std::isfinite(toSeconds) ? toSeconds
+                                                                  : (input->duration > 0 ? double(input->duration) / AV_TIME_BASE : 1.0)) -
+                                           fromSeconds);
+    std::unique_ptr<SwsContext, SwsDeleter> scaler;
+    int scalerFormat = -1;
+    int scalerWidth = 0;
+    int scalerHeight = 0;
+    std::vector<uint8_t> grey(static_cast<size_t>(width) * static_cast<size_t>(height));
+    Packet packet(av_packet_alloc());
+    Frame frame(av_frame_alloc());
+    bool ended = false;
+    bool past = false;
+    int taken = 0;
+    while (!ended && !past && !cancelled(cancel)) {
+        if (av_read_frame(input.get(), packet.get()) < 0) {
+            avcodec_send_packet(codec.get(), nullptr);
+            ended = true;
+        } else {
+            if (packet->stream_index == streamIndex) {
+                avcodec_send_packet(codec.get(), packet.get());
+            }
+            av_packet_unref(packet.get());
+        }
+        while (!past && avcodec_receive_frame(codec.get(), frame.get()) == 0) {
+            const int64_t pts = frame->best_effort_timestamp;
+            const double seconds = pts == AV_NOPTS_VALUE ? 0.0 : static_cast<double>(pts - start) * av_q2d(stream->time_base);
+            if (seconds + 1e-6 < fromSeconds) {
+                av_frame_unref(frame.get());
+                continue;
+            }
+            if (seconds > toSeconds) {
+                past = true;
+                break;
+            }
+            if (!scaler || scalerFormat != frame->format || scalerWidth != frame->width || scalerHeight != frame->height) {
+                scaler.reset(sws_getContext(frame->width, frame->height, static_cast<AVPixelFormat>(frame->format), width, height,
+                                            AV_PIX_FMT_GRAY8, SWS_AREA, nullptr, nullptr, nullptr));
+                scalerFormat = frame->format;
+                scalerWidth = frame->width;
+                scalerHeight = frame->height;
+            }
+            if (scaler) {
+                uint8_t *planes[1] = {grey.data()};
+                const int strides[1] = {width};
+                sws_scale(scaler.get(), frame->data, frame->linesize, 0, frame->height, planes, strides);
+                take(grey, seconds);
+                if (progress && ++taken % 30 == 0) {
+                    progress(std::clamp((seconds - fromSeconds) / span, 0.0, 1.0));
+                }
+            }
+            av_frame_unref(frame.get());
+        }
+    }
+    return !cancelled(cancel);
+}
+
+} // namespace
+
 std::optional<std::vector<float>> extractFrameDifferences(const QString &path, std::vector<double> *times,
                                                           const std::atomic<bool> *cancel, const DecodeProgress &progress)
 {
     constexpr int kWidth = 64;
     constexpr int kHeight = 36;
     constexpr int kBins = 32;
-    Input input = openInput(path);
-    if (!input) {
-        return std::nullopt;
-    }
-    const int streamIndex = av_find_best_stream(input.get(), AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
-    if (streamIndex < 0) {
-        return std::nullopt;
-    }
-    const AVStream *stream = input->streams[streamIndex];
-    Codec codec = openDecoder(stream);
-    if (!codec) {
-        return std::nullopt;
-    }
-    std::unique_ptr<SwsContext, SwsDeleter> scaler;
-    int scalerFormat = -1;
-    int scalerWidth = 0;
-    int scalerHeight = 0;
     std::vector<uint8_t> previous;
-    std::vector<uint8_t> current(kWidth * kHeight);
     std::array<float, kBins> previousHistogram{};
     std::vector<float> differences;
-    Packet packet(av_packet_alloc());
-    Frame frame(av_frame_alloc());
-    bool ended = false;
-    const auto take = [&](const AVFrame *picture) {
-        if (!scaler || scalerFormat != picture->format || scalerWidth != picture->width || scalerHeight != picture->height) {
-            scaler.reset(sws_getContext(picture->width, picture->height, static_cast<AVPixelFormat>(picture->format), kWidth,
-                                        kHeight, AV_PIX_FMT_GRAY8, SWS_AREA, nullptr, nullptr, nullptr));
-            scalerFormat = picture->format;
-            scalerWidth = picture->width;
-            scalerHeight = picture->height;
-        }
-        if (!scaler) {
-            return;
-        }
-        uint8_t *planes[1] = {current.data()};
-        const int strides[1] = {kWidth};
-        sws_scale(scaler.get(), picture->data, picture->linesize, 0, picture->height, planes, strides);
+    const bool ok = decodeGreyFrames(path, kWidth, kHeight, 0.0, std::numeric_limits<double>::infinity(), cancel, progress,
+                                     nullptr, [&](const std::vector<uint8_t> &current, double seconds) {
         std::array<float, kBins> histogram{};
         for (uint8_t value : current) {
             histogram[static_cast<size_t>(value * kBins / 256)] += 1.0f / static_cast<float>(current.size());
@@ -743,35 +800,38 @@ std::optional<std::vector<float>> extractFrameDifferences(const QString &path, s
         }
         differences.push_back(std::clamp(difference, 0.0f, 1.0f));
         if (times) {
-            const int64_t pts = picture->best_effort_timestamp;
-            const int64_t start = stream->start_time == AV_NOPTS_VALUE ? 0 : stream->start_time;
-            times->push_back(pts == AV_NOPTS_VALUE ? 0.0 : static_cast<double>(pts - start) * av_q2d(stream->time_base));
+            times->push_back(seconds);
         }
         previous = current;
         previousHistogram = histogram;
-        if (progress && differences.size() % 30 == 0) {
-            progress(doneShare(input.get(), stream, picture->best_effort_timestamp));
-        }
-    };
-    while (!ended && !cancelled(cancel)) {
-        if (av_read_frame(input.get(), packet.get()) < 0) {
-            avcodec_send_packet(codec.get(), nullptr);
-            ended = true;
-        } else {
-            if (packet->stream_index == streamIndex) {
-                avcodec_send_packet(codec.get(), packet.get());
-            }
-            av_packet_unref(packet.get());
-        }
-        while (avcodec_receive_frame(codec.get(), frame.get()) == 0) {
-            take(frame.get());
-            av_frame_unref(frame.get());
-        }
-    }
-    if (cancelled(cancel)) {
+    });
+    if (!ok || (differences.empty() && !cancelled(cancel))) {
         return std::nullopt;
     }
     return differences;
+}
+
+std::optional<std::vector<fx::CameraStep>> extractCameraSteps(const QString &path, double fromSeconds, double toSeconds,
+                                                              Rational *frameRate, const std::atomic<bool> *cancel,
+                                                              const DecodeProgress &progress)
+{
+    AVRational rate{30, 1};
+    constexpr int kWidth = 160;
+    constexpr int kHeight = 90;
+    std::vector<uint8_t> previous;
+    std::vector<fx::CameraStep> steps;
+    const bool ok = decodeGreyFrames(path, kWidth, kHeight, fromSeconds, toSeconds, cancel, progress, &rate,
+                                     [&](const std::vector<uint8_t> &current, double) {
+        steps.push_back(previous.empty() ? fx::CameraStep{} : fx::estimateCameraStep(previous, current, kWidth, kHeight));
+        previous = current;
+    });
+    if (!ok || steps.empty()) {
+        return std::nullopt;
+    }
+    if (frameRate) {
+        *frameRate = Rational(rate.num, rate.den);
+    }
+    return steps;
 }
 
 } // namespace vedit::engine

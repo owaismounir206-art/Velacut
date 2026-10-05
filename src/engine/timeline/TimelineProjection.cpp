@@ -8,6 +8,7 @@
 #include "fx/Library.h"
 
 #include <QCoreApplication>
+#include <QCryptographicHash>
 #include <QDataStream>
 #include <QFileInfo>
 #include <QIODevice>
@@ -658,6 +659,46 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::compoundProducer(const Projec
     return std::shared_ptr<Mlt::Producer>(nested, tractor);
 }
 
+std::optional<StabilizeSettings> TimelineProjection::stabilizeSettings(const Effect &effect, const Clip &clip)
+{
+    const MediaClipData *media = clip.media();
+    if (!media || media->reversed || media->curve) {
+        return std::nullopt; // steadied on clips played forwards at a steady speed
+    }
+    const auto text = [&effect](const QString &name) {
+        const auto it = effect.params.find(name);
+        if (it == effect.params.end()) {
+            return QString();
+        }
+        const ParamValue value = it->second.staticValue();
+        return std::holds_alternative<QString>(value) ? std::get<QString>(value) : QString();
+    };
+    const QString motion = text(u"motion"_s);
+    const std::optional<Rational> rate = Rational::fromString(text(u"motionRate"_s));
+    const std::optional<Rational> start = Rational::fromString(text(u"motionStart"_s));
+    if (motion.isEmpty() || !rate || !rate->isPositive() || !start) {
+        m_warnings << u"clip %1: stabilization data missing"_s.arg(clip.id.toString());
+        return std::nullopt;
+    }
+    const auto strengthIt = effect.params.find(u"strength"_s);
+    const double strength = std::clamp(strengthIt == effect.params.end() ? 0.6 : numberOf(strengthIt->second, 0.6), 0.0, 1.0);
+    StabilizeSettings settings;
+    settings.dataKey = QCryptographicHash::hash(motion.toLatin1(), QCryptographicHash::Sha1) + QByteArray::number(strength);
+    auto cached = m_stabilizations.value(settings.dataKey);
+    if (!cached) {
+        cached = std::make_shared<const fx::Stabilization>(
+            fx::stabilize(fx::decodeCameraSteps(motion.toLatin1()), rate->toDouble(), strength));
+        m_stabilizations.insert(settings.dataKey, cached);
+    }
+    settings.stabilization = cached;
+    settings.analysisStart = start->toDouble();
+    settings.analysisFps = rate->toDouble();
+    // Positions of the producer: frames of the output at 1x, or of the speed-changed producer.
+    const double outputFps = m_profile.fps() > 0 ? m_profile.fps() : 30.0;
+    settings.secondsPerPosition = (media->speed != 1.0 ? media->speed : 1.0) / outputFps;
+    return settings;
+}
+
 std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::renderOf(const Clip &clip, const Track &track,
                                                                                 const ProjectData &project, const Media *media,
                                                                                 bool mainTrack, int in, std::int64_t length)
@@ -697,6 +738,11 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
                 adjust.vignette = look.value(u"vignette"_s).toDouble();
                 adjust.grain = look.value(u"grain"_s).toDouble();
                 adjust.sharpness = look.value(u"sharpness"_s).toDouble();
+            } else if (effect.type == u"vedit.stabilize"_s) {
+                if (auto settings = stabilizeSettings(effect, clip)) {
+                    render->stabilize = std::move(settings);
+                }
+                continue;
             } else if (effect.type == u"vedit.chroma_key"_s) {
                 ChromaKeySettings ck;
                 for (const auto &[name, param] : effect.params) {
@@ -981,6 +1027,7 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
         stream << adjust.key();
     }
     stream << render->deflicker.has_value() << (render->deflicker ? render->deflicker->key() : QByteArray());
+    stream << render->stabilize.has_value() << (render->stabilize ? render->stabilize->key() : QByteArray());
     stream << render->motionBlur.has_value();
     if (render->motionBlur) {
         stream << render->motionBlur->intensity << render->motionBlur->angle << render->motionBlur->samples;
@@ -1337,6 +1384,11 @@ std::vector<TimelineProjection::Entry> TimelineProjection::transitionEntries(Tra
 
 void TimelineProjection::attachFilters(Mlt::Producer &cut, const ClipRender &render, bool withAudio)
 {
+    // First: the steadied picture is what every other effect works on.
+    if (render.stabilize) {
+        auto filter = makeStabilizeFilter(m_profile, *render.stabilize);
+        cut.attach(*filter);
+    }
     if (render.chromaKey) {
         auto filter = makeChromaKeyFilter(m_profile, *render.chromaKey);
         cut.attach(*filter);

@@ -19,7 +19,7 @@ la libreria rnnoise. Non installo pacchetti di sistema (regola del progetto): i 
 | Rimozione sfondo, segmentazione persona | ONNX Runtime + modello di segmentazione | MIT | dipende dal modello (es. MODNet Apache 2.0) | `onnxruntime` | da integrare; senza: disattivato |
 | Riduzione rumore / isolamento voce | RNNoise (già usato da MLT/FFmpeg) | BSD-3 | BSD-3 (modello incluso) | `rnnoise` (presente) | **già attivo** (Fase 4, pannello Audio) |
 | Rilevamento beat | aubio / flusso spettrale proprio | GPL-3 / GPL-3 (vedit) | — | `aubio` (presente) | **già attivo** (rilevatore proprio, D-51) |
-| Stabilizzazione | vid.stab via FFmpeg | GPL-2 | — | in `ffmpeg` (presente) | da integrare (senza modelli) |
+| Stabilizzazione | stima del movimento propria (4 regioni, corrispondenza a blocchi, mediana) + levigatura gaussiana | GPL-3 (vedit) | — | — | **attivo**: "Stabilizza" (traslazione; la rotazione è misurata ma non corretta) |
 | Rilevamento scene | differenza tra fotogrammi (propria, libavcodec) | GPL-3 (vedit) | — | — | **attivo**: "Dividi le scene" (barra della clip video) |
 | Rimozione silenzi | livelli RMS dell'audio (propria, libavcodec) | GPL-3 (vedit) | — | — | **attivo**: "Rimuovi pause" (barra della clip video/audio) |
 | Slow motion fluido | RIFE ncnn-vulkan → `minterpolate` (CPU) → frame blending | MIT / LGPL | MIT | AUR `rife-ncnn-vulkan` | da integrare; senza RIFE: ripiego CPU |

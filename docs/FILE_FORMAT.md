@@ -408,6 +408,18 @@ Non sono ammessi cicli (A contiene B che contiene A): il file verrebbe rifiutato
 - `params`: nomi e tipi dal manifest; parametri assenti = valore di default del manifest.
 - Tipo sconosciuto: l'oggetto viene conservato così com'è e l'effetto viene saltato nel rendering con un avviso.
 
+**`vedit.stabilize`** ("Stabilizza"): il movimento della camera misurato una volta e salvato nel progetto, così il
+progetto resta completo (anche per l'export in `vedit-render`) senza cache esterne:
+```json
+{ "type": "vedit.stabilize", "params": { "strength": 0.6, "motion": "AAAAAAAA…", "motionRate": "30000/1001",
+                                          "motionStart": "3/2" } }
+```
+- `strength` 0..1: quanto tremolio si toglie (1 ≈ un secondo di levigatura); unico parametro modificabile dall'utente.
+- `motion`: base64 di terne int16 little-endian per fotogramma analizzato (spostamento x e y in 1/10000 della
+  larghezza/altezza, rotazione in 1/1000 di grado; la prima terna è zero): ~8 byte per fotogramma.
+- `motionRate`, `motionStart`: fotogrammi al secondo dell'analisi e secondo del file del primo fotogramma analizzato
+  (`Rational` come stringa). I fotogrammi della clip fuori dalla parte analizzata non vengono corretti.
+
 ### 5.7 Maschere (`masks[]`)
 ```json
 { "id": "…", "shape": "rectangle", "center": [0.0, 0.0], "size": [0.5, 0.3], "rotation": 0.0,

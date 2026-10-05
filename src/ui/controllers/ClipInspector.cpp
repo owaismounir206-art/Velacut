@@ -38,6 +38,7 @@ const QString kAdjustType = u"vedit.adjust.basic"_s;
 const QString kGradeType = u"vedit.grade"_s;
 const QString kLutType = u"vedit.lut"_s;
 const QString kDeflickerType = u"vedit.deflicker"_s;
+const QString kStabilizeType = u"vedit.stabilize"_s;
 const QString kChromaType = u"vedit.chroma_key"_s;
 const QString kMotionBlurType = u"vedit.motion_blur"_s;
 constexpr int kBlendModeCount = 17;
@@ -1072,6 +1073,10 @@ QVariantMap ClipInspector::values() const
     map[u"lut.name"_s] = lutPath.isEmpty() ? QString() : QFileInfo(lutPath).fileName();
     map[u"lut.intensity"_s] = lut ? numberOf(lut->intensity, 1.0) : 1.0;
 
+    const Effect *stabilize = findEffect(*clip, kStabilizeType);
+    map[u"stabilize.on"_s] = stabilize != nullptr;
+    map[u"stabilize.strength"_s] =
+        stabilize && stabilize->params.count(u"strength"_s) ? numberOf(stabilize->params.at(u"strength"_s), 0.6) : 0.6;
     const Effect *deflicker = findEffect(*clip, kDeflickerType);
     map[u"deflicker.enabled"_s] = deflicker != nullptr && deflicker->enabled;
     map[u"deflicker.size"_s] = deflicker && deflicker->params.count(u"size"_s) ? numberOf(deflicker->params.at(u"size"_s), 5.0) : 5.0;
@@ -1261,6 +1266,9 @@ QString ClipInspector::sectionOf(const QString &key) const
     }
     if (key.startsWith(u"mask."_s) || key.startsWith(u"chroma."_s)) {
         return u"cutout"_s;
+    }
+    if (key.startsWith(u"stabilize."_s)) {
+        return u"video"_s;
     }
     if (key.startsWith(u"grade."_s) || key.startsWith(u"lut."_s) || key.startsWith(u"deflicker."_s)) {
         return u"adjust"_s;
@@ -1685,6 +1693,19 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
                 ensureEffect(c, kLutType).intensity = Param(std::clamp(number, 0.0, 1.0));
             }
         }, tr("Change LUT intensity"), mergeTarget);
+    }
+    if (key == u"stabilize.on"_s) {
+        if (value.toBool()) {
+            return false; // added by "Stabilize" (Editor.ai), which measures the shake first
+        }
+        return update(clips, [](Clip &c) { removeEffect(c, kStabilizeType); }, tr("Remove stabilization"), mergeTarget);
+    }
+    if (key == u"stabilize.strength"_s) {
+        return update(clips, [&](Clip &c) {
+            if (findEffect(c, kStabilizeType)) {
+                ensureEffect(c, kStabilizeType).params[u"strength"_s] = Param(std::clamp(number, 0.0, 1.0));
+            }
+        }, tr("Change stabilization"), mergeTarget);
     }
     if (key == u"deflicker.enabled"_s) {
         const bool on = value.toBool();

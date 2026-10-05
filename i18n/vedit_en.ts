@@ -56,7 +56,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+579"/>
+        <location line="+615"/>
         <source>%n keyframe(s)</source>
         <translation>
             <numerusform>%n keyframe</numerusform>
@@ -108,7 +108,7 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+1996"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+2017"/>
         <location line="+454"/>
         <source>Transition on %n cut(s)</source>
         <translation>

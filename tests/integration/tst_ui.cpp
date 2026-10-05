@@ -308,6 +308,7 @@ private slots:
         // Opacity from 100 % to about half, with a drag of the slider: one undo step.
         QQuickItem *slider = byName(u"slider_opacity"_s);
         QVERIFY(slider);
+        ensureVisible(slider);
         const int steps = editor()->document().undoStack().index();
         const QPoint end = slider->mapToScene(QPointF(slider->width() - 12, slider->height() / 2)).toPoint();
         drag(end, slider->mapToScene(QPointF(slider->width() / 2, slider->height() / 2)).toPoint());

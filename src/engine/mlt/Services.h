@@ -4,6 +4,7 @@
 #include "core/project/Clip.h"
 #include "core/project/SpeedCurve.h"
 #include "fx/Color.h"
+#include "fx/Stabilization.h"
 #include "fx/Grade.h"
 #include "fx/Composite.h"
 #include "fx/MotionBlur.h"
@@ -272,6 +273,20 @@ std::unique_ptr<Mlt::Producer> makeGraphicProducer(Mlt::Profile &profile, const 
 // A caption line `length` frames long in the style of its track (engine/text/CaptionRenderer.h).
 std::unique_ptr<Mlt::Producer> makeCaptionProducer(Mlt::Profile &profile, const SubtitleClipData &line,
                                                    const CaptionStyle &style, int length);
+
+// "Stabilize" (effect "vedit.stabilize"): each frame of the clip moved back onto a smoothed camera path and enlarged
+// to hide the borders (fx/Stabilization.h). The corrections are for the analysed frames of the file.
+struct StabilizeSettings
+{
+    std::shared_ptr<const fx::Stabilization> stabilization;
+    double analysisStart = 0.0;     // seconds of the file of the first analysed frame
+    double analysisFps = 30.0;      // analysed frames per second (the video's rate)
+    double secondsPerPosition = 0.0; // seconds of the file per position of the clip's producer (speed / output rate)
+    QByteArray dataKey;             // what the corrections were made from (motion data, strength)
+
+    QByteArray key() const;
+};
+std::unique_ptr<Mlt::Filter> makeStabilizeFilter(Mlt::Profile &profile, const StabilizeSettings &settings);
 
 struct VideoEffectSettings
 {

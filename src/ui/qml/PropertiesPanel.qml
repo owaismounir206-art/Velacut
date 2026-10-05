@@ -754,6 +754,42 @@ Rectangle {
                     visible: panel.page === "video"
                     spacing: Theme.space.md
 
+                    // Stabilize (SPEC 0bis rule 9): one click measures the shake, then how steady is a slider.
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: panel.inspector.kind === Inspector.Video
+                        spacing: Theme.space.xs
+                        Button {
+                            objectName: "stabilizeButton"
+                            Layout.fillWidth: true
+                            visible: !(panel.values["stabilize.on"] ?? false)
+                            enabled: !panel.editor.ai.busy
+                            variant: "tonal"
+                            iconName: "vibration"
+                            text: qsTr("Stabilize")
+                            onClicked: panel.editor.ai.stabilize()
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: panel.values["stabilize.on"] ?? false
+                            PropertySlider {
+                                Layout.fillWidth: true
+                                inspector: panel.inspector
+                                key: "stabilize.strength"
+                                label: qsTr("Steadiness")
+                                from: 0
+                                to: 1
+                                neutral: 0.6
+                            }
+                            IconButton {
+                                objectName: "stabilizeRemove"
+                                iconName: "close"
+                                label: qsTr("Remove stabilization")
+                                onClicked: panel.inspector.set("stabilize.on", false)
+                            }
+                        }
+                    }
+
                     PropertySection {
                         inspector: panel.inspector
                         section: "video"

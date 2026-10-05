@@ -576,6 +576,26 @@ private slots:
         QVERIFY(ai.removePauses());
         QVERIFY(!ai.busy());
         QCOMPARE(mainTrack(editor).clips.size(), size_t(2));
+
+        // "Stabilize": the shake is measured, the clip gets the effect; how much is a slider, and it can be removed.
+        editor.undo();
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        QVERIFY(ai.canStabilize());
+        QVERIFY(ai.stabilize());
+        QTRY_VERIFY_WITH_TIMEOUT(!ai.busy(), 20000);
+        const Clip &steadied = mainTrack(editor).clips[0];
+        const auto stabilize = std::find_if(steadied.effects.begin(), steadied.effects.end(),
+                                            [](const Effect &e) { return e.type == u"vedit.stabilize"_s; });
+        QVERIFY(stabilize != steadied.effects.end());
+        QVERIFY(!std::get<QString>(stabilize->params.at(u"motion"_s).staticValue()).isEmpty());
+        QCOMPARE(std::get<QString>(stabilize->params.at(u"motionRate"_s).staticValue()), u"30"_s);
+        ClipInspector &inspector = *editor.inspector();
+        QVERIFY(inspector.values().value(u"stabilize.on"_s).toBool());
+        QVERIFY(inspector.set(u"stabilize.strength"_s, 0.9));
+        inspector.endGesture();
+        QCOMPARE(inspector.values().value(u"stabilize.strength"_s).toDouble(), 0.9);
+        QVERIFY(inspector.set(u"stabilize.on"_s, false));
+        QVERIFY(!inspector.values().value(u"stabilize.on"_s).toBool());
     }
 
     // The actions of the selection (toolbar, right-click menu), the universal search, the freeze frame.
@@ -603,7 +623,7 @@ private slots:
         editor.select(mainTrack(editor).clips[0].id.toString(), false);
         QCOMPARE(ids(), (QStringList{u"split"_s, u"rippleTrimLeft"_s, u"rippleTrimRight"_s, u"delete"_s, u"duplicate"_s,
                                      u"speed"_s, u"volume"_s, u"animation"_s, u"freeze"_s, u"reverse"_s, u"mirror"_s,
-                                     u"rotate"_s, u"enhance"_s, u"removePauses"_s, u"splitScenes"_s, u"replace"_s}));
+                                     u"rotate"_s, u"enhance"_s, u"removePauses"_s, u"splitScenes"_s, u"stabilize"_s, u"replace"_s}));
         editor.select(mainTrack(editor).clips[1].id.toString(), false);
         QVERIFY(!ids().contains(u"speed"_s) && ids().contains(u"mirror"_s));
 

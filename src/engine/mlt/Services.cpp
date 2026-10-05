@@ -1130,6 +1130,38 @@ mlt_frame videoEffectProcess(mlt_filter filter, mlt_frame frame)
     return frame;
 }
 
+int stabilizeGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
+{
+    auto filter = static_cast<mlt_filter>(mlt_frame_pop_service(frame));
+    const int position = mlt_frame_pop_service_int(frame);
+    *format = mlt_image_rgba;
+    const int error = mlt_frame_get_image(frame, image, format, width, height, 1);
+    const auto *s = settingsOf<StabilizeSettings>(MLT_FILTER_PROPERTIES(filter));
+    if (error || !s || !s->stabilization || *format != mlt_image_rgba || !*image) {
+        return error;
+    }
+    const std::vector<fx::CameraStep> &corrections = s->stabilization->corrections;
+    const double seconds = position * s->secondsPerPosition;
+    const long index = std::lround((seconds - s->analysisStart) * s->analysisFps);
+    if (corrections.empty() || index < 0 || index >= static_cast<long>(corrections.size())) {
+        return 0; // outside the analysed part (the clip was lengthened after "Stabilize")
+    }
+    const int w = *width;
+    const int h = *height;
+    const std::vector<uint8_t> original(*image, *image + static_cast<std::ptrdiff_t>(w) * h * 4);
+    fx::applyStabilization(fx::ImageView{*image, w, h, w * 4}, fx::ConstImageView{original.data(), w, h, w * 4},
+                           corrections[static_cast<size_t>(index)], s->stabilization->zoom);
+    return 0;
+}
+
+mlt_frame stabilizeProcess(mlt_filter filter, mlt_frame frame)
+{
+    mlt_frame_push_service_int(frame, static_cast<int>(mlt_frame_get_position(frame)));
+    mlt_frame_push_service(frame, filter);
+    mlt_frame_push_get_image(frame, stabilizeGetImage);
+    return frame;
+}
+
 mlt_frame beatProcess(mlt_filter filter, mlt_frame frame)
 {
     mlt_frame_push_service_int(frame, static_cast<int>(mlt_frame_get_position(frame)));
@@ -1166,6 +1198,7 @@ void registerServices(Mlt::Repository *repository)
     repository->register_service(mlt_service_producer_type, "vedit.caption", createLayerProducer<captionGetImage>);
     repository->register_service(mlt_service_filter_type, "vedit.beat", createFilter<beatProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.effect", createFilter<videoEffectProcess>);
+    repository->register_service(mlt_service_filter_type, "vedit.stabilize", createFilter<stabilizeProcess>);
 }
 
 // ---- settings -----------------------------------------------------------------------------------------------------
@@ -1717,6 +1750,21 @@ fx::VideoEffectParams videoEffectParams(const QJsonObject &preset, const std::ma
         }
     }
     return params;
+}
+
+QByteArray StabilizeSettings::key() const
+{
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream << dataKey << analysisStart << analysisFps << secondsPerPosition;
+    return bytes;
+}
+
+std::unique_ptr<Mlt::Filter> makeStabilizeFilter(Mlt::Profile &profile, const StabilizeSettings &settings)
+{
+    auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.stabilize");
+    attachSettings(*filter, settings);
+    return filter;
 }
 
 QByteArray VideoEffectSettings::key() const

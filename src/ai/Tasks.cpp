@@ -56,4 +56,27 @@ QString SceneDetection::run()
     return {};
 }
 
+CameraMotionAnalysis::CameraMotionAnalysis(QString path, double fromSeconds, double toSeconds, QObject *parent)
+    : AiTask(parent)
+    , m_path(std::move(path))
+    , m_from(fromSeconds)
+    , m_to(toSeconds)
+{
+}
+
+QString CameraMotionAnalysis::title() const
+{
+    return tr("Steadying the shot");
+}
+
+QString CameraMotionAnalysis::run()
+{
+    const auto steps = engine::extractCameraSteps(m_path, m_from, m_to, &m_rate, cancelFlag(), [this](double share) { report(share); });
+    if (!steps) {
+        return isCanceled() ? QString() : tr("The pictures of %1 cannot be read.").arg(QFileInfo(m_path).fileName());
+    }
+    m_steps = *steps;
+    return {};
+}
+
 } // namespace vedit::ai

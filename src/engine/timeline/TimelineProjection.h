@@ -113,6 +113,7 @@ private:
         std::optional<MaskSettings> maskSettings;
         std::vector<AdjustSettings> adjusts;
         std::optional<DeflickerSettings> deflicker;
+        std::optional<StabilizeSettings> stabilize;
         std::optional<fx::MotionBlurSettings> motionBlur;
         std::vector<BeatEffectSettings> beats;
         std::vector<VideoEffectSettings> videoEffects;
@@ -201,6 +202,7 @@ private:
     std::shared_ptr<Mlt::Producer> colorProducer(const Color &color);
     std::shared_ptr<Mlt::Producer> textProducer(const TextClipData &text);
     std::shared_ptr<Mlt::Producer> captionProducer(const SubtitleClipData &line, const CaptionStyle &style, int length);
+    std::optional<StabilizeSettings> stabilizeSettings(const Effect &effect, const Clip &clip);
     std::shared_ptr<Mlt::Producer> compoundProducer(const ProjectData &project, const SequenceId &sequenceId, int activeAngle = 0);
     void retireEntries(Mlt::Playlist &playlist);
     void updateBackground();
@@ -233,6 +235,7 @@ private:
     std::vector<std::unique_ptr<Mlt::Filter>> m_adjustmentFilters;
     QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_colors; // colour producers, shared by cuts
     QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_texts;  // text producers, by content
+    QHash<QByteArray, std::shared_ptr<const fx::Stabilization>> m_stabilizations; // by motion data and strength
     QHash<QPair<SequenceId, int>, std::shared_ptr<TimelineProjection>> m_compounds;
     std::map<QString, std::pair<QDateTime, std::shared_ptr<const fx::CubeLut>>> m_cubeLuts;
     QHash<QByteArray, std::shared_ptr<Mlt::Producer>> m_stickers;    // sticker producers, by content

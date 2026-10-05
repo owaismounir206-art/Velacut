@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "core/time/Rational.h"
 #include "fx/Loudness.h"
+#include "fx/Stabilization.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -49,6 +51,12 @@ std::optional<std::vector<float>> extractLevels(const QString &path, int windows
 std::optional<std::vector<float>> extractFrameDifferences(const QString &path, std::vector<double> *times,
                                                           const std::atomic<bool> *cancel = nullptr,
                                                           const DecodeProgress &progress = {});
+
+// How the camera moved between consecutive frames from `fromSeconds` to `toSeconds` of the file (the analysis behind
+// "Stabilize"); the first step is zero. `frameRate` gets the video's frame rate.
+std::optional<std::vector<fx::CameraStep>> extractCameraSteps(const QString &path, double fromSeconds, double toSeconds,
+                                                              Rational *frameRate, const std::atomic<bool> *cancel = nullptr,
+                                                              const DecodeProgress &progress = {});
 
 // Integrated and peak loudness measured via ITU-R BS.1770-4 / EBU R128.
 std::optional<fx::LoudnessResult> extractLoudness(const QString &path,

@@ -6,10 +6,12 @@
 
 #include "core/serialization/ProjectJson.h"
 #include "fx/Library.h"
+#include "fx/Stabilization.h"
 #include "engine/mlt/MltRuntime.h"
 #include "engine/timeline/ClipPlacement.h"
 #include "engine/timeline/MediaProducerCache.h"
 #include "engine/analysis/AudioSync.h"
+#include "engine/analysis/Decoding.h"
 #include "engine/text/CaptionRenderer.h"
 #include "engine/timeline/TimelineProjection.h"
 
@@ -19,6 +21,8 @@
 #include <QTemporaryDir>
 
 #include <mlt++/Mlt.h>
+
+#include <cstring>
 
 using namespace vedit;
 using namespace vedit::engine;
@@ -452,6 +456,68 @@ private slots:
         const QImage half = CaptionRenderer::render(*layout, 12, QSize(160, 90));
         QCOMPARE(half.size(), QSize(160, 90));
         QVERIFY(!CaptionRenderer::bounds(*layout, 12).isEmpty());
+    }
+
+    // A shaky shot (a textured picture seen through a jittering window) is steadied: the picture moves much less from one
+    // rendered frame to the next.
+    void stabilizationSteadiesTheShot()
+    {
+        const QString file = m_dir.filePath(u"shaky.mp4"_s);
+        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s,
+                           u"nullsrc=s=400x225:r=30:d=3,format=gray,geq=lum='128+60*sin(X/7)*cos(Y/5)+40*sin((X+2*Y)/11)',"
+                           "crop=w=320:h=180:x='40+14*sin(n*1.9)':y='22+9*cos(n*2.7)',format=yuv420p"_s,
+                           u"-c:v"_s, u"libx264"_s, u"-crf"_s, u"16"_s, file}));
+        const Media shaky = testMedia(MediaKind::Video, file, RationalTime(90, Rational(30)), 320, 180, false);
+        ProjectData data = baseProject();
+        data.media.push_back(shaky);
+        Session session(data);
+        QVERIFY(session.apply(session.editor().insertMedia(shaky.id, frames(0))));
+        const auto shake = [](const ProjectData &project) {
+            auto profile = makeProfile(project, project.mainSequenceId);
+            MediaProducerCache cache(*profile);
+            TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+            projection.build(project, project.mainSequenceId);
+            const auto grey = [](const QImage &image) {
+                const QImage small = image.scaled(160, 90, Qt::IgnoreAspectRatio, Qt::SmoothTransformation).convertToFormat(QImage::Format_Grayscale8);
+                std::vector<std::uint8_t> pixels(160 * 90);
+                for (int y = 0; y < 90; ++y) {
+                    std::memcpy(pixels.data() + y * 160, small.constScanLine(y), 160);
+                }
+                return pixels;
+            };
+            double total = 0.0;
+            std::vector<std::uint8_t> previous = grey(projection.renderFrame(20));
+            for (int position = 21; position < 70; ++position) {
+                std::vector<std::uint8_t> current = grey(projection.renderFrame(position));
+                const fx::CameraStep step = fx::estimateCameraStep(previous, current, 160, 90);
+                total += std::abs(step.dx * 160.0) + std::abs(step.dy * 90.0);
+                previous = std::move(current);
+            }
+            return total / 49.0;
+        };
+        const double before = shake(session.data());
+        Rational rate;
+        const auto steps = extractCameraSteps(file, 0.0, 3.0, &rate);
+        QVERIFY(steps && steps->size() >= 85);
+        QCOMPARE(rate, Rational(30));
+        const ClipId clip = session.mainTrack().clips.front().id;
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [&](Clip &c) {
+            Effect effect;
+            effect.id = EffectId::create();
+            effect.type = u"vedit.stabilize"_s;
+            effect.params[u"strength"_s] = Param(0.8);
+            effect.params[u"motion"_s] = Param(QString::fromLatin1(fx::encodeCameraSteps(*steps)));
+            effect.params[u"motionRate"_s] = Param(rate.toString());
+            effect.params[u"motionStart"_s] = Param(u"0"_s);
+            c.effects.push_back(effect);
+        }, u"Stabilize"_s)));
+        const double after = shake(session.data());
+        qInfo("shake: %.2f -> %.2f pixels per frame", before, after);
+        if (const QString folder = qEnvironmentVariable("VEDIT_UI_SHOTS"); !folder.isEmpty()) {
+            renderFresh1(session.data(), 40).save(folder + u"/stabilized-40.png"_s);
+        }
+        QVERIFY2(before > 2.0, qPrintable(QString::number(before)));
+        QVERIFY2(after < before * 0.3, qPrintable(QStringLiteral("%1 → %2 pixels per frame").arg(before).arg(after)));
     }
 
     // Every caption style of the library draws its words, in a vertical video (VEDIT_UI_SHOTS=<folder> saves a contact

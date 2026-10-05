@@ -48,6 +48,10 @@ public:
     // Whether the clip under the selection (or the playhead) can be used: a video, or a sound for removePauses.
     Q_INVOKABLE bool canRemovePauses() const;
     Q_INVOKABLE bool canSplitScenes() const;
+    // "Stabilize": the camera's shake in the part of the video the clip plays is measured, and the clip gets the
+    // "vedit.stabilize" effect (strength in the Video page of the properties, removable).
+    Q_INVOKABLE bool stabilize();
+    Q_INVOKABLE bool canStabilize() const;
     Q_INVOKABLE void cancel();
 
 signals:

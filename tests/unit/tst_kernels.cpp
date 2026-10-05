@@ -11,6 +11,7 @@
 #include "core/project/SpeedCurve.h"
 #include "core/serialization/ProjectJson.h"
 #include "fx/Mask.h"
+#include "fx/Stabilization.h"
 #include "fx/MotionBlur.h"
 #include "fx/Transform.h"
 #include "fx/Transition.h"
@@ -1031,6 +1032,79 @@ private slots:
         applyMotionBlur(blurredDiag.view(), blurDiag);
         QVERIFY(blurredDiag.at(8, 8)[0] > 0);
         QVERIFY(blurredDiag.at(8, 8)[3] == 255);
+    }
+
+    void cameraStepsAreFound()
+    {
+        // A textured grey picture (smooth noise), then the same moved by (3, −2) pixels, then turned by 2°.
+        const int w = 160;
+        const int h = 90;
+        const auto texture = [](double x, double y) {
+            return std::sin(x * 0.31) * std::cos(y * 0.23) * 60 + std::sin((x + 2 * y) * 0.11) * 50 + std::cos(x * 0.07 - y * 0.13) * 30 + 128;
+        };
+        const auto picture = [&](double shiftX, double shiftY, double degrees) {
+            std::vector<std::uint8_t> pixels(static_cast<size_t>(w * h));
+            const double a = degrees * M_PI / 180.0;
+            for (int y = 0; y < h; ++y) {
+                for (int x = 0; x < w; ++x) {
+                    // Where this pixel was before the move (inverse map around the centre).
+                    const double px = x - w / 2.0 - shiftX;
+                    const double py = y - h / 2.0 - shiftY;
+                    const double sx = std::cos(a) * px + std::sin(a) * py + w / 2.0;
+                    const double sy = -std::sin(a) * px + std::cos(a) * py + h / 2.0;
+                    pixels[static_cast<size_t>(y * w + x)] = static_cast<std::uint8_t>(std::clamp(texture(sx, sy), 0.0, 255.0));
+                }
+            }
+            return pixels;
+        };
+        const auto still = picture(0, 0, 0);
+        const CameraStep moved = estimateCameraStep(still, picture(3, -2, 0), w, h);
+        QVERIFY2(std::abs(moved.dx * w - 3.0) < 0.3 && std::abs(moved.dy * h + 2.0) < 0.3,
+                 qPrintable(QStringLiteral("%1 %2").arg(moved.dx * w).arg(moved.dy * h)));
+        QVERIFY(std::abs(moved.angle) < 0.3);
+        const CameraStep turned = estimateCameraStep(still, picture(0, 0, 2.0), w, h);
+        QVERIFY2(std::abs(turned.angle - 2.0) < 0.5, qPrintable(QString::number(turned.angle)));
+        QVERIFY(std::abs(estimateCameraStep(still, still, w, h).dx * w) < 0.1);
+    }
+
+    void stabilizationSmoothsTheShake()
+    {
+        // A camera panning steadily right (0.002 per frame) with a shake of ±0.01 every other frame.
+        std::vector<CameraStep> steps(120);
+        for (size_t i = 1; i < steps.size(); ++i) {
+            steps[i].dx = 0.002f + (i % 2 ? 0.01f : -0.01f);
+        }
+        const Stabilization steady = stabilize(steps, 30.0, 0.6);
+        QCOMPARE(steady.corrections.size(), steps.size());
+        QVERIFY(steady.zoom > 1.0 && steady.zoom <= 1.25);
+        // After correction the path moves by the pan only: about 0.002 per frame, not ±0.01.
+        double worst = 0.0;
+        double position = 0.0;
+        for (size_t i = 20; i < 100; ++i) {
+            position += steps[i].dx;
+            const double corrected = position + steady.corrections[i].dx;
+            if (i > 20) {
+                const double previous = position - steps[i].dx + steady.corrections[i - 1].dx;
+                worst = std::max(worst, std::abs(corrected - previous - 0.002));
+            }
+        }
+        QVERIFY2(worst < 0.002, qPrintable(QString::number(worst)));
+        // Strength 0: nothing changes.
+        const Stabilization none = stabilize(steps, 30.0, 0.0);
+        QCOMPARE(none.zoom, 1.0);
+        QCOMPARE(none.corrections[50].dx, 0.0f);
+        // The steps fit in the project file and come back to 1/10000.
+        const std::vector<CameraStep> back = decodeCameraSteps(encodeCameraSteps(steps));
+        QCOMPARE(back.size(), steps.size());
+        QVERIFY(std::abs(back[7].dx - steps[7].dx) < 1e-4f);
+
+        // Drawn: a corrected frame is moved and enlarged around the centre.
+        std::vector<std::uint8_t> white(64 * 36 * 4, 255);
+        std::vector<std::uint8_t> out(64 * 36 * 4, 0);
+        applyStabilization(ImageView{out.data(), 64, 36, 64 * 4}, ConstImageView{white.data(), 64, 36, 64 * 4},
+                           CameraStep{0.05f, 0.0f, 0.0f}, 1.2);
+        QCOMPARE(int(out[(18 * 64 + 32) * 4 + 3]), 255);
+        QCOMPARE(int(out[(18 * 64 + 0) * 4 + 3]), 255); // the enlargement covers the uncovered side
     }
 };
 

@@ -124,6 +124,8 @@ ActionRegistry::ActionRegistry(EditorController &editor)
          [this] { return m_editor.ai()->canRemovePauses(); }, [this] { return m_editor.ai()->removePauses(); }});
     add({u"splitScenes"_s, tr("Split scenes"), u"view_week"_s, {}, Video,
          [this] { return m_editor.ai()->canSplitScenes(); }, [this] { return m_editor.ai()->splitScenes(); }});
+    add({u"stabilize"_s, tr("Stabilize"), u"vibration"_s, {}, Video,
+         [this] { return m_editor.ai()->canStabilize(); }, [this] { return m_editor.ai()->stabilize(); }});
     // Another video or photo in the same place, with the same length and look (SPEC 0bis rule 3, §5.2, §5.13).
     add({u"replace"_s, tr("Replace"), u"find_replace"_s, {}, videoLike, clip, [this] {
              const std::optional<ClipId> focus = m_editor.focusClip();

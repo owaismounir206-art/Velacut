@@ -3,7 +3,11 @@
 
 #include "ai/Tasks.h"
 #include "core/edit/TimelineEditor.h"
+#include "fx/Stabilization.h"
 #include "ui/controllers/EditorController.h"
+
+#include <algorithm>
+#include <cmath>
 
 using namespace Qt::StringLiterals;
 
@@ -121,6 +125,75 @@ bool AiController::splitScenes()
     connect(detection, &ai::AiTask::finished, this, [this, detection, what = *what] {
         m_scenes.insert(what.fingerprint, detection->cuts());
         applyScenes(what.clip, detection->cuts());
+    });
+    run(std::move(task));
+    return true;
+}
+
+bool AiController::canStabilize() const
+{
+    if (busy()) {
+        return false;
+    }
+    const std::optional<Target> what = target(true, false);
+    const Clip *clip = what ? m_editor.data().findClip(what->clip) : nullptr;
+    return clip && clip->media() && !clip->media()->reversed && !clip->media()->curve;
+}
+
+bool AiController::stabilize()
+{
+    if (busy()) {
+        return false;
+    }
+    const std::optional<Target> what = target(true, false);
+    const Clip *clip = what ? m_editor.data().findClip(what->clip) : nullptr;
+    const MediaClipData *media = clip ? clip->media() : nullptr;
+    if (!media) {
+        emit m_editor.message(tr("Select a video first."), false);
+        return false;
+    }
+    if (media->reversed || media->curve) {
+        emit m_editor.message(tr("Stabilize works on clips played forwards at a steady speed."), false);
+        return false;
+    }
+    // The part of the file the clip plays, with half a second around it (a trim later still has corrections).
+    const double from = std::max(0.0, media->sourceIn.toSecondsDouble() - 0.5);
+    const double to = media->sourceIn.toSecondsDouble() + clip->duration.toSecondsDouble() * media->speed + 0.5;
+    auto task = std::make_unique<ai::CameraMotionAnalysis>(what->path, from, to);
+    ai::CameraMotionAnalysis *analysis = task.get();
+    const ClipId clipId = what->clip;
+    connect(analysis, &ai::AiTask::finished, this, [this, analysis, clipId] {
+        if (!m_editor.data().findClip(clipId)) {
+            emit m_editor.message(tr("The clip was removed meanwhile."), false);
+            return;
+        }
+        const QString motion = QString::fromLatin1(fx::encodeCameraSteps(analysis->steps()));
+        const QString rate = analysis->frameRate().toString();
+        const QString start = Rational(std::llround(analysis->fromSeconds() * 1000.0), 1000).toString();
+        EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                                .updateClips({clipId},
+                                             [&](Clip &c) {
+                                                 auto it = std::find_if(c.effects.begin(), c.effects.end(), [](const Effect &e) {
+                                                     return e.type == u"vedit.stabilize"_s;
+                                                 });
+                                                 if (it == c.effects.end()) {
+                                                     Effect effect;
+                                                     effect.id = EffectId::create();
+                                                     effect.type = u"vedit.stabilize"_s;
+                                                     effect.params[u"strength"_s] = Param(0.6);
+                                                     c.effects.insert(c.effects.begin(), effect);
+                                                     it = c.effects.begin();
+                                                 }
+                                                 it->enabled = true;
+                                                 it->params[u"motion"_s] = Param(motion);
+                                                 it->params[u"motionRate"_s] = Param(rate);
+                                                 it->params[u"motionStart"_s] = Param(start);
+                                             },
+                                             tr("Stabilize"));
+        if (m_editor.push(std::move(result))) {
+            emit m_editor.message(tr("Clip stabilized: change how much in Video"), true);
+            emit m_editor.propertiesRequested(u"video"_s);
+        }
     });
     run(std::move(task));
     return true;
