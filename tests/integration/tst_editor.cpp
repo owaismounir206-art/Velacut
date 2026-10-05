@@ -22,6 +22,7 @@
 #include "ui/models/AssetLibraryModel.h"
 #include "ui/models/BrandKitModel.h"
 #include "ui/controllers/EditorController.h"
+#include "ui/controllers/TranscriptController.h"
 
 #include <QElapsedTimer>
 #include <QImage>
@@ -43,6 +44,18 @@ class TestEditor : public QObject
     TestMediaFiles m_files;
 
     static const Track &mainTrack(EditorController &editor) { return editor.data().mainSequence()->visualTracks.front(); }
+
+    // Transcripts kept in the cache by earlier tests (the same test files): each test starts from none.
+    static void clearTranscripts()
+    {
+        const QDir media(QDir::cleanPath(QFileInfo(ai::whisper::transcriptCachePath(u"x"_s, u"x"_s, u"x"_s)).absolutePath() + u"/.."_s));
+        for (const QString &folder : media.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            QDir cached(media.filePath(folder));
+            for (const QString &name : cached.entryList({u"transcript-*"_s}, QDir::Files)) {
+                cached.remove(name);
+            }
+        }
+    }
 
 private slots:
     void initTestCase()
@@ -655,6 +668,7 @@ private slots:
         QVERIFY(downloaded.wait(10000));
         QVERIFY2(ai::whisper::installed(u"base"_s), qPrintable(downloaded.first().first().toString()));
 
+        clearTranscripts();
         // The stand-in whisper-cli, first on the PATH.
         const QString bin = m_dir.filePath(u"fake-bin"_s);
         QDir().mkpath(bin);
@@ -726,6 +740,74 @@ echo "whisper_print_progress_callback: progress = 100%" >&2
         QVERIFY(!ai.autoCaptions(u"it"_s));
         QVERIFY(models.remove(u"base"_s).isEmpty());
         QVERIFY(!ai::whisper::installed(u"base"_s));
+    }
+
+    // Editing by the transcript: delete words and they are cut from the video; filler words out at once.
+    void editingByTheTranscript()
+    {
+        // A model and a stand-in whisper-cli answering "Ciao ehm a tutti. Ecco vedit."
+        QDir().mkpath(ai::whisper::modelsFolder());
+        QFile model(ai::whisper::modelPath(u"base"_s));
+        QVERIFY(model.open(QIODevice::WriteOnly));
+        model.write(QByteArray(2'000'000, 'x'));
+        model.close();
+        const QString bin = m_dir.filePath(u"fake-bin-transcript"_s);
+        QDir().mkpath(bin);
+        QFile script(bin + u"/whisper-cli"_s);
+        QVERIFY(script.open(QIODevice::WriteOnly));
+        script.write(R"(#!/bin/sh
+out=""
+while [ $# -gt 0 ]; do [ "$1" = "-of" ] && { out="$2"; shift; }; shift; done
+cat > "$out.json" <<JSON
+{"result": {"language": "it"}, "transcription": [
+ {"offsets": {"from": 0, "to": 3500}, "text": " Ciao ehm a tutti. Ecco vedit.", "tokens": [
+  {"text": " Ciao", "offsets": {"from": 100, "to": 500}}, {"text": " ehm", "offsets": {"from": 600, "to": 1200}},
+  {"text": " a", "offsets": {"from": 1300, "to": 1400}}, {"text": " tutti.", "offsets": {"from": 1400, "to": 1900}},
+  {"text": " Ecco", "offsets": {"from": 2800, "to": 3100}}, {"text": " vedit.", "offsets": {"from": 3100, "to": 3600}}]}]}
+JSON
+)");
+        script.close();
+        script.setPermissions(script.permissions() | QFileDevice::ExeOwner);
+        const QByteArray path = qgetenv("PATH");
+        qputenv("PATH", QByteArray(bin.toLocal8Bit() + ':' + path));
+        const auto restore = qScopeGuard([&path, &model] {
+            qputenv("PATH", path);
+            model.remove();
+        });
+
+        clearTranscripts(); // another test transcribed the same file
+        document::DraftStore store(m_dir.filePath(u"drafts-transcript"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache-transcript"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        TranscriptController &transcript = *editor.transcript();
+        QVERIFY(!transcript.available());
+        QVERIFY(editor.ai()->transcribe(u"it"_s));
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.ai()->busy(), 20000);
+        QVERIFY(transcript.available());
+        QCOMPARE(transcript.wordCount(), 6);
+        QCOMPARE(transcript.fillerCount(), 1);
+        QCOMPARE(transcript.paragraphs().size(), 2); // a sentence and a pause of 0.9 s
+
+        // "ehm" (0.6–1.2 s) out: the clip is 0.6 s shorter, in two pieces.
+        const RationalTime before = mainTrack(editor).clips[0].duration;
+        QCOMPARE(transcript.removeFillerWords(), 1);
+        QCOMPARE(mainTrack(editor).clips.size(), size_t(2));
+        QCOMPARE((before - mainTrack(editor).clips[0].duration - mainTrack(editor).clips[1].duration).value(), 18);
+        QCOMPARE(transcript.wordCount(), 5);
+        QCOMPARE(transcript.fillerCount(), 0);
+        // Delete "Ecco" (now word 3): cut from the second piece.
+        QVERIFY(transcript.deleteWords(3, 3));
+        QCOMPARE(transcript.wordCount(), 4);
+        const QVariantList words = transcript.paragraphs().last().toMap().value(u"words"_s).toList();
+        QCOMPARE(words.first().toMap().value(u"text"_s).toString(), u"vedit."_s);
+        editor.undo();
+        editor.undo();
+        QCOMPARE(mainTrack(editor).clips.size(), size_t(1));
+        QCOMPARE(transcript.wordCount(), 6);
     }
 
     // "Smooth slow motion" in the Speed page: the new frames are computed in background for the preview.

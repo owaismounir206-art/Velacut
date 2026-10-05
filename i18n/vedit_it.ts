@@ -811,52 +811,57 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+25"/>
+        <location line="+26"/>
         <source>Text</source>
         <translation>Testo</translation>
     </message>
     <message>
-        <location line="-24"/>
+        <location line="-25"/>
         <source>Captions</source>
         <translation>Sottotitoli</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+32"/>
+        <source>Transcript</source>
+        <translation>Trascrizione</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+36"/>
         <source>Stickers</source>
         <translation>Sticker</translation>
     </message>
     <message>
-        <location line="-31"/>
-        <location line="+36"/>
+        <location line="-35"/>
+        <location line="+40"/>
         <source>Effects</source>
         <translation>Effetti</translation>
     </message>
     <message>
-        <location line="-35"/>
-        <location line="+40"/>
+        <location line="-39"/>
+        <location line="+44"/>
         <source>Transitions</source>
         <translation>Transizioni</translation>
     </message>
     <message>
-        <location line="-39"/>
-        <location line="+44"/>
+        <location line="-43"/>
+        <location line="+48"/>
         <source>Filters</source>
         <translation>Filtri</translation>
     </message>
     <message>
-        <location line="-43"/>
-        <location line="+48"/>
+        <location line="-47"/>
+        <location line="+52"/>
         <source>Animations</source>
         <translation>Animazioni</translation>
     </message>
     <message>
-        <location line="-47"/>
+        <location line="-51"/>
         <source>Brand</source>
         <translation>Marchio</translation>
     </message>
     <message>
-        <location line="+152"/>
+        <location line="+156"/>
         <source>Choose a video or a photo for “%1”</source>
         <translation>Scegli un video o una foto per «%1»</translation>
     </message>
@@ -4771,6 +4776,81 @@
     </message>
 </context>
 <context>
+    <name>TranscriptPanel</name>
+    <message>
+        <location filename="../src/ui/qml/TranscriptPanel.qml" line="+26"/>
+        <source>Find the language</source>
+        <translation>Trova la lingua</translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>Language of the speech</source>
+        <translation>Lingua del parlato</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+89"/>
+        <source>Transcribe</source>
+        <translation>Trascrivi</translation>
+    </message>
+    <message>
+        <location line="-78"/>
+        <source>The transcript needs whisper.cpp, which is not installed: “%1”.</source>
+        <translation>La trascrizione richiede whisper.cpp, che non è installato: «%1».</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The transcript needs a speech model: download one once, it stays on this computer.</source>
+        <translation>La trascrizione richiede un modello del parlato: scaricalo una volta, resta su questo computer.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>How to install</source>
+        <translation>Come installarlo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Download a model</source>
+        <translation>Scarica un modello</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Transcript</source>
+        <translation>Trascrizione</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+6"/>
+        <source>Remove %n filler word(s)</source>
+        <translation>
+            <numerusform>Rimuovi %n parola di riempimento</numerusform>
+            <numerusform>Rimuovi %n parole di riempimento</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Transcribe the video, then cut it like a text: delete words and they are gone from the video.</source>
+        <translation>Trascrivi il video, poi taglialo come un testo: cancella le parole e spariscono dal video.</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Some clips are not in the transcript yet.</source>
+        <translation>Alcune clip non sono ancora nella trascrizione.</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+84"/>
+        <source>Cut %n word(s) from the video</source>
+        <translation>
+            <numerusform>Taglia %n parola dal video</numerusform>
+            <numerusform>Taglia %n parole dal video</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Clear the selection</source>
+        <translation>Annulla la selezione</translation>
+    </message>
+</context>
+<context>
     <name>VideoPreview</name>
     <message>
         <location filename="../src/ui/qml/VideoPreview.qml" line="+15"/>
@@ -4845,8 +4925,8 @@
         <location line="+80"/>
         <location line="+140"/>
         <location line="+13"/>
-        <location line="+31"/>
-        <location line="+111"/>
+        <location line="+148"/>
+        <location line="+17"/>
         <location line="+33"/>
         <location line="+74"/>
         <location line="+45"/>
@@ -4887,7 +4967,7 @@
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-2025"/>
+        <location line="-2048"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -4903,23 +4983,23 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1572"/>
+        <location line="+1595"/>
         <source>The media is too short to be used.</source>
         <translation>Il file è troppo corto per essere usato.</translation>
     </message>
     <message>
-        <location line="-1549"/>
+        <location line="-1572"/>
         <source>Add audio</source>
         <translation>Aggiungi audio</translation>
     </message>
     <message>
         <location line="+5"/>
-        <location line="+1497"/>
+        <location line="+1520"/>
         <source>The main track is locked.</source>
         <translation>La traccia principale è bloccata.</translation>
     </message>
     <message>
-        <location line="-1492"/>
+        <location line="-1515"/>
         <location line="+4"/>
         <location line="+4"/>
         <source>Add clip</source>
@@ -4931,8 +5011,8 @@
         <location line="+80"/>
         <location line="+73"/>
         <location line="+80"/>
-        <location line="+31"/>
-        <location line="+115"/>
+        <location line="+28"/>
+        <location line="+141"/>
         <location line="+34"/>
         <location line="+74"/>
         <location line="+40"/>
@@ -4951,13 +5031,13 @@
         <translation>La clip non esiste.</translation>
     </message>
     <message>
-        <location line="-1497"/>
+        <location line="-1520"/>
         <location line="+10"/>
         <location line="+49"/>
         <location line="+80"/>
         <location line="+73"/>
-        <location line="+110"/>
-        <location line="+115"/>
+        <location line="+107"/>
+        <location line="+141"/>
         <location line="+34"/>
         <location line="+74"/>
         <location line="+40"/>
@@ -4981,8 +5061,8 @@
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-1949"/>
-        <location line="+971"/>
+        <location line="-1972"/>
+        <location line="+994"/>
         <location line="+47"/>
         <location line="+14"/>
         <location line="+913"/>
@@ -4990,18 +5070,18 @@
         <translation>La traccia non esiste.</translation>
     </message>
     <message>
-        <location line="-1939"/>
+        <location line="-1962"/>
         <source>This clip cannot be placed on that track.</source>
         <translation>Questa clip non può andare su quella traccia.</translation>
     </message>
     <message>
         <location line="+31"/>
-        <location line="+561"/>
+        <location line="+584"/>
         <source>Move clip</source>
         <translation>Sposta clip</translation>
     </message>
     <message>
-        <location line="-481"/>
+        <location line="-504"/>
         <source>Trim clip</source>
         <translation>Accorcia clip</translation>
     </message>
@@ -5032,7 +5112,7 @@
         <translation>Non c&apos;è niente da dividere in questa clip.</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+27"/>
         <source>This works on video and audio clips played forwards at a steady speed.</source>
         <translation>Funziona sulle clip video e audio riprodotte in avanti a velocità costante.</translation>
     </message>
@@ -5047,12 +5127,12 @@
         <translation>Così si toglierebbe tutta la clip.</translation>
     </message>
     <message>
-        <location line="+56"/>
+        <location line="+64"/>
         <source>Remove pauses</source>
         <translation>Rimuovi pause</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+51"/>
         <source>Delete clip</source>
         <translation>Elimina clip</translation>
     </message>
@@ -6231,7 +6311,7 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message>
-        <location filename="../src/ui/controllers/AiController.cpp" line="+95"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+99"/>
         <source>Select a video or a sound with speech first.</source>
         <translation>Seleziona prima un video o un audio con del parlato.</translation>
     </message>
@@ -6248,13 +6328,13 @@
     </message>
     <message>
         <location line="+11"/>
-        <location line="+269"/>
+        <location line="+312"/>
         <location line="+32"/>
         <source>The clip was removed meanwhile.</source>
         <translation>Nel frattempo la clip è stata eliminata.</translation>
     </message>
     <message>
-        <location line="-276"/>
+        <location line="-319"/>
         <source>Stabilize</source>
         <translation>Stabilizza</translation>
     </message>
@@ -6274,7 +6354,7 @@
         <translation>Reinquadrato: i video seguono il soggetto (keyframe in Video)</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+30"/>
         <source>Automatic captions need whisper.cpp: install it with “%1”.</source>
         <translation>I sottotitoli automatici richiedono whisper.cpp: installalo con «%1».</translation>
     </message>
@@ -6289,7 +6369,12 @@
         <translation>Nella traccia principale non c&apos;è audio da cui fare i sottotitoli.</translation>
     </message>
     <message>
-        <location line="+38"/>
+        <location line="+24"/>
+        <source>Transcript ready: delete words to cut them from the video</source>
+        <translation>Trascrizione pronta: cancella le parole per tagliarle dal video</translation>
+    </message>
+    <message>
+        <location line="+56"/>
         <source>No speech was recognised on the main track.</source>
         <translation>Nessun parlato riconosciuto nella traccia principale.</translation>
     </message>
@@ -7158,7 +7243,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+209"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+211"/>
         <location line="+960"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
@@ -7556,6 +7641,40 @@
         <location line="+6"/>
         <source>Your shot</source>
         <translation>La tua ripresa</translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ui::TranscriptController</name>
+    <message>
+        <location filename="../src/ui/controllers/TranscriptController.cpp" line="+191"/>
+        <source>Delete words</source>
+        <translation>Elimina parole</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>%n word(s) cut from the video</source>
+        <translation>
+            <numerusform>%n parola tagliata dal video</numerusform>
+            <numerusform>%n parole tagliate dal video</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>No filler words found.</source>
+        <translation>Nessuna parola di riempimento trovata.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Remove filler words</source>
+        <translation>Rimuovi parole di riempimento</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>%n filler word(s) removed</source>
+        <translation>
+            <numerusform>%n parola di riempimento rimossa</numerusform>
+            <numerusform>%n parole di riempimento rimosse</numerusform>
+        </translation>
     </message>
 </context>
 </TS>

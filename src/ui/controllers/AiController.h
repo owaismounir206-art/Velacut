@@ -4,12 +4,14 @@
 #include "ai/Tasks.h"
 #include "ai/Whisper.h"
 #include "core/project/Id.h"
+#include "core/project/Media.h"
 #include "core/project/Sequence.h"
 
 #include <QHash>
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -58,6 +60,10 @@ public:
     // "Auto captions": the speech of the main track's clips, recognised by whisper.cpp (`language`: ISO 639-1 or
     // "auto"), becomes caption lines word by word on the caption track (replacing the lines there) — one undo step.
     Q_INVOKABLE bool autoCaptions(const QString &language = QStringLiteral("auto"));
+    // "Transcribe": the speech of the main track's clips, for editing by the transcript (Editor.transcript).
+    Q_INVOKABLE bool transcribe(const QString &language = QStringLiteral("auto"));
+    // The transcript of a media file made in this session or found in the cache (best model first), if any.
+    const ai::Transcript *transcriptOf(const Media &media) const;
     int speechStatus() const;
     QString speechInstallCommand() const;
     // Looks again for whisper.cpp and the models (installed while vedit runs).
@@ -68,6 +74,7 @@ signals:
     void busyChanged();
     void progressChanged();
     void speechStatusChanged();
+    void transcriptsChanged();
 
 private:
     struct Target
@@ -81,12 +88,15 @@ private:
     void applyPauses(const ClipId &clipId, const std::vector<ai::SourceRange> &pauses);
     void applyScenes(const ClipId &clipId, const std::vector<double> &cuts);
     void applyCaptions(const QHash<QString, ai::Transcript> &transcripts);
+    // Recognises the speech of the main track (what is not known yet), then calls `then` with every transcript.
+    bool startTranscription(const QString &language, std::function<void(const QHash<QString, ai::Transcript> &)> then);
     void applyReframe(const Canvas &canvas, const std::vector<ClipId> &clips, const std::vector<ai::SubjectTracking::Path> &paths);
 
     EditorController &m_editor;
     std::unique_ptr<ai::AiTask> m_task;
     QHash<QString, std::vector<ai::SourceRange>> m_pauses; // by media fingerprint
     QHash<QString, std::vector<double>> m_scenes;
+    mutable QHash<QString, ai::Transcript> m_transcripts; // by fingerprint (also those read from the cache)
 };
 
 } // namespace vedit::ui

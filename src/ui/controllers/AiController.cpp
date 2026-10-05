@@ -8,6 +8,10 @@
 #include "fx/Stabilization.h"
 #include "ui/controllers/EditorController.h"
 
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QJsonDocument>
 #include <algorithm>
 #include <cmath>
 #include <map>
@@ -342,7 +346,8 @@ void AiController::refreshSpeech()
     emit speechStatusChanged();
 }
 
-bool AiController::autoCaptions(const QString &language)
+bool AiController::startTranscription(const QString &language,
+                                      std::function<void(const QHash<QString, ai::Transcript> &)> then)
 {
     if (busy()) {
         return false;
@@ -377,9 +382,51 @@ bool AiController::autoCaptions(const QString &language)
     }
     auto task = std::make_unique<ai::Transcription>(files, ai::whisper::bestInstalled(), language);
     ai::Transcription *transcription = task.get();
-    connect(transcription, &ai::AiTask::finished, this, [this, transcription] { applyCaptions(transcription->transcripts()); });
+    connect(transcription, &ai::AiTask::finished, this, [this, transcription, then = std::move(then)] {
+        for (auto it = transcription->transcripts().begin(); it != transcription->transcripts().end(); ++it) {
+            m_transcripts.insert(it.key(), it.value());
+        }
+        emit transcriptsChanged();
+        then(transcription->transcripts());
+    });
     run(std::move(task));
     return true;
+}
+
+bool AiController::autoCaptions(const QString &language)
+{
+    return startTranscription(language, [this](const QHash<QString, ai::Transcript> &transcripts) { applyCaptions(transcripts); });
+}
+
+bool AiController::transcribe(const QString &language)
+{
+    return startTranscription(language, [this](const QHash<QString, ai::Transcript> &) {
+        emit m_editor.message(tr("Transcript ready: delete words to cut them from the video"), false);
+    });
+}
+
+const ai::Transcript *AiController::transcriptOf(const Media &media) const
+{
+    const QString fingerprint = media.fingerprint.value;
+    if (const auto it = m_transcripts.constFind(fingerprint); it != m_transcripts.constEnd()) {
+        return &it.value();
+    }
+    // Made in another session: the cache, best model first.
+    std::vector<ai::whisper::Model> models = ai::whisper::catalog();
+    std::sort(models.begin(), models.end(), [](const auto &a, const auto &b) { return a.quality > b.quality; });
+    const QDir folder(QFileInfo(ai::whisper::transcriptCachePath(fingerprint, u"x"_s, u"x"_s)).absolutePath());
+    for (const ai::whisper::Model &model : models) {
+        for (const QString &name : folder.entryList({u"transcript-"_s + model.id + u"-*.json"_s}, QDir::Files)) {
+            QFile file(folder.filePath(name));
+            if (!file.open(QIODevice::ReadOnly)) {
+                continue;
+            }
+            if (const auto transcript = ai::Transcript::fromJson(QJsonDocument::fromJson(file.readAll()).object())) {
+                return &m_transcripts.insert(fingerprint, *transcript).value();
+            }
+        }
+    }
+    return nullptr;
 }
 
 void AiController::applyCaptions(const QHash<QString, ai::Transcript> &transcripts)

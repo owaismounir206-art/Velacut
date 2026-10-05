@@ -6,6 +6,7 @@
 #include "CaptionsController.h"
 #include "ClipInspector.h"
 #include "RecordController.h"
+#include "TranscriptController.h"
 #include "common/Paths.h"
 #include "core/edit/ProjectFormat.h"
 #include "core/edit/TimelineEditor.h"
@@ -123,6 +124,7 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     m_inspector = new ClipInspector(*this);
     m_captions = new CaptionsController(*this);
     m_ai = new AiController(*this);
+    m_transcript = new TranscriptController(*this);
     m_actions = new ActionRegistry(*this);
     m_recorder = std::make_unique<RecordController>(*this);
 }

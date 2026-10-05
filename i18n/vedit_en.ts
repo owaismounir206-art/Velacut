@@ -4,7 +4,7 @@
 <context>
     <name>EditorScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+375"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+380"/>
         <source>Choose %n video(s) or photo(s) for the template</source>
         <translation>
             <numerusform>Choose %n video or photo for the template</numerusform>
@@ -87,9 +87,28 @@
     </message>
 </context>
 <context>
+    <name>TranscriptPanel</name>
+    <message numerus="yes">
+        <location filename="../src/ui/qml/TranscriptPanel.qml" line="+113"/>
+        <source>Remove %n filler word(s)</source>
+        <translation>
+            <numerusform>Remove %n filler word</numerusform>
+            <numerusform>Remove %n filler words</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+130"/>
+        <source>Cut %n word(s) from the video</source>
+        <translation>
+            <numerusform>Cut %n word from the video</numerusform>
+            <numerusform>Cut %n words from the video</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>vedit::ui::AiController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/AiController.cpp" line="+422"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+469"/>
         <source>%n caption line(s) from the speech</source>
         <translation>
             <numerusform>%n caption line from the speech</numerusform>
@@ -139,7 +158,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+959"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+961"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>
@@ -168,6 +187,25 @@
         <translation>
             <numerusform>%n clip deleted, gap closed</numerusform>
             <numerusform>%n clips deleted, gap closed</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ui::TranscriptController</name>
+    <message numerus="yes">
+        <location filename="../src/ui/controllers/TranscriptController.cpp" line="+194"/>
+        <source>%n word(s) cut from the video</source>
+        <translation>
+            <numerusform>%n word cut from the video</numerusform>
+            <numerusform>%n words cut from the video</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+20"/>
+        <source>%n filler word(s) removed</source>
+        <translation>
+            <numerusform>%n filler word removed</numerusform>
+            <numerusform>%n filler words removed</numerusform>
         </translation>
     </message>
 </context>

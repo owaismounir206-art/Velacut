@@ -4,6 +4,7 @@
 // save screenshots of each step (visual review).
 #include "TestMedia.h"
 
+#include "ai/Whisper.h"
 #include "document/Document.h"
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/mlt/MltRuntime.h"
@@ -16,6 +17,8 @@
 #include "ui/controllers/CaptionsController.h"
 #include "ui/controllers/ClipInspector.h"
 #include "ui/controllers/EditorController.h"
+#include "ui/controllers/AiController.h"
+#include "ui/controllers/TranscriptController.h"
 #include "ui/controllers/RecordController.h"
 #include "ui/models/TimelineModel.h"
 
@@ -25,6 +28,7 @@
 #include <QQuickItem>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QScopeGuard>
 #include <QSignalSpy>
 #include <QTest>
 #include <QTemporaryDir>
@@ -1001,6 +1005,73 @@ private slots:
         QCOMPARE(captions->lines()[0].toMap().value(u"text"_s).toString(), u"Ciao a tutti questo è Velacut"_s);
         editor()->undo();
         QCOMPARE(captions->lines().size(), 3);
+        click(byName(u"backButton"_s));
+        QTRY_VERIFY(!editor());
+    }
+
+    // The Transcript tab: words of the speech (a stand-in for whisper-cli), click and shift-click select, the cut.
+    void transcriptPanel()
+    {
+        QDir().mkpath(ai::whisper::modelsFolder());
+        QFile model(ai::whisper::modelPath(u"tiny"_s));
+        QVERIFY(model.open(QIODevice::WriteOnly));
+        model.write(QByteArray(2'000'000, 'x'));
+        model.close();
+        const QString bin = m_dir.filePath(u"fake-bin"_s);
+        QDir().mkpath(bin);
+        QFile script(bin + u"/whisper-cli"_s);
+        QVERIFY(script.open(QIODevice::WriteOnly));
+        script.write(R"(#!/bin/sh
+out=""
+while [ $# -gt 0 ]; do [ "$1" = "-of" ] && { out="$2"; shift; }; shift; done
+cat > "$out.json" <<JSON
+{"result": {"language": "it"}, "transcription": [
+ {"offsets": {"from": 0, "to": 3600}, "text": "", "tokens": [
+  {"text": " Ciao", "offsets": {"from": 100, "to": 500}}, {"text": " ehm", "offsets": {"from": 600, "to": 1200}},
+  {"text": " a", "offsets": {"from": 1300, "to": 1400}}, {"text": " tutti.", "offsets": {"from": 1400, "to": 1900}},
+  {"text": " Questo", "offsets": {"from": 2800, "to": 3100}}, {"text": " è", "offsets": {"from": 3100, "to": 3200}},
+  {"text": " vedit.", "offsets": {"from": 3200, "to": 3600}}]}]}
+JSON
+)");
+        script.close();
+        script.setPermissions(script.permissions() | QFileDevice::ExeOwner);
+        const QByteArray path = qgetenv("PATH");
+        qputenv("PATH", QByteArray(bin.toLocal8Bit() + ':' + path));
+        const auto restore = qScopeGuard([&path, &model] {
+            qputenv("PATH", path);
+            model.remove();
+        });
+
+        // Transcripts of earlier runs: start from none.
+        const QDir media(QDir::cleanPath(QFileInfo(ai::whisper::transcriptCachePath(u"x"_s, u"x"_s, u"x"_s)).absolutePath() + u"/.."_s));
+        for (const QString &folder : media.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            QDir cached(media.filePath(folder));
+            for (const QString &name : cached.entryList({u"transcript-*"_s}, QDir::Files)) {
+                QVERIFY(cached.remove(name));
+            }
+        }
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        editor()->ai()->refreshSpeech();
+        editor()->importAndInsert({QUrl::fromLocalFile(m_files.landscape)}, 0, editor()->timeline()->mainRow());
+        QTRY_VERIFY(!mainTrack().clips.empty());
+        click(byText(u"Transcript"_s));
+        QTRY_VERIFY(byName(u"transcribeButton"_s));
+        QTRY_VERIFY(byName(u"transcribeButton"_s)->property("enabled").toBool());
+        click(byName(u"transcribeButton"_s));
+        QTRY_VERIFY_WITH_TIMEOUT(byName(u"word_6"_s), 20000);
+        click(byName(u"word_4"_s));
+        QTest::mouseClick(m_window, Qt::LeftButton, Qt::ShiftModifier, centre(byName(u"word_5"_s)));
+        QTRY_VERIFY(byName(u"cutWordsButton"_s));
+        shot(u"23-transcript"_s);
+        const int before = editor()->transcript()->wordCount();
+        click(byName(u"cutWordsButton"_s));
+        QTRY_COMPARE(editor()->transcript()->wordCount(), before - 2);
+        QTRY_VERIFY(byName(u"removeFillersButton"_s));
+        click(byName(u"removeFillersButton"_s));
+        QTRY_COMPARE(editor()->transcript()->fillerCount(), 0);
+        click(byText(u"Media"_s));
         click(byName(u"backButton"_s));
         QTRY_VERIFY(!editor());
     }

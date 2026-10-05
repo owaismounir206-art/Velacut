@@ -56,6 +56,11 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   **Gestore modelli** (`AiModelsModel`, `FileDownload`): quattro modelli con dimensione, scarica/ferma/rimuovi;
   stato di whisper.cpp con il comando da copiare e "Controlla di nuovo". Test: download da `file://`, sostituto di
   `whisper-cli` nel PATH (cache riusata, sostituzione, annullamento, stato disattivato senza programma).
+- **Editing dal testo** (scheda **Trascrizione**, `TranscriptController`, criterio della Fase 6): le parole della
+  traccia principale in ordine di timeline, a frasi (lista virtualizzata); clic = vai alla parola, Maiusc+clic =
+  seleziona fino a lì, Canc o "Taglia N parole dal video" = `TimelineEditor::removeSourceRanges` su più clip in un
+  passo; parola in corso evidenziata; "Rimuovi N parole di riempimento" (ehm, uhm, um, uh, eh…; le parole vere usate
+  come riempitivo restano all'utente). Trascrizioni prese anche dalla cache delle sessioni precedenti.
 
 ## Sessione 2026-10-05 — Fine Fase 5: transizioni GPU, slideshow, kit del marchio, filtri, blocco del motore
 - **Percorso GPU delle 114 transizioni** (`92d25d6`, criterio Fase 5 seconda metà ✅): GLSL 1.00/1.10 (OpenGL 2.1 /
@@ -220,8 +225,9 @@ completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::t
 2. ✅ Sottotitoli automatici con whisper.cpp (processo esterno, disattivati con il comando se manca) e gestore modelli
    (Preferenze → Modelli AI, download solo su richiesta con la dimensione). **Da verificare con il whisper-cli reale**
    quando l'utente lo installa (`yay -S whisper.cpp`): il formato `--output-json-full` è stato ricostruito dalla
-   documentazione e provato con un sostituto. Restano: sottotitoli da copione allineati al parlato, editing dal testo,
-   parole di riempimento, capitoli.
+   documentazione e provato con un sostituto. ✅ Editing dal testo e parole di riempimento (scheda Trascrizione).
+   Restano: sottotitoli da copione allineati al parlato, capitoli automatici, testi delle canzoni (karaoke: si fa già
+   con "Sottotitoli automatici" + stile karaoke se whisper riconosce il canto).
 3. Senza modelli: ✅ rimozione pause, ✅ divisione delle scene, ✅ stabilizzazione (traslazione), ✅ rallentatore
    fluido (percorso CPU `minterpolate`), ✅ auto reframe classico; restano rotazione nella stabilizzazione (stima più
    robusta), RIFE quando installato, volti (con un modello) per l'auto reframe.

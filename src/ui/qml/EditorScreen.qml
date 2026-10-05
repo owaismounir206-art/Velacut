@@ -29,7 +29,7 @@ Item {
         }
         function onImportRequested() { library.importFiles() }
         function onLibraryRequested(name) {
-            const index = ["media", "audio", "text", "captions", "stickers", "effects", "transitions", "filters", "animations", "brand"].indexOf(name)
+            const index = ["media", "audio", "text", "captions", "transcript", "stickers", "effects", "transitions", "filters", "animations", "brand"].indexOf(name)
             if (index >= 0)
                 rail.currentIndex = index
         }
@@ -204,6 +204,7 @@ Item {
                                     { text: qsTr("Audio"), iconName: "music_note" },
                                     { text: qsTr("Text"), iconName: "title" },
                                     { text: qsTr("Captions"), iconName: "subtitles" },
+                                    { text: qsTr("Transcript"), iconName: "description" },
                                     { text: qsTr("Stickers"), iconName: "add_reaction" },
                                     { text: qsTr("Effects"), iconName: "auto_awesome" },
                                     { text: qsTr("Transitions"), iconName: "transition_fade" },
@@ -230,6 +231,10 @@ Item {
                                 title: qsTr("Text")
                             }
                             CaptionsPanel {
+                                editor: root.editor
+                                onSetUpRequested: root.aiModelsRequested()
+                            }
+                            TranscriptPanel {
                                 editor: root.editor
                                 onSetUpRequested: root.aiModelsRequested()
                             }

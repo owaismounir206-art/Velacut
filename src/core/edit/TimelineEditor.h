@@ -67,6 +67,9 @@ public:
     // Takes stretches of the clip's source out of it ("Remove pauses"): the rest stays together, the following clips
     // of the track move back. Ranges in the media's own time; media clips at a steady speed, played forwards.
     EditResult removeSourceRanges(const ClipId &clipId, const std::vector<std::pair<RationalTime, RationalTime>> &ranges);
+    // The same on several clips in one step ("delete these words" across clips), with its undo text.
+    EditResult removeSourceRanges(const std::map<ClipId, std::vector<std::pair<RationalTime, RationalTime>>> &ranges,
+                                  const QString &text);
     EditResult deleteClips(const std::vector<ClipId> &clipIds);
     // Deletes clips and closes the gaps on their tracks by shifting subsequent clips left.
     EditResult rippleDeleteClips(const std::vector<ClipId> &clipIds);
@@ -177,6 +180,8 @@ private:
     EditResult fail(const QString &message) const;
     // Splits a clip of `modified` at `time` (no checks of the sequence); an error for the user, empty on success.
     QString splitIn(Sequence &modified, const ClipId &clipId, const RationalTime &time, ClipId *secondId) const;
+    QString removeRangesIn(Sequence &modified, const ClipId &clipId,
+                           const std::vector<std::pair<RationalTime, RationalTime>> &ranges, ClipId *firstKept) const;
     EditResult finish(Sequence &&modified, const QString &text, const ClipId &primary) const;
 
     const ProjectData &m_project;

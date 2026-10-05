@@ -721,24 +721,21 @@ EditResult TimelineEditor::splitClipAt(const ClipId &clipId, std::vector<Rationa
     return finish(std::move(modified), tr("Split clip"), clipId);
 }
 
-EditResult TimelineEditor::removeSourceRanges(const ClipId &clipId, const std::vector<std::pair<RationalTime, RationalTime>> &ranges)
+QString TimelineEditor::removeRangesIn(Sequence &modified, const ClipId &clipId,
+                                       const std::vector<std::pair<RationalTime, RationalTime>> &ranges, ClipId *firstKeptId) const
 {
-    if (!m_sequence) {
-        return fail(tr("The sequence does not exist."));
-    }
-    Sequence modified = *m_sequence;
     const auto ref = findClip(modified, clipId);
     if (!ref) {
-        return fail(tr("The clip does not exist."));
+        return tr("The clip does not exist.");
     }
     if (ref->track->locked) {
-        return fail(tr("The track is locked."));
+        return tr("The track is locked.");
     }
     const Clip original = ref->clip();
     const MediaClipData *media = original.media();
     const Media *item = media ? m_project.findMedia(media->mediaId) : nullptr;
     if (!media || !item || item->kind == MediaKind::Image || media->curve || media->reversed) {
-        return fail(tr("This works on video and audio clips played forwards at a steady speed."));
+        return tr("This works on video and audio clips played forwards at a steady speed.");
     }
     // The ranges as frames from the clip's start, inside the clip, merged.
     std::vector<std::pair<std::int64_t, std::int64_t>> cuts;
@@ -766,14 +763,14 @@ EditResult TimelineEditor::removeSourceRanges(const ClipId &clipId, const std::v
         }
     }
     if (merged.empty()) {
-        return fail(tr("There is nothing to remove in this clip."));
+        return tr("There is nothing to remove in this clip.");
     }
     std::int64_t removedTotal = 0;
     for (const auto &[a, b] : merged) {
         removedTotal += b - a;
     }
     if (removedTotal >= length) {
-        return fail(tr("That would remove the whole clip."));
+        return tr("That would remove the whole clip.");
     }
     // Cut at every edge, then take out the pieces in the ranges.
     std::vector<std::int64_t> edges;
@@ -790,7 +787,7 @@ EditResult TimelineEditor::removeSourceRanges(const ClipId &clipId, const std::v
         ClipId next;
         if (const QString error = splitIn(modified, pieces.back(), original.start + RationalTime(edge, m_rate), &next);
             !error.isEmpty()) {
-            return fail(error);
+            return error;
         }
         pieces.push_back(next);
         pieceStarts.push_back(edge);
@@ -829,7 +826,33 @@ EditResult TimelineEditor::removeSourceRanges(const ClipId &clipId, const std::v
         }
     }
     cleanGroups(modified);
-    return finish(std::move(modified), tr("Remove pauses"), firstKept);
+    if (firstKeptId) {
+        *firstKeptId = firstKept;
+    }
+    return {};
+}
+
+EditResult TimelineEditor::removeSourceRanges(const ClipId &clipId, const std::vector<std::pair<RationalTime, RationalTime>> &ranges)
+{
+    return removeSourceRanges({{clipId, ranges}}, tr("Remove pauses"));
+}
+
+EditResult TimelineEditor::removeSourceRanges(const std::map<ClipId, std::vector<std::pair<RationalTime, RationalTime>>> &ranges,
+                                              const QString &text)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    ClipId primary;
+    for (const auto &[clipId, clipRanges] : ranges) {
+        ClipId firstKept;
+        if (const QString error = removeRangesIn(modified, clipId, clipRanges, &firstKept); !error.isEmpty()) {
+            return fail(error);
+        }
+        primary = primary.isNull() ? firstKept : primary;
+    }
+    return finish(std::move(modified), text, primary);
 }
 
 EditResult TimelineEditor::deleteClips(const std::vector<ClipId> &clipIds)

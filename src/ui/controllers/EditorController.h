@@ -10,6 +10,7 @@
 #include "ui/models/MediaPoolModel.h"
 #include "ui/models/TimelineModel.h"
 #include "RecordController.h"
+#include "TranscriptController.h"
 
 #include <QObject>
 #include <QColor>
@@ -68,6 +69,7 @@ class EditorController : public QObject
     Q_PROPERTY(vedit::ui::ClipInspector *inspector READ inspector CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::CaptionsController *captions READ captions CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::AiController *ai READ ai CONSTANT FINAL)
+    Q_PROPERTY(vedit::ui::TranscriptController *transcript READ transcript CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::ActionRegistry *actions READ actions CONSTANT FINAL)
     Q_PROPERTY(vedit::ui::RecordController *recorder READ recorder CONSTANT FINAL)
     Q_PROPERTY(QStringList selection READ selection NOTIFY selectionChanged FINAL)
@@ -132,6 +134,7 @@ public:
     ClipInspector *inspector() const { return m_inspector; }
     CaptionsController *captions() const { return m_captions; }
     AiController *ai() const { return m_ai; }
+    TranscriptController *transcript() const { return m_transcript; }
     ActionRegistry *actions() const { return m_actions; }
     RecordController *recorder() const;
     Q_INVOKABLE void startRecord(int mode = 0);
@@ -394,6 +397,7 @@ private:
     ClipInspector *m_inspector = nullptr; // child
     CaptionsController *m_captions = nullptr; // child
     AiController *m_ai = nullptr; // child
+    TranscriptController *m_transcript = nullptr; // child
     quint64 m_trackGesture = 1;
     ActionRegistry *m_actions = nullptr;  // child
     quint64 m_importBatch = 0;
