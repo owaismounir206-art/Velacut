@@ -2,12 +2,14 @@
 #include "AiController.h"
 
 #include "ai/Tasks.h"
+#include "core/commands/Edit.h"
 #include "core/edit/TimelineEditor.h"
 #include "fx/Stabilization.h"
 #include "ui/controllers/EditorController.h"
 
 #include <algorithm>
 #include <cmath>
+#include <map>
 
 using namespace Qt::StringLiterals;
 
@@ -197,6 +199,128 @@ bool AiController::stabilize()
     });
     run(std::move(task));
     return true;
+}
+
+bool AiController::autoReframe(int preset)
+{
+    if (busy()) {
+        return false;
+    }
+    const Sequence *sequence = m_editor.data().mainSequence();
+    const std::optional<Canvas> canvas = m_editor.canvasFor(preset);
+    if (!sequence || !canvas) {
+        return false;
+    }
+    // The videos of the main track, each with the part of its file it plays.
+    std::vector<ClipId> clips;
+    std::vector<ai::SubjectTracking::Part> parts;
+    for (const Clip &clip : sequence->visualTracks.front().clips) {
+        const MediaClipData *media = clip.media();
+        const Media *item = media ? m_editor.data().findMedia(media->mediaId) : nullptr;
+        if (!item || item->kind != MediaKind::Video || !item->info.video || media->curve) {
+            continue;
+        }
+        const double first = media->sourceIn.toSecondsDouble();
+        const double length = clip.duration.toSecondsDouble() * media->speed;
+        clips.push_back(clip.id);
+        parts.push_back({item->path, std::max(0.0, first - 0.5), first + length + 0.5});
+    }
+    if (clips.empty()) {
+        m_editor.setCanvasPreset(preset); // nothing to follow: just the format
+        return true;
+    }
+    auto task = std::make_unique<ai::SubjectTracking>(parts);
+    ai::SubjectTracking *tracking = task.get();
+    const Canvas target = *canvas;
+    connect(tracking, &ai::AiTask::finished, this, [this, tracking, clips, target] {
+        applyReframe(target, clips, tracking->paths());
+    });
+    run(std::move(task));
+    return true;
+}
+
+void AiController::applyReframe(const Canvas &canvas, const std::vector<ClipId> &clips,
+                                const std::vector<ai::SubjectTracking::Path> &paths)
+{
+    const Sequence *sequence = m_editor.data().mainSequence();
+    if (!sequence) {
+        return;
+    }
+    const Rational rate = m_editor.data().settings.frameRate;
+    std::map<ClipId, Transform> transforms;
+    for (size_t i = 0; i < clips.size() && i < paths.size(); ++i) {
+        const Clip *clip = m_editor.data().findClip(clips[i]);
+        const MediaClipData *media = clip ? clip->media() : nullptr;
+        const Media *item = media ? m_editor.data().findMedia(media->mediaId) : nullptr;
+        if (!item || !item->info.video) {
+            continue;
+        }
+        // The picture covering the new canvas, in canvas widths and heights.
+        const bool turned = item->info.video->rotation == 90 || item->info.video->rotation == 270;
+        const double width = turned ? item->info.video->height : item->info.video->width;
+        const double height = turned ? item->info.video->width : item->info.video->height;
+        const double cover = std::max(canvas.width / width, canvas.height / height);
+        const double spanX = width * cover / canvas.width;
+        const double spanY = height * cover / canvas.height;
+        const auto positionOf = [&](const fx::SubjectPoint &point) {
+            const double limitX = (spanX - 1.0) / 2.0;
+            const double limitY = (spanY - 1.0) / 2.0;
+            return Vec2{std::clamp((0.5 - point.x) * spanX, -limitX, limitX), std::clamp((0.5 - point.y) * spanY, -limitY, limitY)};
+        };
+        Transform transform = clip->transform;
+        transform.fit = FitMode::Cover;
+        transform.scale = Param(Vec2{1.0, 1.0});
+        const ai::SubjectTracking::Path &path = paths[i];
+        // A keyframe every half second, in the clip's keyframe time (seconds of the file for videos).
+        std::vector<Keyframe> keyframes;
+        double lastSeconds = -1e9;
+        double lowX = 1e9, highX = -1e9, lowY = 1e9, highY = -1e9;
+        for (size_t k = 0; k < path.points.size() && k < path.times.size(); ++k) {
+            if (path.times[k] - lastSeconds < 0.5 - 1e-6) {
+                continue;
+            }
+            lastSeconds = path.times[k];
+            const Vec2 position = positionOf(path.points[k]);
+            lowX = std::min(lowX, position.x);
+            highX = std::max(highX, position.x);
+            lowY = std::min(lowY, position.y);
+            highY = std::max(highY, position.y);
+            const RationalTime time = RationalTime::fromSeconds(Rational(std::llround(path.times[k] * 1000.0), 1000), rate,
+                                                                Rounding::NearestEven);
+            if (!keyframes.empty() && !(time > keyframes.back().time)) {
+                continue;
+            }
+            keyframes.push_back(Keyframe{time, position, Interpolation::Linear, Easing::preset(Easing::Preset::EaseInOut)});
+        }
+        if (keyframes.empty()) {
+            transform.position = Param(Vec2{0.0, 0.0});
+        } else if (highX - lowX < 0.01 && highY - lowY < 0.01) {
+            transform.position = Param(keyframes.front().value); // the subject stays put: no movement at all
+        } else {
+            Param position;
+            position.setKeyframes(std::move(keyframes));
+            transform.position = position;
+        }
+        transforms.emplace(clips[i], transform);
+    }
+    EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                            .updateClips(clips,
+                                         [&transforms](Clip &c) {
+                                             if (const auto it = transforms.find(c.id); it != transforms.end()) {
+                                                 c.transform = it->second;
+                                             }
+                                         },
+                                         tr("Auto reframe"));
+    if (!result.ok()) {
+        emit m_editor.message(result.error, false);
+        return;
+    }
+    if (!(canvas == sequence->canvas)) {
+        result.script.insert(result.script.begin(), edits::setCanvas(m_editor.data().mainSequenceId, sequence->canvas, canvas));
+    }
+    if (m_editor.push(std::move(result))) {
+        emit m_editor.message(tr("Reframed: the videos follow their subject (keyframes in Video)"), true);
+    }
 }
 
 void AiController::cancel()

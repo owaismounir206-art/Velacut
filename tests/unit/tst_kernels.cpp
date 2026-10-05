@@ -11,6 +11,7 @@
 #include "core/project/SpeedCurve.h"
 #include "core/serialization/ProjectJson.h"
 #include "fx/Mask.h"
+#include "fx/Reframe.h"
 #include "fx/Stabilization.h"
 #include "fx/MotionBlur.h"
 #include "fx/Transform.h"
@@ -1105,6 +1106,36 @@ private slots:
                            CameraStep{0.05f, 0.0f, 0.0f}, 1.2);
         QCOMPARE(int(out[(18 * 64 + 32) * 4 + 3]), 255);
         QCOMPARE(int(out[(18 * 64 + 0) * 4 + 3]), 255); // the enlargement covers the uncovered side
+    }
+
+    void subjectIsWhereThingsMoveAndStandOut()
+    {
+        // A grey picture with a white square moving in the right third.
+        const int w = 160;
+        const int h = 90;
+        const auto picture = [&](int squareX) {
+            std::vector<std::uint8_t> pixels(static_cast<size_t>(w * h), 128);
+            for (int y = 35; y < 55; ++y) {
+                for (int x = squareX; x < squareX + 20; ++x) {
+                    pixels[static_cast<size_t>(y * w + x)] = 255;
+                }
+            }
+            return pixels;
+        };
+        const SubjectPoint point = findSubject(picture(110), picture(114), w, h);
+        QVERIFY2(point.x > 0.68 && point.x < 0.80, qPrintable(QString::number(point.x)));
+        QVERIFY2(point.y > 0.4 && point.y < 0.6, qPrintable(QString::number(point.y)));
+        QVERIFY(point.weight > 0.3);
+        // Nothing at all: the middle, and no confidence.
+        const std::vector<std::uint8_t> flat(static_cast<size_t>(w * h), 100);
+        const SubjectPoint none = findSubject(flat, flat, w, h);
+        QCOMPARE(none.x, 0.5f);
+        QCOMPARE(none.weight, 0.0f);
+        // The path: an unsure point in the middle of sure ones follows them.
+        std::vector<SubjectPoint> path(11, SubjectPoint{0.7f, 0.5f, 0.8f});
+        path[5] = SubjectPoint{0.2f, 0.5f, 0.0f};
+        const std::vector<SubjectPoint> smooth = smoothSubjectPath(path, 2.0);
+        QVERIFY2(smooth[5].x > 0.65f, qPrintable(QString::number(smooth[5].x)));
     }
 };
 

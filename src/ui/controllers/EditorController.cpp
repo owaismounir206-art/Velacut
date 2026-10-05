@@ -2075,11 +2075,11 @@ int EditorController::snapRange(int start, int duration, const QStringList &excl
     return best <= threshold ? start + delta : start;
 }
 
-void EditorController::setCanvasPreset(int preset)
+std::optional<Canvas> EditorController::canvasFor(int preset) const
 {
     const Sequence *sequence = data().mainSequence();
     if (!sequence || preset < 0 || preset > static_cast<int>(CanvasPreset::Portrait3x4)) {
-        return;
+        return std::nullopt;
     }
     // The same resolution class ("1080p") in the new shape.
     const int shortSide = std::min(sequence->canvas.width, sequence->canvas.height);
@@ -2108,14 +2108,20 @@ void EditorController::setCanvasPreset(int preset)
         dimensions = size(3, 4);
         break;
     case CanvasPreset::Custom:
-        return;
+        return std::nullopt;
     }
-    const Canvas canvas{dimensions.width(), dimensions.height(), static_cast<CanvasPreset>(preset)};
-    if (canvas == sequence->canvas) {
+    return Canvas{dimensions.width(), dimensions.height(), static_cast<CanvasPreset>(preset)};
+}
+
+void EditorController::setCanvasPreset(int preset)
+{
+    const Sequence *sequence = data().mainSequence();
+    const std::optional<Canvas> canvas = canvasFor(preset);
+    if (!sequence || !canvas || *canvas == sequence->canvas) {
         return;
     }
     EditResult change;
-    change.script.push_back(edits::setCanvas(data().mainSequenceId, sequence->canvas, canvas));
+    change.script.push_back(edits::setCanvas(data().mainSequenceId, sequence->canvas, *canvas));
     change.text = tr("Change format");
     apply(std::move(change), false);
 }

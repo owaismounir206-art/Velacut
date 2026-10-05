@@ -17,6 +17,7 @@ add_library(vedit_fx STATIC
     Loudness.h Loudness.cpp
     Mask.h Mask.cpp
     MotionBlur.h MotionBlur.cpp
+    Reframe.h Reframe.cpp
     Stabilization.h Stabilization.cpp
     PackageManager.h PackageManager.cpp
     Transform.h Transform.cpp

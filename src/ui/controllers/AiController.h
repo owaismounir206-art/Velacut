@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "ai/Tasks.h"
 #include "core/project/Id.h"
+#include "core/project/Sequence.h"
 
 #include <QHash>
 #include <QObject>
-#include <QPointer>
 #include <QtQml/qqmlregistration.h>
 
 #include <memory>
 #include <vector>
-
-namespace vedit::ai {
-class AiTask;
-struct SourceRange;
-}
 
 namespace vedit::ui {
 
@@ -52,6 +48,9 @@ public:
     // "vedit.stabilize" effect (strength in the Video page of the properties, removable).
     Q_INVOKABLE bool stabilize();
     Q_INVOKABLE bool canStabilize() const;
+    // "Adapt to 9:16" (any CanvasPreset): the format changes and every video of the main track fills it, following its
+    // subject with position keyframes (editable) — one undo step.
+    Q_INVOKABLE bool autoReframe(int preset);
     Q_INVOKABLE void cancel();
 
 signals:
@@ -69,6 +68,7 @@ private:
     void run(std::unique_ptr<ai::AiTask> task);
     void applyPauses(const ClipId &clipId, const std::vector<ai::SourceRange> &pauses);
     void applyScenes(const ClipId &clipId, const std::vector<double> &cuts);
+    void applyReframe(const Canvas &canvas, const std::vector<ClipId> &clips, const std::vector<ai::SubjectTracking::Path> &paths);
 
     EditorController &m_editor;
     std::unique_ptr<ai::AiTask> m_task;

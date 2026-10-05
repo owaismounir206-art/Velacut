@@ -38,5 +38,20 @@ Button {
                 onTriggered: button.editor.setCanvasPreset(modelData.preset)
             }
         }
+        MenuSeparator {}
+        // One click (SPEC 0bis rule 9): the new format, and each video follows its subject in it.
+        Repeater {
+            model: [{ text: qsTr("Adapt to 9:16 — follow the subject"), preset: 1 },
+                    { text: qsTr("Adapt to 1:1 — follow the subject"), preset: 2 },
+                    { text: qsTr("Adapt to 4:5 — follow the subject"), preset: 3 }]
+            delegate: MenuItem {
+                required property var modelData
+                objectName: "reframe_" + modelData.preset
+                iconName: "center_focus_strong"
+                text: modelData.text
+                enabled: !button.editor.ai.busy
+                onTriggered: button.editor.ai.autoReframe(modelData.preset)
+            }
+        }
     }
 }

@@ -3,6 +3,7 @@
 
 #include "ai/AiTask.h"
 #include "ai/Analysis.h"
+#include "fx/Reframe.h"
 #include "fx/Stabilization.h"
 
 #include <vector>
@@ -66,6 +67,37 @@ private:
     double m_to = 0.0;
     std::vector<fx::CameraStep> m_steps;
     Rational m_rate{30};
+};
+
+// "Auto reframe": where the subject is over parts of videos, a steady path for each.
+class SubjectTracking : public AiTask
+{
+    Q_OBJECT
+
+public:
+    struct Part
+    {
+        QString path;
+        double fromSeconds = 0.0;
+        double toSeconds = 0.0;
+    };
+    struct Path
+    {
+        std::vector<double> times; // seconds of the file
+        std::vector<fx::SubjectPoint> points;
+    };
+
+    explicit SubjectTracking(std::vector<Part> parts, QObject *parent = nullptr);
+    QString title() const override;
+    // One per part, in order (empty when a part could not be read).
+    const std::vector<Path> &paths() const { return m_paths; }
+
+protected:
+    QString run() override;
+
+private:
+    std::vector<Part> m_parts;
+    std::vector<Path> m_paths;
 };
 
 } // namespace vedit::ai

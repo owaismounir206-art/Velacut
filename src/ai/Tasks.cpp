@@ -5,6 +5,8 @@
 
 #include <QFileInfo>
 
+#include <algorithm>
+
 namespace vedit::ai {
 
 namespace {
@@ -76,6 +78,47 @@ QString CameraMotionAnalysis::run()
         return isCanceled() ? QString() : tr("The pictures of %1 cannot be read.").arg(QFileInfo(m_path).fileName());
     }
     m_steps = *steps;
+    return {};
+}
+
+SubjectTracking::SubjectTracking(std::vector<Part> parts, QObject *parent)
+    : AiTask(parent)
+    , m_parts(std::move(parts))
+{
+}
+
+QString SubjectTracking::title() const
+{
+    return tr("Following the subject");
+}
+
+QString SubjectTracking::run()
+{
+    constexpr int kPointsPerSecond = 5;
+    double total = 0.0;
+    for (const Part &part : m_parts) {
+        total += std::max(0.0, part.toSeconds - part.fromSeconds);
+    }
+    double done = 0.0;
+    for (const Part &part : m_parts) {
+        const double length = std::max(0.0, part.toSeconds - part.fromSeconds);
+        Path path;
+        const auto points = engine::extractSubjectPath(part.path, part.fromSeconds, part.toSeconds, kPointsPerSecond, &path.times,
+                                                       cancelFlag(), [&](double share) {
+            report(total > 0 ? (done + share * length) / total : 0.0);
+        });
+        if (isCanceled()) {
+            return {};
+        }
+        if (points) {
+            // Smoothed over about a second and a half.
+            path.points = fx::smoothSubjectPath(*points, 0.75 * kPointsPerSecond);
+        } else {
+            path.times.clear();
+        }
+        m_paths.push_back(std::move(path));
+        done += length;
+    }
     return {};
 }
 

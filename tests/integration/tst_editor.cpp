@@ -599,6 +599,40 @@ private slots:
         QVERIFY(!inspector.values().value(u"stabilize.on"_s).toBool());
     }
 
+    // "Adapt to 9:16 — follow the subject": the format changes, the video fills it and its position follows the square
+    // on the right with keyframes, in one undo step.
+    void autoReframeFollowsTheSubject()
+    {
+        const QString file = m_dir.filePath(u"subject.mp4"_s);
+        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s,
+                           u"color=c=gray:s=320x180:r=30:d=2,format=yuv420p,"
+                           "drawbox=x='220+10*sin(t*6)':y=70:w=40:h=40:color=white:t=fill"_s,
+                           u"-c:v"_s, u"libx264"_s, file}));
+        document::DraftStore store(m_dir.filePath(u"drafts-reframe"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.importAndInsertPaths({file}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        QCOMPARE(editor.data().mainSequence()->canvas.preset, CanvasPreset::Landscape16x9);
+        const int steps = editor.document().undoStack().index();
+        QVERIFY(editor.ai()->autoReframe(int(CanvasPreset::Portrait9x16)));
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.ai()->busy(), 20000);
+        QCOMPARE(editor.data().mainSequence()->canvas.preset, CanvasPreset::Portrait9x16);
+        QCOMPARE(editor.document().undoStack().index(), steps + 1);
+        const Clip &clip = mainTrack(editor).clips[0];
+        QCOMPARE(clip.transform.fit, FitMode::Cover);
+        // The square is at about 0.75 of the picture: the picture moves left so that it is in the middle.
+        const Param &position = clip.transform.position;
+        const ParamValue value = position.isAnimated() ? position.valueAt(RationalTime(30, Rational(30))) : position.staticValue();
+        const double x = std::get<Vec2>(value).x;
+        QVERIFY2(x < -0.6 && x > -1.3, qPrintable(QString::number(x)));
+        editor.undo();
+        QCOMPARE(editor.data().mainSequence()->canvas.preset, CanvasPreset::Landscape16x9);
+        QCOMPARE(mainTrack(editor).clips[0].transform.fit, FitMode::Contain);
+    }
+
     // "Smooth slow motion" in the Speed page: the new frames are computed in background for the preview.
     void smoothSlowMotionInThePreview()
     {

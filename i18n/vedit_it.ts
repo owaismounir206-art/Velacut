@@ -1267,6 +1267,21 @@
         <source>21:9 — Cinema</source>
         <translation>21:9 — Cinema</translation>
     </message>
+    <message>
+        <location line="+14"/>
+        <source>Adapt to 9:16 — follow the subject</source>
+        <translation>Adatta a 9:16 — segui il soggetto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Adapt to 1:1 — follow the subject</source>
+        <translation>Adatta a 1:1 — segui il soggetto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Adapt to 4:5 — follow the subject</source>
+        <translation>Adatta a 4:5 — segui il soggetto</translation>
+    </message>
 </context>
 <context>
     <name>FullScreenPreview</name>
@@ -5320,7 +5335,7 @@
 <context>
     <name>vedit::ai::CameraMotionAnalysis</name>
     <message>
-        <location filename="../src/ai/Tasks.cpp" line="+69"/>
+        <location filename="../src/ai/Tasks.cpp" line="+71"/>
         <source>Steadying the shot</source>
         <translation>Stabilizzazione dell&apos;inquadratura</translation>
     </message>
@@ -5354,6 +5369,14 @@
         <location line="+8"/>
         <source>The pictures of %1 cannot be read.</source>
         <translation>Le immagini di %1 non possono essere lette.</translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ai::SubjectTracking</name>
+    <message>
+        <location line="+37"/>
+        <source>Following the subject</source>
+        <translation>Inseguimento del soggetto</translation>
     </message>
 </context>
 <context>
@@ -5665,12 +5688,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+282"/>
+        <location line="+284"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-281"/>
+        <location line="-283"/>
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
@@ -5748,6 +5771,11 @@
         <location line="+2"/>
         <source>Split scenes</source>
         <translation>Dividi le scene</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Adapt to 9:16, following the subject</source>
+        <translation>Adatta a 9:16 seguendo il soggetto</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6040,8 +6068,8 @@
         <translation>Animazione in ciclo</translation>
     </message>
     <message>
-        <location line="-287"/>
-        <location line="+288"/>
+        <location line="-289"/>
+        <location line="+290"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -6060,7 +6088,7 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message>
-        <location filename="../src/ui/controllers/AiController.cpp" line="+92"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+94"/>
         <source>Select a video or a sound with speech first.</source>
         <translation>Seleziona prima un video o un audio con del parlato.</translation>
     </message>
@@ -6077,13 +6105,13 @@
     </message>
     <message>
         <location line="+11"/>
-        <location line="+47"/>
+        <location line="+169"/>
         <location line="+32"/>
         <source>The clip was removed meanwhile.</source>
         <translation>Nel frattempo la clip è stata eliminata.</translation>
     </message>
     <message>
-        <location line="-54"/>
+        <location line="-176"/>
         <source>Stabilize</source>
         <translation>Stabilizza</translation>
     </message>
@@ -6093,7 +6121,17 @@
         <translation>Clip stabilizzata: regola quanto in Video</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+117"/>
+        <source>Auto reframe</source>
+        <translation>Reinquadratura automatica</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Reframed: the videos follow their subject (keyframes in Video)</source>
+        <translation>Reinquadrato: i video seguono il soggetto (keyframe in Video)</translation>
+    </message>
+    <message>
+        <location line="+30"/>
         <source>No pauses found in this clip.</source>
         <translation>Nessuna pausa trovata in questa clip.</translation>
     </message>
@@ -7178,7 +7216,7 @@
         <translation>Punti di entrata e uscita cancellati</translation>
     </message>
     <message>
-        <location line="+171"/>
+        <location line="+177"/>
         <source>Change format</source>
         <translation>Cambia formato</translation>
     </message>

@@ -3,6 +3,7 @@
 
 #include "core/time/Rational.h"
 #include "fx/Loudness.h"
+#include "fx/Reframe.h"
 #include "fx/Stabilization.h"
 
 #include <QByteArray>
@@ -57,6 +58,13 @@ std::optional<std::vector<float>> extractFrameDifferences(const QString &path, s
 std::optional<std::vector<fx::CameraStep>> extractCameraSteps(const QString &path, double fromSeconds, double toSeconds,
                                                               Rational *frameRate, const std::atomic<bool> *cancel = nullptr,
                                                               const DecodeProgress &progress = {});
+
+// Where the subject is, `samplesPerSecond` times a second from `fromSeconds` to `toSeconds` of the file (the analysis
+// behind "Auto reframe"); `times` gets the second of the file of each point.
+std::optional<std::vector<fx::SubjectPoint>> extractSubjectPath(const QString &path, double fromSeconds, double toSeconds,
+                                                                int samplesPerSecond, std::vector<double> *times,
+                                                                const std::atomic<bool> *cancel = nullptr,
+                                                                const DecodeProgress &progress = {});
 
 // Integrated and peak loudness measured via ITU-R BS.1770-4 / EBU R128.
 std::optional<fx::LoudnessResult> extractLoudness(const QString &path,

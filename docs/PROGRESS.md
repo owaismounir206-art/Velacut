@@ -42,6 +42,12 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   cache; la clip la riproduce alla sua velocità (stessa mappatura dei tempi; verificato con un programma di prova che
   il fotogramma 0 della copia è l'inizio dell'intervallo e i dispari sono quelli nuovi). Anteprima: coda in background
   con avanzamento; export: la copia si fa al momento se manca. Test: a ½× da 10 fotogrammi ripetuti su 20 a 0.
+- **Adatta a 9:16 / 1:1 / 4:5 seguendo il soggetto** (menu del formato, ricerca; `fx/Reframe`): soggetto stimato 5
+  volte al secondo da movimento (peso 3) e dettagli (peso 0,5) con una leggera preferenza per il centro, centroide
+  delle parti sopra la media, percorso levigato (~1,5 s, i punti incerti pesano meno); il formato cambia e ogni video
+  della traccia principale riempie il canvas (Riempi) con keyframe di posizione ogni 0,5 s nel tempo della sorgente,
+  limitati ai bordi dell'immagine; nessun keyframe se il soggetto sta fermo. Un passo di annullamento (formato +
+  posizioni). Limite: niente riconoscimento dei volti (servirebbe un modello ONNX); test con un quadrato che si muove.
 
 ## Sessione 2026-10-05 — Fine Fase 5: transizioni GPU, slideshow, kit del marchio, filtri, blocco del motore
 - **Percorso GPU delle 114 transizioni** (`92d25d6`, criterio Fase 5 seconda metà ✅): GLSL 1.00/1.10 (OpenGL 2.1 /
@@ -206,8 +212,8 @@ completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::t
 2. Sottotitoli automatici con whisper.cpp come processo esterno se installato (altrimenti disattivati con messaggio,
    `docs/MODELS.md`), gestore modelli con download solo su richiesta; sottotitoli da copione allineati al parlato.
 3. Senza modelli: ✅ rimozione pause, ✅ divisione delle scene, ✅ stabilizzazione (traslazione), ✅ rallentatore
-   fluido (percorso CPU `minterpolate`); restano auto reframe classico (soggetto stimato da movimento/contrasto),
-   rotazione nella stabilizzazione (stima più robusta), RIFE quando installato.
+   fluido (percorso CPU `minterpolate`), ✅ auto reframe classico; restano rotazione nella stabilizzazione (stima più
+   robusta), RIFE quando installato, volti (con un modello) per l'auto reframe.
 4. ✅ Interfaccia comune `ai::AiTask` (progresso, annullamento, risultato modificabile).
 
 ### Sessione 2026-10-01

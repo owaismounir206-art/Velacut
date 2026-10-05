@@ -304,6 +304,8 @@ public:
 
     // Format (SPEC 0bis rule 1: changeable with one click)
     Q_INVOKABLE void setCanvasPreset(int preset);
+    // The canvas of a CanvasPreset in the current resolution class ("1080p" stays 1080p in the new shape).
+    std::optional<Canvas> canvasFor(int preset) const;
 
     // Export (one screen, SPEC §5.15)
     Q_INVOKABLE QVariantMap exportDefaults() const;

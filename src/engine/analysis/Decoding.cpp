@@ -834,4 +834,32 @@ std::optional<std::vector<fx::CameraStep>> extractCameraSteps(const QString &pat
     return steps;
 }
 
+std::optional<std::vector<fx::SubjectPoint>> extractSubjectPath(const QString &path, double fromSeconds, double toSeconds,
+                                                                int samplesPerSecond, std::vector<double> *times,
+                                                                const std::atomic<bool> *cancel, const DecodeProgress &progress)
+{
+    constexpr int kWidth = 160;
+    constexpr int kHeight = 90;
+    std::vector<uint8_t> previous;
+    std::vector<fx::SubjectPoint> points;
+    double next = fromSeconds;
+    const double step = 1.0 / std::max(1, samplesPerSecond);
+    const bool ok = decodeGreyFrames(path, kWidth, kHeight, fromSeconds, toSeconds, cancel, progress, nullptr,
+                                     [&](const std::vector<uint8_t> &current, double seconds) {
+        // A point every `step`, from this frame and the one before (what moves).
+        if (seconds + 1e-6 >= next && !previous.empty()) {
+            points.push_back(fx::findSubject(previous, current, kWidth, kHeight));
+            if (times) {
+                times->push_back(seconds);
+            }
+            next += step;
+        }
+        previous = current;
+    });
+    if (!ok || points.empty()) {
+        return std::nullopt;
+    }
+    return points;
+}
+
 } // namespace vedit::engine
