@@ -66,6 +66,11 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   progetto con `EditorController::importThen` e diventano clip audio sotto la clip/il testo (separazione: audio
   originale silenziato, un passo di annullamento). Voci di Piper aggiunte dall'utente (nessuna offerta da vedit:
   licenze diverse voce per voce). Verificati con programmi sostitutivi nei test.
+- **Rimuovi sfondo** (`engine/analysis/Cutout`, campo `cutout`): fotogrammi della parte usata (ffmpeg) → `rembg p`
+  → video QuickTime RLE ARGB con l'audio originale, in cache; la proiezione lo usa al posto della sorgente (test: un
+  video con metà trasparente lascia vedere il video sotto, e così il risultato del sostituto di rembg). Barra della
+  clip video e pagina Ritaglio (pulsante, poi interruttore per tornare indietro). Download del modello di rembg
+  annunciato e confermato con un secondo clic. Con `cutout` il rallentatore fluido non si applica.
 - **Capitoli per YouTube** (`ai::findChapters`): il primo a 0:00, almeno 3 da ≥ 10 s, circa uno al minuto; ciascuno
   all'inizio di una frase, preferendo le pause più lunghe vicino a punti equidistanti; titolo = prime parole della
   frase. Diventano marker "Capitolo" sulla timeline (un passo di annullamento) e l'elenco "00:00 Titolo" va negli

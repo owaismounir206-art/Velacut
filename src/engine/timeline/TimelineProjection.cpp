@@ -3,6 +3,7 @@
 
 #include "core/project/ClipTime.h"
 #include "core/serialization/ProjectJson.h"
+#include "engine/analysis/Cutout.h"
 #include "engine/analysis/SmoothMotion.h"
 #include "engine/timeline/ClipPlacement.h"
 #include "engine/timeline/MediaProducerCache.h"
@@ -1070,9 +1071,23 @@ std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &
             return placed;
         }
         // Smooth slow motion: the copy with new frames between the real ones, once made (the export makes it now).
+        // "Remove background" uses its cut-out copy the same way (and then no smooth slow motion).
         std::optional<Media> smooth;
         RationalTime smoothFrom;
-        if (const std::optional<SmoothCopy> copy = smoothCopyFor(clip, *media)) {
+        if (const std::optional<CutoutCopy> cutout = cutoutCopyFor(clip, *media)) {
+            if (!cutout->ready() && m_loading == MediaLoading::Wait) {
+                if (const QString error = makeCutoutCopy(*cutout); !error.isEmpty()) {
+                    m_warnings << error;
+                }
+            }
+            if (cutout->ready()) {
+                smooth = cutout->asMedia();
+                smoothFrom = cutout->from.rescaled(data->sourceIn.rate(), Rounding::NearestEven);
+                usedMedia.insert(smooth->id);
+            } else {
+                m_warnings << u"clip %1: the background removal must be made again"_s.arg(clip.id.toString());
+            }
+        } else if (const std::optional<SmoothCopy> copy = smoothCopyFor(clip, *media)) {
             if (!copy->ready() && m_loading == MediaLoading::Wait) {
                 if (const QString error = makeSmoothCopy(*copy); !error.isEmpty()) {
                     m_warnings << error;

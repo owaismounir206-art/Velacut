@@ -1004,6 +1004,7 @@ QVariantMap ClipInspector::values() const
         map[u"reversed"_s] = media->reversed;
         map[u"preservePitch"_s] = media->preservePitch;
         map[u"smooth"_s] = media->smooth;
+        map[u"cutout"_s] = media->cutout;
         map[u"speed.isCurve"_s] = media->curve.has_value();
         map[u"speed.curvePreset"_s] = media->curve ? media->curve->preset : QString();
         QVariantList pointsList;
@@ -1579,6 +1580,12 @@ bool ClipInspector::set(const QString &key, const QVariant &value)
     }
     if (key == u"preservePitch"_s) {
         return update(clips, [&](Clip &c) { c.media()->preservePitch = flag; }, tr("Change pitch"), {});
+    }
+    if (key == u"cutout"_s) {
+        if (flag) {
+            return false; // made by "Remove background" (Editor.ai), which cuts the subject out first
+        }
+        return update(clips, [](Clip &c) { c.media()->cutout = false; }, tr("Restore background"), {});
     }
     if (key == u"smooth"_s) {
         return update(clips, [&](Clip &c) { c.media()->smooth = flag; },

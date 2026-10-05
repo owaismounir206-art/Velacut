@@ -3,6 +3,7 @@
 
 #include "ai/AiTask.h"
 #include "ai/Analysis.h"
+#include "engine/analysis/Cutout.h"
 #include "fx/Reframe.h"
 #include "fx/Stabilization.h"
 
@@ -98,6 +99,22 @@ protected:
 private:
     std::vector<Part> m_parts;
     std::vector<Path> m_paths;
+};
+
+// "Remove background": the cut-out copy of the part of a video a clip plays (engine/analysis/Cutout.h, rembg).
+class BackgroundRemoval : public AiTask
+{
+    Q_OBJECT
+
+public:
+    explicit BackgroundRemoval(engine::CutoutCopy copy, QObject *parent = nullptr);
+    QString title() const override;
+
+protected:
+    QString run() override;
+
+private:
+    engine::CutoutCopy m_copy;
 };
 
 } // namespace vedit::ai

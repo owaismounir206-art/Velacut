@@ -1742,6 +1742,29 @@ Rectangle {
                     visible: panel.page === "cutout"
                     spacing: Theme.space.md
 
+                    // Remove background (SPEC 0bis rules 3 and 9): the subject alone, no green screen needed.
+                    Button {
+                        objectName: "removeBackgroundButton"
+                        Layout.fillWidth: true
+                        visible: panel.inspector.kind === Inspector.Video && !(panel.values["cutout"] ?? false)
+                        enabled: !panel.editor.ai.busy
+                        variant: "tonal"
+                        iconName: "person_remove"
+                        text: qsTr("Remove background")
+                        onClicked: panel.editor.ai.removeBackground()
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        visible: panel.values["cutout"] ?? false
+                        Label { Layout.fillWidth: true; text: qsTr("Background removed"); role: "bodyMedium" }
+                        Switch {
+                            objectName: "cutoutSwitch"
+                            checked: true
+                            Accessible.name: qsTr("Background removed")
+                            onToggled: if (!checked) panel.inspector.set("cutout", false)
+                        }
+                    }
+
                     PropertySection {
                         inspector: panel.inspector
                         section: "cutout"

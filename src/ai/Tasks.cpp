@@ -122,4 +122,23 @@ QString SubjectTracking::run()
     return {};
 }
 
+BackgroundRemoval::BackgroundRemoval(engine::CutoutCopy copy, QObject *parent)
+    : AiTask(parent)
+    , m_copy(std::move(copy))
+{
+}
+
+QString BackgroundRemoval::title() const
+{
+    return tr("Removing the background");
+}
+
+QString BackgroundRemoval::run()
+{
+    if (m_copy.ready()) {
+        return {};
+    }
+    return engine::makeCutoutCopy(m_copy, [this](double share) { report(share); }, cancelFlag());
+}
+
 } // namespace vedit::ai

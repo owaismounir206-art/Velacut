@@ -5,6 +5,7 @@
 #include "TestMedia.h"
 
 #include "ai/Whisper.h"
+#include "common/Paths.h"
 #include "core/serialization/ProjectJson.h"
 #include "document/Document.h"
 #include "document/DraftStore.h"
@@ -12,6 +13,8 @@
 #include "engine/analysis/MediaAnalysis.h"
 #include "engine/analysis/SmoothMotion.h"
 #include "engine/mlt/MltRuntime.h"
+#include "engine/timeline/TimelineProjection.h"
+#include "engine/timeline/MediaProducerCache.h"
 #include "fx/Library.h"
 #include "ui/controllers/ActionRegistry.h"
 #include "ui/controllers/AiController.h"
@@ -25,6 +28,7 @@
 #include "ui/controllers/TranscriptController.h"
 
 #include <QElapsedTimer>
+#include <mlt++/MltProfile.h>
 #include <QImage>
 #include <QScopeGuard>
 #include <QSignalSpy>
@@ -925,6 +929,77 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         QCOMPARE(models.voices().size(), 0);
     }
 
+    // "Remove background" with rembg — a stand-in that makes the right half of every frame transparent: the clip under
+    // it shows there, in the projection used by the preview and the export.
+    void removeBackgroundShowsWhatIsUnder()
+    {
+        const QString bin = m_dir.filePath(u"fake-bin-rembg"_s);
+        QDir().mkpath(bin);
+        QFile script(bin + u"/rembg"_s);
+        QVERIFY(script.open(QIODevice::WriteOnly));
+        script.write(R"SH(#!/bin/sh
+[ "$1" = "p" ] || exit 2
+for f in "$2"/*.png; do
+  ffmpeg -hide_banner -loglevel error -nostdin -y -i "$f" -vf "format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lt(X,W/2),255,0)'" "$3/$(basename "$f")" || exit 3
+done
+)SH");
+        script.close();
+        script.setPermissions(script.permissions() | QFileDevice::ExeOwner);
+        const QByteArray path = qgetenv("PATH");
+        const QByteArray modelHome = qgetenv("U2NET_HOME");
+        qputenv("PATH", QByteArray(bin.toLocal8Bit() + ':' + path));
+        qputenv("U2NET_HOME", m_dir.filePath(u"u2net"_s).toLocal8Bit()); // no model yet: the first click explains
+        const auto restore = qScopeGuard([&path, &modelHome] {
+            qputenv("PATH", path);
+            qputenv("U2NET_HOME", modelHome);
+        });
+
+        // Cut-out copies of earlier runs: start from none.
+        const QDir proxies(paths::cacheDir() + u"/proxy"_s);
+        for (const QString &name : proxies.entryList({u"*-cutout-*"_s}, QDir::Files)) {
+            QFile::remove(proxies.filePath(name));
+        }
+        document::DraftStore store(m_dir.filePath(u"drafts-rembg"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache-rembg"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.importAndInsertPaths({m_files.vertical}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow() - 1); // the row above: overlay
+        QTRY_COMPARE_WITH_TIMEOUT(editor.data().mainSequence()->visualTracks.size(), size_t(2), 20000);
+        const ClipId over = editor.data().mainSequence()->visualTracks[1].clips.front().id;
+        editor.select(over.toString(), false);
+        QVERIFY(editor.ai()->canRemoveBackground());
+        QSignalSpy messages(&editor, &EditorController::message);
+        QVERIFY(!editor.ai()->removeBackground()); // explains the model download first
+        QVERIFY(messages.last().first().toString().contains(u"170"_s));
+        QVERIFY(editor.ai()->removeBackground());
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.ai()->busy(), 60000);
+        QVERIFY2(editor.data().findClip(over)->media()->cutout, qPrintable(messages.last().first().toString()));
+
+        const auto render = [](const ProjectData &data) {
+            auto profile = engine::makeProfile(data, data.mainSequenceId);
+            engine::MediaProducerCache cache(*profile);
+            engine::TimelineProjection projection(*profile, cache, engine::TimelineProjection::MediaLoading::Wait);
+            projection.build(data, data.mainSequenceId);
+            return projection.renderFrame(15);
+        };
+        const QImage cut = render(editor.data());
+        ProjectData without = editor.data();
+        without.sequences.front().visualTracks.pop_back();
+        const QImage under = render(without);
+        QVERIFY(!cut.isNull() && cut.size() == under.size());
+        // Right half: what is under; left half: the clip on top.
+        const QPoint right(cut.width() * 3 / 4, cut.height() / 2);
+        const QPoint left(cut.width() / 4, cut.height() / 2);
+        QCOMPARE(cut.pixel(right), under.pixel(right));
+        QVERIFY(cut.pixel(left) != under.pixel(left));
+        // Switched off in Cutout: the whole clip again.
+        QVERIFY(editor.inspector()->set(u"cutout"_s, false));
+        QVERIFY(!editor.data().findClip(over)->media()->cutout);
+    }
+
     // "Smooth slow motion" in the Speed page: the new frames are computed in background for the preview.
     void smoothSlowMotionInThePreview()
     {
@@ -977,7 +1052,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         editor.select(mainTrack(editor).clips[0].id.toString(), false);
         QCOMPARE(ids(), (QStringList{u"split"_s, u"rippleTrimLeft"_s, u"rippleTrimRight"_s, u"delete"_s, u"duplicate"_s,
                                      u"speed"_s, u"volume"_s, u"animation"_s, u"freeze"_s, u"reverse"_s, u"mirror"_s,
-                                     u"rotate"_s, u"enhance"_s, u"removePauses"_s, u"splitScenes"_s, u"stabilize"_s, u"replace"_s}));
+                                     u"rotate"_s, u"enhance"_s, u"removePauses"_s, u"splitScenes"_s, u"removeBackground"_s, u"stabilize"_s, u"replace"_s}));
         editor.select(mainTrack(editor).clips[1].id.toString(), false);
         QVERIFY(!ids().contains(u"speed"_s) && ids().contains(u"mirror"_s));
 

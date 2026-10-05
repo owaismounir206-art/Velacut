@@ -130,6 +130,8 @@ ActionRegistry::ActionRegistry(EditorController &editor)
          [this] { return m_editor.ai()->canSeparateVoice(); }, [this] { return m_editor.ai()->separateVoice(); }});
     add({u"autoReframe"_s, tr("Adapt to 9:16, following the subject"), u"center_focus_strong"_s, {}, 0,
          [this] { return !m_editor.ai()->busy(); }, [this] { return m_editor.ai()->autoReframe(1); }});
+    add({u"removeBackground"_s, tr("Remove background"), u"person_remove"_s, {}, Video,
+         [this] { return m_editor.ai()->canRemoveBackground(); }, [this] { return m_editor.ai()->removeBackground(); }});
     add({u"stabilize"_s, tr("Stabilize"), u"vibration"_s, {}, Video,
          [this] { return m_editor.ai()->canStabilize(); }, [this] { return m_editor.ai()->stabilize(); }});
     // Another video or photo in the same place, with the same length and look (SPEC 0bis rule 3, §5.2, §5.13).

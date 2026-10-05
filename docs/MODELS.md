@@ -16,7 +16,7 @@ la libreria rnnoise. Non installo pacchetti di sistema (regola del progetto): i 
 |---|---|---|---|---|---|
 | Sottotitoli automatici, testi delle canzoni, editing dal testo, parole di riempimento | whisper.cpp + modelli ggml di Whisper | MIT | MIT (OpenAI Whisper) | AUR `whisper.cpp` | **integrato** (processo esterno `whisper-cli … -ojf`, trascrizioni in cache per file); senza programma o modello: funzioni disattivate con il comando o il pulsante per il modello. Verificato con un programma sostitutivo nei test, **non ancora con il whisper-cli reale** (non installato qui) |
 | Text-to-speech | Piper + voci | MIT | variabile per voce (da verificare voce per voce) | AUR `piper-tts-bin` | **integrato** ("Leggi ad alta voce" sui testi; `piper-tts --model … --output_file …`). Nessuna voce offerta da vedit: l'utente aggiunge le sue (Preferenze → Modelli AI) e ne controlla la licenza. Verificato con un sostituto |
-| Rimozione sfondo, segmentazione persona | ONNX Runtime + modello di segmentazione | MIT | dipende dal modello (es. MODNet Apache 2.0) | `onnxruntime` | da integrare; senza: disattivato |
+| Rimozione sfondo, segmentazione persona | rembg (programma, usa ONNX Runtime; modello u2net) | MIT | Apache 2.0 (u2net) | `pipx install "rembg[cli]"` | **integrato** ("Rimuovi sfondo": fotogrammi → `rembg p` → copia QuickTime RLE con alfa in cache, audio copiato; trasparenza verificata nella proiezione). rembg scarica il modello (~170 MB) alla prima esecuzione: vedit lo dice e chiede un secondo clic. Verificato con un sostituto |
 | Riduzione rumore / isolamento voce | RNNoise (già usato da MLT/FFmpeg) | BSD-3 | BSD-3 (modello incluso) | `rnnoise` (presente) | **già attivo** (Fase 4, pannello Audio) |
 | Rilevamento beat | aubio / flusso spettrale proprio | GPL-3 / GPL-3 (vedit) | — | `aubio` (presente) | **già attivo** (rilevatore proprio, D-51) |
 | Stabilizzazione | stima del movimento propria (4 regioni, corrispondenza a blocchi, mediana) + levigatura gaussiana | GPL-3 (vedit) | — | — | **attivo**: "Stabilizza" (traslazione; la rotazione è misurata ma non corretta) |
@@ -35,6 +35,8 @@ sudo pacman -S onnxruntime
 yay -S piper-tts-bin
 # separazione voce/musica
 pipx install demucs
+# rimozione dello sfondo (scarica il suo modello alla prima esecuzione)
+pipx install "rembg[cli]"
 # slow motion con interpolazione su GPU Vulkan
 yay -S rife-ncnn-vulkan
 ```

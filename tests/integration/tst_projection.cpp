@@ -499,6 +499,30 @@ private slots:
         QCOMPARE(copy->frameRate, Rational(60));
     }
 
+    // A video with transparency (what "Remove background" makes) shows what is under it through its transparent parts.
+    void videoWithTransparencyShowsWhatIsUnder()
+    {
+        const QString file = m_dir.filePath(u"alpha.mov"_s);
+        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s,
+                           u"color=c=red:s=320x180:r=30:d=1,format=rgba,geq=r='255':g='0':b='0':a='if(lt(X,160),255,0)'"_s,
+                           u"-c:v"_s, u"qtrle"_s, u"-pix_fmt"_s, u"argb"_s, file}));
+        Media alpha = testMedia(MediaKind::Video, file, RationalTime(30, Rational(30)), 320, 180, false);
+        alpha.info.video->hasAlpha = true;
+        ProjectData data = baseProject();
+        data.media.push_back(alpha);
+        Session session(data);
+        // The test picture below, the half-transparent red video above.
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const QImage under = renderFresh1(session.data(), 10);
+        QVERIFY(session.apply(session.editor().insertMedia(alpha.id, frames(0), std::nullopt, Placement::Overlay)));
+        const QImage frame = renderFresh1(session.data(), 10);
+        if (const QString folder = qEnvironmentVariable("VEDIT_UI_SHOTS"); !folder.isEmpty()) {
+            frame.save(folder + u"/alpha.png"_s);
+        }
+        QCOMPARE(QColor(frame.pixel(60, 90)), QColor(255, 0, 0));
+        QCOMPARE(QColor(frame.pixel(260, 90)), QColor(under.pixel(260, 90)));
+    }
+
     // A shaky shot (a textured picture seen through a jittering window) is steadied: the picture moves much less from one
     // rendered frame to the next.
     void stabilizationSteadiesTheShot()

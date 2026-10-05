@@ -108,7 +108,7 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/AiController.cpp" line="+588"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+640"/>
         <source>%n caption line(s) from the speech</source>
         <translation>
             <numerusform>%n caption line from the speech</numerusform>
@@ -138,7 +138,7 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+2022"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+2029"/>
         <location line="+454"/>
         <source>Transition on %n cut(s)</source>
         <translation>

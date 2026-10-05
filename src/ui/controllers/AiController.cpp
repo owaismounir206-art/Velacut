@@ -208,6 +208,58 @@ bool AiController::separateVoice()
     return true;
 }
 
+bool AiController::canRemoveBackground() const
+{
+    if (busy()) {
+        return false;
+    }
+    const std::optional<Target> what = target(true, false);
+    const Clip *clip = what ? m_editor.data().findClip(what->clip) : nullptr;
+    return clip && clip->media() && !clip->media()->cutout && !clip->media()->reversed && !clip->media()->curve;
+}
+
+bool AiController::removeBackground()
+{
+    if (busy()) {
+        return false;
+    }
+    const std::optional<Target> what = target(true, false);
+    const Clip *clip = what ? m_editor.data().findClip(what->clip) : nullptr;
+    const Media *media = clip && clip->media() ? m_editor.data().findMedia(clip->media()->mediaId) : nullptr;
+    const std::optional<engine::CutoutCopy> copy = media ? engine::cutoutCopyFor(*clip, *media, true) : std::nullopt;
+    if (!copy) {
+        emit m_editor.message(tr("Select a video played forwards at a steady speed first."), false);
+        return false;
+    }
+    const ClipId clipId = what->clip;
+    const auto apply = [this, clipId] {
+        if (m_editor.push(TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                              .updateClips({clipId}, [](Clip &c) { c.media()->cutout = true; }, tr("Remove background")))) {
+            emit m_editor.message(tr("Background removed: what is under the clip shows through"), true);
+        }
+    };
+    if (copy->ready()) {
+        apply();
+        return true;
+    }
+    if (engine::rembg::executable().isEmpty()) {
+        emit m_editor.message(tr("Removing the background needs rembg, which is not installed: “%1”.").arg(engine::rembg::installCommand()),
+                              false);
+        return false;
+    }
+    if (!engine::rembg::hasModel() && !m_rembgDownloadExplained) {
+        // Never a silent download (SPEC §1): say it, and go on only with a second click.
+        m_rembgDownloadExplained = true;
+        emit m_editor.message(tr("The first time, rembg downloads its model (about 170 MB). Click “Remove background” again to go on."),
+                              false);
+        return false;
+    }
+    auto task = std::make_unique<ai::BackgroundRemoval>(*copy);
+    connect(task.get(), &ai::AiTask::finished, this, apply);
+    run(std::move(task));
+    return true;
+}
+
 bool AiController::canReadAloud() const
 {
     const std::optional<ClipId> focus = m_editor.focusClip();

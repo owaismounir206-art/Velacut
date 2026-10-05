@@ -287,6 +287,10 @@ vengono ignorati e riscritti invariati.
   invece di ripeterli (solo con `speed` < 1, in avanti, senza curva). Il calcolo è una copia in cache della parte
   usata del file (interpolazione a compensazione di movimento di FFmpeg, `minterpolate`); finché non c'è, la clip si
   vede con i fotogrammi ripetuti.
+- `cutout` (facoltativo, assente = `false`): sfondo rimosso ("Rimuovi sfondo"). La clip mostra una copia in cache della
+  parte usata del file con la trasparenza attorno al soggetto (fotogrammi scontornati da `rembg`, QuickTime RLE ARGB,
+  audio copiato); se la copia manca, la clip si vede intera con un avviso. Con `cutout` il rallentatore fluido non si
+  applica.
 - `sourceIn`: primo fotogramma usato della sorgente, nel tempo del contenuto a velocità 1×, sulla griglia del progetto.
   Intervallo di sorgente usato = `[sourceIn, sourceIn + duration × speed)`, arrotondato al fotogramma dall'engine.
   Con `reversed: true` la riproduzione va dalla fine dell'intervallo verso `sourceIn`.

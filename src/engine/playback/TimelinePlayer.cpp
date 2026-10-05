@@ -177,7 +177,7 @@ void TimelinePlayer::requestReverseProxies()
                 if (media->reversed) {
                     m_reverse->request(*item);
                 }
-                if (const std::optional<SmoothCopy> copy = smoothCopyFor(clip, *item); copy && !copy->ready()) {
+                if (const std::optional<SmoothCopy> copy = smoothCopyFor(clip, *item); copy && !copy->ready() && !media->cutout) {
                     m_smooth->request(*copy);
                 }
             }

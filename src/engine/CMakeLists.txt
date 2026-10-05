@@ -14,6 +14,7 @@ add_library(vedit_engine STATIC
     analysis/MediaImporter.h analysis/MediaImporter.cpp
     analysis/MediaProbe.h analysis/MediaProbe.cpp
     analysis/ReverseProxy.h analysis/ReverseProxy.cpp
+    analysis/Cutout.h analysis/Cutout.cpp
     analysis/SmoothMotion.h analysis/SmoothMotion.cpp
     mlt/MltRuntime.h mlt/MltRuntime.cpp
     mlt/Services.h mlt/Services.cpp

@@ -66,6 +66,10 @@ public:
     // two sounds of their own (each with its own volume) — one undo step.
     Q_INVOKABLE bool separateVoice();
     Q_INVOKABLE bool canSeparateVoice() const;
+    // "Remove background" (rembg): the subject of the video clip on a transparent background (what is under it shows),
+    // undoable, switched off in Cutout. The first time, rembg downloads its model: a first click explains it.
+    Q_INVOKABLE bool removeBackground();
+    Q_INVOKABLE bool canRemoveBackground() const;
     // "Read aloud" (Piper): the selected text, spoken with the first voice added, as a sound under it.
     Q_INVOKABLE bool readAloud();
     Q_INVOKABLE bool canReadAloud() const;
@@ -106,6 +110,7 @@ private:
     QHash<QString, std::vector<ai::SourceRange>> m_pauses; // by media fingerprint
     QHash<QString, std::vector<double>> m_scenes;
     mutable QHash<QString, ai::Transcript> m_transcripts; // by fingerprint (also those read from the cache)
+    bool m_rembgDownloadExplained = false;
 };
 
 } // namespace vedit::ui

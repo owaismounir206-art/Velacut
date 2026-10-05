@@ -2651,12 +2651,12 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1940"/>
+        <location line="+1963"/>
         <source>Adjust</source>
         <translation>Regola</translation>
     </message>
     <message>
-        <location line="-1835"/>
+        <location line="-1858"/>
         <source>Select a clip on the timeline to change it here.</source>
         <translation>Seleziona una clip sulla timeline per modificarla qui.</translation>
     </message>
@@ -3234,12 +3234,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+893"/>
+        <location line="+916"/>
         <source>Rotation</source>
         <translation>Rotazione</translation>
     </message>
     <message>
-        <location line="-883"/>
+        <location line="-906"/>
         <source>Opacity</source>
         <translation>Opacità</translation>
     </message>
@@ -3320,18 +3320,18 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+1186"/>
+        <location line="+1209"/>
         <source>Hue</source>
         <translation>Tonalità</translation>
     </message>
     <message>
-        <location line="-1186"/>
-        <location line="+1195"/>
+        <location line="-1209"/>
+        <location line="+1218"/>
         <source>Saturation</source>
         <translation>Saturazione</translation>
     </message>
     <message>
-        <location line="-1193"/>
+        <location line="-1216"/>
         <source>Blend mode</source>
         <translation>Modalità di fusione</translation>
     </message>
@@ -3447,7 +3447,18 @@
         <translation>Calcolo dei nuovi fotogrammi… %1%</translation>
     </message>
     <message>
-        <location line="+312"/>
+        <location line="+122"/>
+        <source>Remove background</source>
+        <translation>Rimuovi sfondo</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+4"/>
+        <source>Background removed</source>
+        <translation>Sfondo rimosso</translation>
+    </message>
+    <message>
+        <location line="+203"/>
         <source>Filter and LUT</source>
         <translation>Filtro e LUT</translation>
     </message>
@@ -3577,7 +3588,7 @@
         <translation>Curve colore</translation>
     </message>
     <message>
-        <location line="-1438"/>
+        <location line="-1461"/>
         <location line="+265"/>
         <location line="+16"/>
         <source>Blur</source>
@@ -3615,12 +3626,12 @@
         <translation>Dissolvenza in uscita</translation>
     </message>
     <message>
-        <location line="+569"/>
+        <location line="+592"/>
         <source>Auto enhance</source>
         <translation>Migliora automaticamente</translation>
     </message>
     <message>
-        <location line="-368"/>
+        <location line="-391"/>
         <location line="+9"/>
         <source>%1×</source>
         <translation>%1×</translation>
@@ -3693,23 +3704,23 @@
         <translation>Scegli un&apos;animazione</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+38"/>
         <source>Mask</source>
         <translation>Maschera</translation>
     </message>
     <message>
-        <location line="-1345"/>
+        <location line="-1368"/>
         <location line="+196"/>
         <location line="+95"/>
         <location line="+687"/>
-        <location line="+374"/>
+        <location line="+397"/>
         <source>None</source>
         <translation>Nessuna</translation>
     </message>
     <message>
-        <location line="-1446"/>
+        <location line="-1469"/>
         <location line="+409"/>
-        <location line="+1037"/>
+        <location line="+1060"/>
         <source>Line</source>
         <translation>Linea</translation>
     </message>
@@ -3719,13 +3730,13 @@
         <translation>Fascia</translation>
     </message>
     <message>
-        <location line="-654"/>
-        <location line="+654"/>
+        <location line="-677"/>
+        <location line="+677"/>
         <source>Circle</source>
         <translation>Cerchio</translation>
     </message>
     <message>
-        <location line="-1736"/>
+        <location line="-1759"/>
         <source>Choose 3D LUT (.cube)</source>
         <translation>Scegli una LUT 3D (.cube)</translation>
     </message>
@@ -3741,12 +3752,12 @@
     </message>
     <message>
         <location line="+553"/>
-        <location line="+1182"/>
+        <location line="+1205"/>
         <source>Rectangle</source>
         <translation>Rettangolo</translation>
     </message>
     <message>
-        <location line="-656"/>
+        <location line="-679"/>
         <location line="+44"/>
         <source>Bars</source>
         <translation>Barre</translation>
@@ -3914,7 +3925,7 @@
         <translation>Sfocatura di movimento</translation>
     </message>
     <message>
-        <location line="+163"/>
+        <location line="+186"/>
         <source>Heart</source>
         <translation>Cuore</translation>
     </message>
@@ -3975,8 +3986,8 @@
         <translation>Colore da rimuovere</translation>
     </message>
     <message>
-        <location line="-601"/>
-        <location line="+609"/>
+        <location line="-624"/>
+        <location line="+632"/>
         <source>Strength</source>
         <translation>Intensità</translation>
     </message>
@@ -4080,6 +4091,51 @@
         <location line="+11"/>
         <source>The voice could not be removed.</source>
         <translation>Impossibile rimuovere la voce.</translation>
+    </message>
+    <message>
+        <location filename="../src/engine/analysis/Cutout.cpp" line="+100"/>
+        <source>%1 could not be started.</source>
+        <translation>Impossibile avviare %1.</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>Removing the background needs rembg: install it with “%1”.</source>
+        <translation>Rimuovere lo sfondo richiede rembg: installalo con «%1».</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>No room for temporary files.</source>
+        <translation>Non c&apos;è spazio per i file temporanei.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>The pictures of %1 cannot be read: %2</source>
+        <translation>Le immagini di %1 non possono essere lette: %2</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The pictures of %1 cannot be read.</source>
+        <translation>Le immagini di %1 non possono essere lette.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>rembg could not remove the background of %1: %2</source>
+        <translation>rembg non è riuscito a rimuovere lo sfondo di %1: %2</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>rembg did not cut out every picture of %1.</source>
+        <translation>rembg non ha scontornato tutte le immagini di %1.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The cut-out video of %1 could not be made: %2</source>
+        <translation>Il video scontornato di %1 non è stato possibile: %2</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The cut-out video could not be saved in the cache.</source>
+        <translation>Il video scontornato non è stato salvato nella cache.</translation>
     </message>
 </context>
 <context>
@@ -5585,9 +5641,17 @@
     </message>
 </context>
 <context>
+    <name>vedit::ai::BackgroundRemoval</name>
+    <message>
+        <location filename="../src/ai/Tasks.cpp" line="+133"/>
+        <source>Removing the background</source>
+        <translation>Rimozione dello sfondo</translation>
+    </message>
+</context>
+<context>
     <name>vedit::ai::CameraMotionAnalysis</name>
     <message>
-        <location filename="../src/ai/Tasks.cpp" line="+71"/>
+        <location line="-62"/>
         <source>Steadying the shot</source>
         <translation>Stabilizzazione dell&apos;inquadratura</translation>
     </message>
@@ -6020,7 +6084,7 @@
 <context>
     <name>vedit::projectjson</name>
     <message>
-        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1646"/>
+        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1650"/>
         <source>The project file is damaged (%1).</source>
         <translation>Il file del progetto è danneggiato (%1).</translation>
     </message>
@@ -6054,12 +6118,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+288"/>
+        <location line="+290"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-287"/>
+        <location line="-289"/>
         <source>Read aloud</source>
         <translation>Leggi ad alta voce</translation>
     </message>
@@ -6152,6 +6216,11 @@
         <location line="+2"/>
         <source>Adapt to 9:16, following the subject</source>
         <translation>Adatta a 9:16 seguendo il soggetto</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Remove background</source>
+        <translation>Rimuovi sfondo</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6444,8 +6513,8 @@
         <translation>Animazione in ciclo</translation>
     </message>
     <message>
-        <location line="-291"/>
-        <location line="+292"/>
+        <location line="-293"/>
+        <location line="+294"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -6470,12 +6539,12 @@
     </message>
     <message>
         <location line="+24"/>
-        <location line="+154"/>
+        <location line="+206"/>
         <source>Select a video first.</source>
         <translation>Seleziona prima un video.</translation>
     </message>
     <message>
-        <location line="-119"/>
+        <location line="-171"/>
         <source>Select a video or a sound first.</source>
         <translation>Seleziona prima un video o un audio.</translation>
     </message>
@@ -6505,7 +6574,32 @@
         <translation>Voce e musica separate: due audio sotto la clip</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+27"/>
+        <source>Select a video played forwards at a steady speed first.</source>
+        <translation>Seleziona prima un video riprodotto in avanti a velocità costante.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Remove background</source>
+        <translation>Rimuovi sfondo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Background removed: what is under the clip shows through</source>
+        <translation>Sfondo rimosso: si vede ciò che sta sotto la clip</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Removing the background needs rembg, which is not installed: “%1”.</source>
+        <translation>Rimuovere lo sfondo richiede rembg, che non è installato: «%1».</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The first time, rembg downloads its model (about 170 MB). Click “Remove background” again to go on.</source>
+        <translation>La prima volta rembg scarica il suo modello (circa 170 MB). Fai di nuovo clic su «Rimuovi sfondo» per continuare.</translation>
+    </message>
+    <message>
+        <location line="+26"/>
         <source>Select a text first.</source>
         <translation>Seleziona prima un testo.</translation>
     </message>
@@ -6825,13 +6919,13 @@
     <name>vedit::ui::ClipInspector</name>
     <message>
         <location filename="../src/ui/controllers/ClipInspector.cpp" line="+367"/>
-        <location line="+1042"/>
+        <location line="+1043"/>
         <location line="+26"/>
         <source>Change mask</source>
         <translation>Modifica maschera</translation>
     </message>
     <message>
-        <location line="-1042"/>
+        <location line="-1043"/>
         <source>Click on the clip to pick the colour to remove.</source>
         <translation>Fai clic sulla clip per scegliere il colore da rimuovere.</translation>
     </message>
@@ -6866,7 +6960,7 @@
         <translation>Cambia la curva del keyframe</translation>
     </message>
     <message>
-        <location line="+629"/>
+        <location line="+630"/>
         <source>Colour</source>
         <translation>Colore</translation>
     </message>
@@ -7029,6 +7123,11 @@
         <location line="+3"/>
         <source>Change pitch</source>
         <translation>Cambia intonazione</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Restore background</source>
+        <translation>Ripristina sfondo</translation>
     </message>
     <message>
         <location line="+4"/>

@@ -196,6 +196,8 @@ struct MediaClipData
     bool reversed = false;
     // Slow motion with new frames made between the real ones (instead of repeating them); speed < 1 only.
     bool smooth = false;
+    // The background removed ("Remove background"): the clip shows its cut-out copy, transparent around the subject.
+    bool cutout = false;
     ClipAudio audio;
 
     friend bool operator==(const MediaClipData &, const MediaClipData &) = default;
