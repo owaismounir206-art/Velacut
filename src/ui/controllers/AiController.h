@@ -63,7 +63,8 @@ public:
     Q_INVOKABLE bool autoReframe(int preset);
     // "Auto captions": the speech of the main track's clips, recognised by whisper.cpp (`language`: ISO 639-1 or
     // "auto"), becomes caption lines word by word on the caption track (replacing the lines there) — one undo step.
-    Q_INVOKABLE bool autoCaptions(const QString &language = QStringLiteral("auto"));
+    // With `bilingual`, each line also in English, smaller, under the words (whisper.cpp translates into English only).
+    Q_INVOKABLE bool autoCaptions(const QString &language = QStringLiteral("auto"), bool bilingual = false);
     // Captions from a script (SPEC §5.8): the text as written, each word at the time it is said (the speech of the main
     // track recognised first when needed).
     Q_INVOKABLE bool captionsFromScript(const QString &script, const QString &language = QStringLiteral("auto"));
@@ -121,7 +122,7 @@ private:
     void run(std::unique_ptr<ai::AiTask> task);
     void applyPauses(const ClipId &clipId, const std::vector<ai::SourceRange> &pauses);
     void applyScenes(const ClipId &clipId, const std::vector<double> &cuts);
-    void applyCaptions(const QHash<QString, ai::Transcript> &transcripts);
+    void applyCaptions(const QHash<QString, ai::Transcript> &transcripts, const QHash<QString, ai::Transcript> &translations = {});
     // New caption lines on the caption track (replacing its lines), in the chosen style or an animated one.
     void placeCaptions(const std::vector<captions::CaptionLine> &lines);
     // Recognises the speech of the main track (what is not known yet), then calls `then` with every transcript.

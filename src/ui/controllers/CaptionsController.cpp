@@ -143,7 +143,8 @@ QVariantList CaptionsController::lines() const
                               {u"start"_s, qint64(clip.start.rescaled(rate, Rounding::NearestEven).value())},
                               {u"end"_s, qint64(clip.end().rescaled(rate, Rounding::NearestEven).value())},
                               {u"time"_s, clock(clip.start)},
-                              {u"text"_s, data->text}};
+                              {u"text"_s, data->text},
+                              {u"translation"_s, data->translation}};
     }
     return result;
 }
@@ -371,6 +372,24 @@ bool CaptionsController::setLineText(int index, const QString &text)
     EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
                             .updateClips({clip->id}, [&text](Clip &c) { c.payload = captions::withText(*c.subtitle(), text); },
                                          tr("Edit caption"));
+    return m_editor.push(std::move(result));
+}
+
+bool CaptionsController::setLineTranslation(int index, const QString &text)
+{
+    const Clip *clip = line(index);
+    const QString translation = text.simplified();
+    if (!clip || clip->subtitle()->translation == translation) {
+        return false;
+    }
+    EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                            .updateClips({clip->id},
+                                         [&translation](Clip &c) {
+                                             SubtitleClipData data = *c.subtitle();
+                                             data.translation = translation;
+                                             c.payload = std::move(data);
+                                         },
+                                         tr("Edit translation"));
     return m_editor.push(std::move(result));
 }
 

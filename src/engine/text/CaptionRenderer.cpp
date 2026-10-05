@@ -30,6 +30,9 @@ constexpr double kBoxPadY = 0.03;
 constexpr double kBoxRadius = 0.2;
 // Lines of captions never get wider than this share of the canvas (safe from the edges and the buttons of the apps).
 constexpr double kMaxLineWidth = 0.84;
+// The translation of bilingual captions: its size (share of the words' size) and the gap above it (share of a line).
+constexpr double kTranslationScale = 0.62;
+constexpr double kTranslationGap = 0.2;
 
 QColor toQColor(const Color &c)
 {
@@ -227,6 +230,46 @@ std::shared_ptr<CaptionLayout> CaptionRenderer::layout(const SubtitleClipData &l
         }
         layout.groups.push_back(std::move(group));
     }
+
+    const QString translation = line.translation.simplified();
+    if (!translation.isEmpty() && !layout.groups.empty()) {
+        QFont small = font;
+        small.setPixelSize(std::max(1, static_cast<int>(std::lround(layout.pixelSize * kTranslationScale))));
+        small.setWeight(static_cast<QFont::Weight>(std::clamp(text.fontWeight - 100, 100, 900)));
+        if (spacing != 0.0) {
+            small.setLetterSpacing(QFont::AbsoluteSpacing, spacing * layout.pixelSize * kTranslationScale);
+        }
+        const QFontMetricsF smallMetrics(small);
+        const double smallSpace = smallMetrics.horizontalAdvance(QLatin1Char(' '));
+        double bottom = 0.0;
+        for (const CaptionLayout::Group &group : layout.groups) {
+            bottom = std::max(bottom, group.bounds.bottom());
+        }
+        std::vector<QString> lines(1);
+        std::vector<double> widths(1, 0.0);
+        for (const QString &word : translation.split(u' ', Qt::SkipEmptyParts)) {
+            const QString shown = layout.style.uppercase ? word.toUpper() : word;
+            const double width = smallMetrics.horizontalAdvance(shown);
+            if (!lines.back().isEmpty() && widths.back() + smallSpace + width > maxWidth) {
+                lines.emplace_back();
+                widths.push_back(0.0);
+            }
+            if (!lines.back().isEmpty()) {
+                lines.back() += u' ';
+                widths.back() += smallSpace;
+            }
+            lines.back() += shown;
+            widths.back() += width;
+        }
+        double top = bottom + kTranslationGap * lineStep;
+        for (size_t l = 0; l < lines.size(); ++l) {
+            const double x = (canvas.width() - widths[l]) / 2.0;
+            layout.translation.addText(QPointF(x, top + smallMetrics.ascent()), small, lines[l]);
+            layout.translationLines.push_back(QRectF(x, top, widths[l], smallMetrics.height()));
+            layout.translationBounds = layout.translationBounds.united(layout.translationLines.back());
+            top += smallMetrics.height() * text.lineHeight;
+        }
+    }
     return result;
 }
 
@@ -261,7 +304,7 @@ std::int64_t CaptionRenderer::stateKey(const CaptionLayout &layout, std::int64_t
 QRectF CaptionRenderer::bounds(const CaptionLayout &layout, std::int64_t frame)
 {
     const int g = groupAt(layout, frame);
-    return g < 0 ? QRectF() : layout.groups[static_cast<size_t>(g)].bounds;
+    return g < 0 ? QRectF() : layout.groups[static_cast<size_t>(g)].bounds.united(layout.translationBounds);
 }
 
 QImage CaptionRenderer::render(const CaptionLayout &layout, std::int64_t frame, QSize size)
@@ -298,7 +341,9 @@ QImage CaptionRenderer::render(const CaptionLayout &layout, std::int64_t frame, 
         opacity = std::min(1.0, entry * 3.0);
         break;
     }
-    if (opacity <= 0.0) {
+    // The translation stays on screen from one group to the next: only the first group brings it in.
+    const double translationOpacity = g == 0 ? opacity : 1.0;
+    if (opacity <= 0.0 && (layout.translation.isEmpty() || translationOpacity <= 0.0)) {
         return image.convertToFormat(QImage::Format_RGBA8888);
     }
     const QTransform world = motion * view;
@@ -347,6 +392,15 @@ QImage CaptionRenderer::render(const CaptionLayout &layout, std::int64_t frame, 
         for (const QRectF &line : group.lines) {
             painter.drawRoundedRect(line.adjusted(-pad, -pad * 0.4, pad, pad * 0.4), radius, radius);
         }
+        painter.save();
+        painter.setTransform(view);
+        painter.setOpacity(translationOpacity);
+        for (const QRectF &line : layout.translationLines) {
+            const double smallPad = pad * kTranslationScale;
+            painter.drawRoundedRect(line.adjusted(-smallPad, -smallPad * 0.4, smallPad, smallPad * 0.4),
+                                    radius * kTranslationScale, radius * kTranslationScale);
+        }
+        painter.restore();
     }
     // The box behind the word being said.
     if (style.highlight == CaptionHighlight::Box && active >= 0) {
@@ -372,6 +426,15 @@ QImage CaptionRenderer::render(const CaptionLayout &layout, std::int64_t frame, 
                 p.strokePath(all, QPen(color, 2 * strokeWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
             }
             p.fillPath(all, color);
+            if (!layout.translation.isEmpty()) {
+                p.setTransform(QTransform::fromTranslate(text.shadow->offset.x * layout.canvas.height(),
+                                                         text.shadow->offset.y * layout.canvas.height()) * view);
+                if (strokeWidth > 0.0) {
+                    p.strokePath(layout.translation, QPen(color, 2 * strokeWidth * kTranslationScale, Qt::SolidLine,
+                                                          Qt::RoundCap, Qt::RoundJoin));
+                }
+                p.fillPath(layout.translation, color);
+            }
         }
         const double scale = size.height() / static_cast<double>(layout.canvas.height());
         const int radius = static_cast<int>(std::lround(text.shadow->blur * px * scale / 3.0));
@@ -393,6 +456,18 @@ QImage CaptionRenderer::render(const CaptionLayout &layout, std::int64_t frame, 
 
     const QColor normal = toQColor(colorOf(text.color, Color{255, 255, 255, 255}));
     const QColor highlight = toQColor(style.highlightColor);
+    if (!layout.translation.isEmpty()) {
+        // Still under the moving words: it is the whole line, not the group being said.
+        painter.save();
+        painter.setTransform(view);
+        painter.setOpacity(translationOpacity);
+        if (strokeWidth > 0.0) {
+            painter.strokePath(layout.translation, QPen(strokeColor, 2 * strokeWidth * kTranslationScale, Qt::SolidLine,
+                                                        Qt::RoundCap, Qt::RoundJoin));
+        }
+        painter.fillPath(layout.translation, normal);
+        painter.restore();
+    }
     for (int i = group.first; i < group.first + group.count; ++i) {
         QColor color = normal;
         switch (style.highlight) {

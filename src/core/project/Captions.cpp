@@ -73,6 +73,7 @@ std::pair<SubtitleClipData, SubtitleClipData> split(const SubtitleClipData &line
     }
     first.text = firstText.join(u' ');
     second.text = secondText.join(u' ');
+    second.translation.clear(); // the translation of the whole line stays with its first part
     return {first, second};
 }
 
@@ -102,6 +103,7 @@ SubtitleClipData merged(const SubtitleClipData &first, const RationalTime &first
                                          word.end.rescaled(offset.rate(), Rounding::NearestEven) + offset});
     }
     result.text = QStringList{first.text, second.text}.join(u' ').trimmed();
+    result.translation = QStringList{first.translation, second.translation}.join(u' ').trimmed();
     return result;
 }
 
@@ -146,7 +148,10 @@ std::vector<SubtitleEntry> entriesOf(const Track &track)
     std::vector<SubtitleEntry> entries;
     for (const Clip &clip : track.clips) {
         if (const SubtitleClipData *line = clip.subtitle()) {
-            entries.push_back(SubtitleEntry{clip.start, clip.end(), line->text});
+            // Bilingual captions: the translation on a second line, as subtitle players show two languages.
+            const QString translation = line->translation.simplified();
+            entries.push_back(SubtitleEntry{clip.start, clip.end(),
+                                            translation.isEmpty() ? line->text : line->text + u'\n' + translation});
         }
     }
     return entries;

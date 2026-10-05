@@ -75,14 +75,20 @@ bool AiController::canSplitScenes() const
 
 void AiController::run(std::unique_ptr<ai::AiTask> task)
 {
+    if (m_task) {
+        // Started from the result of the task finishing now (analysis, then tracking): that one goes once its signal
+        // is over.
+        m_task.release()->deleteLater();
+    }
     m_task = std::move(task);
     connect(m_task.get(), &ai::AiTask::progressChanged, this, &AiController::progressChanged);
-    const auto finish = [this] {
-        // Deleted later: this runs inside one of the task's signals.
-        if (m_task) {
+    const ai::AiTask *current = m_task.get();
+    const auto finish = [this, current] {
+        // Deleted later: this runs inside one of the task's signals. A task started meanwhile stays.
+        if (m_task.get() == current) {
             m_task.release()->deleteLater();
+            emit busyChanged();
         }
-        emit busyChanged();
     };
     connect(m_task.get(), &ai::AiTask::failed, this, [this, finish](const QString &error) {
         finish();
@@ -923,9 +929,33 @@ bool AiController::startTranscription(const QString &language,
     return true;
 }
 
-bool AiController::autoCaptions(const QString &language)
+bool AiController::autoCaptions(const QString &language, bool bilingual)
 {
-    return startTranscription(language, [this](const QHash<QString, ai::Transcript> &transcripts) { applyCaptions(transcripts); });
+    if (!bilingual) {
+        return startTranscription(language, [this](const QHash<QString, ai::Transcript> &transcripts) { applyCaptions(transcripts); });
+    }
+    return startTranscription(language, [this, language](const QHash<QString, ai::Transcript> &transcripts) {
+        // The files whose speech is not English already, translated by a second pass of whisper.cpp.
+        std::vector<ai::Transcription::File> files;
+        for (const Media &item : m_editor.data().media) {
+            const auto it = transcripts.constFind(item.fingerprint.value);
+            if (it != transcripts.constEnd() && it->language != u"en"_s &&
+                std::none_of(files.begin(), files.end(), [&item](const auto &f) { return f.fingerprint == item.fingerprint.value; })) {
+                files.push_back({item.path, item.fingerprint.value});
+            }
+        }
+        if (files.empty()) {
+            emit m_editor.message(tr("The speech is in English already: captions in one language."), false);
+            applyCaptions(transcripts);
+            return;
+        }
+        auto task = std::make_unique<ai::Transcription>(files, ai::whisper::bestInstalled(), language, true);
+        ai::Transcription *translation = task.get();
+        connect(translation, &ai::AiTask::finished, this, [this, translation, transcripts] {
+            applyCaptions(transcripts, translation->transcripts());
+        });
+        run(std::move(task));
+    });
 }
 
 bool AiController::captionsFromScript(const QString &script, const QString &language)
@@ -985,7 +1015,7 @@ const ai::Transcript *AiController::transcriptOf(const Media &media) const
     return nullptr;
 }
 
-void AiController::applyCaptions(const QHash<QString, ai::Transcript> &transcripts)
+void AiController::applyCaptions(const QHash<QString, ai::Transcript> &transcripts, const QHash<QString, ai::Transcript> &translations)
 {
     const Sequence *sequence = m_editor.data().mainSequence();
     if (!sequence) {
@@ -1007,8 +1037,12 @@ void AiController::applyCaptions(const QHash<QString, ai::Transcript> &transcrip
             const double frames = static_cast<double>(ms - sourceInMs) / speed * rate.toDouble() / 1000.0;
             return start + RationalTime(std::llround(frames), rate);
         };
-        for (captions::CaptionLine &line : ai::captionLines(transcripts.value(item->fingerprint.value), sourceInMs,
-                                                            sourceInMs + lengthMs, toTimeline)) {
+        std::vector<captions::CaptionLine> clipLines =
+            ai::captionLines(transcripts.value(item->fingerprint.value), sourceInMs, sourceInMs + lengthMs, toTimeline);
+        if (const auto translation = translations.constFind(item->fingerprint.value); translation != translations.constEnd()) {
+            ai::attachTranslation(clipLines, *translation, sourceInMs, sourceInMs + lengthMs, toTimeline);
+        }
+        for (captions::CaptionLine &line : clipLines) {
             lines.push_back(std::move(line));
         }
     }

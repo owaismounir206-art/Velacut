@@ -342,6 +342,9 @@ traccia, sovrascrivibile riga per riga con `styleOverride`), più le parole temp
 { "text": "ciao a tutti", "styleOverride": null,
   "words": [ { "w": "ciao", "t0": "0@30", "t1": "9@30" }, { "w": "a", "t0": "9@30", "t1": "12@30" } ] }
 ```
+`translation` (facoltativo, assente = una lingua sola): i sottotitoli bilingue, la riga in un'altra lingua, disegnata
+più piccola sotto le parole per tutta la durata della riga ed esportata come seconda riga nei file SRT/VTT. Dividendo una
+riga la traduzione resta alla prima metà; unendo due righe le traduzioni si uniscono.
 I tempi delle parole partono dall'inizio della clip (si spostano con lei; tagliando una riga ogni metà tiene le parole
 dette nella sua parte). Se `words` manca o non corrisponde più al testo (riga modificata, importata da SRT/VTT), le parole
 vengono distribuite sulla durata della riga in proporzione alla loro lunghezza.

@@ -36,7 +36,7 @@ class CaptionsController : public QObject
     QML_UNCREATABLE("Provided by Editor.captions")
 
     Q_PROPERTY(bool hasCaptions READ hasCaptions NOTIFY changed FINAL)
-    // [{clipId, start, end (frames), time ("0:04.2"), text}] in time order.
+    // [{clipId, start, end (frames), time ("0:04.2"), text, translation}] in time order.
     Q_PROPERTY(QVariantList lines READ lines NOTIFY changed FINAL)
     // The line at the playhead (or the last one before it), -1 before the first.
     Q_PROPERTY(int currentIndex READ currentIndex NOTIFY currentChanged FINAL)
@@ -71,6 +71,8 @@ public:
     Q_INVOKABLE void endGesture();
 
     Q_INVOKABLE bool setLineText(int index, const QString &text);
+    // Bilingual captions: the line in the other language (empty = one language only).
+    Q_INVOKABLE bool setLineTranslation(int index, const QString &text);
     Q_INVOKABLE void seekToLine(int index);
     Q_INVOKABLE bool splitLine(int index);
     Q_INVOKABLE bool joinWithNext(int index);

@@ -45,6 +45,11 @@ Transcript parseWhisperJson(const QJsonObject &json, std::int64_t offsetMs = 0);
 std::vector<captions::CaptionLine> captionLines(const Transcript &transcript, std::int64_t fromMs, std::int64_t toMs,
                                                 const std::function<RationalTime(std::int64_t)> &toTimeline);
 
+// Bilingual captions: the words of `translation` (the same speech in another language, from the same file) said in
+// [fromMs, toMs) added to the translation of the line on screen at their middle (or the nearest line), in order.
+void attachTranslation(std::vector<captions::CaptionLine> &lines, const Transcript &translation, std::int64_t fromMs,
+                       std::int64_t toMs, const std::function<RationalTime(std::int64_t)> &toTimeline);
+
 // Chapters for YouTube from what is said (SPEC §5.8): the first at 0, at least 3, each at least 10 s, about one a
 // minute; each starts at the beginning of a sentence, preferring the sentences after the longest pauses near evenly
 // spaced points, and is titled with the first words of that sentence. Words in timeline milliseconds. Empty when the

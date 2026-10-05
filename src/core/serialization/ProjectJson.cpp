@@ -172,7 +172,7 @@ const QSet<QString> kClipCommonKeys{u"id"_s,        u"kind"_s,        u"start"_s
                                     u"opacity"_s,   u"blendMode"_s,   u"effects"_s,    u"masks"_s,
                                     u"animations"_s, u"markers"_s,    u"background"_s, u"placeholder"_s};
 const QSet<QString> kTextClipKeys{u"text"_s, u"style"_s, u"stylePreset"_s, u"box"_s, u"animation"_s};
-const QSet<QString> kSubtitleClipKeys{u"text"_s, u"words"_s, u"styleOverride"_s};
+const QSet<QString> kSubtitleClipKeys{u"text"_s, u"words"_s, u"styleOverride"_s, u"translation"_s};
 
 const QSet<QString> kTextStyleKeys{u"font"_s,          u"size"_s,       u"color"_s, u"stroke"_s,   u"shadow"_s,
                                    u"background"_s,    u"letterSpacing"_s, u"lineHeight"_s, u"align"_s,
@@ -570,6 +570,9 @@ QJsonObject clipJson(const Clip &clip)
                     words.append(QJsonObject{{u"w"_s, word.text}, {u"t0"_s, timeValue(word.start)}, {u"t1"_s, timeValue(word.end)}});
                 }
                 object.insert(u"words"_s, words);
+                if (!data.translation.isEmpty()) {
+                    object.insert(u"translation"_s, data.translation);
+                }
                 object.insert(u"styleOverride"_s, data.styleOverride ? QJsonValue(textStyleJson(*data.styleOverride)) : QJsonValue::Null);
                 mergeInto(object, data.fields);
             } else if constexpr (std::is_same_v<T, AdjustmentClipData>) {
@@ -1417,6 +1420,7 @@ public:
             if (object.value(u"styleOverride"_s).isObject()) {
                 data.styleOverride = textStyle(object.value(u"styleOverride"_s).toObject(), join(path, u"styleOverride"_s));
             }
+            data.translation = object.value(u"translation"_s).toString();
             data.fields = unknownKeys(object, kClipCommonKeys, kSubtitleClipKeys);
             clip.payload = std::move(data);
             break;

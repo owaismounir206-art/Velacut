@@ -398,7 +398,7 @@
 <context>
     <name>CaptionsPanel</name>
     <message>
-        <location filename="../src/ui/qml/CaptionsPanel.qml" line="+80"/>
+        <location filename="../src/ui/qml/CaptionsPanel.qml" line="+82"/>
         <source>Import captions</source>
         <translation>Importa sottotitoli</translation>
     </message>
@@ -453,18 +453,18 @@
         <translation>Stili</translation>
     </message>
     <message>
-        <location line="-111"/>
+        <location line="-113"/>
         <source>Find the language</source>
         <translation>Trova la lingua</translation>
     </message>
     <message>
-        <location line="+26"/>
-        <location line="+166"/>
+        <location line="+28"/>
+        <location line="+182"/>
         <source>Captions from a script</source>
         <translation>Sottotitoli da un copione</translation>
     </message>
     <message>
-        <location line="-154"/>
+        <location line="-170"/>
         <source>Paste what is said in the video: the captions keep your words and spelling, each at the moment it is said.</source>
         <translation>Incolla ciò che viene detto nel video: i sottotitoli tengono le tue parole e la tua grafia, ognuna nel momento in cui è detta.</translation>
     </message>
@@ -489,7 +489,17 @@
         <translation>Lingua del parlato</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
+        <source>Also in English</source>
+        <translation>Anche in inglese</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Bilingual captions: each line also in English, under the words</source>
+        <translation>Sottotitoli bilingue: ogni riga anche in inglese, sotto le parole</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>Auto captions</source>
         <translation>Sottotitoli automatici</translation>
     </message>
@@ -544,12 +554,17 @@
         <translation>Sostituisci tutto (%1)</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+66"/>
         <source>Caption line %1</source>
         <translation>Riga di sottotitoli %1</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+30"/>
+        <source>Translation of caption line %1</source>
+        <translation>Traduzione della riga %1 dei sottotitoli</translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>Split the line at the playhead</source>
         <translation>Dividi la riga all&apos;indicatore di riproduzione</translation>
     </message>
@@ -5499,13 +5514,13 @@
         <location line="+121"/>
         <location line="+21"/>
         <location line="+67"/>
-        <location line="+79"/>
+        <location line="+80"/>
         <location line="+27"/>
         <source>The sequence does not exist.</source>
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-2069"/>
+        <location line="-2070"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -5592,23 +5607,23 @@
         <location line="+26"/>
         <location line="+64"/>
         <location line="+286"/>
-        <location line="+101"/>
+        <location line="+102"/>
         <location line="+42"/>
         <location line="+27"/>
         <source>The track is locked.</source>
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-1993"/>
+        <location line="-1994"/>
         <location line="+994"/>
         <location line="+47"/>
         <location line="+14"/>
-        <location line="+934"/>
+        <location line="+935"/>
         <source>The track does not exist.</source>
         <translation>La traccia non esiste.</translation>
     </message>
     <message>
-        <location line="-1983"/>
+        <location line="-1984"/>
         <source>This clip cannot be placed on that track.</source>
         <translation>Questa clip non può andare su quella traccia.</translation>
     </message>
@@ -6010,7 +6025,7 @@
         <translation>Taglia e cambia angolo</translation>
     </message>
     <message>
-        <location line="+49"/>
+        <location line="+50"/>
         <source>There are no captions to add.</source>
         <translation>Non ci sono sottotitoli da aggiungere.</translation>
     </message>
@@ -6172,9 +6187,14 @@
 <context>
     <name>vedit::ai::Transcription</name>
     <message>
-        <location filename="../src/ai/Whisper.cpp" line="+106"/>
+        <location filename="../src/ai/Whisper.cpp" line="+112"/>
         <source>Recognising the speech</source>
         <translation>Riconoscimento del parlato</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Translating the speech into English</source>
+        <translation>Traduzione del parlato in inglese</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -6187,7 +6207,7 @@
         <translation>Scarica prima un modello del parlato (Preferenze → Modelli AI).</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+37"/>
         <source>No room for temporary files.</source>
         <translation>Non c&apos;è spazio per i file temporanei.</translation>
     </message>
@@ -6197,7 +6217,7 @@
         <translation>L&apos;audio di %1 non può essere letto.</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+16"/>
         <source>whisper.cpp could not be started.</source>
         <translation>Impossibile avviare whisper.cpp.</translation>
     </message>
@@ -6525,7 +6545,7 @@
 <context>
     <name>vedit::projectjson</name>
     <message>
-        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1650"/>
+        <location filename="../src/core/serialization/ProjectJson.cpp" line="+1654"/>
         <source>The project file is damaged (%1).</source>
         <translation>Il file del progetto è danneggiato (%1).</translation>
     </message>
@@ -6989,7 +7009,7 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message>
-        <location filename="../src/ui/controllers/AiController.cpp" line="+105"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+111"/>
         <source>Select a video or a sound with speech first.</source>
         <translation>Seleziona prima un video o un audio con del parlato.</translation>
     </message>
@@ -7171,13 +7191,13 @@
         <location line="+40"/>
         <location line="+45"/>
         <location line="+93"/>
-        <location line="+310"/>
+        <location line="+338"/>
         <location line="+32"/>
         <source>The clip was removed meanwhile.</source>
         <translation>Nel frattempo la clip è stata eliminata.</translation>
     </message>
     <message>
-        <location line="-317"/>
+        <location line="-345"/>
         <source>Stabilize</source>
         <translation>Stabilizza</translation>
     </message>
@@ -7212,7 +7232,12 @@
         <translation>Nella traccia principale non c&apos;è audio da cui fare i sottotitoli.</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+32"/>
+        <source>The speech is in English already: captions in one language.</source>
+        <translation>Il parlato è già in inglese: sottotitoli in una lingua.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
         <source>Paste the script first.</source>
         <translation>Incolla prima il copione.</translation>
     </message>
@@ -7223,7 +7248,7 @@
     </message>
     <message>
         <location line="-20"/>
-        <location line="+76"/>
+        <location line="+80"/>
         <source>No speech was recognised on the main track.</source>
         <translation>Nessun parlato riconosciuto nella traccia principale.</translation>
     </message>
@@ -7381,7 +7406,7 @@
 <context>
     <name>vedit::ui::CaptionsController</name>
     <message>
-        <location filename="../src/ui/controllers/CaptionsController.cpp" line="+205"/>
+        <location filename="../src/ui/controllers/CaptionsController.cpp" line="+206"/>
         <source>The file %1 cannot be read.</source>
         <translation>Il file %1 non può essere letto.</translation>
     </message>
@@ -7437,6 +7462,11 @@
         <location line="+19"/>
         <source>Edit caption</source>
         <translation>Modifica sottotitolo</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Edit translation</source>
+        <translation>Modifica la traduzione</translation>
     </message>
     <message>
         <location line="+53"/>

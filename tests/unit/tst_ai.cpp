@@ -198,6 +198,17 @@ private slots:
         QCOMPARE(lines[2].words[0].start, toTimeline(3000));
         // Only the part of the file a clip plays.
         QCOMPARE(ai::captionLines(transcript, 1000, 3200, toTimeline).size(), 2u);
+        // Bilingual: the English words said during each line become its translation (one said in the pause goes to
+        // the nearest line; one outside the clip's part is left out).
+        std::vector<captions::CaptionLine> bilingual = lines;
+        ai::Transcript english;
+        english.words = {{u"Hi"_s, 0, 300}, {u"everyone."_s, 300, 800}, {u"Today"_s, 900, 1300},
+                         {u"we"_s, 1300, 1500}, {u"talk"_s, 2500, 2700}, {u"about"_s, 3000, 3300},
+                         {u"video."_s, 3300, 3600}, {u"later"_s, 6000, 6400}};
+        ai::attachTranslation(bilingual, english, 0, 5000, toTimeline);
+        QCOMPARE(bilingual[0].translation, u"Hi everyone."_s);
+        QCOMPARE(bilingual[1].translation, u"Today we talk"_s);
+        QCOMPARE(bilingual[2].translation, u"about video."_s);
         // Filler words.
         QVERIFY(ai::isFillerWord(QStringLiteral("ehm")));
         QVERIFY(ai::isFillerWord(QStringLiteral("Uhmm,")));

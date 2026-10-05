@@ -5,6 +5,8 @@
 #include <QRegularExpression>
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
 
 using namespace Qt::StringLiterals;
 
@@ -124,6 +126,35 @@ Transcript parseWhisperJson(const QJsonObject &json, std::int64_t offsetMs)
         transcript.words[i].to = std::max(transcript.words[i].to, transcript.words[i].from);
     }
     return transcript;
+}
+
+void attachTranslation(std::vector<captions::CaptionLine> &lines, const Transcript &translation, std::int64_t fromMs,
+                       std::int64_t toMs, const std::function<RationalTime(std::int64_t)> &toTimeline)
+{
+    if (lines.empty()) {
+        return;
+    }
+    for (const Transcript::Word &word : translation.words) {
+        const std::int64_t middle = (word.from + word.to) / 2;
+        if (middle < fromMs || middle >= toMs) {
+            continue;
+        }
+        const RationalTime at = toTimeline(middle);
+        captions::CaptionLine *best = nullptr;
+        double distance = std::numeric_limits<double>::max();
+        for (captions::CaptionLine &line : lines) {
+            if (!(at < line.start) && at < line.end) {
+                best = &line;
+                break;
+            }
+            const double away = std::min(std::abs((at - line.start).toSecondsDouble()), std::abs((at - line.end).toSecondsDouble()));
+            if (away < distance) {
+                distance = away;
+                best = &line;
+            }
+        }
+        best->translation = best->translation.isEmpty() ? word.text : best->translation + u' ' + word.text;
+    }
 }
 
 std::vector<captions::CaptionLine> captionLines(const Transcript &transcript, std::int64_t fromMs, std::int64_t toMs,

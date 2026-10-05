@@ -26,6 +26,8 @@ Item {
                                       { code: "fr", text: "Français" }, { code: "de", text: "Deutsch" },
                                       { code: "pt", text: "Português" }]
     property int language: 0
+    // Bilingual captions: each line also in English, smaller, under the words (whisper.cpp translates into English).
+    property bool bilingual: false
 
     // Captions just made from the speech: their look comes next (one click to change it).
     Connections {
@@ -107,7 +109,7 @@ Item {
                 enabled: panel.ai.speechStatus === 0 && !panel.ai.busy
                 iconName: "auto_awesome"
                 label: qsTr("Make the captions again from the speech")
-                onClicked: panel.ai.autoCaptions(panel.languages[panel.language].code)
+                onClicked: panel.ai.autoCaptions(panel.languages[panel.language].code, panel.bilingual)
             }
             Tool {
                 objectName: "captionImportButton"
@@ -176,6 +178,22 @@ Item {
                         Accessible.name: qsTr("Language of the speech")
                         onActivated: (index) => panel.language = index
                     }
+                    RowLayout {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: Theme.editor.panelMinimumWidth
+                        visible: panel.ai.speechStatus === 0
+                        Label {
+                            Layout.fillWidth: true
+                            role: "bodyMedium"
+                            text: qsTr("Also in English")
+                        }
+                        Switch {
+                            objectName: "captionBilingual"
+                            checked: panel.bilingual
+                            Accessible.name: qsTr("Bilingual captions: each line also in English, under the words")
+                            onToggled: panel.bilingual = checked
+                        }
+                    }
                     Button {
                         objectName: "autoCaptionsButton"
                         Layout.alignment: Qt.AlignHCenter
@@ -183,7 +201,7 @@ Item {
                         iconName: "auto_awesome"
                         enabled: panel.ai.speechStatus === 0 && !panel.ai.busy
                         text: qsTr("Auto captions")
-                        onClicked: panel.ai.autoCaptions(panel.languages[panel.language].code)
+                        onClicked: panel.ai.autoCaptions(panel.languages[panel.language].code, panel.bilingual)
                     }
                     // What is missing, and where to get it (never a button that does nothing).
                     Label {
@@ -327,6 +345,9 @@ Item {
                                     color: row.current ? Theme.color.onSecondaryContainer : Theme.color.onSurfaceVariant
                                     text: row.modelData.time
                                 }
+                                ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: Theme.space.xxs
                                 TextEdit {
                                     id: lineText
                                     objectName: "captionLineText_" + row.index
@@ -356,6 +377,35 @@ Item {
                                         text = row.modelData.text
                                         lineList.forceActiveFocus()
                                     }
+                                }
+                                // Bilingual captions: the line in the other language, edited the same way.
+                                TextEdit {
+                                    objectName: "captionLineTranslation_" + row.index
+                                    Layout.fillWidth: true
+                                    visible: row.modelData.translation !== ""
+                                    wrapMode: TextEdit.Wrap
+                                    selectByMouse: true
+                                    readOnly: panel.captions.locked
+                                    font: Theme.type.bodySmall
+                                    color: row.current ? Theme.color.onSecondaryContainer : Theme.color.onSurfaceVariant
+                                    selectionColor: Theme.alpha(Theme.color.primary, 0.4)
+                                    text: row.modelData.translation
+                                    Accessible.role: Accessible.EditableText
+                                    Accessible.name: qsTr("Translation of caption line %1").arg(row.index + 1)
+                                    onActiveFocusChanged: {
+                                        lineList.lineEditing = activeFocus
+                                        if (!activeFocus && text !== row.modelData.translation)
+                                            panel.captions.setLineTranslation(row.index, text)
+                                    }
+                                    Keys.onReturnPressed: {
+                                        panel.captions.setLineTranslation(row.index, text)
+                                        lineList.forceActiveFocus()
+                                    }
+                                    Keys.onEscapePressed: {
+                                        text = row.modelData.translation
+                                        lineList.forceActiveFocus()
+                                    }
+                                }
                                 }
                                 Row {
                                     Layout.alignment: Qt.AlignTop

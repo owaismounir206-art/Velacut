@@ -39,6 +39,8 @@ bool installed(const QString &id);
 QString bestInstalled();
 // Where the transcript of a file made by `model` in `language` ("auto" = found) is kept.
 QString transcriptCachePath(const QString &fingerprint, const QString &model, const QString &language);
+// Where its translation into English (whisper.cpp `--translate`) is kept.
+QString translationCachePath(const QString &fingerprint, const QString &model, const QString &language);
 
 } // namespace whisper
 
@@ -55,8 +57,9 @@ public:
         QString path;
         QString fingerprint;
     };
-    // `language`: an ISO 639-1 code, or "auto".
-    Transcription(std::vector<File> files, QString model, QString language, QObject *parent = nullptr);
+    // `language`: an ISO 639-1 code, or "auto". With `translate`, what is said is written in English (whisper.cpp
+    // translates from any language into English only), timed as said.
+    Transcription(std::vector<File> files, QString model, QString language, bool translate = false, QObject *parent = nullptr);
     QString title() const override;
     // By fingerprint.
     const QHash<QString, Transcript> &transcripts() const { return m_transcripts; }
@@ -70,6 +73,7 @@ private:
     std::vector<File> m_files;
     QString m_model;
     QString m_language;
+    bool m_translate = false;
     QHash<QString, Transcript> m_transcripts;
 };
 

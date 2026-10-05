@@ -470,6 +470,7 @@ struct SubtitleClipData
     std::vector<TimedWord> words;
     std::optional<TextStyle> styleOverride;
     QJsonObject fields; // unknown keys, kept verbatim
+    QString translation{}; // bilingual captions: the line in another language, smaller, under the words
 
     friend bool operator==(const SubtitleClipData &, const SubtitleClipData &) = default;
 };

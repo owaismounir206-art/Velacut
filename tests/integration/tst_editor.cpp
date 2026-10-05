@@ -766,17 +766,29 @@ private slots:
         QFile script(bin + u"/whisper-cli"_s);
         QVERIFY(script.open(QIODevice::WriteOnly));
         script.write(R"(#!/bin/sh
-out=""; model=""; language=""
+out=""; model=""; language=""; translate=""
 while [ $# -gt 0 ]; do
   case "$1" in
     -of) out="$2"; shift ;;
     -m) model="$2"; shift ;;
     -l) language="$2"; shift ;;
+    -tr) translate=1 ;;
   esac
   shift
 done
 [ -f "$model" ] || { echo "error: no model" >&2; exit 1; }
 echo "whisper_print_progress_callback: progress =  50%" >&2
+if [ -n "$translate" ]; then
+cat > "$out.json" <<JSON
+{"result": {"language": "$language"}, "transcription": [
+ {"offsets": {"from": 200, "to": 1500}, "text": " Hello everyone.", "tokens": [
+  {"text": " Hello", "offsets": {"from": 200, "to": 700}}, {"text": " everyone.", "offsets": {"from": 700, "to": 1400}}]},
+ {"offsets": {"from": 2000, "to": 3000}, "text": " Here is vedit.", "tokens": [
+  {"text": " Here", "offsets": {"from": 2000, "to": 2300}}, {"text": " is", "offsets": {"from": 2300, "to": 2500}},
+  {"text": " vedit.", "offsets": {"from": 2500, "to": 3000}}]}]}
+JSON
+exit 0
+fi
 cat > "$out.json" <<JSON
 {"result": {"language": "$language"}, "transcription": [
  {"offsets": {"from": 200, "to": 1500}, "text": " Ciao a tutti.", "tokens": [
@@ -815,6 +827,25 @@ echo "whisper_print_progress_callback: progress = 100%" >&2
         const Track &captions = editor.data().mainSequence()->visualTracks.back();
         QCOMPARE(captions.clips[0].subtitle()->words.size(), 3u);
         QCOMPARE(editor.captions()->styleId(), u"captions/pop-three"_s); // animated, word by word, by default
+        // Bilingual (SPEC §5.8): a second pass of whisper.cpp translates into English, each line gets what is said
+        // during it, under the words; the subtitle file has both lines.
+        QVERIFY(ai.autoCaptions(u"it"_s, true));
+        QTRY_VERIFY_WITH_TIMEOUT(!ai.busy(), 20000);
+        const QVariantList bilingual = editor.captions()->lines();
+        QCOMPARE(bilingual.size(), 2);
+        QCOMPARE(bilingual[0].toMap().value(u"text"_s).toString(), u"Ciao a tutti."_s);
+        QCOMPARE(bilingual[0].toMap().value(u"translation"_s).toString(), u"Hello everyone."_s);
+        QCOMPARE(bilingual[1].toMap().value(u"translation"_s).toString(), u"Here is vedit."_s);
+        QVERIFY(editor.captions()->setLineTranslation(1, u"This is vedit."_s));
+        QCOMPARE(editor.captions()->lines()[1].toMap().value(u"translation"_s).toString(), u"This is vedit."_s);
+        const QString srt = m_dir.filePath(u"bilingual.srt"_s);
+        QVERIFY(editor.captions()->exportFile(QUrl::fromLocalFile(srt)));
+        QFile srtFile(srt);
+        QVERIFY(srtFile.open(QIODevice::ReadOnly));
+        QVERIFY(QString::fromUtf8(srtFile.readAll()).contains(u"Ciao a tutti.\nHello everyone."_s));
+        editor.undo();
+        editor.undo();
+        QCOMPARE(editor.captions()->lines()[0].toMap().value(u"translation"_s).toString(), QString());
         // From a script: the words as written, at the times they are said ("vedit" was heard, "Velacut" written).
         QVERIFY(ai.captionsFromScript(u"Ciao a tutti!\nEcco Velacut."_s, u"it"_s));
         QTRY_VERIFY_WITH_TIMEOUT(!ai.busy(), 20000);

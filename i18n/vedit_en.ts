@@ -119,7 +119,7 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/AiController.cpp" line="+601"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+607"/>
         <source>Highlights: %n s kept from the best moments</source>
         <translation>
             <numerusform>Highlights: %n s kept from the best moments</numerusform>
@@ -135,7 +135,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+380"/>
+        <location line="+408"/>
         <source>%n caption line(s) from the speech</source>
         <translation>
             <numerusform>%n caption line from the speech</numerusform>
@@ -146,7 +146,7 @@
 <context>
     <name>vedit::ui::CaptionsController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/CaptionsController.cpp" line="+221"/>
+        <location filename="../src/ui/controllers/CaptionsController.cpp" line="+222"/>
         <source>%n caption line(s) added</source>
         <translation>
             <numerusform>%n caption line added</numerusform>
@@ -154,7 +154,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+275"/>
+        <location line="+293"/>
         <source>Replaced in %n line(s)</source>
         <translation>
             <numerusform>Replaced in %n line</numerusform>

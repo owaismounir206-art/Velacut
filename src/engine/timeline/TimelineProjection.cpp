@@ -447,6 +447,9 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::captionProducer(const Subtitl
     if (line.styleOverride) {
         content.insert(u"override"_s, projectjson::textStyleToJson(*line.styleOverride));
     }
+    if (!line.translation.isEmpty()) {
+        content.insert(u"translation"_s, line.translation);
+    }
     const QByteArray key = QJsonDocument(content).toJson(QJsonDocument::Compact);
     if (auto existing = m_texts.value(key)) {
         return existing;

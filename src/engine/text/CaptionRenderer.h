@@ -42,6 +42,11 @@ struct CaptionLayout
     CaptionStyle style; // with the line's own text style, if it has one
     std::vector<Word> words;
     std::vector<Group> groups;
+    // Bilingual captions: the whole line in the other language, smaller, under the lowest line of the groups, shown
+    // with every group (canvas pixels).
+    QPainterPath translation;
+    std::vector<QRectF> translationLines;
+    QRectF translationBounds;
 };
 
 // Social media captions (SPEC §5.8): the line, or groups of a few words following the speech, at the style's height

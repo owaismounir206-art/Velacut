@@ -2319,6 +2319,7 @@ EditResult TimelineEditor::insertCaptions(const std::vector<captions::CaptionLin
         clip.duration = end - start;
         SubtitleClipData data;
         data.text = text;
+        data.translation = line.translation.simplified();
         for (const TimedWord &word : line.words) {
             const RationalTime from = std::clamp(word.start.rescaled(m_rate, Rounding::NearestEven), start, end) - start;
             const RationalTime to = std::clamp(word.end.rescaled(m_rate, Rounding::NearestEven), start, end) - start;

@@ -91,19 +91,25 @@ QString transcriptCachePath(const QString &fingerprint, const QString &model, co
     return paths::cacheDir() + u"/media/"_s + fingerprint + u"/transcript-"_s + model + u'-' + language + u".json"_s;
 }
 
+QString translationCachePath(const QString &fingerprint, const QString &model, const QString &language)
+{
+    return paths::cacheDir() + u"/media/"_s + fingerprint + u"/translation-en-"_s + model + u'-' + language + u".json"_s;
+}
+
 } // namespace whisper
 
-Transcription::Transcription(std::vector<File> files, QString model, QString language, QObject *parent)
+Transcription::Transcription(std::vector<File> files, QString model, QString language, bool translate, QObject *parent)
     : AiTask(parent)
     , m_files(std::move(files))
     , m_model(std::move(model))
     , m_language(language.isEmpty() ? u"auto"_s : std::move(language))
+    , m_translate(translate)
 {
 }
 
 QString Transcription::title() const
 {
-    return tr("Recognising the speech");
+    return m_translate ? tr("Translating the speech into English") : tr("Recognising the speech");
 }
 
 QString Transcription::run()
@@ -120,7 +126,8 @@ QString Transcription::run()
         if (m_transcripts.contains(file.fingerprint)) {
             continue;
         }
-        const QString cache = whisper::transcriptCachePath(file.fingerprint, m_model, m_language);
+        const QString cache = m_translate ? whisper::translationCachePath(file.fingerprint, m_model, m_language)
+                                          : whisper::transcriptCachePath(file.fingerprint, m_model, m_language);
         QFile cached(cache);
         if (cached.open(QIODevice::ReadOnly)) {
             if (const auto transcript = Transcript::fromJson(QJsonDocument::fromJson(cached.readAll()).object())) {
@@ -177,8 +184,12 @@ QString Transcription::transcribe(const File &file, double shareBefore, double s
     QProcess process;
     process.setProcessChannelMode(QProcess::SeparateChannels);
     const int threads = std::clamp(QThread::idealThreadCount() - 1, 1, 8);
-    process.start(whisper::executable(), {u"-m"_s, whisper::modelPath(m_model), u"-f"_s, wav, u"-l"_s, m_language,
-                                          u"-t"_s, QString::number(threads), u"-pp"_s, u"-ojf"_s, u"-of"_s, base});
+    QStringList arguments{u"-m"_s, whisper::modelPath(m_model), u"-f"_s, wav, u"-l"_s, m_language,
+                          u"-t"_s, QString::number(threads), u"-pp"_s, u"-ojf"_s, u"-of"_s, base};
+    if (m_translate) {
+        arguments << u"-tr"_s;
+    }
+    process.start(whisper::executable(), arguments);
     if (!process.waitForStarted(10000)) {
         return tr("whisper.cpp could not be started.");
     }
@@ -210,7 +221,9 @@ QString Transcription::transcribe(const File &file, double shareBefore, double s
         return tr("whisper.cpp gave an answer vedit cannot read (%1).").arg(error.errorString());
     }
     *result = parseWhisperJson(document.object());
-    if (result->language.isEmpty() && m_language != u"auto"_s) {
+    if (m_translate) {
+        result->language = u"en"_s;
+    } else if (result->language.isEmpty() && m_language != u"auto"_s) {
         result->language = m_language;
     }
     return {};

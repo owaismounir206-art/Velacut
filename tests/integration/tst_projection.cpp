@@ -460,6 +460,44 @@ private slots:
         QVERIFY(!CaptionRenderer::bounds(*layout, 12).isEmpty());
     }
 
+    // Bilingual captions (SPEC §5.8): the translation, smaller, under the words of every group, and still there from
+    // one group to the next.
+    void bilingualCaptionsShowTheTranslationUnderTheWords()
+    {
+        SubtitleClipData line;
+        line.text = u"uno due tre"_s;
+        line.words = {TimedWord{u"uno"_s, frames(0), frames(20)}, TimedWord{u"due"_s, frames(20), frames(40)},
+                      TimedWord{u"tre"_s, frames(40), frames(60)}};
+        CaptionStyle style;
+        style.maxWordsPerLine = 2;
+        style.position = 0.0;
+        style.animation = CaptionAnimation::Pop;
+        const auto plain = CaptionRenderer::layout(line, style, 60, QSize(320, 180), Rational(30));
+        QVERIFY(plain->translation.isEmpty());
+        line.translation = u"one two three"_s;
+        const auto layout = CaptionRenderer::layout(line, style, 60, QSize(320, 180), Rational(30));
+        QVERIFY(!layout->translation.isEmpty());
+        QVERIFY(layout->translationBounds.top() > layout->groups[0].bounds.bottom());
+        QVERIFY(layout->translationBounds.height() < layout->groups[0].bounds.height());
+        QVERIFY(CaptionRenderer::bounds(*layout, 10).contains(layout->translationBounds));
+        // Opaque pixels under the words: none without the translation, many with it.
+        const auto under = [&layout](const QImage &image) {
+            int n = 0;
+            for (int y = static_cast<int>(layout->translationBounds.top()); y < static_cast<int>(layout->translationBounds.bottom()); ++y) {
+                for (int x = 0; x < image.width(); ++x) {
+                    n += qAlpha(image.pixel(x, y)) > 128 ? 1 : 0;
+                }
+            }
+            return n;
+        };
+        QCOMPARE(under(CaptionRenderer::render(*plain, 30, QSize(320, 180))), 0);
+        QVERIFY(under(CaptionRenderer::render(*layout, 30, QSize(320, 180))) > 50);
+        // The second group pops in; the translation does not.
+        QVERIFY(under(CaptionRenderer::render(*layout, 40, QSize(320, 180))) > 50);
+        QCOMPARE(under(CaptionRenderer::render(*layout, 40, QSize(320, 180))),
+                 under(CaptionRenderer::render(*layout, 50, QSize(320, 180))));
+    }
+
     // Slow motion at half speed: frames repeat in pairs; with "smooth", every frame is a different picture (new ones
     // computed between the real ones), and the clip still shows the same moment at the same time.
     void smoothSlowMotionMakesNewFrames()

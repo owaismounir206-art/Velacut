@@ -20,6 +20,7 @@ struct CaptionLine
     RationalTime end;
     QString text;
     std::vector<TimedWord> words;
+    QString translation{}; // bilingual captions
 };
 
 // The words of a text (split on white space, punctuation kept with its word).
