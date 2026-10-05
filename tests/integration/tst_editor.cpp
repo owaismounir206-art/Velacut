@@ -170,7 +170,7 @@ private slots:
         QVERIFY(inspector.active());
         QCOMPARE(inspector.kind(), int(ClipInspector::Video));
         QCOMPARE(inspector.sections(), (QStringList{u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s,
-                                                   u"cutout"_s, u"filter"_s, u"effects"_s, u"adjust"_s}));
+                                                   u"cutout"_s, u"filter"_s, u"effects"_s, u"adjust"_s, u"ai"_s}));
         QVERIFY(inspector.modifiedSections().isEmpty());
 
         // A slider drag: many values, one undo step.
@@ -249,6 +249,7 @@ private slots:
         QCOMPARE(inspector.kind(), int(ClipInspector::Image));
         QVERIFY(!inspector.sections().contains(u"speed"_s));
         QVERIFY(!inspector.sections().contains(u"audio"_s));
+        QVERIFY(!inspector.sections().contains(u"ai"_s)); // nothing smart to do on a photo yet
 
         // Copy and paste attributes: the look and the placement of the video onto the photo.
         editor.select(video, false);
@@ -618,6 +619,87 @@ private slots:
         QCOMPARE(inspector.values().value(u"stabilize.strength"_s).toDouble(), 0.9);
         QVERIFY(inspector.set(u"stabilize.on"_s, false));
         QVERIFY(!inspector.values().value(u"stabilize.on"_s).toBool());
+    }
+
+    // "Highlights" and "Long video to short clips" (SPEC §5.12) on a minute with two loud bursts (12–16 s and 40–44 s)
+    // and scene changes at 20 and 40 s: the bursts are kept, the rest shortened in one undo step; the short clips are
+    // vertical drafts made of the same file, each with a title.
+    void highlightsAndShortClips()
+    {
+        const QString file = m_dir.filePath(u"long.mp4"_s);
+        QVERIFY(runFfmpeg({u"-filter_complex"_s,
+                           u"color=c=red:s=160x90:r=30:d=20[r];color=c=blue:s=160x90:r=30:d=20[b];"
+                           "color=c=green:s=160x90:r=30:d=20[g];[r][b][g]concat=n=3:v=1:a=0,format=yuv420p[v];"
+                           "aevalsrc='(if(between(t\\,12\\,16)+between(t\\,40\\,44)\\,0.7\\,0.05))*sin(2*PI*440*t)':s=48000:d=60[a]"_s,
+                           u"-map"_s, u"[v]"_s, u"-map"_s, u"[a]"_s, u"-c:v"_s, u"libx264"_s, u"-preset"_s, u"ultrafast"_s,
+                           u"-c:a"_s, u"aac"_s, file}));
+        document::DraftStore store(m_dir.filePath(u"drafts-highlights"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.importAndInsertPaths({file}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        AiController &ai = *editor.ai();
+        QVERIFY(ai.canFindHighlights());
+        QVERIFY(editor.actions()->isEnabled(u"highlights"_s));
+
+        const int steps = editor.document().undoStack().index();
+        QVERIFY(ai.highlights());
+        QTRY_VERIFY_WITH_TIMEOUT(!ai.busy(), 30000);
+        QCOMPARE(editor.document().undoStack().index(), steps + 1);
+        // What is kept, in seconds of the file: both bursts, about 18 s in all.
+        double kept = 0.0;
+        const auto keeps = [&editor](double second) {
+            for (const Clip &clip : mainTrack(editor).clips) {
+                const double from = clip.media()->sourceIn.toSecondsDouble();
+                if (second >= from && second < from + clip.duration.toSecondsDouble()) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        for (const Clip &clip : mainTrack(editor).clips) {
+            kept += clip.duration.toSecondsDouble();
+        }
+        QVERIFY2(kept >= 12.0 && kept <= 30.0, qPrintable(QString::number(kept)));
+        QVERIFY(keeps(13.0) && keeps(15.0) && keeps(41.0) && keeps(43.0));
+        QVERIFY(!keeps(30.0) && !keeps(55.0));
+        editor.undo();
+        QCOMPARE(mainTrack(editor).clips.size(), size_t(1));
+        QCOMPARE(mainTrack(editor).clips[0].duration.toSecondsDouble(), 60.0);
+
+        // Short clips: written by the draft maker (the home screen's drafts in the app), the editor unchanged.
+        std::vector<ProjectData> drafts;
+        editor.setDraftMaker([&drafts](const std::vector<ProjectData> &made) {
+            drafts = made;
+            return static_cast<int>(made.size());
+        });
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        QSignalSpy messages(&editor, &EditorController::message);
+        QVERIFY(ai.makeShortClips());
+        QVERIFY(!ai.busy()); // the analysis of the file is known already
+        QVERIFY(!drafts.empty());
+        QVERIFY(messages.last().first().toString().contains(QString::number(drafts.size())));
+        QCOMPARE(mainTrack(editor).clips.size(), size_t(1));
+        for (size_t i = 0; i < drafts.size(); ++i) {
+            const ProjectData &draft = drafts[i];
+            QCOMPARE(draft.mainSequence()->canvas.preset, CanvasPreset::Portrait9x16);
+            QCOMPARE(draft.media.size(), size_t(1));
+            const Track &main = draft.mainSequence()->visualTracks.front();
+            QCOMPARE(main.clips.size(), size_t(1));
+            const double length = main.clips[0].duration.toSecondsDouble();
+            QVERIFY2(length >= 15.0 && length <= 60.0, qPrintable(QString::number(length)));
+            QCOMPARE(main.clips[0].transform.fit, FitMode::Cover);
+            bool titled = false;
+            for (const Track &track : draft.mainSequence()->visualTracks) {
+                for (const Clip &clip : track.clips) {
+                    titled = titled || (clip.text() && clip.text()->text == u"Part %1"_s.arg(i + 1));
+                }
+            }
+            QVERIFY(titled);
+        }
     }
 
     // "Adapt to 9:16 — follow the subject": the format changes, the video fills it and its position follows the square

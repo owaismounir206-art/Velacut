@@ -79,6 +79,13 @@ public:
     // keyframes, editable).
     Q_INVOKABLE bool trackMotion();
     Q_INVOKABLE bool canTrackMotion() const;
+    // "Highlights": only the best moments of the clip remain (louder than usual, full of speech, at scene changes and
+    // sentence edges), about a minute for a long clip — ordinary cuts, one undo step.
+    Q_INVOKABLE bool highlights();
+    // "Long video to short clips": up to 10 vertical clips of about 30 s from the best parts of the clip, each a new
+    // draft on the home screen (with captions when the speech was transcribed).
+    Q_INVOKABLE bool makeShortClips();
+    Q_INVOKABLE bool canFindHighlights() const;
     // "Read aloud" (Piper): the selected text, spoken with the first voice added, as a sound under it.
     Q_INVOKABLE bool readAloud();
     Q_INVOKABLE bool canReadAloud() const;
@@ -127,6 +134,9 @@ private:
     QHash<QString, std::vector<double>> m_scenes;
     mutable QHash<QString, ai::Transcript> m_transcripts; // by fingerprint (also those read from the cache)
     bool m_rembgDownloadExplained = false;
+    QHash<QString, ai::HighlightInput> m_highlightInputs; // by fingerprint
+    // Runs the analysis of the clip's file (or takes it from this session) and calls `then` with it.
+    bool withHighlightInput(const std::function<void(const ClipId &, const ai::HighlightInput &)> &then);
     void synthesizeNext(QStringList texts, QStringList done, std::function<void(const QStringList &)> finished);
 };
 

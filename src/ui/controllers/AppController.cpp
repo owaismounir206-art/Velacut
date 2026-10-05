@@ -138,6 +138,22 @@ void AppController::makeEditor(std::unique_ptr<document::Document> document)
     m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper, previewLimit());
     m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
     m_editor->setHardwareEncoding(hardwareEncoders(), gpuDisplayName());
+    // Projects made from this one ("Long video to short clips") go to the drafts, ready on the home screen.
+    m_editor->setDraftMaker([this](const std::vector<ProjectData> &projects) {
+        int written = 0;
+        for (ProjectData project : projects) {
+            project.name = m_store->uniqueName(project.name);
+            QString error;
+            if (auto document = document::Document::create(m_store->directoryOf(project.id), std::move(project), &error)) {
+                document->close();
+                ++written;
+            } else {
+                emit message(error);
+            }
+        }
+        m_drafts->refresh();
+        return written;
+    });
 }
 
 // How big the preview frames may be (SPEC 1bis rules 8 and 9). The export always renders at full size; only the

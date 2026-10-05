@@ -10,6 +10,7 @@
 #include "common/Paths.h"
 #include "core/edit/ProjectFormat.h"
 #include "core/edit/TimelineEditor.h"
+#include "core/project/ProjectMutator.h"
 #include "ui/controllers/AiController.h"
 #include "core/project/Captions.h"
 #include "ai/Script.h"
@@ -1295,6 +1296,82 @@ void EditorController::layScript(const QStringList &scenes, const QStringList &v
     emit message(tr("%n scene(s) ready: put your videos in the grey slots (Choose), change anything you like.", nullptr,
                     static_cast<int>(scenes.size())),
                  false);
+}
+
+int EditorController::makeShortClipDrafts(const ClipId &clipId, const std::vector<ai::Span> &spans, const ai::Transcript *transcript)
+{
+    const Clip *clip = data().findClip(clipId);
+    const MediaClipData *media = clip ? clip->media() : nullptr;
+    const Media *item = media ? data().findMedia(media->mediaId) : nullptr;
+    const std::optional<Canvas> canvas = canvasFor(static_cast<int>(CanvasPreset::Portrait9x16));
+    if (!item || !canvas || !m_draftMaker) {
+        return 0;
+    }
+    const Rational rate = data().settings.frameRate;
+    const auto at = [&rate](double seconds) {
+        return RationalTime::fromSeconds(Rational(static_cast<qint64>(std::llround(seconds * 1000)), 1000), rate, Rounding::NearestEven);
+    };
+    std::optional<CaptionStyle> style;
+    if (const fx::CaptionStylePreset *preset = fx::Library::core().captionStyle(u"captions/pop-three"_s)) {
+        style = projectjson::captionStyleFromJson(preset->style);
+        style->preset = preset->id;
+    }
+    std::vector<ProjectData> drafts;
+    int index = 0;
+    for (const ai::Span &span : spans) {
+        ++index;
+        ProjectData base = ProjectData::createEmpty(tr("%1 — clip %2").arg(name()).arg(index));
+        base.settings = data().settings;
+        base.media = {*item};
+        base.sequences.front().canvas = *canvas;
+        Project project(std::move(base));
+        const auto apply = [&project](EditResult result) {
+            if (!result.ok()) {
+                return false;
+            }
+            ProjectMutator mutator(project);
+            for (const auto &edit : result.script) {
+                edit->apply(mutator);
+            }
+            return true;
+        };
+        const SequenceId sequenceId = project.data().mainSequenceId;
+        const double fileFrom = media->sourceIn.toSecondsDouble() + span.from;
+        EditResult insert = TimelineEditor(project.data(), sequenceId)
+                                .insertMedia(item->id, RationalTime(0, rate), TimeRange{at(fileFrom), at(span.length())});
+        const ClipId shot = insert.primaryClip;
+        if (!apply(std::move(insert))) {
+            continue;
+        }
+        apply(TimelineEditor(project.data(), sequenceId).updateClips({shot}, [](Clip &c) { c.transform.fit = FitMode::Cover; },
+                                                                     tr("Fill the picture")));
+        // A title: the first words said, or the clip's number.
+        QString title = tr("Part %1").arg(index);
+        if (transcript) {
+            QStringList words;
+            for (const ai::Transcript::Word &word : transcript->words) {
+                if (word.from / 1000.0 >= fileFrom && words.size() < 5) {
+                    words << word.text;
+                }
+            }
+            if (!words.isEmpty()) {
+                title = words.join(u' ');
+            }
+            const auto toTimeline = [fileFrom](std::int64_t ms) {
+                return RationalTime(std::max<std::int64_t>(0, ms - std::llround(fileFrom * 1000.0)), Rational(1000));
+            };
+            const auto lines = ai::captionLines(*transcript, std::llround(fileFrom * 1000.0),
+                                                std::llround((fileFrom + span.length()) * 1000.0), toTimeline);
+            if (!lines.empty()) {
+                apply(TimelineEditor(project.data(), sequenceId).insertCaptions(lines, style));
+            }
+        }
+        TextClipData text = textInStyle(u"text/anim-pop-in-bold"_s, title);
+        text.text = title;
+        apply(TimelineEditor(project.data(), sequenceId).insertText(RationalTime(0, rate), std::move(text), at(2.0)));
+        drafts.push_back(project.data());
+    }
+    return m_draftMaker(drafts);
 }
 
 bool EditorController::shuffleMontage()

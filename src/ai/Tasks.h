@@ -3,6 +3,7 @@
 
 #include "ai/AiTask.h"
 #include "ai/Analysis.h"
+#include "ai/Highlights.h"
 #include "engine/analysis/Cutout.h"
 #include "engine/analysis/Decoding.h"
 #include "fx/Reframe.h"
@@ -127,6 +128,25 @@ private:
     int m_rotation;
     double m_aspect;
     std::vector<engine::TrackedPoint> m_points;
+};
+
+// "Highlights" and "Long video to short clips": the loudness and the scene changes of a whole file.
+class HighlightAnalysis : public AiTask
+{
+    Q_OBJECT
+
+public:
+    explicit HighlightAnalysis(QString path, QObject *parent = nullptr);
+    QString title() const override;
+    // Levels (100 a second) and scene changes of the whole file; `seconds` its length as decoded.
+    const HighlightInput &input() const { return m_input; }
+
+protected:
+    QString run() override;
+
+private:
+    QString m_path;
+    HighlightInput m_input;
 };
 
 // "Remove background": the cut-out copy of the part of a video a clip plays (engine/analysis/Cutout.h, rembg).

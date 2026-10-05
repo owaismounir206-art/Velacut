@@ -60,6 +60,8 @@ Rectangle {
             list.push({ text: qsTr("Effects"), page: "effects" })
         if (sections.includes("adjust"))
             list.push({ text: qsTr("Adjust"), page: "adjust" })
+        if (sections.includes("ai"))
+            list.push({ text: qsTr("AI"), page: "ai" })
         return list
     }
     // The page chosen by the user, kept while the selection changes when the new clip has it too.
@@ -1890,6 +1892,99 @@ Rectangle {
                             neutral: 0.5
                             format: v => Math.round(v * 100)
                         }
+                    }
+                }
+
+                // ---- AI: the smart tools of the clip, one click each, the result made of ordinary edits ----------
+                ColumnLayout {
+                    objectName: "aiTools"
+                    Layout.fillWidth: true
+                    visible: panel.page === "ai"
+                    spacing: Theme.space.sm
+
+                    Repeater {
+                        model: [{ id: "captions", icon: "subtitles", text: qsTr("Auto captions"),
+                                  detail: qsTr("Writes what is said, word by word, in an animated style") },
+                                { id: "removePauses", icon: "voice_over_off", text: qsTr("Remove pauses"),
+                                  detail: qsTr("Cuts the silences between the sentences") },
+                                { id: "highlights", icon: "star", text: qsTr("Highlights"),
+                                  detail: qsTr("Keeps only the liveliest moments of a long video") },
+                                { id: "shortClips", video: true, icon: "view_carousel", text: qsTr("Long video to short clips"),
+                                  detail: qsTr("The best moments as vertical clips with captions, each a new draft") },
+                                { id: "splitScenes", video: true, icon: "view_week", text: qsTr("Split scenes"),
+                                  detail: qsTr("A cut at every change of shot") },
+                                { id: "stabilize", video: true, icon: "vibration", text: qsTr("Stabilize"),
+                                  detail: qsTr("Steadies a shaky camera") },
+                                { id: "removeBackground", video: true, icon: "person_remove", text: qsTr("Remove background"),
+                                  detail: qsTr("Keeps only the person, no green screen needed") },
+                                { id: "autoReframe", video: true, icon: "center_focus_strong", text: qsTr("Auto reframe"),
+                                  detail: qsTr("Adapts the video to 9:16, following the subject") },
+                                { id: "separateVoice", icon: "graphic_eq", text: qsTr("Separate voice and music"),
+                                  detail: qsTr("The voice and the music on two tracks of their own") }]
+                        delegate: Card {
+                            id: tool
+                            required property var modelData
+                            // Re-read when the clip, its values or the running analysis change.
+                            readonly property bool available: {
+                                panel.values
+                                panel.editor.ai.busy
+                                return panel.editor.actions.isEnabled(modelData.id)
+                            }
+                            objectName: "aiTool_" + modelData.id
+                            Layout.fillWidth: true
+                            // The tools of the picture only for a video.
+                            visible: !(modelData.video ?? false) || panel.inspector.kind === Inspector.Video
+                            implicitHeight: toolRow.implicitHeight + 2 * Theme.space.sm
+                            interactive: available
+                            opacity: available ? 1 : Theme.state.disabledContent
+                            containerColor: Theme.color.surfaceContainerHigh
+                            Accessible.name: modelData.text
+                            Accessible.description: modelData.detail
+                            onClicked: panel.editor.actions.trigger(modelData.id)
+
+                            RowLayout {
+                                id: toolRow
+                                anchors.fill: parent
+                                anchors.margins: Theme.space.sm
+                                spacing: Theme.space.sm
+                                Rectangle {
+                                    implicitWidth: Theme.editor.toolButtonSize
+                                    implicitHeight: Theme.editor.toolButtonSize
+                                    radius: Theme.shape.full
+                                    color: Theme.color.primaryContainer
+                                    Icon {
+                                        anchors.centerIn: parent
+                                        name: tool.modelData.icon
+                                        size: Theme.editor.toolIconSize
+                                        color: Theme.color.onPrimaryContainer
+                                    }
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 0
+                                    Label {
+                                        Layout.fillWidth: true
+                                        role: "labelLarge"
+                                        elide: Text.ElideRight
+                                        text: tool.modelData.text
+                                    }
+                                    Label {
+                                        Layout.fillWidth: true
+                                        role: "bodySmall"
+                                        wrapMode: Text.WordWrap
+                                        color: Theme.color.onSurfaceVariant
+                                        text: tool.modelData.detail
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        role: "bodySmall"
+                        color: Theme.color.onSurfaceVariant
+                        text: qsTr("Everything runs on this computer; the result is made of ordinary cuts and clips, undo brings back the original.")
                     }
                 }
 

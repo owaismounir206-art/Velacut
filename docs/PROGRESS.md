@@ -27,6 +27,21 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   → keyframe di posizione ogni 2 fotogrammi nel tempo della clip; video ruotati dai metadati gestiti. Test: uno
   sticker su un quadrato in movimento lo segue (errore < 2 % della larghezza). Scoperto che `drawbox` di FFmpeg non
   anima x/y con `t` (i test usavano un quadrato fermo): ora `overlay` con `eval=frame`.
+- **Momenti salienti e da video lungo a clip brevi** (SPEC §5.12; `ai/Highlights`, `ai::HighlightAnalysis`,
+  `AiController::highlights/makeShortClips`, `EditorController::makeShortClipDrafts`): il video lungo è diviso in
+  pezzi di 3–15 s ai cambi di scena, a metà delle pause e dove il volume salta di più di 8 dB (risate, applausi,
+  enfasi); ogni pezzo ha un punteggio (più forte del solito 0,6, parlato fitto 0,4 se c'è la trascrizione, inizio su
+  un cambio di scena +0,1). "Momenti salienti" tiene i pezzi migliori fino a circa 60 s (il 30 % se la clip dura meno
+  di 2 minuti) con `removeSourceRanges`: un passo di annullamento. "Da video lungo a clip brevi" sceglie 3–10 finestre
+  di circa 30 s (15–60 s, non sovrapposte) e ne fa **bozze 9:16** nella schermata iniziale (video a riempimento,
+  sottotitoli dalla trascrizione se c'è, titolo animato con le prime parole o "Parte N"), senza toccare il progetto
+  aperto. Analisi una volta per file (memorizzata nella sessione). Test: un minuto con due picchi di volume e due cambi
+  di scena (`tst_editor::highlightsAndShortClips`), dall'interfaccia fino alla bozza aperta in 3 azioni
+  (`tst_ui::shortClipsFromTheAiTab`) e unitario (`tst_ai`). Limite: niente visione (volti, sorrisi,
+  azione): il punteggio usa solo suono, scene e parlato.
+- **Scheda "IA" nelle proprietà** (la SPEC elenca "AI" tra le schede del pannello destro): tutti gli strumenti
+  intelligenti della clip selezionata in un elenco con una riga di spiegazione; quelli che non valgono per la clip
+  sono in grigio, quelli solo video nascosti per l'audio. Nessuna funzione nuova: ogni voce usa l'azione esistente.
 - **Proposta per l'utente (da decidere)**: OpenCV 5 è installato su questa macchina ma non è nell'elenco delle
   dipendenze della SPEC (che chiede di domandare prima): con il suo consenso darebbe rilevamento dei volti (ritocco
   viso, sticker sul viso, auto reframe e montaggio sui volti), inpainting (rimozione oggetti), GrabCut (scontorno a un

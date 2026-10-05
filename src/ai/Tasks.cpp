@@ -191,6 +191,42 @@ QString MotionTracking::run()
     return {};
 }
 
+HighlightAnalysis::HighlightAnalysis(QString path, QObject *parent)
+    : AiTask(parent)
+    , m_path(std::move(path))
+{
+}
+
+QString HighlightAnalysis::title() const
+{
+    return tr("Finding the best moments");
+}
+
+QString HighlightAnalysis::run()
+{
+    // The sound first (fast), then the pictures (scene changes).
+    const auto levels = engine::extractLevels(m_path, 100, cancelFlag(), [this](double share) { report(0.3 * share); });
+    if (!levels) {
+        return isCanceled() ? QString() : tr("The sound of %1 cannot be read.").arg(QFileInfo(m_path).fileName());
+    }
+    m_input.levels = *levels;
+    m_input.levelsPerSecond = 100;
+    m_input.seconds = static_cast<double>(levels->size()) / 100.0;
+    std::vector<double> times;
+    const auto differences = engine::extractFrameDifferences(m_path, &times, cancelFlag(),
+                                                             [this](double share) { report(0.3 + 0.7 * share); });
+    if (isCanceled()) {
+        return {};
+    }
+    if (differences) {
+        m_input.cuts = findSceneCuts(*differences, times);
+        if (!times.empty()) {
+            m_input.seconds = std::max(m_input.seconds, times.back());
+        }
+    }
+    return {};
+}
+
 BackgroundRemoval::BackgroundRemoval(engine::CutoutCopy copy, QObject *parent)
     : AiTask(parent)
     , m_copy(std::move(copy))

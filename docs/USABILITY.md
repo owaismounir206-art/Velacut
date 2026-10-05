@@ -115,4 +115,7 @@ azioni non dipende dal programma.
 | # | Scenario | Limite | Risultato | Percorso |
 |---|---|---|---|---|
 | — | Da 20 clip e una canzone, un video sul ritmo con il montaggio automatico (criterio Fase 7) | < 5 | ✅ **4** (5 cambiando stile e durata) | "Montaggio automatico" nella schermata iniziale → scelta dei file → (canzone, stile, durata) → "Crea"; "Rimescola" per un'altra versione |
+| — | Da un video lungo, solo i momenti salienti | — | **3** | clic sulla clip → scheda "IA" delle proprietà → "Momenti salienti" (anche dalla ricerca: Ctrl+K, "momenti") |
+| — | Da un video lungo, clip brevi verticali con sottotitoli | — | **3** | clic sulla clip → scheda "IA" → "Da video lungo a clip brevi": le bozze compaiono nella schermata iniziale |
+| 10 | Strumenti AI di una clip in un posto solo | 2 | ✅ | scheda "IA" delle proprietà (livello 2): sottotitoli automatici, pause, momenti salienti, clip brevi, scene, stabilizza, sfondo, reinquadratura, voce e musica; quelli che non valgono per la clip sono in grigio |
 

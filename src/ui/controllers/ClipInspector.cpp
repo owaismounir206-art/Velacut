@@ -710,6 +710,9 @@ bool ClipInspector::supports(const Clip &clip, const QString &section) const
     if (clip.subtitle()) {
         return section == u"caption"_s || section == u"video"_s;
     }
+    if (section == u"ai"_s) {
+        return media != nullptr && !image; // the smart tools of videos and sounds
+    }
     if (section == u"effects"_s) {
         return !audioOnly;
     }
@@ -756,7 +759,7 @@ QStringList ClipInspector::sections() const
         return result;
     }
     for (const QString &section : {u"caption"_s, u"text"_s, u"sticker"_s, u"video"_s, u"background"_s, u"audio"_s, u"speed"_s, u"animation"_s, u"cutout"_s,
-                                   u"filter"_s, u"effects"_s, u"adjust"_s}) {
+                                   u"filter"_s, u"effects"_s, u"adjust"_s, u"ai"_s}) {
         if (supports(*clip, section)) {
             result << section;
         }

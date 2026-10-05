@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "ai/Highlights.h"
 #include "ai/Montage.h"
+#include "ai/Transcript.h"
 #include "core/commands/EditCommand.h"
 #include "core/project/ChangeSet.h"
 #include "core/project/Id.h"
@@ -214,6 +216,11 @@ public:
     // them) with its text as animated captions, read aloud when a Piper voice is installed, over the music (lowered
     // under the voice). `preset`: CanvasPreset of the video.
     Q_INVOKABLE void buildFromScript(const QString &script, int preset, const QUrl &music);
+    // "Long video to short clips": a vertical draft for each span (seconds from the start of the part of the file the
+    // clip plays): the clip filling the picture, a title, captions from `transcript` if there is one. The drafts are
+    // written by the draft maker (the application's draft store); the number written.
+    int makeShortClipDrafts(const ClipId &clipId, const std::vector<ai::Span> &spans, const ai::Transcript *transcript);
+    void setDraftMaker(std::function<int(const std::vector<ProjectData> &)> maker) { m_draftMaker = std::move(maker); }
     bool buildingFromScript() const { return m_buildingScript; }
     Q_INVOKABLE void dismissMontage();
     // Brand kit (SPEC §5.13ter), one click each: the logo as a sticker at the playhead, or as a watermark over the whole
@@ -468,6 +475,7 @@ private:
     std::optional<MontageState> m_montage;
     void layMontage(bool initial);
     bool m_buildingScript = false;
+    std::function<int(const std::vector<ProjectData> &)> m_draftMaker;
     void layScript(const QStringList &scenes, const QStringList &voices, const QHash<QString, MediaId> &media, const QString &music);
     struct PendingImport
     {

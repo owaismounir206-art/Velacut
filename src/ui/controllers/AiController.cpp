@@ -436,6 +436,148 @@ void AiController::synthesizeNext(QStringList texts, QStringList done, std::func
     run(std::move(task));
 }
 
+bool AiController::canFindHighlights() const
+{
+    if (busy()) {
+        return false;
+    }
+    const std::optional<Target> what = target(false, false);
+    const Clip *clip = what ? m_editor.data().findClip(what->clip) : nullptr;
+    return clip && clip->media() && !clip->media()->reversed && !clip->media()->curve && clip->duration.toSecondsDouble() >= 30.0;
+}
+
+bool AiController::withHighlightInput(const std::function<void(const ClipId &, const ai::HighlightInput &)> &then)
+{
+    if (busy()) {
+        return false;
+    }
+    const std::optional<Target> what = target(false, false);
+    const Clip *clip = what ? m_editor.data().findClip(what->clip) : nullptr;
+    if (!clip || !clip->media() || clip->media()->reversed || clip->media()->curve) {
+        emit m_editor.message(tr("Select a long video played forwards at a steady speed first."), false);
+        return false;
+    }
+    if (clip->duration.toSecondsDouble() < 30.0) {
+        emit m_editor.message(tr("This works on clips of at least 30 seconds."), false);
+        return false;
+    }
+    const ClipId clipId = what->clip;
+    if (const auto known = m_highlightInputs.constFind(what->fingerprint); known != m_highlightInputs.constEnd()) {
+        then(clipId, *known);
+        return true;
+    }
+    auto task = std::make_unique<ai::HighlightAnalysis>(what->path);
+    ai::HighlightAnalysis *analysis = task.get();
+    const QString fingerprint = what->fingerprint;
+    connect(analysis, &ai::AiTask::finished, this, [this, analysis, clipId, fingerprint, then] {
+        m_highlightInputs.insert(fingerprint, analysis->input());
+        then(clipId, analysis->input());
+    });
+    run(std::move(task));
+    return true;
+}
+
+namespace {
+
+// The highlight input of the part of the file a clip plays, in seconds from the start of that part, with the words
+// said there when the file was transcribed.
+ai::HighlightInput clipPart(const ai::HighlightInput &file, const Clip &clip, const ai::Transcript *transcript)
+{
+    const MediaClipData &media = *clip.media();
+    const double from = media.sourceIn.toSecondsDouble();
+    const double length = clip.duration.toSecondsDouble() * media.speed;
+    ai::HighlightInput part;
+    part.levelsPerSecond = file.levelsPerSecond;
+    part.seconds = length;
+    const auto first = static_cast<size_t>(std::max(0.0, from * file.levelsPerSecond));
+    const auto last = std::min(file.levels.size(), static_cast<size_t>((from + length) * file.levelsPerSecond));
+    if (last > first) {
+        part.levels.assign(file.levels.begin() + static_cast<std::ptrdiff_t>(first), file.levels.begin() + static_cast<std::ptrdiff_t>(last));
+    }
+    for (const double cut : file.cuts) {
+        if (cut > from && cut < from + length) {
+            part.cuts.push_back(cut - from);
+        }
+    }
+    if (transcript) {
+        for (const ai::Transcript::Word &word : transcript->words) {
+            const double t = word.from / 1000.0;
+            if (t >= from && t < from + length) {
+                part.words.emplace_back(t - from, word.to / 1000.0 - from);
+            }
+        }
+    }
+    return part;
+}
+
+} // namespace
+
+bool AiController::highlights()
+{
+    return withHighlightInput([this](const ClipId &clipId, const ai::HighlightInput &file) {
+        const Clip *clip = m_editor.data().findClip(clipId);
+        const Media *item = clip && clip->media() ? m_editor.data().findMedia(clip->media()->mediaId) : nullptr;
+        if (!item) {
+            emit m_editor.message(tr("The clip was removed meanwhile."), false);
+            return;
+        }
+        const ai::HighlightInput part = clipPart(file, *clip, transcriptOf(*item));
+        const double target = part.seconds > 120.0 ? 60.0 : std::max(10.0, part.seconds * 0.3);
+        const std::vector<ai::Span> keep = ai::findHighlights(part, target);
+        if (keep.empty()) {
+            emit m_editor.message(tr("No highlights found in this clip."), false);
+            return;
+        }
+        // Everything else goes: the ranges between the kept pieces, in the file's time.
+        const double from = clip->media()->sourceIn.toSecondsDouble();
+        const auto ms = [](double seconds) { return RationalTime(std::llround(seconds * 1000.0), Rational(1000)); };
+        std::vector<std::pair<RationalTime, RationalTime>> cuts;
+        double cursor = 0.0;
+        for (const ai::Span &span : keep) {
+            if (span.from > cursor + 0.05) {
+                cuts.emplace_back(ms(from + cursor), ms(from + span.from));
+            }
+            cursor = span.to;
+        }
+        if (cursor < part.seconds - 0.05) {
+            cuts.emplace_back(ms(from + cursor), ms(from + part.seconds));
+        }
+        if (m_editor.push(TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId).removeSourceRanges({{clipId, cuts}}, tr("Highlights")))) {
+            double total = 0.0;
+            for (const ai::Span &span : keep) {
+                total += span.length();
+            }
+            emit m_editor.message(tr("Highlights: %n s kept from the best moments", nullptr, static_cast<int>(std::lround(total))), true);
+        }
+    });
+}
+
+bool AiController::makeShortClips()
+{
+    return withHighlightInput([this](const ClipId &clipId, const ai::HighlightInput &file) {
+        const Clip *clip = m_editor.data().findClip(clipId);
+        const Media *item = clip && clip->media() ? m_editor.data().findMedia(clip->media()->mediaId) : nullptr;
+        if (!item) {
+            emit m_editor.message(tr("The clip was removed meanwhile."), false);
+            return;
+        }
+        const ai::Transcript *transcript = transcriptOf(*item);
+        const ai::HighlightInput part = clipPart(file, *clip, transcript);
+        const int count = std::clamp(static_cast<int>(part.seconds / 120.0), 3, 10);
+        const std::vector<ai::Span> spans = ai::findShortClips(part, count, 30.0);
+        if (spans.empty()) {
+            emit m_editor.message(tr("The clip is too short for short clips (they last 15–60 s)."), false);
+            return;
+        }
+        const int made = m_editor.makeShortClipDrafts(clipId, spans, transcript);
+        if (made > 0) {
+            emit m_editor.message(tr("%n short clip(s) made: they are on the home screen, ready to edit", nullptr, made), false);
+        } else {
+            emit m_editor.message(tr("The short clips could not be written."), false);
+        }
+    });
+}
+
 bool AiController::canReadAloud() const
 {
     const std::optional<ClipId> focus = m_editor.focusClip();

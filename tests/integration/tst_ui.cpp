@@ -18,6 +18,7 @@
 #include "ui/controllers/ClipInspector.h"
 #include "ui/controllers/EditorController.h"
 #include "ui/controllers/AiController.h"
+#include "ui/models/DraftsModel.h"
 #include "ui/controllers/TranscriptController.h"
 #include "ui/controllers/RecordController.h"
 #include "ui/models/TimelineModel.h"
@@ -329,6 +330,19 @@ private slots:
         QTRY_VERIFY(editor()->inspector()->modifiedSections().contains(u"adjust"_s));
         shot(u"11-properties-adjust"_s);
         editor()->undo();
+
+        // AI: every smart tool of the clip in one list; those that do not apply to it are greyed out (a 4 s clip has
+        // no highlights) and a click on one does nothing.
+        click(byText(u"AI"_s));
+        QTRY_VERIFY(byName(u"aiTool_stabilize"_s) && byName(u"aiTool_stabilize"_s)->isVisible());
+        QTRY_VERIFY(byName(u"aiTool_highlights"_s)->y() > byName(u"aiTool_removePauses"_s)->y());
+        QVERIFY(byName(u"aiTool_stabilize"_s)->property("available").toBool());
+        QVERIFY(!byName(u"aiTool_highlights"_s)->property("available").toBool());
+        shot(u"11-properties-ai"_s);
+        const int beforeTools = editor()->document().undoStack().index();
+        click(byName(u"aiTool_highlights"_s));
+        QCOMPARE(editor()->document().undoStack().index(), beforeTools);
+        QVERIFY(!editor()->ai()->busy());
 
         // A text: added from the toolbar, written in the panel.
         editor()->clearSelection();
@@ -948,6 +962,62 @@ private slots:
         qInfo("automatic montage from the home screen: %d actions", m_actions);
         click(byName(u"shuffleMontage"_s));
         QTRY_VERIFY(editor()->canUndo());
+        click(byName(u"backButton"_s));
+        QTRY_VERIFY(!editor());
+    }
+
+    // "Long video to short clips" from the AI tab (SPEC §5.12): 3 actions from the timeline; the clips become new 9:16
+    // drafts on the home screen, the open project stays as it was.
+    void shortClipsFromTheAiTab()
+    {
+        QTRY_VERIFY(!editor());
+        const QString file = m_dir.filePath(u"long.mp4"_s);
+        QVERIFY(runFfmpeg({u"-filter_complex"_s,
+                           u"color=c=red:s=160x90:r=30:d=20[r];color=c=blue:s=160x90:r=30:d=20[b];"
+                           "[r][b]concat=n=2:v=1:a=0,format=yuv420p[v];"
+                           "aevalsrc='(if(between(t\\,8\\,12)+between(t\\,30\\,34)\\,0.7\\,0.05))*sin(2*PI*440*t)':s=48000:d=40[a]"_s,
+                           u"-map"_s, u"[v]"_s, u"-map"_s, u"[a]"_s, u"-c:v"_s, u"libx264"_s, u"-preset"_s, u"ultrafast"_s,
+                           u"-c:a"_s, u"aac"_s, file}));
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        editor()->importAndInsertPaths({file}, 0, editor()->timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack().clips.size(), size_t(1), 20000);
+        const int drafts = m_app->drafts()->count();
+        m_actions = 0;
+        QTRY_VERIFY(byName(u"clip-"_s + mainTrack().clips.front().id.toString()));
+        click(byName(u"clip-"_s + mainTrack().clips.front().id.toString()));           // 1
+        QTRY_VERIFY(byText(u"AI"_s));
+        click(byText(u"AI"_s));                                                         // 2
+        QTRY_VERIFY(byName(u"aiTool_shortClips"_s) && byName(u"aiTool_shortClips"_s)->isVisible());
+        QTRY_VERIFY(byName(u"aiTool_shortClips"_s)->property("available").toBool());
+        // Once the list is laid out (the cards one under the other).
+        QTRY_VERIFY(byName(u"aiTool_shortClips"_s)->y() > byName(u"aiTool_highlights"_s)->y());
+        click(byName(u"aiTool_shortClips"_s));                                          // 3
+        QTRY_VERIFY_WITH_TIMEOUT(m_app->drafts()->count() > drafts, 30000);
+        QVERIFY(!editor()->ai()->busy());
+        QCOMPARE(mainTrack().clips.size(), size_t(1));
+        qInfo("short clips from a long video: %d actions", m_actions);
+
+        // A new draft opens as any other: vertical, the video filling it, a title.
+        QString made;
+        for (int row = 0; row < m_app->drafts()->count(); ++row) {
+            const QModelIndex index = m_app->drafts()->index(row);
+            if (index.data(ui::DraftsModel::NameRole).toString().endsWith(u" — clip 1"_s)) {
+                made = index.data(ui::DraftsModel::DraftIdRole).toString();
+            }
+        }
+        QVERIFY(!made.isEmpty());
+        click(byName(u"backButton"_s));
+        QTRY_VERIFY(!editor());
+        QVERIFY(m_app->openDraft(made));
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        QCOMPARE(editor()->data().mainSequence()->canvas.preset, CanvasPreset::Portrait9x16);
+        QCOMPARE(mainTrack().clips.size(), size_t(1));
+        QCOMPARE(mainTrack().clips.front().transform.fit, FitMode::Cover);
+        QVERIFY(editor()->data().mainSequence()->visualTracks.size() >= 2); // the title above
+        shot(u"26-short-clip-draft"_s);
         click(byName(u"backButton"_s));
         QTRY_VERIFY(!editor());
     }

@@ -59,7 +59,7 @@
 <context>
     <name>PropertiesPanel</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+193"/>
+        <location filename="../src/ui/qml/PropertiesPanel.qml" line="+195"/>
         <source>%n clip(s) selected: changes apply to all of them.</source>
         <translation>
             <numerusform>%n clip selected: changes apply to it.</numerusform>
@@ -119,7 +119,23 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/AiController.cpp" line="+859"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+550"/>
+        <source>Highlights: %n s kept from the best moments</source>
+        <translation>
+            <numerusform>Highlights: %n s kept from the best moments</numerusform>
+            <numerusform>Highlights: %n s kept from the best moments</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+24"/>
+        <source>%n short clip(s) made: they are on the home screen, ready to edit</source>
+        <translation>
+            <numerusform>%n short clip made: it is on the home screen, ready to edit</numerusform>
+            <numerusform>%n short clips made: they are on the home screen, ready to edit</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+427"/>
         <source>%n caption line(s) from the speech</source>
         <translation>
             <numerusform>%n caption line from the speech</numerusform>
@@ -149,7 +165,7 @@
 <context>
     <name>vedit::ui::ClipInspector</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+2029"/>
+        <location filename="../src/ui/controllers/ClipInspector.cpp" line="+2032"/>
         <location line="+454"/>
         <source>Transition on %n cut(s)</source>
         <translation>
@@ -169,7 +185,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+996"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+997"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>
@@ -201,7 +217,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+421"/>
+        <location line="+497"/>
         <source>%n beat(s) marked on the clip</source>
         <translation>
             <numerusform>%n beat marked on the clip</numerusform>

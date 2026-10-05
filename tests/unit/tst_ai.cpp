@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ai/AiTask.h"
 #include "ai/Analysis.h"
+#include "ai/Highlights.h"
 #include "ai/Montage.h"
 #include "ai/Script.h"
 #include "ai/Transcript.h"
@@ -312,6 +313,48 @@ private slots:
         QVERIFY(ai::splitScript(QStringLiteral("  \n\n ")).isEmpty());
         QCOMPARE(ai::readingSeconds(QStringLiteral("Ciao")), 2.0);
         QVERIFY(std::abs(ai::readingSeconds(twelve + u' ' + twelve) - (24 / 2.6 + 0.4)) < 1e-9);
+    }
+
+    void highlightsAreTheLivelyMoments()
+    {
+        // Two minutes of talk at −30 dB with a short pause every 8 s, louder (laughter, cheering) at 40–50 s and 90–96 s.
+        ai::HighlightInput input;
+        input.seconds = 120.0;
+        for (int k = 0; k < 12000; ++k) {
+            const double t = k / 100.0;
+            float level = std::fmod(t, 8.0) < 0.8 ? -60.0f : -30.0f;
+            if ((t >= 40.0 && t < 50.0) || (t >= 90.0 && t < 96.0)) {
+                level = -12.0f;
+            }
+            input.levels.push_back(level);
+        }
+        input.cuts = {20.0, 60.0, 100.0};
+        for (double t = 40.0; t < 50.0; t += 0.3) {
+            input.words.emplace_back(t, t + 0.25); // and a lot is said there
+        }
+        const std::vector<ai::Span> segments = ai::highlightSegments(input);
+        for (const ai::Span &segment : segments) {
+            QVERIFY(segment.length() >= 2.99 && segment.length() <= 15.01);
+        }
+        const std::vector<ai::Span> best = ai::findHighlights(input, 15.0);
+        double total = 0.0;
+        for (const ai::Span &span : best) {
+            total += span.length();
+            // Mostly lively: at least 40 % of the piece in one of the lively parts.
+            const double lively = std::max(0.0, std::min(span.to, 50.0) - std::max(span.from, 40.0)) +
+                                  std::max(0.0, std::min(span.to, 96.0) - std::max(span.from, 90.0));
+            QVERIFY2(lively >= 0.4 * span.length(), qPrintable(QStringLiteral("%1–%2").arg(span.from).arg(span.to)));
+        }
+        QVERIFY(total >= 15.0 && total < 30.0);
+        for (size_t i = 1; i < best.size(); ++i) {
+            QVERIFY(best[i].from >= best[i - 1].to - 1e-9); // in their order in the video
+        }
+        // Two short clips of about 20 s: around the two lively moments, not overlapping.
+        const std::vector<ai::Span> clips = ai::findShortClips(input, 2, 20.0);
+        QCOMPARE(clips.size(), 2u);
+        QVERIFY(clips[0].from <= 45.0 && clips[0].to >= 45.0); // the liveliest first
+        QVERIFY(clips[1].from <= 93.0 && clips[1].to >= 93.0);
+        QVERIFY(clips[0].length() >= 15.0 && clips[0].length() <= 60.0);
     }
 };
 
