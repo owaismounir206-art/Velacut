@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "Decoding.h"
 #include "Spectrum.h"
+#include "fx/Tracking.h"
 
 #include <QFile>
 #include <QTransform>
@@ -908,6 +909,31 @@ std::optional<std::vector<ShotSample>> extractShotSamples(const QString &path, i
         *seconds = last + step;
     }
     return samples;
+}
+
+std::optional<std::vector<TrackedPoint>> extractTrackedPath(const QString &path, double fromSeconds, double toSeconds,
+                                                            double x, double y, double radius, double storedAspect,
+                                                            const std::atomic<bool> *cancel, const DecodeProgress &progress)
+{
+    constexpr int kWidth = 320;
+    const int height = std::max(16, static_cast<int>(std::lround(kWidth / std::max(0.1, storedAspect) / 2.0)) * 2);
+    std::optional<fx::PointTracker> tracker;
+    std::vector<TrackedPoint> points;
+    const bool ok = decodeGreyFrames(path, kWidth, height, fromSeconds, toSeconds, cancel, progress, nullptr,
+                                     [&](const std::vector<uint8_t> &frame, double seconds) {
+        if (!tracker) {
+            tracker.emplace(frame, kWidth, height, x * kWidth, y * height,
+                            std::max(4, static_cast<int>(std::lround(radius * kWidth))));
+            points.push_back(TrackedPoint{seconds, x, y, false});
+            return;
+        }
+        const fx::PointTracker::Point point = tracker->update(frame);
+        points.push_back(TrackedPoint{seconds, point.x / kWidth, point.y / height, point.lost});
+    });
+    if (!ok || points.empty()) {
+        return std::nullopt;
+    }
+    return points;
 }
 
 } // namespace vedit::engine

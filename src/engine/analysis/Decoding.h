@@ -79,6 +79,21 @@ struct ShotSample
 std::optional<std::vector<ShotSample>> extractShotSamples(const QString &path, int samplesPerSecond, double *seconds,
                                                               const std::atomic<bool> *cancel = nullptr);
 
+// Motion tracking: where a point of the video goes from `fromSeconds` to `toSeconds` of the file, frame by frame.
+// Point and results as shares (0…1) of the frame as stored in the file (before its rotation metadata);
+// `storedAspect` is its width / height; `radius` the half side of the followed patch, as a share of the width.
+struct TrackedPoint
+{
+    double seconds = 0.0;
+    double x = 0.0;
+    double y = 0.0;
+    bool lost = false;
+};
+std::optional<std::vector<TrackedPoint>> extractTrackedPath(const QString &path, double fromSeconds, double toSeconds,
+                                                            double x, double y, double radius, double storedAspect,
+                                                            const std::atomic<bool> *cancel = nullptr,
+                                                            const DecodeProgress &progress = {});
+
 // Integrated and peak loudness measured via ITU-R BS.1770-4 / EBU R128.
 std::optional<fx::LoudnessResult> extractLoudness(const QString &path,
                                                   const std::atomic<bool> *cancel = nullptr);

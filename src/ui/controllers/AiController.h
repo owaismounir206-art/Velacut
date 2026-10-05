@@ -73,6 +73,10 @@ public:
     // undoable, switched off in Cutout. The first time, rembg downloads its model: a first click explains it.
     Q_INVOKABLE bool removeBackground();
     Q_INVOKABLE bool canRemoveBackground() const;
+    // "Track" (motion tracking): the selected text or sticker follows what is under it in the video (position
+    // keyframes, editable).
+    Q_INVOKABLE bool trackMotion();
+    Q_INVOKABLE bool canTrackMotion() const;
     // "Read aloud" (Piper): the selected text, spoken with the first voice added, as a sound under it.
     Q_INVOKABLE bool readAloud();
     Q_INVOKABLE bool canReadAloud() const;

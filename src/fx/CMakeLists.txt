@@ -19,6 +19,7 @@ add_library(vedit_fx STATIC
     MotionBlur.h MotionBlur.cpp
     Reframe.h Reframe.cpp
     Stabilization.h Stabilization.cpp
+    Tracking.h Tracking.cpp
     PackageManager.h PackageManager.cpp
     Transform.h Transform.cpp
     Transition.h Transition.cpp

@@ -15,6 +15,16 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   "Rimescola" nel banner del player = altro ordine e altri momenti (seme diverso), un passo di annullamento.
   Test: 16 video + 4 foto + una canzone a 120 BPM → 15 s, ogni taglio su un battito, rimescola/annulla, poi un taglio
   normale funziona (`tst_editor::automaticMontage`); dalla schermata iniziale 5 azioni (4 con i valori predefiniti).
+- **Tracciamento del movimento** ("Traccia" sui testi e sticker; `fx::PointTracker`, `engine::extractTrackedPath`):
+  la zona del video sotto il testo/sticker (8 % della larghezza) seguita fotogramma per fotogramma (confronto a
+  blocchi grossolano+fine, sub-pixel, modello aggiornato lentamente, "perso" quando nessun posto somiglia abbastanza)
+  → keyframe di posizione ogni 2 fotogrammi nel tempo della clip; video ruotati dai metadati gestiti. Test: uno
+  sticker su un quadrato in movimento lo segue (errore < 2 % della larghezza). Scoperto che `drawbox` di FFmpeg non
+  anima x/y con `t` (i test usavano un quadrato fermo): ora `overlay` con `eval=frame`.
+- **Proposta per l'utente (da decidere)**: OpenCV 5 è installato su questa macchina ma non è nell'elenco delle
+  dipendenze della SPEC (che chiede di domandare prima): con il suo consenso darebbe rilevamento dei volti (ritocco
+  viso, sticker sul viso, auto reframe e montaggio sui volti), inpainting (rimozione oggetti), GrabCut (scontorno a un
+  clic) e i tracker di OpenCV, come programma separato facoltativo (`vedit-vision`) così che l'app parta anche senza.
 
 ## Sessione 2026-10-05 (pomeriggio) — Fase 6: sottotitoli
 - **Core** (`10f2f61`): clip `subtitle` tipizzate (testo, parole con tempi dall'inizio della clip, stile per riga) e

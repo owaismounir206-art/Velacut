@@ -13,6 +13,7 @@
 #include "fx/Mask.h"
 #include "fx/Reframe.h"
 #include "fx/Stabilization.h"
+#include "fx/Tracking.h"
 #include "fx/MotionBlur.h"
 #include "fx/Transform.h"
 #include "fx/Transition.h"
@@ -1136,6 +1137,39 @@ private slots:
         path[5] = SubjectPoint{0.2f, 0.5f, 0.0f};
         const std::vector<SubjectPoint> smooth = smoothSubjectPath(path, 2.0);
         QVERIFY2(smooth[5].x > 0.65f, qPrintable(QString::number(smooth[5].x)));
+    }
+
+    void trackerFollowsAMovingSpot()
+    {
+        // A small textured spot on a soft background, moving 3 px right and 1 px down per frame.
+        const int w = 160;
+        const int h = 90;
+        const auto frame = [&](double sx, double sy) {
+            std::vector<std::uint8_t> pixels(static_cast<size_t>(w * h));
+            for (int y = 0; y < h; ++y) {
+                for (int x = 0; x < w; ++x) {
+                    double v = 100 + 20 * std::sin(x * 0.05) + 15 * std::cos(y * 0.07);
+                    const double dx = x - sx;
+                    const double dy = y - sy;
+                    if (std::abs(dx) < 7 && std::abs(dy) < 7) {
+                        v = 200 + 50 * std::sin(dx * 1.3) * std::cos(dy * 1.1);
+                    }
+                    pixels[static_cast<size_t>(y * w + x)] = static_cast<std::uint8_t>(std::clamp(v, 0.0, 255.0));
+                }
+            }
+            return pixels;
+        };
+        PointTracker tracker(frame(30, 30), w, h, 30, 30, 9);
+        for (int i = 1; i <= 25; ++i) {
+            const PointTracker::Point p = tracker.update(frame(30 + 3 * i, 30 + i));
+            QVERIFY2(!p.lost && std::abs(p.x - (30 + 3 * i)) < 1.0 && std::abs(p.y - (30 + i)) < 1.0,
+                     qPrintable(QStringLiteral("frame %1: %2 %3").arg(i).arg(p.x).arg(p.y)));
+        }
+        // Gone: lost, it stays where it was.
+        const std::vector<std::uint8_t> empty(static_cast<size_t>(w * h), 100);
+        const PointTracker::Point gone = tracker.update(empty);
+        QVERIFY(gone.lost);
+        QVERIFY(std::abs(gone.x - 105) < 1.0);
     }
 };
 

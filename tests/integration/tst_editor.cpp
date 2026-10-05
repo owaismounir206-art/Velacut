@@ -625,9 +625,9 @@ private slots:
     void autoReframeFollowsTheSubject()
     {
         const QString file = m_dir.filePath(u"subject.mp4"_s);
-        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s,
-                           u"color=c=gray:s=320x180:r=30:d=2,format=yuv420p,"
-                           "drawbox=x='220+10*sin(t*6)':y=70:w=40:h=40:color=white:t=fill"_s,
+        QVERIFY(runFfmpeg({u"-filter_complex"_s,
+                           u"color=c=gray:s=320x180:r=30:d=2[bg];color=c=white:s=40x40:r=30:d=2[square];"
+                           "[bg][square]overlay=x='220+10*sin(t*6)':y=70:eval=frame,format=yuv420p"_s,
                            u"-c:v"_s, u"libx264"_s, file}));
         document::DraftStore store(m_dir.filePath(u"drafts-reframe"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
@@ -1008,6 +1008,40 @@ done
         // Switched off in Cutout: the whole clip again.
         QVERIFY(editor.inspector()->set(u"cutout"_s, false));
         QVERIFY(!editor.data().findClip(over)->media()->cutout);
+    }
+
+    // "Track": a sticker put on a moving square follows it (position keyframes).
+    void stickerFollowsTheMovement()
+    {
+        const QString file = m_dir.filePath(u"moving.mp4"_s);
+        // (overlay moves it frame by frame; drawbox would place it once)
+        QVERIFY(runFfmpeg({u"-filter_complex"_s,
+                           u"color=c=gray:s=320x180:r=30:d=2[bg];color=c=white:s=40x40:r=30:d=2[square];"
+                           "[bg][square]overlay=x='40+40*t':y=70:eval=frame,format=yuv420p"_s,
+                           u"-c:v"_s, u"libx264"_s, u"-crf"_s, u"12"_s, file}));
+        document::DraftStore store(m_dir.filePath(u"drafts-track"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.importAndInsertPaths({file}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        editor.player()->seek(0);
+        QVERIFY(editor.addSticker(fx::Library::core().stickers().front().id));
+        const ClipId sticker = editor.selectedClips().front();
+        // On the square (its centre at x = 60 px of 320 at the start).
+        QVERIFY(editor.inspector()->set(u"x"_s, (60.0 - 160.0) / 320.0));
+        QVERIFY(editor.inspector()->set(u"y"_s, 0.0));
+        editor.inspector()->endGesture();
+        QVERIFY(editor.ai()->canTrackMotion());
+        QVERIFY(editor.ai()->trackMotion());
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.ai()->busy(), 20000);
+        const Param &position = editor.data().findClip(sticker)->transform.position;
+        QVERIFY(position.isAnimated());
+        // After 1.5 s the square moved 60 px right: so did the sticker.
+        const Vec2 later = std::get<Vec2>(position.valueAt(RationalTime(45, Rational(30))));
+        QVERIFY2(std::abs(later.x - (120.0 - 160.0) / 320.0) < 0.02, qPrintable(QString::number(later.x)));
+        QVERIFY(std::abs(later.y) < 0.02);
     }
 
     // "Smooth slow motion" in the Speed page: the new frames are computed in background for the preview.

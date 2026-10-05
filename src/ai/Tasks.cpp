@@ -122,6 +122,75 @@ QString SubjectTracking::run()
     return {};
 }
 
+namespace {
+
+// Display (what is seen, rotated by the file's metadata) ↔ stored frame, in shares of each.
+std::pair<double, double> toStored(double x, double y, int rotation)
+{
+    switch (rotation) {
+    case 90:
+        return {y, 1.0 - x};
+    case 180:
+        return {1.0 - x, 1.0 - y};
+    case 270:
+        return {1.0 - y, x};
+    default:
+        return {x, y};
+    }
+}
+
+std::pair<double, double> toDisplay(double x, double y, int rotation)
+{
+    switch (rotation) {
+    case 90:
+        return {1.0 - y, x};
+    case 180:
+        return {1.0 - x, 1.0 - y};
+    case 270:
+        return {y, 1.0 - x};
+    default:
+        return {x, y};
+    }
+}
+
+} // namespace
+
+MotionTracking::MotionTracking(QString path, double fromSeconds, double toSeconds, double x, double y, double radius, int rotation,
+                               double storedAspect, QObject *parent)
+    : AiTask(parent)
+    , m_path(std::move(path))
+    , m_from(fromSeconds)
+    , m_to(toSeconds)
+    , m_x(x)
+    , m_y(y)
+    , m_radius(radius)
+    , m_rotation(rotation)
+    , m_aspect(storedAspect)
+{
+}
+
+QString MotionTracking::title() const
+{
+    return tr("Tracking the movement");
+}
+
+QString MotionTracking::run()
+{
+    const auto [sx, sy] = toStored(m_x, m_y, m_rotation);
+    const auto points = engine::extractTrackedPath(m_path, m_from, m_to, sx, sy, m_radius, m_aspect, cancelFlag(),
+                                                   [this](double share) { report(share); });
+    if (!points) {
+        return isCanceled() ? QString() : tr("The pictures of %1 cannot be read.").arg(QFileInfo(m_path).fileName());
+    }
+    m_points = *points;
+    for (engine::TrackedPoint &point : m_points) {
+        const auto [dx, dy] = toDisplay(point.x, point.y, m_rotation);
+        point.x = dx;
+        point.y = dy;
+    }
+    return {};
+}
+
 BackgroundRemoval::BackgroundRemoval(engine::CutoutCopy copy, QObject *parent)
     : AiTask(parent)
     , m_copy(std::move(copy))

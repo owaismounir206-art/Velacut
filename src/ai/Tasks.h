@@ -4,6 +4,7 @@
 #include "ai/AiTask.h"
 #include "ai/Analysis.h"
 #include "engine/analysis/Cutout.h"
+#include "engine/analysis/Decoding.h"
 #include "fx/Reframe.h"
 #include "fx/Stabilization.h"
 
@@ -99,6 +100,33 @@ protected:
 private:
     std::vector<Part> m_parts;
     std::vector<Path> m_paths;
+};
+
+// "Track": where a point of a video goes (engine::extractTrackedPath), in shares of the frame as displayed.
+class MotionTracking : public AiTask
+{
+    Q_OBJECT
+
+public:
+    // `rotation`: of the video's display (degrees clockwise); `aspect`: of the stored frames.
+    MotionTracking(QString path, double fromSeconds, double toSeconds, double x, double y, double radius, int rotation,
+                   double storedAspect, QObject *parent = nullptr);
+    QString title() const override;
+    const std::vector<engine::TrackedPoint> &points() const { return m_points; }
+
+protected:
+    QString run() override;
+
+private:
+    QString m_path;
+    double m_from;
+    double m_to;
+    double m_x;
+    double m_y;
+    double m_radius;
+    int m_rotation;
+    double m_aspect;
+    std::vector<engine::TrackedPoint> m_points;
 };
 
 // "Remove background": the cut-out copy of the part of a video a clip plays (engine/analysis/Cutout.h, rembg).

@@ -87,6 +87,8 @@ ActionRegistry::ActionRegistry(EditorController &editor)
          [this] { return m_editor.canRippleTrimRight(); }, [this] { return m_editor.rippleTrimRight(); }});
     add({u"textEdit"_s, tr("Edit text"), u"edit"_s, {}, Text, clip, properties(u"text"_s)});
     add({u"textStyle"_s, tr("Text style"), u"style"_s, {}, Text, always, library(u"text"_s)});
+    add({u"trackMotion"_s, tr("Track"), u"my_location"_s, {}, Text | Sticker,
+         [this] { return m_editor.ai()->canTrackMotion(); }, [this] { return m_editor.ai()->trackMotion(); }});
     add({u"readAloud"_s, tr("Read aloud"), u"record_voice_over"_s, {}, Text,
          [this] { return m_editor.ai()->canReadAloud(); }, [this] { return m_editor.ai()->readAloud(); }});
     add({u"delete"_s, tr("Delete"), u"delete"_s, tr("Del"), AnyClip | TransitionSelected,

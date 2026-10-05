@@ -5877,7 +5877,7 @@
 <context>
     <name>vedit::ai::BackgroundRemoval</name>
     <message>
-        <location filename="../src/ai/Tasks.cpp" line="+133"/>
+        <location filename="../src/ai/Tasks.cpp" line="+202"/>
         <source>Removing the background</source>
         <translation>Rimozione dello sfondo</translation>
     </message>
@@ -5885,7 +5885,7 @@
 <context>
     <name>vedit::ai::CameraMotionAnalysis</name>
     <message>
-        <location line="-62"/>
+        <location line="-131"/>
         <source>Steadying the shot</source>
         <translation>Stabilizzazione dell&apos;inquadratura</translation>
     </message>
@@ -5896,9 +5896,22 @@
     </message>
 </context>
 <context>
+    <name>vedit::ai::MotionTracking</name>
+    <message>
+        <location line="+96"/>
+        <source>Tracking the movement</source>
+        <translation>Tracciamento del movimento</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>The pictures of %1 cannot be read.</source>
+        <translation>Le immagini di %1 non possono essere lette.</translation>
+    </message>
+</context>
+<context>
     <name>vedit::ai::PauseDetection</name>
     <message>
-        <location line="-52"/>
+        <location line="-157"/>
         <source>Finding the pauses</source>
         <translation>Ricerca delle pause</translation>
     </message>
@@ -6352,12 +6365,17 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+290"/>
+        <location line="+292"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-289"/>
+        <location line="-291"/>
+        <source>Track</source>
+        <translation>Traccia</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Read aloud</source>
         <translation>Leggi ad alta voce</translation>
     </message>
@@ -6767,18 +6785,18 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message>
-        <location filename="../src/ui/controllers/AiController.cpp" line="+104"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+105"/>
         <source>Select a video or a sound with speech first.</source>
         <translation>Seleziona prima un video o un audio con del parlato.</translation>
     </message>
     <message>
         <location line="+24"/>
-        <location line="+206"/>
+        <location line="+341"/>
         <source>Select a video first.</source>
         <translation>Seleziona prima un video.</translation>
     </message>
     <message>
-        <location line="-171"/>
+        <location line="-306"/>
         <source>Select a video or a sound first.</source>
         <translation>Seleziona prima un video o un audio.</translation>
     </message>
@@ -6833,7 +6851,42 @@
         <translation>La prima volta rembg scarica il suo modello (circa 170 MB). Fai di nuovo clic su «Rimuovi sfondo» per continuare.</translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+54"/>
+        <source>Select a text or a sticker over a video first.</source>
+        <translation>Seleziona prima un testo o uno sticker sopra un video.</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Put the text or sticker over a video played forwards (not turned) to follow it.</source>
+        <translation>Metti il testo o lo sticker sopra un video riprodotto in avanti (non ruotato) per seguirlo.</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Place the text or sticker on the part of the video to follow.</source>
+        <translation>Metti il testo o lo sticker sulla parte del video da seguire.</translation>
+    </message>
+    <message>
+        <location line="+54"/>
+        <source>Nothing to follow was found under it: try another place.</source>
+        <translation>Sotto non c&apos;è niente da seguire: prova in un altro punto.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Track motion</source>
+        <translation>Traccia il movimento</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>It follows the movement, but lost it for a while: check the keyframes in Video</source>
+        <translation>Segue il movimento, ma l&apos;ha perso per un po&apos;: controlla i keyframe in Video</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>It follows the movement (keyframes in Video)</source>
+        <translation>Segue il movimento (keyframe in Video)</translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>Select a text first.</source>
         <translation>Seleziona prima un testo.</translation>
     </message>
@@ -6863,7 +6916,8 @@
         <translation>Stabilizza funziona sulle clip riprodotte in avanti a velocità costante.</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="-118"/>
+        <location line="+129"/>
         <location line="+356"/>
         <location line="+32"/>
         <source>The clip was removed meanwhile.</source>

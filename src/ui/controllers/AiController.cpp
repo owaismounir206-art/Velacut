@@ -4,6 +4,7 @@
 #include "ai/Tasks.h"
 #include "core/commands/Edit.h"
 #include "core/edit/TimelineEditor.h"
+#include "engine/timeline/ClipPlacement.h"
 #include "core/serialization/ProjectJson.h"
 #include "fx/Library.h"
 #include "ui/controllers/CaptionsController.h"
@@ -260,6 +261,141 @@ bool AiController::removeBackground()
     }
     auto task = std::make_unique<ai::BackgroundRemoval>(*copy);
     connect(task.get(), &ai::AiTask::finished, this, apply);
+    run(std::move(task));
+    return true;
+}
+
+namespace {
+
+// The video clip under `overlay` at its start (the nearest lower track that has one), if any.
+const Clip *videoUnder(const ProjectData &data, const Clip &overlay)
+{
+    const Sequence *sequence = data.mainSequence();
+    if (!sequence) {
+        return nullptr;
+    }
+    int overlayTrack = -1;
+    for (size_t t = 0; t < sequence->visualTracks.size(); ++t) {
+        if (sequence->visualTracks[t].findClip(overlay.id)) {
+            overlayTrack = static_cast<int>(t);
+        }
+    }
+    for (int t = overlayTrack - 1; t >= 0; --t) {
+        for (const Clip &clip : sequence->visualTracks[static_cast<size_t>(t)].clips) {
+            const MediaClipData *media = clip.media();
+            const Media *item = media ? data.findMedia(media->mediaId) : nullptr;
+            if (item && item->kind == MediaKind::Video && clip.start <= overlay.start && clip.end() > overlay.start) {
+                return &clip;
+            }
+        }
+    }
+    return nullptr;
+}
+
+} // namespace
+
+bool AiController::canTrackMotion() const
+{
+    const std::optional<ClipId> focus = m_editor.focusClip();
+    const Clip *clip = focus ? m_editor.data().findClip(*focus) : nullptr;
+    return !busy() && clip && (clip->text() || clip->sticker()) && videoUnder(m_editor.data(), *clip);
+}
+
+bool AiController::trackMotion()
+{
+    if (busy()) {
+        return false;
+    }
+    const std::optional<ClipId> focus = m_editor.focusClip();
+    const Clip *overlay = focus ? m_editor.data().findClip(*focus) : nullptr;
+    if (!overlay || (!overlay->text() && !overlay->sticker())) {
+        emit m_editor.message(tr("Select a text or a sticker over a video first."), false);
+        return false;
+    }
+    const Clip *under = videoUnder(m_editor.data(), *overlay);
+    const MediaClipData *media = under ? under->media() : nullptr;
+    const Media *item = media ? m_editor.data().findMedia(media->mediaId) : nullptr;
+    const ParamValue rotation = under ? under->transform.rotation.staticValue() : ParamValue(0.0);
+    const bool turned = under && (under->transform.rotation.isAnimated() ||
+                                  (std::holds_alternative<double>(rotation) && std::abs(std::get<double>(rotation)) > 0.01));
+    if (!item || !item->info.video || media->reversed || media->curve || turned) {
+        emit m_editor.message(tr("Put the text or sticker over a video played forwards (not turned) to follow it."), false);
+        return false;
+    }
+    const Canvas canvas = m_editor.data().mainSequence()->canvas;
+    const QSize size(canvas.width, canvas.height);
+    const engine::CanvasBox overlayBox = engine::canvasBox(*overlay, nullptr, size);
+    const engine::CanvasBox videoBox = engine::canvasBox(*under, item, size);
+    const double u = (overlayBox.centre.x() - videoBox.centre.x()) / videoBox.size.width() + 0.5;
+    const double v = (overlayBox.centre.y() - videoBox.centre.y()) / videoBox.size.height() + 0.5;
+    if (u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0) {
+        emit m_editor.message(tr("Place the text or sticker on the part of the video to follow."), false);
+        return false;
+    }
+    // The part of the file under the overlay.
+    const RationalTime from = std::max(overlay->start, under->start);
+    const RationalTime to = std::min(overlay->end(), under->end());
+    const auto sourceSeconds = [&](const RationalTime &t) {
+        return media->sourceIn.toSecondsDouble() + (t - under->start).toSecondsDouble() * media->speed;
+    };
+    const int fileRotation = item->info.video->rotation;
+    const double storedAspect = (fileRotation == 90 || fileRotation == 270) ? double(item->info.video->height) / item->info.video->width
+                                                                    : double(item->info.video->width) / item->info.video->height;
+    auto task = std::make_unique<ai::MotionTracking>(item->path, sourceSeconds(from), sourceSeconds(to), u, v, 0.08, fileRotation,
+                                                     storedAspect);
+    ai::MotionTracking *tracking = task.get();
+    const ClipId overlayId = overlay->id;
+    const ClipId underId = under->id;
+    const QPointF start = overlayBox.centre;
+    connect(tracking, &ai::AiTask::finished, this, [this, tracking, overlayId, underId, start, size] {
+        const Clip *overlay = m_editor.data().findClip(overlayId);
+        const Clip *under = m_editor.data().findClip(underId);
+        const MediaClipData *media = under ? under->media() : nullptr;
+        const Media *item = media ? m_editor.data().findMedia(media->mediaId) : nullptr;
+        if (!overlay || !item) {
+            emit m_editor.message(tr("The clip was removed meanwhile."), false);
+            return;
+        }
+        const engine::CanvasBox videoBox = engine::canvasBox(*under, item, size);
+        const Rational rate = m_editor.data().settings.frameRate;
+        const Vec2 base = std::holds_alternative<Vec2>(overlay->transform.position.staticValue())
+                              ? std::get<Vec2>(overlay->transform.position.staticValue())
+                              : Vec2{0.0, 0.0};
+        std::vector<Keyframe> keyframes;
+        int lost = 0;
+        const auto &points = tracking->points();
+        for (size_t i = 0; i < points.size(); ++i) {
+            const engine::TrackedPoint &point = points[i];
+            lost += point.lost ? 1 : 0;
+            if (point.lost || (i % 2 != 0 && i + 1 != points.size())) {
+                continue; // a keyframe every other frame is smooth enough
+            }
+            // Back on the timeline, from the start of the overlay.
+            const double timeline = under->start.toSecondsDouble() + (point.seconds - media->sourceIn.toSecondsDouble()) / media->speed;
+            const RationalTime local = RationalTime::fromSeconds(
+                Rational(std::llround((timeline - overlay->start.toSecondsDouble()) * 1000.0), 1000), rate, Rounding::NearestEven);
+            if (local.isNegative() || local > overlay->duration || (!keyframes.empty() && !(local > keyframes.back().time))) {
+                continue;
+            }
+            const double x = videoBox.centre.x() + (point.x - 0.5) * videoBox.size.width();
+            const double y = videoBox.centre.y() + (point.y - 0.5) * videoBox.size.height();
+            keyframes.push_back(Keyframe{local, Vec2{base.x + (x - start.x()) / size.width(), base.y + (y - start.y()) / size.height()},
+                                         Interpolation::Linear, Easing::preset(Easing::Preset::Linear)});
+        }
+        if (keyframes.size() < 2) {
+            emit m_editor.message(tr("Nothing to follow was found under it: try another place."), false);
+            return;
+        }
+        Param position;
+        position.setKeyframes(std::move(keyframes));
+        if (m_editor.push(TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                              .updateClips({overlayId}, [&position](Clip &c) { c.transform.position = position; }, tr("Track motion")))) {
+            emit m_editor.message(lost * 3 > static_cast<int>(points.size())
+                                      ? tr("It follows the movement, but lost it for a while: check the keyframes in Video")
+                                      : tr("It follows the movement (keyframes in Video)"),
+                                  true);
+        }
+    });
     run(std::move(task));
     return true;
 }
