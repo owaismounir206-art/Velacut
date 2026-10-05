@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "Services.h"
 
+#include "engine/gpu/GpuTransitions.h"
+
 #include "core/project/ClipTime.h"
 #include "engine/playback/AudioMeters.h"
 #include "engine/text/TextRenderer.h"
@@ -586,7 +588,11 @@ int transitionGetImage(mlt_frame aFrame, uint8_t **image, mlt_image_format *form
     const fx::ConstImageView av{a, aw, ah, aw * 4};
     const fx::ConstImageView bv{b, bw, bh, bw * 4};
     const fx::TransitionParams params{s->softness};
-    runSliced(ah, [&](int begin, int end) { fx::renderTransition(s->kind, target, av, bv, progress, params, begin, end); });
+    // The GPU path when it is on and willing (SPEC §5.11bis), else the CPU reference kernel.
+    engine::GpuTransitions *gpu = engine::GpuTransitions::instance();
+    if (!gpu || !gpu->render(s->kind, target, av, bv, progress, params)) {
+        runSliced(ah, [&](int begin, int end) { fx::renderTransition(s->kind, target, av, bv, progress, params, begin, end); });
+    }
     mlt_frame_set_image(aFrame, out, size, mlt_pool_release);
     *image = out;
     *width = aw;

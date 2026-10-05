@@ -216,6 +216,11 @@ inline float pseudoRandom(int x, int y)
 
 } // namespace
 
+float transitionNoise(int x, int y)
+{
+    return pseudoRandom(x, y);
+}
+
 std::optional<TransitionKind> transitionKindFromName(std::string_view name)
 {
     for (const auto &[kind, text] : kNames) {
@@ -989,7 +994,9 @@ void renderTransition(TransitionKind kind, ImageView out, ConstImageView a, Cons
             }
             case TransitionKind::FlipHorizontal: {
                 const float scaleX = std::cos(t * pi);
-                if (scaleX >= 0.0f) {
+                // The side shown is decided by the progress, not by the sign of a cosine that is ~0 at the middle
+                // (its sign there differs between the CPU and a GPU).
+                if (t < 0.5f) {
                     p = sample(a, cx + (x + 0.5f - cx) / std::max(0.01f, scaleX), y + 0.5f);
                 } else {
                     p = sample(b, cx + (x + 0.5f - cx) / std::max(0.01f, -scaleX), y + 0.5f);
@@ -1000,7 +1007,7 @@ void renderTransition(TransitionKind kind, ImageView out, ConstImageView a, Cons
             }
             case TransitionKind::FlipVertical: {
                 const float scaleY = std::cos(t * pi);
-                if (scaleY >= 0.0f) {
+                if (t < 0.5f) {
                     p = sample(a, x + 0.5f, cy + (y + 0.5f - cy) / std::max(0.01f, scaleY));
                 } else {
                     p = sample(b, x + 0.5f, cy + (y + 0.5f - cy) / std::max(0.01f, -scaleY));

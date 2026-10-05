@@ -10,6 +10,7 @@
 #include "ui/models/TimelineModel.h"
 #include "document/DraftStore.h"
 #include "theme/ThemeManager.h"
+#include "engine/gpu/GpuTransitions.h"
 #include "ui/controllers/AppController.h"
 #include "ui/models/DraftsModel.h"
 
@@ -197,6 +198,18 @@ int main(int argc, char *argv[])
 
         ui::AppController controller(decision, capabilities);
         ui::AppController::setInstance(&controller);
+        // GPU path of the transitions (SPEC §5.11bis): only when the graphics decision allows GPU effects; it checks
+        // itself against the CPU on first use and falls back to it with a notice if anything goes wrong.
+        if (decision.gpuEffects) {
+            engine::GpuTransitions::initialize();
+            engine::GpuTransitions::instance()->setFailureHandler([&controller](const QString &why) {
+                QMetaObject::invokeMethod(&controller, [&controller, why] {
+                    emit controller.message(QCoreApplication::translate("main", "The graphics card had a problem with "
+                                                                                "the transitions: the processor draws "
+                                                                                "them now (%1).").arg(why));
+                });
+            });
+        }
 
         // Video capabilities are slower to probe: done in background, then cached.
         if (!safeMode && capabilities.video.status == gpu::ProbeStatus::NotProbed) {
@@ -307,6 +320,7 @@ int main(int argc, char *argv[])
         } else {
             controller.closeEditor(); // writes the last changes
         }
+        engine::GpuTransitions::shutdown(); // after the editor: no MLT thread uses it any more
         // Destruction order: QML first, then the editor (every MLT object), then MLT itself.
     }
     engine::MltRuntime::shutdown();

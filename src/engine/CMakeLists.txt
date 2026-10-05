@@ -28,9 +28,12 @@ add_library(vedit_engine STATIC
     timeline/ClipPlacement.h timeline/ClipPlacement.cpp
     timeline/MediaProducerCache.h timeline/MediaProducerCache.cpp
     timeline/TimelineProjection.h timeline/TimelineProjection.cpp
+    gpu/GpuTransitions.h gpu/GpuTransitions.cpp
 )
+# The GLSL of the GPU path (OpenGL 2.1 / ES 2.0), read at run time from the resources.
+qt_add_resources(vedit_engine "vedit_gpu_shaders" PREFIX "/vedit/gpu" BASE gpu/shaders FILES gpu/shaders/transitions.frag)
 target_include_directories(vedit_engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
-target_link_libraries(vedit_engine PUBLIC Qt6::Core Qt6::Gui Qt6::Svg vedit_core vedit_common vedit_gpu PkgConfig::MLTPP PUBLIC vedit_fx PRIVATE PkgConfig::FFMPEG)
+target_link_libraries(vedit_engine PUBLIC Qt6::Core Qt6::Gui Qt6::OpenGL Qt6::Svg vedit_core vedit_common vedit_gpu PkgConfig::MLTPP PUBLIC vedit_fx PRIVATE PkgConfig::FFMPEG)
 vedit_target_options(vedit_engine)
 
 # vedit-render: export in a separate process (docs/ARCHITECTURE.md §5.4).

@@ -126,3 +126,25 @@ del vendor (nessuna estensione proprietaria, SPEC 1bis regola 7).
   percorsi); il percorso GPU degli effetti (GLSL 2.1) è la Fase 5 residua.
 - Nessuna decodifica VA-API nel producer MLT: beneficio nullo misurato, vedi sopra.
 
+
+## 7. Percorso GPU delle transizioni (Fase 5, SPEC §5.11bis)
+- **Cosa**: le 114 transizioni hanno, oltre al kernel CPU di riferimento (`src/fx/Transition.cpp`), un programma GLSL
+  1.00/1.10 (`src/engine/gpu/shaders/transitions.frag`), compatibile **OpenGL 2.1 e OpenGL ES 2.0**, senza estensioni.
+  Un solo sorgente; il codice antepone `#version` e `#define K_<nome del kernel>`, quindi ogni transizione è un
+  programma piccolo compilato alla prima richiesta.
+- **Dove gira**: `engine::GpuTransitions` crea un contesto OpenGL offscreen su un thread suo; il servizio MLT
+  `vedit.transition` gli chiede il fotogramma e, se rifiuta, usa la CPU. Anche l'export (`vedit-render`, piattaforma
+  `offscreen`) lo usa quando l'editor lo usa.
+- **Parità con la CPU**: stesse formule riga per riga; texture premoltiplicate come i calcoli della CPU; i valori
+  pseudo-casuali (hash intero, non riproducibile in GLSL ES 2.0) arrivano in una texture di rumore calcolata dalla CPU
+  con la stessa funzione (`fx::transitionNoise`). `tst_gputransitions` confronta tutte le 114 transizioni a 3 istanti
+  (342 confronti, tolleranza PSNR ≥ 40 dB): **peggiore 52,1 dB sulla Radeon 740M, 55,3 dB su llvmpipe** (CTest lo
+  esegue due volte: GPU della macchina e `LIBGL_ALWAYS_SOFTWARE=1`). Nessun contesto OpenGL → il test viene saltato e
+  tutto resta sulla CPU.
+- **Sicurezza** (SPEC 1bis regole 3-4): attivo solo se la decisione grafica permette gli effetti GPU (non in modalità
+  sicura, preferenza "Effetti sulla scheda grafica"); al primo uso un autocontrollo confronta quattro transizioni con la
+  CPU; qualsiasi errore (contesto, shader, errore OpenGL, autocontrollo) spegne il percorso GPU per la sessione, lo
+  scrive nel log e mostra un avviso non bloccante. Oltre 4096 px di lato si usa la CPU.
+- **Prestazioni**: ogni fotogramma carica due texture e rilegge il risultato, quindi su una iGPU UMA il guadagno
+  rispetto ai kernel CPU multithread può essere piccolo. **Non ancora misurato** in anteprima e in export (da fare nel
+  profiling della Fase 8). Il percorso esiste per la specifica e per le CPU deboli; non è mai un requisito.

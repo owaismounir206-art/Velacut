@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "RenderJob.h"
 
+#include "engine/gpu/GpuTransitions.h"
+
 #include "common/Paths.h"
 #include "core/serialization/ProjectFile.h"
 
@@ -128,10 +130,13 @@ bool RenderJob::start(const ProjectData &project, const SequenceId &sequenceId, 
     }
     QJsonObject encoders;
     encoders.insert(u"video"_s, QJsonArray::fromStringList(m_hardwareEncoders));
+    // The export uses the GPU path of the transitions when the editor does (it passed its self-check here).
+    const GpuTransitions *gpu = GpuTransitions::instance();
     const QJsonObject job{{u"project"_s, m_frozenProject},
                           {u"sequence"_s, sequenceId.toString()},
                           {u"settings"_s, settings.toJson()},
-                          {u"encoders"_s, encoders}};
+                          {u"encoders"_s, encoders},
+                          {u"gpuEffects"_s, gpu && gpu->available()}};
     if (const auto written = projectfile::writeAtomically(m_jobFile, QJsonDocument(job).toJson()); !written) {
         QFile::remove(m_frozenProject);
         emit failed(errorMessage(RenderError::ProjectUnreadable), written.error);

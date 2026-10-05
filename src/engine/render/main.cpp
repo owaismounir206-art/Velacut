@@ -23,6 +23,8 @@
 
 #include <QCommandLineParser>
 #include <QGuiApplication>
+
+#include "engine/gpu/GpuTransitions.h"
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -82,6 +84,10 @@ int run(const QString &jobPath)
     for (const QJsonValue &encoder : job.value(u"encoders"_s).toObject().value(u"video"_s).toArray()) {
         hardwareEncoders.append(encoder.toString());
     }
+    // GPU path of the transitions (offscreen OpenGL), when the editor uses it; the CPU otherwise or if it fails.
+    if (job.value(u"gpuEffects"_s).toBool()) {
+        GpuTransitions::initialize();
+    }
     int lastReported = -1;
     const Renderer::Result result = Renderer::render(
         *loaded.project, *sequenceId, *settings,
@@ -95,6 +101,10 @@ int run(const QString &jobPath)
     for (const QString &warning : result.warnings) {
         emitEvent({{u"event"_s, u"warning"_s}, {u"message"_s, warning}});
     }
+    if (const GpuTransitions *gpu = GpuTransitions::instance(); gpu && !gpu->failure().isEmpty()) {
+        emitEvent({{u"event"_s, u"warning"_s}, {u"message"_s, QString(u"GPU transitions: "_s + gpu->failure())}});
+    }
+    GpuTransitions::shutdown();
     switch (result.status) {
     case Renderer::Status::Done:
         emitEvent({{u"event"_s, u"done"_s}, {u"output"_s, settings->outputPath}});

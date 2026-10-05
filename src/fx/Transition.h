@@ -166,6 +166,10 @@ enum class Easing
 };
 double ease(Easing easing, double t);
 
+// The pseudo-random value 0…1 the kernels use for pixel or cell (x, y) (noise, mosaics, glitches): also uploaded to the
+// GPU path, so that both draw the same pattern.
+float transitionNoise(int x, int y);
+
 // out = transition from `a` to `b` at `progress` 0…1 (already eased). All images the same size; `out` may not alias.
 // Straight alpha; mixing in premultiplied space. Rows [rowBegin, rowEnd).
 void renderTransition(TransitionKind kind, ImageView out, ConstImageView a, ConstImageView b, double progress,
