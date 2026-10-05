@@ -62,6 +62,11 @@ public:
     // Subsequent clips on the track (and on magnetic main track) shift to close the gap.
     EditResult rippleTrimClip(const ClipId &clipId, ClipEdge edge, const RationalTime &time);
     EditResult splitClip(const ClipId &clipId, const RationalTime &time);
+    // Several cuts in one step ("Split scenes"); times outside the clip are ignored.
+    EditResult splitClipAt(const ClipId &clipId, std::vector<RationalTime> times);
+    // Takes stretches of the clip's source out of it ("Remove pauses"): the rest stays together, the following clips
+    // of the track move back. Ranges in the media's own time; media clips at a steady speed, played forwards.
+    EditResult removeSourceRanges(const ClipId &clipId, const std::vector<std::pair<RationalTime, RationalTime>> &ranges);
     EditResult deleteClips(const std::vector<ClipId> &clipIds);
     // Deletes clips and closes the gaps on their tracks by shifting subsequent clips left.
     EditResult rippleDeleteClips(const std::vector<ClipId> &clipIds);
@@ -170,6 +175,8 @@ public:
 
 private:
     EditResult fail(const QString &message) const;
+    // Splits a clip of `modified` at `time` (no checks of the sequence); an error for the user, empty on success.
+    QString splitIn(Sequence &modified, const ClipId &clipId, const RationalTime &time, ClipId *secondId) const;
     EditResult finish(Sequence &&modified, const QString &text, const ClipId &primary) const;
 
     const ProjectData &m_project;

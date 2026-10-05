@@ -8,7 +8,9 @@
 #include <QString>
 
 #include <atomic>
+#include <functional>
 #include <optional>
+#include <vector>
 
 namespace vedit::engine {
 
@@ -31,6 +33,22 @@ struct Waveform
 };
 std::optional<Waveform> extractWaveform(const QString &path, int bucketsPerSecond = 100,
                                         const std::atomic<bool> *cancel = nullptr);
+
+// Called now and then with the share of the file done (0…1), from the decoding thread.
+using DecodeProgress = std::function<void(double)>;
+
+// Loudness of the audio mixed down to mono, as RMS level in dBFS (−100 for silence) for every 1/`windowsPerSecond` s
+// (the analysis behind "Remove pauses").
+std::optional<std::vector<float>> extractLevels(const QString &path, int windowsPerSecond,
+                                                const std::atomic<bool> *cancel = nullptr,
+                                                const DecodeProgress &progress = {});
+
+// How much each frame differs from the previous one (0 = same picture, 1 = everything changed), from small grey
+// pictures (pixel and histogram differences): the analysis behind "Split scenes". `times` gets the time of each
+// frame in seconds of the file; the first frame's difference is 0.
+std::optional<std::vector<float>> extractFrameDifferences(const QString &path, std::vector<double> *times,
+                                                          const std::atomic<bool> *cancel = nullptr,
+                                                          const DecodeProgress &progress = {});
 
 // Integrated and peak loudness measured via ITU-R BS.1770-4 / EBU R128.
 std::optional<fx::LoudnessResult> extractLoudness(const QString &path,

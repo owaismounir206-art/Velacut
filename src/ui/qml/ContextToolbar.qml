@@ -89,6 +89,44 @@ Item {
             }
         }
 
+        // A one-click AI function at work: what it does, how far it is, and how to stop it (SPEC 0bis rule 15).
+        Rectangle {
+            objectName: "aiProgress"
+            visible: bar.editor.ai.busy
+            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: aiRow.implicitWidth + Theme.space.md
+            implicitHeight: Theme.editor.toolButtonSize
+            radius: Theme.shape.full
+            color: Theme.color.secondaryContainer
+            Row {
+                id: aiRow
+                anchors.verticalCenter: parent.verticalCenter
+                x: Theme.space.md
+                spacing: Theme.space.sm
+                BusyIndicator {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.editor.smallIconSize
+                    height: width
+                    running: parent.parent.visible
+                    progress: bar.editor.ai.progress
+                }
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    role: "labelMedium"
+                    font.features: { "tnum": 1 }
+                    color: Theme.color.onSecondaryContainer
+                    text: qsTr("%1… %2 %").arg(bar.editor.ai.title).arg(Math.round(bar.editor.ai.progress * 100))
+                }
+                Tool {
+                    objectName: "aiCancel"
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconName: "close"
+                    label: qsTr("Stop")
+                    onClicked: bar.editor.ai.cancel()
+                }
+            }
+        }
+
         Separator { Layout.leftMargin: Theme.space.xs; Layout.rightMargin: Theme.space.xs }
 
         Toggle {

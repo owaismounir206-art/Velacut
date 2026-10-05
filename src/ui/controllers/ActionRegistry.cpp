@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ActionRegistry.h"
 
+#include "AiController.h"
 #include "CaptionsController.h"
 #include "ClipInspector.h"
 #include "EditorController.h"
@@ -118,6 +119,11 @@ ActionRegistry::ActionRegistry(EditorController &editor)
          }});
     add({u"enhance"_s, tr("Enhance"), u"auto_fix_high"_s, {}, videoLike | Audio, clip,
          [inspector] { return inspector->autoEnhance(); }});
+    // One click, a result made of ordinary cuts (SPEC 0bis rule 9).
+    add({u"removePauses"_s, tr("Remove pauses"), u"voice_over_off"_s, {}, Video | Audio,
+         [this] { return m_editor.ai()->canRemovePauses(); }, [this] { return m_editor.ai()->removePauses(); }});
+    add({u"splitScenes"_s, tr("Split scenes"), u"view_week"_s, {}, Video,
+         [this] { return m_editor.ai()->canSplitScenes(); }, [this] { return m_editor.ai()->splitScenes(); }});
     // Another video or photo in the same place, with the same length and look (SPEC 0bis rule 3, §5.2, §5.13).
     add({u"replace"_s, tr("Replace"), u"find_replace"_s, {}, videoLike, clip, [this] {
              const std::optional<ClipId> focus = m_editor.focusClip();

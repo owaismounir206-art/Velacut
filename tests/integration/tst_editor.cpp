@@ -12,6 +12,7 @@
 #include "engine/mlt/MltRuntime.h"
 #include "fx/Library.h"
 #include "ui/controllers/ActionRegistry.h"
+#include "ui/controllers/AiController.h"
 #include "ui/controllers/ClipInspector.h"
 #include "ui/items/AssetThumbnail.h"
 #include "ui/models/AssetLibraryModel.h"
@@ -529,6 +530,54 @@ private slots:
         QVERIFY(editor.close());
     }
 
+    // "Split scenes" and "Remove pauses" on a clip with three shots and a second of silence in the middle.
+    void aiToolsCutScenesAndPauses()
+    {
+        const QString file = m_dir.filePath(u"shots.mp4"_s);
+        QVERIFY(runFfmpeg({u"-filter_complex"_s,
+                           u"color=c=red:s=160x90:r=30:d=1[r];color=c=blue:s=160x90:r=30:d=1[b];"
+                           "testsrc=s=160x90:r=30:d=1[t];[r][b][t]concat=n=3:v=1:a=0,format=yuv420p[v];"
+                           "aevalsrc='if(between(t\\,1\\,2)\\,0\\,0.5*sin(2*PI*440*t))':s=48000:d=3[a]"_s,
+                           u"-map"_s, u"[v]"_s, u"-map"_s, u"[a]"_s, u"-c:v"_s, u"libx264"_s, u"-c:a"_s, u"aac"_s, file}));
+        document::DraftStore store(m_dir.filePath(u"drafts-ai"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.importAndInsertPaths({file}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        AiController &ai = *editor.ai();
+        QVERIFY(ai.canSplitScenes() && ai.canRemovePauses());
+
+        QVERIFY(ai.splitScenes());
+        QVERIFY(ai.busy());
+        QTRY_VERIFY_WITH_TIMEOUT(!ai.busy(), 20000);
+        QCOMPARE(mainTrack(editor).clips.size(), size_t(3));
+        QCOMPARE(mainTrack(editor).clips[1].start, RationalTime(30, Rational(30)));
+        QCOMPARE(mainTrack(editor).clips[2].start, RationalTime(60, Rational(30)));
+        editor.undo(); // one step
+        QCOMPARE(mainTrack(editor).clips.size(), size_t(1));
+
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        const RationalTime before = mainTrack(editor).clips[0].duration;
+        QVERIFY(ai.removePauses());
+        QTRY_VERIFY_WITH_TIMEOUT(!ai.busy(), 20000);
+        // The second of silence minus 0.15 s kept on each side: about 0.7 s (21 frames) shorter, in two pieces.
+        QCOMPARE(mainTrack(editor).clips.size(), size_t(2));
+        const RationalTime after = mainTrack(editor).clips[0].duration + mainTrack(editor).clips[1].duration;
+        const std::int64_t removed = (before - after).value();
+        QVERIFY2(removed >= 18 && removed <= 24, qPrintable(QString::number(removed)));
+        QVERIFY(std::abs(mainTrack(editor).clips[1].media()->sourceIn.value() - 56) <= 2); // 1.85 s
+
+        // A second run on the same file uses what was found (no new analysis).
+        editor.undo();
+        editor.select(mainTrack(editor).clips[0].id.toString(), false);
+        QVERIFY(ai.removePauses());
+        QVERIFY(!ai.busy());
+        QCOMPARE(mainTrack(editor).clips.size(), size_t(2));
+    }
+
     // The actions of the selection (toolbar, right-click menu), the universal search, the freeze frame.
     void actionsSearchAndFreeze()
     {
@@ -554,7 +603,7 @@ private slots:
         editor.select(mainTrack(editor).clips[0].id.toString(), false);
         QCOMPARE(ids(), (QStringList{u"split"_s, u"rippleTrimLeft"_s, u"rippleTrimRight"_s, u"delete"_s, u"duplicate"_s,
                                      u"speed"_s, u"volume"_s, u"animation"_s, u"freeze"_s, u"reverse"_s, u"mirror"_s,
-                                     u"rotate"_s, u"enhance"_s, u"replace"_s}));
+                                     u"rotate"_s, u"enhance"_s, u"removePauses"_s, u"splitScenes"_s, u"replace"_s}));
         editor.select(mainTrack(editor).clips[1].id.toString(), false);
         QVERIFY(!ids().contains(u"speed"_s) && ids().contains(u"mirror"_s));
 

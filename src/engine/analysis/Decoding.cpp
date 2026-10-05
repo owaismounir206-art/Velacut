@@ -16,6 +16,7 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <memory>
 
@@ -580,6 +581,197 @@ QImage extractFrame(const QString &path, double seconds, int maxHeight)
     const int destinationStride[4] = {static_cast<int>(image.bytesPerLine()), 0, 0, 0};
     sws_scale(scaler.get(), frame->data, frame->linesize, 0, frame->height, destination, destinationStride);
     return rotation != 0 ? image.transformed(QTransform().rotate(rotation)) : image;
+}
+
+namespace {
+
+// The share of the file done, from a timestamp of the stream.
+double doneShare(const AVFormatContext *input, const AVStream *stream, int64_t pts)
+{
+    if (pts == AV_NOPTS_VALUE || input->duration <= 0) {
+        return 0.0;
+    }
+    const double seconds = static_cast<double>(pts - (stream->start_time == AV_NOPTS_VALUE ? 0 : stream->start_time)) *
+                           av_q2d(stream->time_base);
+    return std::clamp(seconds / (static_cast<double>(input->duration) / AV_TIME_BASE), 0.0, 1.0);
+}
+
+} // namespace
+
+std::optional<std::vector<float>> extractLevels(const QString &path, int windowsPerSecond, const std::atomic<bool> *cancel,
+                                                const DecodeProgress &progress)
+{
+    Input input = openInput(path);
+    if (!input || windowsPerSecond <= 0) {
+        return std::nullopt;
+    }
+    const int streamIndex = av_find_best_stream(input.get(), AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    if (streamIndex < 0) {
+        return std::nullopt;
+    }
+    const AVStream *stream = input->streams[streamIndex];
+    Codec codec = openDecoder(stream);
+    if (!codec || codec->sample_rate <= 0) {
+        return std::nullopt;
+    }
+    SwrContext *rawResampler = nullptr;
+    AVChannelLayout mono = AV_CHANNEL_LAYOUT_MONO;
+    if (swr_alloc_set_opts2(&rawResampler, &mono, AV_SAMPLE_FMT_FLT, codec->sample_rate, &codec->ch_layout,
+                            codec->sample_fmt, codec->sample_rate, 0, nullptr) < 0) {
+        return std::nullopt;
+    }
+    std::unique_ptr<SwrContext, SwrDeleter> resampler(rawResampler);
+    if (swr_init(resampler.get()) < 0) {
+        return std::nullopt;
+    }
+    std::vector<float> levels;
+    const int windowSize = std::max(1, codec->sample_rate / windowsPerSecond);
+    double sum = 0.0;
+    int filled = 0;
+    const auto push = [&] {
+        const double rms = std::sqrt(sum / std::max(1, filled));
+        levels.push_back(rms > 1e-5 ? static_cast<float>(20.0 * std::log10(rms)) : -100.0f);
+        sum = 0.0;
+        filled = 0;
+    };
+    std::vector<float> mixed;
+    const auto consume = [&](const uint8_t *const *data, int samples) {
+        mixed.resize(static_cast<size_t>(std::max(0, swr_get_out_samples(resampler.get(), samples))));
+        uint8_t *out[1] = {reinterpret_cast<uint8_t *>(mixed.data())};
+        const int converted = swr_convert(resampler.get(), out, static_cast<int>(mixed.size()), data, samples);
+        for (int i = 0; i < converted; ++i) {
+            const double v = mixed[static_cast<size_t>(i)];
+            sum += v * v;
+            if (++filled == windowSize) {
+                push();
+            }
+        }
+    };
+    Packet packet(av_packet_alloc());
+    Frame frame(av_frame_alloc());
+    bool ended = false;
+    int64_t lastReport = 0;
+    while (!ended && !cancelled(cancel)) {
+        if (av_read_frame(input.get(), packet.get()) < 0) {
+            avcodec_send_packet(codec.get(), nullptr);
+            ended = true;
+        } else {
+            if (packet->stream_index == streamIndex) {
+                avcodec_send_packet(codec.get(), packet.get());
+            }
+            av_packet_unref(packet.get());
+        }
+        while (avcodec_receive_frame(codec.get(), frame.get()) == 0) {
+            consume(frame->extended_data, frame->nb_samples);
+            if (progress && frame->best_effort_timestamp - lastReport > stream->time_base.den / std::max(1, stream->time_base.num)) {
+                lastReport = frame->best_effort_timestamp;
+                progress(doneShare(input.get(), stream, frame->best_effort_timestamp));
+            }
+            av_frame_unref(frame.get());
+        }
+    }
+    if (cancelled(cancel)) {
+        return std::nullopt;
+    }
+    consume(nullptr, 0);
+    if (filled > 0) {
+        push();
+    }
+    return levels;
+}
+
+std::optional<std::vector<float>> extractFrameDifferences(const QString &path, std::vector<double> *times,
+                                                          const std::atomic<bool> *cancel, const DecodeProgress &progress)
+{
+    constexpr int kWidth = 64;
+    constexpr int kHeight = 36;
+    constexpr int kBins = 32;
+    Input input = openInput(path);
+    if (!input) {
+        return std::nullopt;
+    }
+    const int streamIndex = av_find_best_stream(input.get(), AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
+    if (streamIndex < 0) {
+        return std::nullopt;
+    }
+    const AVStream *stream = input->streams[streamIndex];
+    Codec codec = openDecoder(stream);
+    if (!codec) {
+        return std::nullopt;
+    }
+    std::unique_ptr<SwsContext, SwsDeleter> scaler;
+    int scalerFormat = -1;
+    int scalerWidth = 0;
+    int scalerHeight = 0;
+    std::vector<uint8_t> previous;
+    std::vector<uint8_t> current(kWidth * kHeight);
+    std::array<float, kBins> previousHistogram{};
+    std::vector<float> differences;
+    Packet packet(av_packet_alloc());
+    Frame frame(av_frame_alloc());
+    bool ended = false;
+    const auto take = [&](const AVFrame *picture) {
+        if (!scaler || scalerFormat != picture->format || scalerWidth != picture->width || scalerHeight != picture->height) {
+            scaler.reset(sws_getContext(picture->width, picture->height, static_cast<AVPixelFormat>(picture->format), kWidth,
+                                        kHeight, AV_PIX_FMT_GRAY8, SWS_AREA, nullptr, nullptr, nullptr));
+            scalerFormat = picture->format;
+            scalerWidth = picture->width;
+            scalerHeight = picture->height;
+        }
+        if (!scaler) {
+            return;
+        }
+        uint8_t *planes[1] = {current.data()};
+        const int strides[1] = {kWidth};
+        sws_scale(scaler.get(), picture->data, picture->linesize, 0, picture->height, planes, strides);
+        std::array<float, kBins> histogram{};
+        for (uint8_t value : current) {
+            histogram[static_cast<size_t>(value * kBins / 256)] += 1.0f / static_cast<float>(current.size());
+        }
+        float difference = 0.0f;
+        if (!previous.empty()) {
+            double pixels = 0.0;
+            for (size_t i = 0; i < current.size(); ++i) {
+                pixels += std::abs(int(current[i]) - int(previous[i]));
+            }
+            float bins = 0.0f;
+            for (size_t b = 0; b < histogram.size(); ++b) {
+                bins += std::abs(histogram[b] - previousHistogram[b]);
+            }
+            // Both in 0…1: the pixels say "something moved", the histogram says "it is another picture".
+            difference = static_cast<float>(0.5 * pixels / (255.0 * current.size()) + 0.25 * bins);
+        }
+        differences.push_back(std::clamp(difference, 0.0f, 1.0f));
+        if (times) {
+            const int64_t pts = picture->best_effort_timestamp;
+            const int64_t start = stream->start_time == AV_NOPTS_VALUE ? 0 : stream->start_time;
+            times->push_back(pts == AV_NOPTS_VALUE ? 0.0 : static_cast<double>(pts - start) * av_q2d(stream->time_base));
+        }
+        previous = current;
+        previousHistogram = histogram;
+        if (progress && differences.size() % 30 == 0) {
+            progress(doneShare(input.get(), stream, picture->best_effort_timestamp));
+        }
+    };
+    while (!ended && !cancelled(cancel)) {
+        if (av_read_frame(input.get(), packet.get()) < 0) {
+            avcodec_send_packet(codec.get(), nullptr);
+            ended = true;
+        } else {
+            if (packet->stream_index == streamIndex) {
+                avcodec_send_packet(codec.get(), packet.get());
+            }
+            av_packet_unref(packet.get());
+        }
+        while (avcodec_receive_frame(codec.get(), frame.get()) == 0) {
+            take(frame.get());
+            av_frame_unref(frame.get());
+        }
+    }
+    if (cancelled(cancel)) {
+        return std::nullopt;
+    }
+    return differences;
 }
 
 } // namespace vedit::engine

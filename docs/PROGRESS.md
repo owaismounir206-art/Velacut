@@ -24,6 +24,11 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   tutti i testi uscivano in Noto Sans, e vedit-render non caricava proprio il font. Ora `vedit_fonts` (libreria
   comune) registra Inter in ogni processo e sostituisce "Inter" → "Inter Variable" (test in `tst_theme`).
 - Le proprietà ricordano la pagina scelta per tipo di clip (un testo o un sottotitolo si apre sulle sue parole).
+- **Funzioni AI senza modelli** (libreria `vedit_ai`, D-55): interfaccia `ai::AiTask` (thread, progresso, annullamento,
+  distruzione sicura; test), **Rimuovi pause** (livelli RMS → pause con soglia adattiva, tagliate con
+  `TimelineEditor::removeSourceRanges`, il resto si ricompatta) e **Dividi le scene** (differenze tra fotogrammi →
+  `splitClipAt`), nella barra della clip, con pillola di progresso e "Ferma" nella barra; un passo di annullamento.
+  Test su un file generato (tre inquadrature, un secondo di silenzio): tagli esatti a 1 s e 2 s, ~0,7 s tolti.
 
 ## Sessione 2026-10-05 — Fine Fase 5: transizioni GPU, slideshow, kit del marchio, filtri, blocco del motore
 - **Percorso GPU delle 114 transizioni** (`92d25d6`, criterio Fase 5 seconda metà ✅): GLSL 1.00/1.10 (OpenGL 2.1 /
@@ -187,9 +192,9 @@ completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::t
    formato lo supporta: `styleOverride`), parole chiave evidenziate automaticamente ed emoji automatiche.
 2. Sottotitoli automatici con whisper.cpp come processo esterno se installato (altrimenti disattivati con messaggio,
    `docs/MODELS.md`), gestore modelli con download solo su richiesta; sottotitoli da copione allineati al parlato.
-3. Senza modelli: rimozione silenzi, rilevamento scene con divisione, stabilizzazione (vid.stab), slow motion con
-   `minterpolate`, auto reframe classico (soggetto stimato da movimento/contrasto).
-4. Interfaccia `IAiTask` comune (progresso, annullamento, risultato modificabile).
+3. Senza modelli: ✅ rimozione pause, ✅ divisione delle scene; restano stabilizzazione, slow motion fluido
+   (`minterpolate`), auto reframe classico (soggetto stimato da movimento/contrasto).
+4. ✅ Interfaccia comune `ai::AiTask` (progresso, annullamento, risultato modificabile).
 
 ### Sessione 2026-10-01
 - **P5.7 — Template di progetto con segnaposto (fondamenta complete)**:

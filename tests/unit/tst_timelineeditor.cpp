@@ -1036,6 +1036,45 @@ private slots:
         QCOMPARE(corrected.words[2].start, frames(40));
         QVERIFY(captions::withText(corrected, u"Salve"_s).words.empty());
     }
+
+    void removingPausesKeepsTheRestTogether()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+        // Source frames 60–90 and 200–240 of A are quiet.
+        EditResult result = session.editor().removeSourceRanges(a, {{frames(60), frames(90)}, {frames(200), frames(240)}, {frames(500), frames(600)}});
+        QVERIFY(result.ok());
+        QVERIFY(session.apply(std::move(result)));
+        const Track &main = session.mainTrack();
+        QCOMPARE(main.clips.size(), 5u);
+        QCOMPARE(main.clips[0].id, a);
+        QCOMPARE(main.clips[0].duration, frames(60));
+        QCOMPARE(main.clips[1].media()->sourceIn, frames(90));
+        QCOMPARE(main.clips[1].duration, frames(110));
+        QCOMPARE(main.clips[2].media()->sourceIn, frames(240));
+        QCOMPARE(main.clips[2].duration, frames(60));
+        QCOMPARE(main.clips[3].id, b);
+        QCOMPARE(main.clips[3].start, frames(230)); // the rest moved back by the 70 frames removed
+        // Nothing to remove, or everything: refused.
+        QVERIFY(!session.editor().removeSourceRanges(b, {{frames(500), frames(600)}}).ok());
+        QVERIFY(!session.editor().removeSourceRanges(b, {{frames(0), frames(500)}}).ok());
+        QVERIFY(!session.editor().removeSourceRanges(c, {{frames(0), frames(10)}}).ok()); // a photo
+    }
+
+    void splittingAtSeveralTimes()
+    {
+        ClipId a;
+        auto owner = threeClips(&a);
+        Session &session = *owner;
+        QVERIFY(session.apply(session.editor().splitClipAt(a, {frames(100), frames(50), frames(400), frames(100)})));
+        const Track &main = session.mainTrack();
+        QCOMPARE(main.clips.size(), 5u);
+        QCOMPARE(main.clips[0].duration, frames(50));
+        QCOMPARE(main.clips[1].duration, frames(50));
+        QCOMPARE(main.clips[2].media()->sourceIn, frames(100));
+        QVERIFY(!session.editor().splitClipAt(a, {frames(900)}).ok());
+    }
 };
 
 QTEST_GUILESS_MAIN(TestTimelineEditor)

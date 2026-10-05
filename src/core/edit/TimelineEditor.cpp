@@ -613,24 +613,21 @@ EditResult TimelineEditor::rippleTrimClip(const ClipId &clipId, ClipEdge edge, c
     return finish(std::move(modified), edge == ClipEdge::Start ? tr("Ripple trim start to playhead") : tr("Ripple trim playhead to end"), clipId);
 }
 
-EditResult TimelineEditor::splitClip(const ClipId &clipId, const RationalTime &requestedTime)
+QString TimelineEditor::splitIn(Sequence &modified, const ClipId &clipId, const RationalTime &requestedTime,
+                                ClipId *secondId) const
 {
-    if (!m_sequence) {
-        return fail(tr("The sequence does not exist."));
-    }
-    Sequence modified = *m_sequence;
     const auto ref = findClip(modified, clipId);
     if (!ref) {
-        return fail(tr("The clip does not exist."));
+        return tr("The clip does not exist.");
     }
     Track &track = *ref->track;
     if (track.locked) {
-        return fail(tr("The track is locked."));
+        return tr("The track is locked.");
     }
     const RationalTime time = requestedTime.rescaled(m_rate, Rounding::NearestEven);
     Clip &first = ref->clip();
     if (!(time > first.start && time < first.end())) {
-        return fail(tr("Move the playhead inside the clip to split it."));
+        return tr("Move the playhead inside the clip to split it.");
     }
     const RationalTime offset = time - first.start;
 
@@ -669,13 +666,170 @@ EditResult TimelineEditor::splitClip(const ClipId &clipId, const RationalTime &r
             transition.from = second.id;
         }
     }
-    const ClipId secondId = second.id;
+    if (secondId) {
+        *secondId = second.id;
+    }
     track.clips.insert(track.clips.begin() + static_cast<std::ptrdiff_t>(ref->index) + 1, std::move(second));
     clampTransitions(track);
     if (isMagneticMain(modified, track)) {
         pack(track, m_rate);
     }
+    return {};
+}
+
+EditResult TimelineEditor::splitClip(const ClipId &clipId, const RationalTime &requestedTime)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    ClipId secondId;
+    if (const QString error = splitIn(modified, clipId, requestedTime, &secondId); !error.isEmpty()) {
+        return fail(error);
+    }
     return finish(std::move(modified), tr("Split clip"), secondId);
+}
+
+EditResult TimelineEditor::splitClipAt(const ClipId &clipId, std::vector<RationalTime> times)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    const TimeRange range = ref->clip().range();
+    for (RationalTime &time : times) {
+        time = time.rescaled(m_rate, Rounding::NearestEven);
+    }
+    std::sort(times.begin(), times.end());
+    times.erase(std::unique(times.begin(), times.end()), times.end());
+    std::erase_if(times, [&range](const RationalTime &time) { return !(time > range.start && time < range.start + range.duration); });
+    if (times.empty()) {
+        return fail(tr("There is nothing to split in this clip."));
+    }
+    ClipId piece = clipId;
+    for (const RationalTime &time : times) {
+        ClipId next;
+        if (const QString error = splitIn(modified, piece, time, &next); !error.isEmpty()) {
+            return fail(error);
+        }
+        piece = next;
+    }
+    return finish(std::move(modified), tr("Split clip"), clipId);
+}
+
+EditResult TimelineEditor::removeSourceRanges(const ClipId &clipId, const std::vector<std::pair<RationalTime, RationalTime>> &ranges)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    const auto ref = findClip(modified, clipId);
+    if (!ref) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (ref->track->locked) {
+        return fail(tr("The track is locked."));
+    }
+    const Clip original = ref->clip();
+    const MediaClipData *media = original.media();
+    const Media *item = media ? m_project.findMedia(media->mediaId) : nullptr;
+    if (!media || !item || item->kind == MediaKind::Image || media->curve || media->reversed) {
+        return fail(tr("This works on video and audio clips played forwards at a steady speed."));
+    }
+    // The ranges as frames from the clip's start, inside the clip, merged.
+    std::vector<std::pair<std::int64_t, std::int64_t>> cuts;
+    const double speed = media->speed;
+    const std::int64_t sourceIn = media->sourceIn.rescaled(m_rate, Rounding::NearestEven).value();
+    const std::int64_t length = original.duration.value();
+    for (const auto &[from, to] : ranges) {
+        const auto offset = [&](const RationalTime &time) {
+            const double source = static_cast<double>(time.rescaled(m_rate, Rounding::NearestEven).value() - sourceIn);
+            return std::clamp<std::int64_t>(std::llround(source / speed), 0, length);
+        };
+        const std::int64_t a = offset(from);
+        const std::int64_t b = offset(to);
+        if (b > a) {
+            cuts.emplace_back(a, b);
+        }
+    }
+    std::sort(cuts.begin(), cuts.end());
+    std::vector<std::pair<std::int64_t, std::int64_t>> merged;
+    for (const auto &cut : cuts) {
+        if (!merged.empty() && cut.first <= merged.back().second) {
+            merged.back().second = std::max(merged.back().second, cut.second);
+        } else {
+            merged.push_back(cut);
+        }
+    }
+    if (merged.empty()) {
+        return fail(tr("There is nothing to remove in this clip."));
+    }
+    std::int64_t removedTotal = 0;
+    for (const auto &[a, b] : merged) {
+        removedTotal += b - a;
+    }
+    if (removedTotal >= length) {
+        return fail(tr("That would remove the whole clip."));
+    }
+    // Cut at every edge, then take out the pieces in the ranges.
+    std::vector<std::int64_t> edges;
+    for (const auto &[a, b] : merged) {
+        edges.push_back(a);
+        edges.push_back(b);
+    }
+    std::vector<ClipId> pieces{clipId};
+    std::vector<std::int64_t> pieceStarts{0};
+    for (const std::int64_t edge : edges) {
+        if (edge <= 0 || edge >= length || edge == pieceStarts.back()) {
+            continue;
+        }
+        ClipId next;
+        if (const QString error = splitIn(modified, pieces.back(), original.start + RationalTime(edge, m_rate), &next);
+            !error.isEmpty()) {
+            return fail(error);
+        }
+        pieces.push_back(next);
+        pieceStarts.push_back(edge);
+    }
+    auto track = findClip(modified, clipId)->track;
+    const bool magnetic = isMagneticMain(modified, *track);
+    ClipId firstKept;
+    for (size_t i = 0; i < pieces.size(); ++i) {
+        const std::int64_t at = pieceStarts[i];
+        const bool removed = std::any_of(merged.begin(), merged.end(), [at](const auto &cut) { return at >= cut.first && at < cut.second; });
+        if (!removed) {
+            if (firstKept.isNull()) {
+                firstKept = pieces[i];
+            }
+            continue;
+        }
+        const int index = track->clipIndex(pieces[i]);
+        if (index >= 0) {
+            takeClip(*track, static_cast<size_t>(index));
+        }
+    }
+    if (magnetic) {
+        pack(*track, m_rate);
+    } else {
+        // Close the gaps: everything after a removed stretch moves back by what was removed before it.
+        for (Clip &clip : track->clips) {
+            if (clip.start < original.start) {
+                continue;
+            }
+            const std::int64_t at = (clip.start - original.start).value();
+            std::int64_t before = 0;
+            for (const auto &[a, b] : merged) {
+                before += std::clamp<std::int64_t>(at - a, 0, b - a);
+            }
+            clip.start -= RationalTime(before, m_rate);
+        }
+    }
+    cleanGroups(modified);
+    return finish(std::move(modified), tr("Remove pauses"), firstKept);
 }
 
 EditResult TimelineEditor::deleteClips(const std::vector<ClipId> &clipIds)

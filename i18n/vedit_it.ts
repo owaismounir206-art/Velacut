@@ -620,7 +620,17 @@
         <translation>Ctrl+Maiusc+Z</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+60"/>
+        <source>%1… %2 %</source>
+        <translation>%1… %2 %</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Stop</source>
+        <translation>Ferma</translation>
+    </message>
+    <message>
+        <location line="+12"/>
         <source>Magnetic main track (On)</source>
         <translation>Traccia principale magnetica (attiva)</translation>
     </message>
@@ -4669,8 +4679,10 @@
         <location line="+74"/>
         <location line="+58"/>
         <location line="+80"/>
-        <location line="+76"/>
-        <location line="+65"/>
+        <location line="+140"/>
+        <location line="+13"/>
+        <location line="+31"/>
+        <location line="+111"/>
         <location line="+33"/>
         <location line="+74"/>
         <location line="+45"/>
@@ -4711,7 +4723,7 @@
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-1871"/>
+        <location line="-2025"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -4727,23 +4739,23 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1418"/>
+        <location line="+1572"/>
         <source>The media is too short to be used.</source>
         <translation>Il file è troppo corto per essere usato.</translation>
     </message>
     <message>
-        <location line="-1395"/>
+        <location line="-1549"/>
         <source>Add audio</source>
         <translation>Aggiungi audio</translation>
     </message>
     <message>
         <location line="+5"/>
-        <location line="+1343"/>
+        <location line="+1497"/>
         <source>The main track is locked.</source>
         <translation>La traccia principale è bloccata.</translation>
     </message>
     <message>
-        <location line="-1338"/>
+        <location line="-1492"/>
         <location line="+4"/>
         <location line="+4"/>
         <source>Add clip</source>
@@ -4753,8 +4765,10 @@
         <location line="+12"/>
         <location line="+58"/>
         <location line="+80"/>
-        <location line="+76"/>
-        <location line="+69"/>
+        <location line="+73"/>
+        <location line="+80"/>
+        <location line="+31"/>
+        <location line="+115"/>
         <location line="+34"/>
         <location line="+74"/>
         <location line="+40"/>
@@ -4773,12 +4787,13 @@
         <translation>La clip non esiste.</translation>
     </message>
     <message>
-        <location line="-1343"/>
+        <location line="-1497"/>
         <location line="+10"/>
         <location line="+49"/>
         <location line="+80"/>
-        <location line="+76"/>
-        <location line="+68"/>
+        <location line="+73"/>
+        <location line="+110"/>
+        <location line="+115"/>
         <location line="+34"/>
         <location line="+74"/>
         <location line="+40"/>
@@ -4802,8 +4817,8 @@
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-1795"/>
-        <location line="+817"/>
+        <location line="-1949"/>
+        <location line="+971"/>
         <location line="+47"/>
         <location line="+14"/>
         <location line="+913"/>
@@ -4811,18 +4826,18 @@
         <translation>La traccia non esiste.</translation>
     </message>
     <message>
-        <location line="-1785"/>
+        <location line="-1939"/>
         <source>This clip cannot be placed on that track.</source>
         <translation>Questa clip non può andare su quella traccia.</translation>
     </message>
     <message>
         <location line="+31"/>
-        <location line="+407"/>
+        <location line="+561"/>
         <source>Move clip</source>
         <translation>Sposta clip</translation>
     </message>
     <message>
-        <location line="-327"/>
+        <location line="-481"/>
         <source>Trim clip</source>
         <translation>Accorcia clip</translation>
     </message>
@@ -4837,14 +4852,40 @@
         <translation>Elimina dalla testina alla fine</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+17"/>
         <source>Move the playhead inside the clip to split it.</source>
         <translation>Porta la testina dentro la clip per dividerla.</translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+60"/>
+        <location line="+31"/>
         <source>Split clip</source>
         <translation>Dividi clip</translation>
+    </message>
+    <message>
+        <location line="-10"/>
+        <source>There is nothing to split in this clip.</source>
+        <translation>Non c&apos;è niente da dividere in questa clip.</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>This works on video and audio clips played forwards at a steady speed.</source>
+        <translation>Funziona sulle clip video e audio riprodotte in avanti a velocità costante.</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>There is nothing to remove in this clip.</source>
+        <translation>Non c&apos;è niente da togliere in questa clip.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>That would remove the whole clip.</source>
+        <translation>Così si toglierebbe tutta la clip.</translation>
+    </message>
+    <message>
+        <location line="+56"/>
+        <source>Remove pauses</source>
+        <translation>Rimuovi pause</translation>
     </message>
     <message>
         <location line="+33"/>
@@ -5228,6 +5269,32 @@
     </message>
 </context>
 <context>
+    <name>vedit::ai::PauseDetection</name>
+    <message>
+        <location filename="../src/ai/Tasks.cpp" line="+24"/>
+        <source>Finding the pauses</source>
+        <translation>Ricerca delle pause</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The sound of %1 cannot be read.</source>
+        <translation>L&apos;audio di %1 non può essere letto.</translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ai::SceneDetection</name>
+    <message>
+        <location line="+14"/>
+        <source>Finding the scenes</source>
+        <translation>Ricerca delle scene</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>The pictures of %1 cannot be read.</source>
+        <translation>Le immagini di %1 non possono essere lette.</translation>
+    </message>
+</context>
+<context>
     <name>vedit::document::Document</name>
     <message>
         <location filename="../src/document/Document.cpp" line="+71"/>
@@ -5515,7 +5582,7 @@
 <context>
     <name>vedit::ui::ActionRegistry</name>
     <message>
-        <location filename="../src/ui/controllers/ActionRegistry.cpp" line="+80"/>
+        <location filename="../src/ui/controllers/ActionRegistry.cpp" line="+81"/>
         <source>Split</source>
         <translation>Dividi</translation>
     </message>
@@ -5536,12 +5603,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+275"/>
+        <location line="+280"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-274"/>
+        <location line="-279"/>
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
@@ -5609,6 +5676,16 @@
         <location line="+6"/>
         <source>Enhance</source>
         <translation>Migliora</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Remove pauses</source>
+        <translation>Rimuovi pause</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Split scenes</source>
+        <translation>Dividi le scene</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -5896,8 +5973,8 @@
         <translation>Animazione in ciclo</translation>
     </message>
     <message>
-        <location line="-280"/>
-        <location line="+281"/>
+        <location line="-285"/>
+        <location line="+286"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -5911,6 +5988,50 @@
         <location line="+5"/>
         <source>Your media</source>
         <translation>I tuoi media</translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ui::AiController</name>
+    <message>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+88"/>
+        <source>Select a video or a sound with speech first.</source>
+        <translation>Seleziona prima un video o un audio con del parlato.</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Select a video first.</source>
+        <translation>Seleziona prima un video.</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <location line="+32"/>
+        <source>The clip was removed meanwhile.</source>
+        <translation>Nel frattempo la clip è stata eliminata.</translation>
+    </message>
+    <message>
+        <location line="-18"/>
+        <source>No pauses found in this clip.</source>
+        <translation>Nessuna pausa trovata in questa clip.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Pauses removed</source>
+        <translation>Pause rimosse</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Scenes are found in clips played forwards at a steady speed.</source>
+        <translation>Le scene si trovano nelle clip riprodotte in avanti a velocità costante.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>No scene changes found in this clip.</source>
+        <translation>Nessun cambio di scena trovato in questa clip.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Clip split at each scene</source>
+        <translation>Clip divisa a ogni scena</translation>
     </message>
 </context>
 <context>
@@ -6671,7 +6792,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+206"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+208"/>
         <location line="+960"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
