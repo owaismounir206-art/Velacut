@@ -108,7 +108,7 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/AiController.cpp" line="+469"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+588"/>
         <source>%n caption line(s) from the speech</source>
         <translation>
             <numerusform>%n caption line from the speech</numerusform>
@@ -158,7 +158,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+961"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+992"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>

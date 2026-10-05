@@ -61,6 +61,11 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   seleziona fino a lì, Canc o "Taglia N parole dal video" = `TimelineEditor::removeSourceRanges` su più clip in un
   passo; parola in corso evidenziata; "Rimuovi N parole di riempimento" (ehm, uhm, um, uh, eh…; le parole vere usate
   come riempitivo restano all'utente). Trascrizioni prese anche dalla cache delle sessioni precedenti.
+- **Separa voce e musica** (Demucs, `ai::VoiceSeparation`) e **Leggi ad alta voce** (Piper, `ai::SpeechSynthesis`):
+  programmi esterni facoltativi come whisper.cpp; senza, un messaggio con il comando. I suoni ottenuti entrano nel
+  progetto con `EditorController::importThen` e diventano clip audio sotto la clip/il testo (separazione: audio
+  originale silenziato, un passo di annullamento). Voci di Piper aggiunte dall'utente (nessuna offerta da vedit:
+  licenze diverse voce per voce). Verificati con programmi sostitutivi nei test.
 - **Capitoli per YouTube** (`ai::findChapters`): il primo a 0:00, almeno 3 da ≥ 10 s, circa uno al minuto; ciascuno
   all'inizio di una frase, preferendo le pause più lunghe vicino a punti equidistanti; titolo = prime parole della
   frase. Diventano marker "Capitolo" sulla timeline (un passo di annullamento) e l'elenco "00:00 Titolo" va negli

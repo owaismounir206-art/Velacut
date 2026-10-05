@@ -2365,11 +2365,12 @@
     </message>
     <message>
         <location line="+7"/>
+        <location line="+104"/>
         <source>Check again</source>
         <translation>Controlla di nuovo</translation>
     </message>
     <message>
-        <location line="+56"/>
+        <location line="-48"/>
         <source>Download (%1)</source>
         <translation>Scarica (%1)</translation>
     </message>
@@ -2394,7 +2395,52 @@
         <translation>I modelli si scaricano solo quando lo chiedi, da huggingface.co (progetto whisper.cpp, licenza MIT), e restano in %1.</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+4"/>
+        <source>Read aloud (text to speech)</source>
+        <translation>Leggi ad alta voce (sintesi vocale)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Piper is installed. Add the voices you want (a .onnx file with its .onnx.json, from the Piper project); check the licence of each voice before publishing.</source>
+        <translation>Piper è installato. Aggiungi le voci che vuoi (un file .onnx con il suo .onnx.json, dal progetto Piper); controlla la licenza di ogni voce prima di pubblicare.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reading texts aloud needs Piper, which is not installed: “%1”.</source>
+        <translation>Leggere i testi ad alta voce richiede Piper, che non è installato: «%1».</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Add a voice…</source>
+        <translation>Aggiungi una voce…</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Remove the voice</source>
+        <translation>Rimuovi la voce</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Voice removed</source>
+        <translation>Voce rimossa</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Add a Piper voice</source>
+        <translation>Aggiungi una voce di Piper</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Piper voices (%1)</source>
+        <translation>Voci di Piper (%1)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Voice added</source>
+        <translation>Voce aggiunta</translation>
+    </message>
+    <message>
+        <location line="+17"/>
         <source>An offline video editor: everything runs on this computer. Free software under the GPL 3.0 licence.</source>
         <translation>Un editor video offline: tutto gira su questo computer. Software libero con licenza GPL 3.0.</translation>
     </message>
@@ -4020,6 +4066,21 @@
         <source>The smooth slow motion could not be saved in the cache.</source>
         <translation>Il rallentatore fluido non è stato salvato nella cache.</translation>
     </message>
+    <message>
+        <location filename="../src/ai/Speech.cpp" line="+68"/>
+        <source>A Piper voice is a .onnx file with its .onnx.json next to it.</source>
+        <translation>Una voce di Piper è un file .onnx con il suo .onnx.json accanto.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The voice could not be copied to %1.</source>
+        <translation>Impossibile copiare la voce in %1.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The voice could not be removed.</source>
+        <translation>Impossibile rimuovere la voce.</translation>
+    </message>
 </context>
 <context>
     <name>RecordDialog</name>
@@ -5563,9 +5624,42 @@
     </message>
 </context>
 <context>
+    <name>vedit::ai::SpeechSynthesis</name>
+    <message>
+        <location filename="../src/ai/Speech.cpp" line="+24"/>
+        <source>Reading the text aloud</source>
+        <translation>Lettura del testo ad alta voce</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Reading aloud needs Piper: install it with “%1”.</source>
+        <translation>La lettura ad alta voce richiede Piper: installalo con «%1».</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Add a Piper voice first (Preferences → AI models).</source>
+        <translation>Aggiungi prima una voce di Piper (Preferenze → Modelli AI).</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Piper could not be started.</source>
+        <translation>Impossibile avviare Piper.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Piper could not read the text: %1</source>
+        <translation>Piper non è riuscito a leggere il testo: %1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The speech could not be saved in the cache.</source>
+        <translation>Il parlato non è stato salvato nella cache.</translation>
+    </message>
+</context>
+<context>
     <name>vedit::ai::SubjectTracking</name>
     <message>
-        <location line="+37"/>
+        <location filename="../src/ai/Tasks.cpp" line="+37"/>
         <source>Following the subject</source>
         <translation>Inseguimento del soggetto</translation>
     </message>
@@ -5611,6 +5705,44 @@
         <location line="+5"/>
         <source>whisper.cpp gave an answer vedit cannot read (%1).</source>
         <translation>whisper.cpp ha dato una risposta che vedit non sa leggere (%1).</translation>
+    </message>
+</context>
+<context>
+    <name>vedit::ai::VoiceSeparation</name>
+    <message>
+        <location filename="../src/ai/Separation.cpp" line="+42"/>
+        <source>Separating voice and music</source>
+        <translation>Separazione di voce e musica</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>Separating voice and music needs Demucs: install it with “%1”.</source>
+        <translation>Separare voce e musica richiede Demucs: installalo con «%1».</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>No room for temporary files.</source>
+        <translation>Non c&apos;è spazio per i file temporanei.</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>The sound of %1 cannot be read.</source>
+        <translation>L&apos;audio di %1 non può essere letto.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Demucs could not be started.</source>
+        <translation>Impossibile avviare Demucs.</translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <source>Demucs could not separate %1: %2</source>
+        <translation>Demucs non è riuscito a separare %1: %2</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The separated sounds could not be saved in the cache.</source>
+        <translation>I suoni separati non sono stati salvati nella cache.</translation>
     </message>
 </context>
 <context>
@@ -5922,12 +6054,17 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+284"/>
+        <location line="+288"/>
         <source>Text style</source>
         <translation>Stile del testo</translation>
     </message>
     <message>
-        <location line="-283"/>
+        <location line="-287"/>
+        <source>Read aloud</source>
+        <translation>Leggi ad alta voce</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
@@ -6005,6 +6142,11 @@
         <location line="+2"/>
         <source>Split scenes</source>
         <translation>Dividi le scene</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Separate voice and music</source>
+        <translation>Separa voce e musica</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6302,8 +6444,8 @@
         <translation>Animazione in ciclo</translation>
     </message>
     <message>
-        <location line="-289"/>
-        <location line="+290"/>
+        <location line="-291"/>
+        <location line="+292"/>
         <source>Animation</source>
         <translation>Animazione</translation>
     </message>
@@ -6322,18 +6464,73 @@
 <context>
     <name>vedit::ui::AiController</name>
     <message>
-        <location filename="../src/ui/controllers/AiController.cpp" line="+99"/>
+        <location filename="../src/ui/controllers/AiController.cpp" line="+100"/>
         <source>Select a video or a sound with speech first.</source>
         <translation>Seleziona prima un video o un audio con del parlato.</translation>
     </message>
     <message>
         <location line="+24"/>
-        <location line="+36"/>
+        <location line="+154"/>
         <source>Select a video first.</source>
         <translation>Seleziona prima un video.</translation>
     </message>
     <message>
+        <location line="-119"/>
+        <source>Select a video or a sound first.</source>
+        <translation>Seleziona prima un video o un audio.</translation>
+    </message>
+    <message>
         <location line="+4"/>
+        <source>Voice and music are separated on clips played forwards at a steady speed.</source>
+        <translation>Voce e musica si separano sulle clip riprodotte in avanti a velocità costante.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Separating voice and music needs Demucs, which is not installed: “%1”.</source>
+        <translation>Separare voce e musica richiede Demucs, che non è installato: «%1».</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>The separated sounds could not be added.</source>
+        <translation>Impossibile aggiungere i suoni separati.</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Separate voice and music</source>
+        <translation>Separa voce e musica</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Voice and music separated: two sounds under the clip</source>
+        <translation>Voce e musica separate: due audio sotto la clip</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Select a text first.</source>
+        <translation>Seleziona prima un testo.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Reading aloud needs Piper, which is not installed: “%1”.</source>
+        <translation>La lettura ad alta voce richiede Piper, che non è installato: «%1».</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Add a Piper voice first (Preferences → AI models).</source>
+        <translation>Aggiungi prima una voce di Piper (Preferenze → Modelli AI).</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The speech could not be added.</source>
+        <translation>Impossibile aggiungere il parlato.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The text is read aloud under it</source>
+        <translation>Il testo è letto ad alta voce sotto di esso</translation>
+    </message>
+    <message>
+        <location line="+31"/>
         <source>Stabilize works on clips played forwards at a steady speed.</source>
         <translation>Stabilizza funziona sulle clip riprodotte in avanti a velocità costante.</translation>
     </message>
@@ -6426,7 +6623,7 @@
 <context>
     <name>vedit::ui::AiModelsModel</name>
     <message>
-        <location filename="../src/ui/models/AiModelsModel.cpp" line="+116"/>
+        <location filename="../src/ui/models/AiModelsModel.cpp" line="+117"/>
         <source>Speech — very fast</source>
         <translation>Parlato — molto veloce</translation>
     </message>
@@ -6466,7 +6663,7 @@
         <translation>Il risultato migliore, lentamente: per lavori lunghi fatti una volta.</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+105"/>
         <source>Model downloaded: speech recognition is ready.</source>
         <translation>Modello scaricato: il riconoscimento del parlato è pronto.</translation>
     </message>
@@ -7254,18 +7451,18 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+211"/>
-        <location line="+960"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+212"/>
+        <location line="+990"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
     </message>
     <message>
-        <location line="-576"/>
+        <location line="-577"/>
         <source>Import media</source>
         <translation>Importa media</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+21"/>
         <source>A watermark is a picture (PNG with transparency is best).</source>
         <translation>La filigrana è un&apos;immagine (meglio un PNG con trasparenza).</translation>
     </message>
@@ -7605,7 +7802,7 @@
 <context>
     <name>vedit::ui::FileDownload</name>
     <message>
-        <location filename="../src/ui/models/AiModelsModel.cpp" line="-189"/>
+        <location filename="../src/ui/models/AiModelsModel.cpp" line="-224"/>
         <location line="+61"/>
         <source>%1 cannot be written.</source>
         <translation>Impossibile scrivere %1.</translation>

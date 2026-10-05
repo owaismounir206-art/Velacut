@@ -8,6 +8,7 @@
 #include "fx/Stabilization.h"
 #include "ui/controllers/EditorController.h"
 
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -132,6 +133,124 @@ bool AiController::splitScenes()
     connect(detection, &ai::AiTask::finished, this, [this, detection, what = *what] {
         m_scenes.insert(what.fingerprint, detection->cuts());
         applyScenes(what.clip, detection->cuts());
+    });
+    run(std::move(task));
+    return true;
+}
+
+bool AiController::canSeparateVoice() const
+{
+    if (busy()) {
+        return false;
+    }
+    const std::optional<Target> what = target(false, true);
+    const Clip *clip = what ? m_editor.data().findClip(what->clip) : nullptr;
+    return clip && clip->media() && !clip->media()->reversed && !clip->media()->curve;
+}
+
+bool AiController::separateVoice()
+{
+    if (busy()) {
+        return false;
+    }
+    const std::optional<Target> what = target(false, true);
+    const Clip *clip = what ? m_editor.data().findClip(what->clip) : nullptr;
+    if (!clip || !clip->media()) {
+        emit m_editor.message(tr("Select a video or a sound first."), false);
+        return false;
+    }
+    if (clip->media()->reversed || clip->media()->curve) {
+        emit m_editor.message(tr("Voice and music are separated on clips played forwards at a steady speed."), false);
+        return false;
+    }
+    const bool cached = QFileInfo(ai::VoiceSeparation::voicePathOf(what->fingerprint)).size() > 0;
+    if (!cached && ai::demucs::executable().isEmpty()) {
+        emit m_editor.message(tr("Separating voice and music needs Demucs, which is not installed: “%1”.").arg(ai::demucs::installCommand()),
+                              false);
+        return false;
+    }
+    auto task = std::make_unique<ai::VoiceSeparation>(what->path, what->fingerprint);
+    ai::VoiceSeparation *separation = task.get();
+    const ClipId clipId = what->clip;
+    connect(separation, &ai::AiTask::finished, this, [this, separation, clipId] {
+        const QString voice = separation->voicePath();
+        const QString music = separation->musicPath();
+        m_editor.importThen({voice, music}, [this, clipId, voice, music](const QHash<QString, MediaId> &media) {
+            const Clip *clip = m_editor.data().findClip(clipId);
+            if (!clip || !clip->media() || !media.contains(voice) || !media.contains(music)) {
+                emit m_editor.message(tr("The separated sounds could not be added."), false);
+                return;
+            }
+            // Both sounds under the clip, playing the same part of the file at the same speed; the clip goes quiet.
+            const MergeKey step{u"separate"_s, static_cast<quint64>(QDateTime::currentMSecsSinceEpoch())};
+            const RationalTime start = clip->start;
+            const TimeRange part{clip->media()->sourceIn, RationalTime(std::llround(clip->duration.value() * clip->media()->speed),
+                                                                       clip->duration.rate())};
+            const double speed = clip->media()->speed;
+            for (const QString &path : {voice, music}) {
+                EditResult insert = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                                        .insertMedia(media.value(path), start, part);
+                const ClipId added = insert.primaryClip;
+                if (!m_editor.push(std::move(insert), step)) {
+                    return;
+                }
+                if (speed != 1.0) {
+                    m_editor.push(TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId).setSpeed(added, speed), step);
+                }
+            }
+            m_editor.push(TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
+                              .updateClips({clipId}, [](Clip &c) { c.media()->audio.muted = true; }, tr("Separate voice and music")),
+                          step);
+            emit m_editor.message(tr("Voice and music separated: two sounds under the clip"), true);
+        });
+    });
+    run(std::move(task));
+    return true;
+}
+
+bool AiController::canReadAloud() const
+{
+    const std::optional<ClipId> focus = m_editor.focusClip();
+    const Clip *clip = focus ? m_editor.data().findClip(*focus) : nullptr;
+    return !busy() && clip && (clip->text() || clip->subtitle());
+}
+
+bool AiController::readAloud()
+{
+    if (busy()) {
+        return false;
+    }
+    const std::optional<ClipId> focus = m_editor.focusClip();
+    const Clip *clip = focus ? m_editor.data().findClip(*focus) : nullptr;
+    const QString text = !clip ? QString() : clip->text() ? clip->text()->text : clip->subtitle() ? clip->subtitle()->text : QString();
+    if (text.trimmed().isEmpty()) {
+        emit m_editor.message(tr("Select a text first."), false);
+        return false;
+    }
+    if (ai::piper::executable().isEmpty()) {
+        emit m_editor.message(tr("Reading aloud needs Piper, which is not installed: “%1”.").arg(ai::piper::installCommand()), false);
+        return false;
+    }
+    const QStringList voices = ai::piper::voices();
+    if (voices.isEmpty()) {
+        emit m_editor.message(tr("Add a Piper voice first (Preferences → AI models)."), false);
+        return false;
+    }
+    auto task = std::make_unique<ai::SpeechSynthesis>(text.simplified(), voices.front());
+    ai::SpeechSynthesis *speech = task.get();
+    const ClipId clipId = clip->id;
+    connect(speech, &ai::AiTask::finished, this, [this, speech, clipId] {
+        const QString file = speech->outputPath();
+        m_editor.importThen({file}, [this, clipId, file](const QHash<QString, MediaId> &media) {
+            const Clip *clip = m_editor.data().findClip(clipId);
+            if (!clip || !media.contains(file)) {
+                emit m_editor.message(tr("The speech could not be added."), false);
+                return;
+            }
+            if (m_editor.push(TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId).insertMedia(media.value(file), clip->start))) {
+                emit m_editor.message(tr("The text is read aloud under it"), true);
+            }
+        });
     });
     run(std::move(task));
     return true;

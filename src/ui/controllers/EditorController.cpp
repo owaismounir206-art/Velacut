@@ -107,6 +107,7 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
         m_pendingInserts.removeIf([&path](const PendingInsert &pending) { return pending.path == path; });
         emit message(text, false);
         slideshowFileDone(path, std::nullopt);
+        pendingImportDone(path, std::nullopt);
     });
     connect(m_importer.get(), &engine::MediaImporter::busyChanged, this, &EditorController::importingChanged);
     connect(m_exportJob.get(), &engine::RenderJob::finished, this, [this](const QString &path) { emit exportFinished(path); });
@@ -552,6 +553,35 @@ void EditorController::importPaths(const QStringList &paths)
     m_importer->import(paths);
 }
 
+void EditorController::importThen(const QStringList &paths, std::function<void(const QHash<QString, MediaId> &)> done)
+{
+    if (paths.isEmpty()) {
+        done({});
+        return;
+    }
+    m_pendingImports.push_back(PendingImport{QSet<QString>(paths.begin(), paths.end()), {}, std::move(done)});
+    importPaths(paths);
+}
+
+void EditorController::pendingImportDone(const QString &path, const std::optional<MediaId> &media)
+{
+    for (size_t i = 0; i < m_pendingImports.size(); ++i) {
+        PendingImport &pending = m_pendingImports[i];
+        if (!pending.waiting.remove(path)) {
+            continue;
+        }
+        if (media) {
+            pending.media.insert(path, *media);
+        }
+        if (pending.waiting.isEmpty()) {
+            PendingImport finished = std::move(pending);
+            m_pendingImports.erase(m_pendingImports.begin() + static_cast<std::ptrdiff_t>(i));
+            finished.done(finished.media);
+        }
+        return;
+    }
+}
+
 void EditorController::importAndInsert(const QList<QUrl> &urls, int frame, int trackRow)
 {
     QStringList paths;
@@ -600,6 +630,7 @@ void EditorController::onImported(const Media &imported)
         slideshowFileDone(imported.path, mediaId);
         return;
     }
+    pendingImportDone(imported.path, mediaId);
     const auto pending = std::find_if(m_pendingInserts.begin(), m_pendingInserts.end(),
                                       [&imported](const PendingInsert &p) { return p.path == imported.path; });
     if (pending == m_pendingInserts.end()) {

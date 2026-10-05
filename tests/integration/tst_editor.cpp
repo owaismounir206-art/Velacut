@@ -811,6 +811,120 @@ JSON
         QCOMPARE(transcript.wordCount(), 6);
     }
 
+    // "Separate voice and music" with Demucs — a stand-in here, with the outputs where Demucs writes them.
+    void separateVoiceAndMusic()
+    {
+        const QString bin = m_dir.filePath(u"fake-bin-demucs"_s);
+        QDir().mkpath(bin);
+        QFile script(bin + u"/demucs"_s);
+        QVERIFY(script.open(QIODevice::WriteOnly));
+        script.write(R"(#!/bin/sh
+out=""; input=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -o) out="$2"; shift ;;
+    -n) shift ;;
+    --*) ;;
+    *) input="$1" ;;
+  esac
+  shift
+done
+name=$(basename "$input" .wav)
+mkdir -p "$out/htdemucs/$name"
+echo " 50%|=====     |" >&2
+cp "$input" "$out/htdemucs/$name/vocals.wav"
+cp "$input" "$out/htdemucs/$name/no_vocals.wav"
+echo "100%|==========|" >&2
+)");
+        script.close();
+        script.setPermissions(script.permissions() | QFileDevice::ExeOwner);
+        const QByteArray path = qgetenv("PATH");
+        qputenv("PATH", QByteArray(bin.toLocal8Bit() + ':' + path));
+        const auto restore = qScopeGuard([&path] { qputenv("PATH", path); });
+
+        document::DraftStore store(m_dir.filePath(u"drafts-demucs"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache-demucs"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
+        const ClipId clip = mainTrack(editor).clips[0].id;
+        editor.select(clip.toString(), false);
+        QVERIFY(editor.ai()->canSeparateVoice());
+        QVERIFY(editor.ai()->separateVoice());
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.ai()->busy(), 20000);
+        QTRY_COMPARE_WITH_TIMEOUT(editor.data().mainSequence()->audioTracks.size(), size_t(2), 20000);
+        QVERIFY(editor.data().findClip(clip)->media()->audio.muted);
+        for (const Track &track : editor.data().mainSequence()->audioTracks) {
+            QCOMPARE(track.clips.size(), size_t(1));
+            QCOMPARE(track.clips[0].start, mainTrack(editor).clips[0].start);
+            QCOMPARE(track.clips[0].duration, mainTrack(editor).clips[0].duration);
+        }
+        // One undo step takes the separation back.
+        editor.undo();
+        QCOMPARE(editor.data().mainSequence()->audioTracks.size(), size_t(0));
+        QVERIFY(!editor.data().findClip(clip)->media()->audio.muted);
+    }
+
+    // "Read aloud" with Piper — a stand-in that makes a second of sound — and a voice added in Preferences.
+    void readTextAloud()
+    {
+        const QString bin = m_dir.filePath(u"fake-bin-piper"_s);
+        QDir().mkpath(bin);
+        QFile script(bin + u"/piper-tts"_s);
+        QVERIFY(script.open(QIODevice::WriteOnly));
+        script.write(R"(#!/bin/sh
+out=""; model=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --model) model="$2"; shift ;;
+    --output_file) out="$2"; shift ;;
+  esac
+  shift
+done
+[ -f "$model" ] || exit 2
+text=$(cat)
+[ -n "$text" ] || exit 3
+ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:duration=1" "$out"
+)");
+        script.close();
+        script.setPermissions(script.permissions() | QFileDevice::ExeOwner);
+        const QByteArray path = qgetenv("PATH");
+        qputenv("PATH", QByteArray(bin.toLocal8Bit() + ':' + path));
+        const auto restore = qScopeGuard([&path] { qputenv("PATH", path); });
+        // A voice, added like a user does.
+        const QString voice = m_dir.filePath(u"it_IT-prova-medium.onnx"_s);
+        for (const QString &file : QStringList{voice, voice + u".json"_s}) {
+            QFile f(file);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("{}");
+        }
+        AiModelsModel models;
+        QVERIFY(models.piperInstalled());
+        QVERIFY(models.addVoice(QUrl::fromLocalFile(voice)).isEmpty());
+        QCOMPARE(models.voices().size(), 1);
+        QCOMPARE(models.voices().first().toMap().value(u"name"_s).toString(), u"it_IT prova (medium)"_s);
+
+        document::DraftStore store(m_dir.filePath(u"drafts-piper"_s));
+        engine::MediaAnalysis analysis(m_dir.filePath(u"cache-piper"_s));
+        QString error;
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        editor.player()->setVolume(0.0);
+        editor.player()->seek(15);
+        QVERIFY(editor.addText());
+        const ClipId text = editor.selectedClips().front();
+        QVERIFY(editor.ai()->canReadAloud());
+        QVERIFY(editor.ai()->readAloud());
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.ai()->busy(), 20000);
+        QTRY_COMPARE_WITH_TIMEOUT(editor.data().mainSequence()->audioTracks.size(), size_t(1), 20000);
+        const Clip &speech = editor.data().mainSequence()->audioTracks.front().clips.front();
+        QCOMPARE(speech.start, editor.data().findClip(text)->start);
+        QCOMPARE(speech.duration, RationalTime(30, Rational(30)));
+        QVERIFY(models.removeVoice(models.voices().first().toMap().value(u"path"_s).toString()).isEmpty());
+        QCOMPARE(models.voices().size(), 0);
+    }
+
     // "Smooth slow motion" in the Speed page: the new frames are computed in background for the preview.
     void smoothSlowMotionInThePreview()
     {

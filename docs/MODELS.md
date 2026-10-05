@@ -15,7 +15,7 @@ la libreria rnnoise. Non installo pacchetti di sistema (regola del progetto): i 
 | Funzione | Componente | Licenza codice | Licenza pesi | Pacchetto Arch | Stato in vedit |
 |---|---|---|---|---|---|
 | Sottotitoli automatici, testi delle canzoni, editing dal testo, parole di riempimento | whisper.cpp + modelli ggml di Whisper | MIT | MIT (OpenAI Whisper) | AUR `whisper.cpp` | **integrato** (processo esterno `whisper-cli … -ojf`, trascrizioni in cache per file); senza programma o modello: funzioni disattivate con il comando o il pulsante per il modello. Verificato con un programma sostitutivo nei test, **non ancora con il whisper-cli reale** (non installato qui) |
-| Text-to-speech | Piper + voci | MIT | variabile per voce (molte CC BY 4.0 / MIT; da verificare voce per voce prima di offrirla) | AUR `piper-tts-bin` | da integrare; senza: disattivato |
+| Text-to-speech | Piper + voci | MIT | variabile per voce (da verificare voce per voce) | AUR `piper-tts-bin` | **integrato** ("Leggi ad alta voce" sui testi; `piper-tts --model … --output_file …`). Nessuna voce offerta da vedit: l'utente aggiunge le sue (Preferenze → Modelli AI) e ne controlla la licenza. Verificato con un sostituto |
 | Rimozione sfondo, segmentazione persona | ONNX Runtime + modello di segmentazione | MIT | dipende dal modello (es. MODNet Apache 2.0) | `onnxruntime` | da integrare; senza: disattivato |
 | Riduzione rumore / isolamento voce | RNNoise (già usato da MLT/FFmpeg) | BSD-3 | BSD-3 (modello incluso) | `rnnoise` (presente) | **già attivo** (Fase 4, pannello Audio) |
 | Rilevamento beat | aubio / flusso spettrale proprio | GPL-3 / GPL-3 (vedit) | — | `aubio` (presente) | **già attivo** (rilevatore proprio, D-51) |
@@ -23,7 +23,7 @@ la libreria rnnoise. Non installo pacchetti di sistema (regola del progetto): i 
 | Rilevamento scene | differenza tra fotogrammi (propria, libavcodec) | GPL-3 (vedit) | — | — | **attivo**: "Dividi le scene" (barra della clip video) |
 | Rimozione silenzi | livelli RMS dell'audio (propria, libavcodec) | GPL-3 (vedit) | — | — | **attivo**: "Rimuovi pause" (barra della clip video/audio) |
 | Slow motion fluido | RIFE ncnn-vulkan → `minterpolate` (CPU) → frame blending | MIT / LGPL | MIT | AUR `rife-ncnn-vulkan` | **attivo il percorso CPU**: `minterpolate` di FFmpeg (copia in cache della parte usata); RIFE da integrare quando installato |
-| Separazione voce/musica | Demucs (ONNX) | MIT | MIT | — | da integrare; senza: disattivato |
+| Separazione voce/musica | Demucs (programma `demucs`, Python) | MIT | MIT | `pipx install demucs` | **integrato** ("Separa voce e musica" sulle clip audio: `demucs --two-stems=vocals -n htdemucs`, risultati in cache); senza: messaggio con il comando. Verificato con un sostituto |
 
 ## 3. Comandi per l'utente (non eseguiti da vedit né dall'assistente)
 ```bash
@@ -31,8 +31,10 @@ la libreria rnnoise. Non installo pacchetti di sistema (regola del progetto): i 
 yay -S whisper.cpp
 # rimozione dello sfondo e funzioni di segmentazione
 sudo pacman -S onnxruntime
-# voce sintetica
+# voce sintetica (poi aggiungere una voce .onnx in Preferenze → Modelli AI)
 yay -S piper-tts-bin
+# separazione voce/musica
+pipx install demucs
 # slow motion con interpolazione su GPU Vulkan
 yay -S rife-ncnn-vulkan
 ```

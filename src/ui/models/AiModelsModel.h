@@ -53,6 +53,10 @@ class AiModelsModel : public QAbstractListModel
     Q_PROPERTY(QString whisperPath READ whisperPath NOTIFY componentsChanged FINAL)
     Q_PROPERTY(QString whisperInstallCommand READ whisperInstallCommand CONSTANT FINAL)
     Q_PROPERTY(QString folder READ folder CONSTANT FINAL)
+    // Text to speech (Piper): whether it is installed, the command that installs it, the voices added ([{path, name}]).
+    Q_PROPERTY(bool piperInstalled READ piperInstalled NOTIFY componentsChanged FINAL)
+    Q_PROPERTY(QString piperInstallCommand READ piperInstallCommand CONSTANT FINAL)
+    Q_PROPERTY(QVariantList voices READ voices NOTIFY voicesChanged FINAL)
 
 public:
     enum Role
@@ -78,6 +82,12 @@ public:
     QString whisperInstallCommand() const;
     QString folder() const;
 
+    bool piperInstalled() const;
+    QString piperInstallCommand() const;
+    QVariantList voices() const;
+    // Adds a Piper voice (.onnx with its .onnx.json); an error for the user, or empty.
+    Q_INVOKABLE QString addVoice(const QUrl &file);
+    Q_INVOKABLE QString removeVoice(const QString &path);
     Q_INVOKABLE void download(const QString &modelId);
     Q_INVOKABLE void cancel(const QString &modelId);
     // An error for the user, empty when removed.
@@ -89,6 +99,7 @@ public:
 
 signals:
     void componentsChanged();
+    void voicesChanged();
     void message(const QString &text);
 
 private:

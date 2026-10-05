@@ -581,6 +581,63 @@ Dialog {
                             wrapMode: Text.WordWrap
                             text: qsTr("Models are downloaded only when you ask, from huggingface.co (whisper.cpp project, MIT licence), and saved in %1.").arg(aiModels.folder)
                         }
+                        // Text to speech: Piper and the voices the user chose (their licences differ voice by voice).
+                        Group {
+                            title: qsTr("Read aloud (text to speech)")
+                            detail: aiModels.piperInstalled
+                                    ? qsTr("Piper is installed. Add the voices you want (a .onnx file with its .onnx.json, from the Piper project); check the licence of each voice before publishing.")
+                                    : qsTr("Reading texts aloud needs Piper, which is not installed: “%1”.").arg(aiModels.piperInstallCommand)
+                            RowLayout {
+                                spacing: Theme.space.sm
+                                Button {
+                                    objectName: "addVoice"
+                                    variant: "tonal"
+                                    iconName: "record_voice_over"
+                                    text: qsTr("Add a voice…")
+                                    onClicked: voiceDialog.open()
+                                }
+                                Button {
+                                    visible: !aiModels.piperInstalled
+                                    variant: "text"
+                                    iconName: "refresh"
+                                    text: qsTr("Check again")
+                                    onClicked: aiModels.refresh()
+                                }
+                            }
+                            Repeater {
+                                model: aiModels.voices
+                                delegate: RowLayout {
+                                    id: voice
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    Icon { name: "record_voice_over"; color: Theme.color.onSurfaceVariant }
+                                    Label {
+                                        Layout.fillWidth: true
+                                        role: "bodyMedium"
+                                        elide: Text.ElideRight
+                                        text: voice.modelData.name
+                                    }
+                                    IconButton {
+                                        iconName: "delete"
+                                        label: qsTr("Remove the voice")
+                                        onClicked: {
+                                            const error = aiModels.removeVoice(voice.modelData.path)
+                                            App.message(error !== "" ? error : qsTr("Voice removed"))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        FileDialog {
+                            id: voiceDialog
+                            title: qsTr("Add a Piper voice")
+                            fileMode: FileDialog.OpenFile
+                            nameFilters: [qsTr("Piper voices (%1)").arg("*.onnx")]
+                            onAccepted: {
+                                const error = aiModels.addVoice(selectedFile)
+                                App.message(error !== "" ? error : qsTr("Voice added"))
+                            }
+                        }
                     }
 
                     // ---- About ------------------------------------------------------------------------------------

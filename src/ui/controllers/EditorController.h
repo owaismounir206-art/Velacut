@@ -23,6 +23,7 @@
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
+#include <functional>
 #include <memory>
 
 namespace vedit {
@@ -164,6 +165,9 @@ public:
     // Media
     Q_INVOKABLE void importFiles(const QList<QUrl> &urls);
     void importPaths(const QStringList &paths);
+    // Imports files made by vedit (separated sounds, generated speech…) and calls `done` with the media of each path
+    // once all of them are in the project (a path that could not be imported is missing from the map).
+    void importThen(const QStringList &paths, std::function<void(const QHash<QString, MediaId> &)> done);
     // Files dropped on the timeline: imported, then placed one after the other from `frame` on `trackRow`.
     Q_INVOKABLE void importAndInsert(const QList<QUrl> &urls, int frame, int trackRow);
     void importAndInsertPaths(const QStringList &paths, int frame, int trackRow);
@@ -429,6 +433,14 @@ private:
         QSet<QString> failed;
     };
     std::optional<PendingSlideshow> m_slideshow;
+    struct PendingImport
+    {
+        QSet<QString> waiting;
+        QHash<QString, MediaId> media;
+        std::function<void(const QHash<QString, MediaId> &)> done;
+    };
+    std::vector<PendingImport> m_pendingImports;
+    void pendingImportDone(const QString &path, const std::optional<MediaId> &media);
     void slideshowFileDone(const QString &path, const std::optional<MediaId> &media);
     void finishSlideshow(const std::vector<double> &beats);
     bool m_closed = false;

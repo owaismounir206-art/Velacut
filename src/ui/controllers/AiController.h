@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "ai/Separation.h"
+#include "ai/Speech.h"
 #include "ai/Tasks.h"
 #include "ai/Whisper.h"
 #include "core/project/Id.h"
@@ -60,6 +62,13 @@ public:
     // "Auto captions": the speech of the main track's clips, recognised by whisper.cpp (`language`: ISO 639-1 or
     // "auto"), becomes caption lines word by word on the caption track (replacing the lines there) — one undo step.
     Q_INVOKABLE bool autoCaptions(const QString &language = QStringLiteral("auto"));
+    // "Separate voice and music" (Demucs): the clip's sound is muted and its voice and its music come under it as
+    // two sounds of their own (each with its own volume) — one undo step.
+    Q_INVOKABLE bool separateVoice();
+    Q_INVOKABLE bool canSeparateVoice() const;
+    // "Read aloud" (Piper): the selected text, spoken with the first voice added, as a sound under it.
+    Q_INVOKABLE bool readAloud();
+    Q_INVOKABLE bool canReadAloud() const;
     // "Transcribe": the speech of the main track's clips, for editing by the transcript (Editor.transcript).
     Q_INVOKABLE bool transcribe(const QString &language = QStringLiteral("auto"));
     // The transcript of a media file made in this session or found in the cache (best model first), if any.

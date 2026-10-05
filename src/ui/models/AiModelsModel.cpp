@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "AiModelsModel.h"
 
+#include "ai/Speech.h"
 #include "ai/Whisper.h"
 
 #include <QDir>
@@ -172,6 +173,41 @@ int AiModelsModel::rowOf(const QString &modelId) const
         }
     }
     return -1;
+}
+
+bool AiModelsModel::piperInstalled() const
+{
+    return !ai::piper::executable().isEmpty();
+}
+
+QString AiModelsModel::piperInstallCommand() const
+{
+    return ai::piper::installCommand();
+}
+
+QVariantList AiModelsModel::voices() const
+{
+    QVariantList result;
+    for (const QString &path : ai::piper::voices()) {
+        result << QVariantMap{{u"path"_s, path}, {u"name"_s, ai::piper::voiceName(path)}};
+    }
+    return result;
+}
+
+QString AiModelsModel::addVoice(const QUrl &file)
+{
+    const QString error = ai::piper::addVoice(file.isLocalFile() ? file.toLocalFile() : file.toString());
+    if (error.isEmpty()) {
+        emit voicesChanged();
+    }
+    return error;
+}
+
+QString AiModelsModel::removeVoice(const QString &path)
+{
+    const QString error = ai::piper::removeVoice(path);
+    emit voicesChanged();
+    return error;
 }
 
 void AiModelsModel::download(const QString &modelId)
