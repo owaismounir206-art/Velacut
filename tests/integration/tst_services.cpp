@@ -181,6 +181,39 @@ private slots:
         }
     }
 
+    // "Reduce noise" in Adjust: the grain of a flat grey video is about halved (a small picture: the smallest radius).
+    void adjustReducesNoise()
+    {
+        const QString file = m_dir.filePath(u"noisy.mp4"_s);
+        QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s, u"color=c=gray:s=320x180:r=30:d=1,noise=alls=10:allf=t,format=yuv420p"_s,
+                           u"-c:v"_s, u"libx264"_s, u"-crf"_s, u"8"_s, file}));
+        auto profile = profile320();
+        Mlt::Producer video(*profile, file.toUtf8().constData());
+        const auto spread = [](const QImage &image) {
+            double sum = 0, squares = 0;
+            int count = 0;
+            for (int y = 40; y < 140; ++y) {
+                for (int x = 60; x < 260; ++x) {
+                    const int v = qGreen(image.pixel(x, y));
+                    sum += v;
+                    squares += v * v;
+                    ++count;
+                }
+            }
+            const double mean = sum / count;
+            return std::sqrt(squares / count - mean * mean);
+        };
+        std::unique_ptr<Mlt::Producer> plain(video.cut(0, 29));
+        const double before = spread(frameImage(*plain, 5));
+        AdjustSettings clean;
+        clean.denoise = 1.0;
+        std::unique_ptr<Mlt::Producer> cut(video.cut(0, 29));
+        auto filter = makeAdjustFilter(*profile, clean);
+        cut->attach(*filter);
+        const double after = spread(frameImage(*cut, 5));
+        QVERIFY2(before > 4.0 && after < before * 0.6, qPrintable(u"%1 → %2"_s.arg(before).arg(after)));
+    }
+
     void gainFadesFromTheClipStart()
     {
         auto profile = profile320();

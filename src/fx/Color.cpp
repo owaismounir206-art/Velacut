@@ -265,6 +265,76 @@ void sharpen(ImageView destination, ConstImageView source, double amount, int ro
     }
 }
 
+namespace {
+
+// One pixel of the noise reduction from its neighbours `at(k)`, k = −radius…radius.
+template<typename Neighbour>
+inline void denoisePixel(const std::uint8_t *centre, std::uint8_t *out, int radius, const std::array<int, 256> &weightOf, Neighbour at)
+{
+    int sum0 = centre[0] * 256, sum1 = centre[1] * 256, sum2 = centre[2] * 256;
+    int weights = 256;
+    for (int k = -radius; k <= radius; ++k) {
+        if (k == 0) {
+            continue;
+        }
+        const std::uint8_t *p = at(k);
+        const int difference = std::max({std::abs(p[0] - centre[0]), std::abs(p[1] - centre[1]), std::abs(p[2] - centre[2])});
+        const int weight = weightOf[static_cast<size_t>(difference)];
+        sum0 += weight * p[0];
+        sum1 += weight * p[1];
+        sum2 += weight * p[2];
+        weights += weight;
+    }
+    const int half = weights / 2;
+    out[0] = static_cast<std::uint8_t>((sum0 + half) / weights);
+    out[1] = static_cast<std::uint8_t>((sum1 + half) / weights);
+    out[2] = static_cast<std::uint8_t>((sum2 + half) / weights);
+    out[3] = centre[3];
+}
+
+} // namespace
+
+void denoisePass(ImageView destination, ConstImageView source, double amount, int radius, bool vertical, int rowBegin, int rowEnd)
+{
+    const int w = std::min(destination.width, source.width);
+    const int h = std::min(destination.height, source.height);
+    radius = std::clamp(radius, 1, 8);
+    // Weight of a neighbour by its difference from the pixel, in 1/256: 1 − difference / threshold.
+    const double threshold = 6.0 + 34.0 * std::clamp(amount, 0.0, 1.0);
+    std::array<int, 256> weightOf{};
+    for (int d = 0; d < 256; ++d) {
+        weightOf[static_cast<size_t>(d)] = std::max(0, static_cast<int>(std::lround(256.0 * (1.0 - d / threshold))));
+    }
+    std::array<const std::uint8_t *, 17> rows{};
+    for (int y = std::max(0, rowBegin); y < std::min(rowEnd, h); ++y) {
+        const std::uint8_t *here = source.row(y);
+        std::uint8_t *d = destination.row(y);
+        if (vertical) {
+            for (int k = -radius; k <= radius; ++k) {
+                rows[static_cast<size_t>(k + radius)] = source.row(std::clamp(y + k, 0, h - 1));
+            }
+            for (int x = 0; x < w; ++x) {
+                denoisePixel(here + x * 4, d + x * 4, radius, weightOf,
+                             [&rows, radius, x](int k) { return rows[static_cast<size_t>(k + radius)] + x * 4; });
+            }
+            continue;
+        }
+        for (int x = 0; x < w; ++x) {
+            if (x >= radius && x + radius < w) {
+                denoisePixel(here + x * 4, d + x * 4, radius, weightOf, [here, x](int k) { return here + (x + k) * 4; });
+            } else {
+                denoisePixel(here + x * 4, d + x * 4, radius, weightOf,
+                             [here, x, w](int k) { return here + std::clamp(x + k, 0, w - 1) * 4; });
+            }
+        }
+    }
+}
+
+int denoiseRadius(int height, double amount)
+{
+    return std::clamp(static_cast<int>(std::lround(height / 540.0 * (1.0 + std::clamp(amount, 0.0, 1.0)))), 1, 8);
+}
+
 void boxBlur(ImageView image, int radius)
 {
     if (radius <= 0 || image.width <= 0 || image.height <= 0) {

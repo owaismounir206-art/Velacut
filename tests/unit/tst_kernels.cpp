@@ -264,6 +264,45 @@ private slots:
         Buffer edgeOut(8, 1);
         sharpen(edgeOut.view(), edge.constView(), 1.0, 0, 1);
         QVERIFY(edgeOut.at(4, 0)[0] > 200 && edgeOut.at(3, 0)[0] < 50);
+        // Reduce noise: the noise of a flat area mostly goes, a strong edge stays sharp, alpha is kept.
+        Buffer noisy(64, 16);
+        std::uint32_t state = 7;
+        for (int y = 0; y < 16; ++y) {
+            for (int x = 0; x < 64; ++x) {
+                state = state * 1664525u + 1013904223u;
+                const int base = x < 32 ? 60 : 190;
+                const int n = static_cast<int>((state >> 24) % 17) - 8; // ±8
+                const auto v = static_cast<std::uint8_t>(base + n);
+                noisy.set(x, y, {v, v, v, 200});
+            }
+        }
+        const auto spread = [](const Buffer &b, int x0, int x1) {
+            double sum = 0, squares = 0;
+            int count = 0;
+            for (int y = 0; y < 16; ++y) {
+                for (int x = x0; x < x1; ++x) {
+                    const int v = b.at(x, y)[0];
+                    sum += v;
+                    squares += v * v;
+                    ++count;
+                }
+            }
+            const double mean = sum / count;
+            return std::sqrt(squares / count - mean * mean);
+        };
+        Buffer across(64, 16);
+        Buffer denoised(64, 16);
+        const int radius = denoiseRadius(1080, 0.6);
+        QCOMPARE(radius, 3);
+        denoisePass(across.view(), noisy.constView(), 0.6, radius, false, 0, 16);
+        denoisePass(denoised.view(), across.constView(), 0.6, radius, true, 0, 16);
+        QVERIFY2(spread(denoised, 4, 28) < spread(noisy, 4, 28) * 0.5,
+                 qPrintable(u"%1 → %2"_s.arg(spread(noisy, 4, 28)).arg(spread(denoised, 4, 28))));
+        QVERIFY(denoised.at(31, 8)[0] < 75 && denoised.at(32, 8)[0] > 175);
+        QCOMPARE(denoised.at(10, 3)[3], 200);
+        QCOMPARE(denoiseRadius(540, 0.0), 1);
+        QCOMPARE(denoiseRadius(2160, 1.0), 8);
+
         // Box blur: flat stays flat, a dot spreads and keeps its energy approximately.
         Buffer dot(21, 21, {0, 0, 0, 255});
         dot.set(10, 10, {255, 255, 255, 255});

@@ -67,6 +67,14 @@ void grain(ImageView image, double amount, std::uint32_t seed, int rowBegin, int
 // Unsharp mask 3×3 from `source` into `destination` (same size, different buffers), amount 0…2.
 void sharpen(ImageView destination, ConstImageView source, double amount, int rowBegin, int rowEnd);
 
+// Noise reduction that keeps edges, one direction at a time (horizontal, then vertical on the result): each pixel
+// becomes the average of the neighbours within `radius` that differ from it by less than a threshold set by `amount`
+// (0…1), so grain and compression noise flatten while outlines stay. From `source` into `destination` (different
+// buffers), rows [rowBegin, rowEnd). Alpha is kept.
+void denoisePass(ImageView destination, ConstImageView source, double amount, int radius, bool vertical, int rowBegin, int rowEnd);
+// The radius for a picture `height` pixels high: the same look in the preview and in the export.
+int denoiseRadius(int height, double amount);
+
 // Separable box blur (three passes ≈ Gaussian), radius in pixels, in place on the whole image (not sliced: the
 // callers blur small downscaled copies).
 void boxBlur(ImageView image, int radius);

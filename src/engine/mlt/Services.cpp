@@ -346,6 +346,15 @@ int adjustGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, i
     const AdjustSettings &s = state->settings;
     const double k = std::clamp(s.intensity, 0.0, 1.0);
     const fx::ImageView view{*image, *width, *height, *width * 4};
+    if (s.denoise > 0) {
+        const double amount = s.denoise * k;
+        const int radius = fx::denoiseRadius(*height, amount);
+        std::vector<uint8_t> copy(*image, *image + static_cast<size_t>(*width * *height * 4));
+        const fx::ConstImageView source{copy.data(), *width, *height, *width * 4};
+        runSliced(*height, [&](int begin, int end) { fx::denoisePass(view, source, amount, radius, false, begin, end); });
+        std::copy(*image, *image + copy.size(), copy.begin());
+        runSliced(*height, [&](int begin, int end) { fx::denoisePass(view, source, amount, radius, true, begin, end); });
+    }
     if (s.changesColour()) {
         runSliced(*height, [&](int begin, int end) { state->lut.apply(view, k, begin, end); });
     }
@@ -1345,7 +1354,7 @@ QByteArray AdjustSettings::key() const
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     const fx::ColorAdjust &a = look;
     for (double v : {a.exposure, a.brightness, a.contrast, a.highlights, a.shadows, a.whites, a.blacks, a.saturation, a.vibrance,
-                     a.temperature, a.tint, a.fade, a.splitAmount, intensity, vignette, grain, sharpness}) {
+                     a.temperature, a.tint, a.fade, a.splitAmount, intensity, vignette, grain, sharpness, denoise}) {
         appendDouble(stream, v);
     }
     for (double v : a.shadowTone) {

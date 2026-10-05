@@ -55,7 +55,9 @@ mescola l'immagine originale con quella filtrata.
   "params": [ { "name": "exposure", "min": -3, "max": 3, "default": 0, "label": { … }, "advanced": false } ] }
 ```
 I parametri `advanced` stanno nella sezione "Avanzate" (chiusa) del pannello. `vedit.adjust.basic` ha gli stessi nomi del
-`look` dei filtri. Nel progetto: `{ "type": "vedit.adjust.basic", "params": { "exposure": 0.3, … } }`.
+`look` dei filtri, più `denoise` (0…1, "Riduci rumore": media dei vicini che differiscono poco, prima orizzontale poi
+verticale, raggio proporzionale all'altezza dell'immagine così anteprima ed export si somigliano; applicato per primo).
+Nel progetto: `{ "type": "vedit.adjust.basic", "params": { "exposure": 0.3, … } }`.
 
 ## 4. Transizioni (`transitions.json`)
 ```json

@@ -39,6 +39,11 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   di scena (`tst_editor::highlightsAndShortClips`), dall'interfaccia fino alla bozza aperta in 3 azioni
   (`tst_ui::shortClipsFromTheAiTab`) e unitario (`tst_ai`). Limite: niente visione (volti, sorrisi,
   azione): il punteggio usa solo suono, scene e parlato.
+- **Riduci rumore** (SPEC §5.12 "miglioramento qualità video: denoise"): cursore in Regola (`denoise` di
+  `vedit.adjust.basic`), filtro CPU che conserva i bordi (`fx::denoisePass`, due passate separabili con pesi interi,
+  ~6 ms a 1080p su 12 thread). Test: unitario (rumore dimezzato, bordo intatto, alfa conservato) e sul servizio MLT.
+  Restano: upscale (servirebbe un modello, es. Real-ESRGAN ncnn, come programma esterno facoltativo) e stima automatica
+  del rumore in "Migliora" (le miniature sono troppo piccole per misurarlo).
 - **Scheda "IA" nelle proprietà** (la SPEC elenca "AI" tra le schede del pannello destro): tutti gli strumenti
   intelligenti della clip selezionata in un elenco con una riga di spiegazione; quelli che non valgono per la clip
   sono in grigio, quelli solo video nascosti per l'audio. Nessuna funzione nuova: ogni voce usa l'azione esistente.

@@ -740,6 +740,7 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
                 adjust.vignette = look.value(u"vignette"_s).toDouble();
                 adjust.grain = look.value(u"grain"_s).toDouble();
                 adjust.sharpness = look.value(u"sharpness"_s).toDouble();
+                adjust.denoise = look.value(u"denoise"_s).toDouble();
             } else if (effect.type == u"vedit.stabilize"_s) {
                 if (auto settings = stabilizeSettings(effect, clip)) {
                     render->stabilize = std::move(settings);

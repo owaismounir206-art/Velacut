@@ -127,6 +127,7 @@ struct AdjustSettings
     double vignette = 0;
     double grain = 0;
     double sharpness = 0;
+    double denoise = 0; // 0…1, before everything else
 
     QByteArray key() const;
     bool changesColour() const { return !look.isIdentity() || !grade.isIdentity() || cube; }
