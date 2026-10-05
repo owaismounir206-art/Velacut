@@ -106,6 +106,14 @@ Item {
             Layout.fillWidth: true
             title: qsTr("Transcript")
             Tool {
+                objectName: "chaptersButton"
+                anchors.verticalCenter: parent.verticalCenter
+                visible: panel.transcript.available
+                iconName: "toc"
+                label: qsTr("Chapters for YouTube: markers on the timeline and the list for the description")
+                onClicked: panel.transcript.makeChapters()
+            }
+            Tool {
                 objectName: "removeFillersButton"
                 anchors.verticalCenter: parent.verticalCenter
                 visible: panel.transcript.fillerCount > 0

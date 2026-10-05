@@ -4789,12 +4789,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+89"/>
+        <location line="+97"/>
         <source>Transcribe</source>
         <translation>Trascrivi</translation>
     </message>
     <message>
-        <location line="-78"/>
+        <location line="-86"/>
         <source>The transcript needs whisper.cpp, which is not installed: “%1”.</source>
         <translation>La trascrizione richiede whisper.cpp, che non è installato: «%1».</translation>
     </message>
@@ -4818,8 +4818,13 @@
         <source>Transcript</source>
         <translation>Trascrizione</translation>
     </message>
-    <message numerus="yes">
+    <message>
         <location line="+6"/>
+        <source>Chapters for YouTube: markers on the timeline and the list for the description</source>
+        <translation>Capitoli per YouTube: marker sulla timeline e l&apos;elenco per la descrizione</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+8"/>
         <source>Remove %n filler word(s)</source>
         <translation>
             <numerusform>Rimuovi %n parola di riempimento</numerusform>
@@ -4949,6 +4954,7 @@
         <location line="+81"/>
         <location line="+25"/>
         <location line="+22"/>
+        <location line="+21"/>
         <location line="+15"/>
         <location line="+19"/>
         <location line="+30"/>
@@ -4967,7 +4973,7 @@
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-2048"/>
+        <location line="-2069"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -4983,23 +4989,23 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1595"/>
+        <location line="+1616"/>
         <source>The media is too short to be used.</source>
         <translation>Il file è troppo corto per essere usato.</translation>
     </message>
     <message>
-        <location line="-1572"/>
+        <location line="-1593"/>
         <source>Add audio</source>
         <translation>Aggiungi audio</translation>
     </message>
     <message>
         <location line="+5"/>
-        <location line="+1520"/>
+        <location line="+1541"/>
         <source>The main track is locked.</source>
         <translation>La traccia principale è bloccata.</translation>
     </message>
     <message>
-        <location line="-1515"/>
+        <location line="-1536"/>
         <location line="+4"/>
         <location line="+4"/>
         <source>Add clip</source>
@@ -5022,7 +5028,7 @@
         <location line="+50"/>
         <location line="+80"/>
         <location line="+296"/>
-        <location line="+162"/>
+        <location line="+183"/>
         <location line="+30"/>
         <location line="+23"/>
         <location line="+26"/>
@@ -5031,7 +5037,7 @@
         <translation>La clip non esiste.</translation>
     </message>
     <message>
-        <location line="-1520"/>
+        <location line="-1541"/>
         <location line="+10"/>
         <location line="+49"/>
         <location line="+80"/>
@@ -5048,7 +5054,7 @@
         <location line="+81"/>
         <location line="+82"/>
         <location line="+213"/>
-        <location line="+162"/>
+        <location line="+183"/>
         <location line="+30"/>
         <location line="+23"/>
         <location line="+26"/>
@@ -5061,16 +5067,16 @@
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-1972"/>
+        <location line="-1993"/>
         <location line="+994"/>
         <location line="+47"/>
         <location line="+14"/>
-        <location line="+913"/>
+        <location line="+934"/>
         <source>The track does not exist.</source>
         <translation>La traccia non esiste.</translation>
     </message>
     <message>
-        <location line="-1962"/>
+        <location line="-1983"/>
         <source>This clip cannot be placed on that track.</source>
         <translation>Questa clip non può andare su quella traccia.</translation>
     </message>
@@ -5318,6 +5324,11 @@
         <location line="+23"/>
         <source>Add marker</source>
         <translation>Aggiungi marker</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Chapters</source>
+        <translation>Capitoli</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -7646,7 +7657,7 @@
 <context>
     <name>vedit::ui::TranscriptController</name>
     <message>
-        <location filename="../src/ui/controllers/TranscriptController.cpp" line="+191"/>
+        <location filename="../src/ui/controllers/TranscriptController.cpp" line="+193"/>
         <source>Delete words</source>
         <translation>Elimina parole</translation>
     </message>
@@ -7659,7 +7670,20 @@
         </translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+15"/>
+        <source>Chapters need a video of at least 30 seconds with speech (YouTube wants 3 of 10 s or more).</source>
+        <translation>I capitoli richiedono un video di almeno 30 secondi con parlato (YouTube ne vuole 3 da 10 s o più).</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+12"/>
+        <source>%n chapter(s) marked on the timeline; the list is copied for the description</source>
+        <translation>
+            <numerusform>%n capitolo segnato sulla timeline; l&apos;elenco è copiato per la descrizione</numerusform>
+            <numerusform>%n capitoli segnati sulla timeline; l&apos;elenco è copiato per la descrizione</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+15"/>
         <source>No filler words found.</source>
         <translation>Nessuna parola di riempimento trovata.</translation>
     </message>

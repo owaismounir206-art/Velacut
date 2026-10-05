@@ -120,6 +120,8 @@ public:
                                  const QString &color = QStringLiteral("primary"),
                                  const QString &note = QString(), MarkerKind kind = MarkerKind::User);
     EditResult removeSequenceMarker(const MarkerId &markerId);
+    // The chapter markers of the sequence (YouTube chapters) replaced by these, in one step.
+    EditResult setChapterMarkers(const std::vector<std::pair<RationalTime, QString>> &chapters);
     EditResult updateSequenceMarker(const Marker &marker);
     // Clip markers: `time` in the clip's keyframe time (D-05, core/project/ClipTime.h).
     EditResult addClipMarker(const ClipId &clipId, const RationalTime &time, const QString &name = QString(),

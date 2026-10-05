@@ -45,6 +45,25 @@ Transcript parseWhisperJson(const QJsonObject &json, std::int64_t offsetMs = 0);
 std::vector<captions::CaptionLine> captionLines(const Transcript &transcript, std::int64_t fromMs, std::int64_t toMs,
                                                 const std::function<RationalTime(std::int64_t)> &toTimeline);
 
+// Chapters for YouTube from what is said (SPEC §5.8): the first at 0, at least 3, each at least 10 s, about one a
+// minute; each starts at the beginning of a sentence, preferring the sentences after the longest pauses near evenly
+// spaced points, and is titled with the first words of that sentence. Words in timeline milliseconds. Empty when the
+// video is too short for 3 chapters.
+struct SpokenWord
+{
+    QString text;
+    std::int64_t from = 0;
+    std::int64_t to = 0;
+};
+struct Chapter
+{
+    std::int64_t start = 0; // ms of the timeline
+    QString title;
+};
+std::vector<Chapter> findChapters(const std::vector<SpokenWord> &words, std::int64_t durationMs);
+// "00:00 Title" lines (or "0:00:00" from an hour on), as YouTube reads them in a description.
+QString chapterList(const std::vector<Chapter> &chapters, std::int64_t durationMs);
+
 // Hesitations that carry no meaning ("ehm", "uhm", "um", "uh", "eh"…), in any language: the words "Remove filler
 // words" takes out. Real words that are often fillers ("cioè", "like") are left to the user.
 bool isFillerWord(const QString &word);

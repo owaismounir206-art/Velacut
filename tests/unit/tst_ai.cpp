@@ -202,6 +202,30 @@ private slots:
         QVERIFY(!ai::isFillerWord(QStringLiteral("umano")));
         QVERIFY(!ai::isFillerWord(QStringLiteral("video")));
     }
+
+    void chaptersStartAtSentencesAfterPauses()
+    {
+        // Three minutes: a sentence of four words every 10 s, with a long pause before the ones at 62 s and 122 s.
+        std::vector<ai::SpokenWord> words;
+        for (int sentence = 0; sentence < 18; ++sentence) {
+            const std::int64_t start = sentence * 10'000 + (sentence == 6 ? 2'000 : 0) + (sentence == 12 ? 2'000 : 0);
+            const QStringList texts{QStringLiteral("parte %1").arg(sentence), QStringLiteral("del"), QStringLiteral("video"),
+                                    QStringLiteral("qui.")};
+            for (int w = 0; w < texts.size(); ++w) {
+                words.push_back(ai::SpokenWord{texts[w], start + w * 500, start + w * 500 + 400});
+            }
+        }
+        const std::vector<ai::Chapter> chapters = ai::findChapters(words, 180'000);
+        QCOMPARE(chapters.size(), 3u);
+        QCOMPARE(chapters[0].start, 0);
+        QCOMPARE(chapters[1].start, 62'000);
+        QCOMPARE(chapters[2].start, 122'000);
+        QCOMPARE(chapters[1].title, QStringLiteral("Parte 6 del video qui"));
+        QCOMPARE(ai::chapterList(chapters, 180'000),
+                 QStringLiteral("00:00 Parte 0 del video qui\n01:02 Parte 6 del video qui\n02:02 Parte 12 del video qui"));
+        // Too short for YouTube.
+        QVERIFY(ai::findChapters(words, 25'000).empty());
+    }
 };
 
 QTEST_GUILESS_MAIN(TestAi)

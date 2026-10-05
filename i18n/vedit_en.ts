@@ -89,7 +89,7 @@
 <context>
     <name>TranscriptPanel</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/TranscriptPanel.qml" line="+113"/>
+        <location filename="../src/ui/qml/TranscriptPanel.qml" line="+121"/>
         <source>Remove %n filler word(s)</source>
         <translation>
             <numerusform>Remove %n filler word</numerusform>
@@ -193,7 +193,7 @@
 <context>
     <name>vedit::ui::TranscriptController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/TranscriptController.cpp" line="+194"/>
+        <location filename="../src/ui/controllers/TranscriptController.cpp" line="+196"/>
         <source>%n word(s) cut from the video</source>
         <translation>
             <numerusform>%n word cut from the video</numerusform>
@@ -201,7 +201,15 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+20"/>
+        <location line="+27"/>
+        <source>%n chapter(s) marked on the timeline; the list is copied for the description</source>
+        <translation>
+            <numerusform>%n chapter marked on the timeline; the list is copied for the description</numerusform>
+            <numerusform>%n chapters marked on the timeline; the list is copied for the description</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+22"/>
         <source>%n filler word(s) removed</source>
         <translation>
             <numerusform>%n filler word removed</numerusform>

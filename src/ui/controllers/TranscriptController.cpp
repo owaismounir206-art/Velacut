@@ -7,6 +7,8 @@
 #include "ui/controllers/AiController.h"
 #include "ui/controllers/EditorController.h"
 
+#include <QClipboard>
+#include <QGuiApplication>
 #include <QRegularExpression>
 
 #include <algorithm>
@@ -193,6 +195,35 @@ bool TranscriptController::deleteWords(int first, int last)
     }
     emit m_editor.message(tr("%n word(s) cut from the video", nullptr, static_cast<int>(words.size())), true);
     return true;
+}
+
+QString TranscriptController::makeChapters()
+{
+    const Rational rate = m_editor.data().settings.frameRate;
+    const auto ms = [&rate](std::int64_t frame) { return std::llround(static_cast<double>(frame) * 1000.0 / rate.toDouble()); };
+    std::vector<ai::SpokenWord> words;
+    for (const Entry &entry : entries()) {
+        words.push_back(ai::SpokenWord{entry.text, ms(entry.frame), ms(entry.endFrame)});
+    }
+    const std::int64_t duration = ms(m_editor.player()->duration());
+    const std::vector<ai::Chapter> chapters = ai::findChapters(words, duration);
+    if (chapters.empty()) {
+        emit m_editor.message(tr("Chapters need a video of at least 30 seconds with speech (YouTube wants 3 of 10 s or more)."), false);
+        return {};
+    }
+    std::vector<std::pair<RationalTime, QString>> markers;
+    for (const ai::Chapter &chapter : chapters) {
+        markers.emplace_back(RationalTime(chapter.start, Rational(1000)), chapter.title);
+    }
+    if (!m_editor.push(TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId).setChapterMarkers(markers))) {
+        return {};
+    }
+    const QString list = ai::chapterList(chapters, duration);
+    QGuiApplication::clipboard()->setText(list);
+    emit m_editor.message(tr("%n chapter(s) marked on the timeline; the list is copied for the description", nullptr,
+                             static_cast<int>(chapters.size())),
+                          true);
+    return list;
 }
 
 int TranscriptController::removeFillerWords()

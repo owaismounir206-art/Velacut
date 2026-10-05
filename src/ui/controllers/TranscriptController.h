@@ -49,6 +49,9 @@ public:
     Q_INVOKABLE bool deleteWords(int first, int last);
     // The number of filler words taken out.
     Q_INVOKABLE int removeFillerWords();
+    // YouTube chapters from the transcript: chapter markers on the timeline (one undo step) and the "00:00 Title" list
+    // copied for the video's description. Returns the list, empty when the video is too short.
+    Q_INVOKABLE QString makeChapters();
 
 signals:
     void changed();

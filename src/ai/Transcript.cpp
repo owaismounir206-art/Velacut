@@ -168,6 +168,84 @@ std::vector<captions::CaptionLine> captionLines(const Transcript &transcript, st
     return lines;
 }
 
+std::vector<Chapter> findChapters(const std::vector<SpokenWord> &words, std::int64_t durationMs)
+{
+    constexpr std::int64_t kMinimum = 10'000;
+    constexpr std::int64_t kPerChapter = 60'000;
+    std::vector<Chapter> chapters;
+    if (durationMs < 3 * kMinimum || words.empty()) {
+        return chapters;
+    }
+    // Sentence starts, with the pause before them.
+    struct Start
+    {
+        size_t word;
+        std::int64_t pause;
+    };
+    std::vector<Start> starts;
+    for (size_t i = 1; i < words.size(); ++i) {
+        if (endsSentence(words[i - 1].text)) {
+            starts.push_back({i, words[i].from - words[i - 1].to});
+        }
+    }
+    const auto titleFrom = [&words](size_t first) {
+        QStringList title;
+        for (size_t i = first; i < words.size() && title.size() < 6; ++i) {
+            title << words[i].text;
+            if (endsSentence(words[i].text)) {
+                break;
+            }
+        }
+        QString text = title.join(u' ');
+        static const QRegularExpression trailing(u"[\\p{P}]+$"_s);
+        text.remove(trailing);
+        if (!text.isEmpty()) {
+            text[0] = text[0].toUpper();
+        }
+        return text;
+    };
+    const int count = static_cast<int>(std::clamp<std::int64_t>(durationMs / kPerChapter, 3, 12));
+    chapters.push_back(Chapter{0, titleFrom(0)});
+    for (int k = 1; k < count; ++k) {
+        const std::int64_t ideal = durationMs * k / count;
+        const std::int64_t window = durationMs / count * 3 / 10;
+        const Start *best = nullptr;
+        double bestScore = -1.0;
+        for (const Start &start : starts) {
+            const std::int64_t at = words[start.word].from;
+            if (std::abs(at - ideal) > window || at - chapters.back().start < kMinimum || durationMs - at < kMinimum) {
+                continue;
+            }
+            // Long pauses close to the ideal point.
+            const double score = static_cast<double>(start.pause) - 0.3 * static_cast<double>(std::abs(at - ideal));
+            if (score > bestScore) {
+                bestScore = score;
+                best = &start;
+            }
+        }
+        if (best) {
+            chapters.push_back(Chapter{words[best->word].from, titleFrom(best->word)});
+        }
+    }
+    if (chapters.size() < 3) {
+        chapters.clear();
+    }
+    return chapters;
+}
+
+QString chapterList(const std::vector<Chapter> &chapters, std::int64_t durationMs)
+{
+    QStringList lines;
+    const bool hours = durationMs >= 3'600'000;
+    for (const Chapter &chapter : chapters) {
+        const std::int64_t seconds = chapter.start / 1000;
+        const QString time = hours ? u"%1:%2:%3"_s.arg(seconds / 3600).arg(seconds / 60 % 60, 2, 10, u'0').arg(seconds % 60, 2, 10, u'0')
+                                   : u"%1:%2"_s.arg(seconds / 60, 2, 10, u'0').arg(seconds % 60, 2, 10, u'0');
+        lines << time + u' ' + chapter.title;
+    }
+    return lines.join(u'\n');
+}
+
 bool isFillerWord(const QString &word)
 {
     static const QRegularExpression filler(u"^(e+h*m+|u+h*m+|m+h*m+|e+h+|u+h+|a+h+|h+m+|u+m+|e+r+m*|ehm+|mm+)$"_s,

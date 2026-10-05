@@ -791,6 +791,7 @@ JSON
         QCOMPARE(transcript.wordCount(), 6);
         QCOMPARE(transcript.fillerCount(), 1);
         QCOMPARE(transcript.paragraphs().size(), 2); // a sentence and a pause of 0.9 s
+        QVERIFY(transcript.makeChapters().isEmpty()); // 4 s: too short for YouTube chapters
 
         // "ehm" (0.6–1.2 s) out: the clip is 0.6 s shorter, in two pieces.
         const RationalTime before = mainTrack(editor).clips[0].duration;

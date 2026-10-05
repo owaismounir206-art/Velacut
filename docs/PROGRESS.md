@@ -61,6 +61,10 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   seleziona fino a lì, Canc o "Taglia N parole dal video" = `TimelineEditor::removeSourceRanges` su più clip in un
   passo; parola in corso evidenziata; "Rimuovi N parole di riempimento" (ehm, uhm, um, uh, eh…; le parole vere usate
   come riempitivo restano all'utente). Trascrizioni prese anche dalla cache delle sessioni precedenti.
+- **Capitoli per YouTube** (`ai::findChapters`): il primo a 0:00, almeno 3 da ≥ 10 s, circa uno al minuto; ciascuno
+  all'inizio di una frase, preferendo le pause più lunghe vicino a punti equidistanti; titolo = prime parole della
+  frase. Diventano marker "Capitolo" sulla timeline (un passo di annullamento) e l'elenco "00:00 Titolo" va negli
+  appunti per la descrizione.
 
 ## Sessione 2026-10-05 — Fine Fase 5: transizioni GPU, slideshow, kit del marchio, filtri, blocco del motore
 - **Percorso GPU delle 114 transizioni** (`92d25d6`, criterio Fase 5 seconda metà ✅): GLSL 1.00/1.10 (OpenGL 2.1 /
@@ -226,8 +230,8 @@ completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::t
    (Preferenze → Modelli AI, download solo su richiesta con la dimensione). **Da verificare con il whisper-cli reale**
    quando l'utente lo installa (`yay -S whisper.cpp`): il formato `--output-json-full` è stato ricostruito dalla
    documentazione e provato con un sostituto. ✅ Editing dal testo e parole di riempimento (scheda Trascrizione).
-   Restano: sottotitoli da copione allineati al parlato, capitoli automatici, testi delle canzoni (karaoke: si fa già
-   con "Sottotitoli automatici" + stile karaoke se whisper riconosce il canto).
+   ✅ Capitoli automatici (pulsante nella scheda Trascrizione). Restano: sottotitoli da copione allineati al parlato,
+   testi delle canzoni (karaoke: si fa già con "Sottotitoli automatici" + stile karaoke se whisper riconosce il canto).
 3. Senza modelli: ✅ rimozione pause, ✅ divisione delle scene, ✅ stabilizzazione (traslazione), ✅ rallentatore
    fluido (percorso CPU `minterpolate`), ✅ auto reframe classico; restano rotazione nella stabilizzazione (stima più
    robusta), RIFE quando installato, volti (con un modello) per l'auto reframe.

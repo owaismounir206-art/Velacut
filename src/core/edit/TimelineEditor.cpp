@@ -1745,6 +1745,27 @@ EditResult TimelineEditor::addSequenceMarker(const RationalTime &time, const QSt
     return finish(std::move(modified), tr("Add marker"), ClipId{});
 }
 
+EditResult TimelineEditor::setChapterMarkers(const std::vector<std::pair<RationalTime, QString>> &chapters)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    Sequence modified = *m_sequence;
+    std::erase_if(modified.markers, [](const Marker &marker) { return marker.kind == MarkerKind::Chapter; });
+    for (const auto &[time, name] : chapters) {
+        Marker marker;
+        marker.id = MarkerId::create();
+        marker.time = std::max(time.rescaled(m_rate, Rounding::NearestEven), RationalTime(0, m_rate));
+        marker.name = name;
+        marker.color = QStringLiteral("tertiary");
+        marker.kind = MarkerKind::Chapter;
+        modified.markers.push_back(std::move(marker));
+    }
+    std::stable_sort(modified.markers.begin(), modified.markers.end(),
+                     [](const Marker &a, const Marker &b) { return a.time < b.time; });
+    return finish(std::move(modified), tr("Chapters"), ClipId{});
+}
+
 EditResult TimelineEditor::removeSequenceMarker(const MarkerId &markerId)
 {
     if (!m_sequence) {
