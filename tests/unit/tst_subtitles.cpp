@@ -182,6 +182,12 @@ Late
         const auto back = captions::entriesOf(track);
         QCOMPARE(back.size(), 1u);
         QCOMPARE(back[0], (SubtitleEntry{frames(10), frames(30), u"Ciao"_s}));
+        // An export between In and Out: cut to the part and timed from its start; lines outside are left out.
+        const auto part = captions::entriesOf(track, TimeRange(frames(20), frames(40)));
+        QCOMPARE(part.size(), 1u);
+        QCOMPARE(part[0], (SubtitleEntry{frames(0), frames(10), u"Ciao"_s}));
+        QVERIFY(captions::entriesOf(track, TimeRange(frames(30), frames(10))).empty());
+        QCOMPARE(captions::entriesOf(track, TimeRange()), back);
     }
 };
 

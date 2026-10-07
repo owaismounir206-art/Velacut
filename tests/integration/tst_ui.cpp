@@ -798,6 +798,38 @@ private slots:
         QTRY_VERIFY(!byName(u"exportConfirmButton"_s) && !byText(u"Copy path"_s));
     }
 
+    // An animated GIF (SPEC §5.15) in 3 actions: Export, "GIF", Export; 480p at 15 fps by default, its own palette.
+    void gifFromTheExportWindow()
+    {
+        m_actions = 0;
+        QSignalSpy exported(editor(), &ui::EditorController::exportFinished);
+        click(byName(u"exportButton"_s));                                              // 1
+        QTRY_VERIFY(byName(u"exportKind_1"_s));
+        click(byName(u"exportKind_1"_s));                                              // 2
+        QTRY_VERIFY(byName(u"exportEstimate"_s)->property("text").toString().contains(u"×"_s));
+        const QQuickItem *advanced = byName(u"exportAdvancedButton"_s);
+        QVERIFY(!advanced || !advanced->isVisible()); // nothing technical to choose for a GIF
+        shot(u"06b-export-gif"_s);
+        click(byName(u"exportConfirmButton"_s));                                       // 3
+        QVERIFY(exported.wait(60000));
+        QCOMPARE(m_actions, 3);
+        const QString output = exported.first().first().toString();
+        QVERIFY(output.endsWith(u".gif"_s));
+        const QJsonObject video = streamOfType(ffprobe(output), u"video"_s);
+        QCOMPARE(video.value(u"codec_name"_s).toString(), u"gif"_s);
+        QCOMPARE(std::min(video.value(u"width"_s).toInt(), video.value(u"height"_s).toInt()), 180); // never larger than the project
+        QFile::remove(output);
+        click(byText(u"Close"_s));
+        QTRY_VERIFY(!byName(u"exportConfirmButton"_s) && !byText(u"Copy path"_s));
+        // The next export starts as a GIF again (the choice is remembered), and a click goes back to video.
+        click(byName(u"exportButton"_s));
+        QTRY_VERIFY(byName(u"exportKind_0"_s));
+        QTRY_VERIFY(byName(u"exportEstimate"_s)->property("text").toString().contains(u"180"_s));
+        click(byName(u"exportKind_0"_s));
+        QTest::keyClick(m_window, Qt::Key_Escape);
+        QTRY_VERIFY(!byName(u"exportConfirmButton"_s));
+    }
+
     void backHomeShowsTheDraft()
     {
         const QString name = editor()->name();

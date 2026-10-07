@@ -39,6 +39,7 @@ FocusScope {
                 readonly property bool selected: index === root.currentIndex
                 readonly property bool first: index === 0
                 readonly property bool last: index === root.model.length - 1
+                objectName: root.objectName !== "" ? root.objectName + "_" + index : ""
 
                 width: Math.max(48, content.implicitWidth + 24)
                 height: root.height

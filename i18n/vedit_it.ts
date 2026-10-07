@@ -1064,7 +1064,47 @@
 <context>
     <name>ExportDialog</name>
     <message>
-        <location filename="../src/ui/qml/ExportDialog.qml" line="+47"/>
+        <location filename="../src/ui/qml/ExportDialog.qml" line="+51"/>
+        <source>MP4 — plays everywhere</source>
+        <translation>MP4 — si apre ovunque</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>MOV — for editing in another program</source>
+        <translation>MOV — per montarlo in un altro programma</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>WebM — for web pages</source>
+        <translation>WebM — per le pagine web</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>PNG pictures — one per frame, in a folder</source>
+        <translation>Immagini PNG — una per fotogramma, in una cartella</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>MP3 — plays everywhere</source>
+        <translation>MP3 — si apre ovunque</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>M4A (AAC) — small, good quality</source>
+        <translation>M4A (AAC) — piccolo, buona qualità</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>WAV — not compressed</source>
+        <translation>WAV — non compresso</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>FLAC — compressed without loss</source>
+        <translation>FLAC — compresso senza perdita</translation>
+    </message>
+    <message>
+        <location line="+34"/>
         <source>H.264 — plays everywhere</source>
         <translation>H.264 — riproduce ovunque</translation>
     </message>
@@ -1079,7 +1119,17 @@
         <translation>AV1 — il file più piccolo (nuovo)</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+1"/>
+        <source>ProRes — for editing, very large</source>
+        <translation>ProRes — per il montaggio, molto grande</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>VP9 — for web pages</source>
+        <translation>VP9 — per le pagine web</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>No size limit</source>
         <translation>Senza limite di dimensione</translation>
     </message>
@@ -1145,12 +1195,12 @@
     </message>
     <message>
         <location line="+0"/>
-        <location line="+188"/>
+        <location line="+250"/>
         <source>Export</source>
         <translation>Esporta</translation>
     </message>
     <message>
-        <location line="-168"/>
+        <location line="-230"/>
         <source>Choose where to save the video</source>
         <translation>Scegli dove salvare il video</translation>
     </message>
@@ -1166,21 +1216,41 @@
     </message>
     <message>
         <location line="+4"/>
+        <source>Export as</source>
+        <translation>Esporta come</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Video</source>
+        <translation type="unfinished">Video</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>GIF</source>
+        <translation>GIF</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sound only</source>
+        <translation>Solo audio</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Resolution</source>
         <translation>Risoluzione</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+6"/>
         <source>Frame rate</source>
         <translation>Fotogrammi al secondo</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+6"/>
         <source>Quality</source>
         <translation>Qualità</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>Low</source>
         <translation>Bassa</translation>
     </message>
@@ -1195,7 +1265,22 @@
         <translation>Alta</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+39"/>
+        <source>Only between the In and Out points</source>
+        <translation>Solo tra i punti di inizio e fine</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Also save the captions as a file (SRT)</source>
+        <translation>Salva anche i sottotitoli in un file (SRT)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The captions stay in the picture too; the file lets players and websites show them on their own.</source>
+        <translation>I sottotitoli restano anche nell&apos;immagine; il file permette a lettori e siti di mostrarli per conto loro.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Even out the volume, as social networks want it</source>
         <translation>Volume uniforme, come lo vogliono i social</translation>
     </message>
@@ -1205,17 +1290,22 @@
         <translation>Loudness normalizzata a −14 LUFS (EBU R128), il livello di YouTube, TikTok e Instagram.</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+9"/>
         <source>Advanced</source>
         <translation>Avanzate</translation>
     </message>
     <message>
         <location line="+7"/>
+        <source>File format</source>
+        <translation>Formato del file</translation>
+    </message>
+    <message>
+        <location line="+19"/>
         <source>Video codec</source>
         <translation>Codec video</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+18"/>
         <source>Use hardware acceleration</source>
         <translation>Usa l&apos;accelerazione hardware</translation>
     </message>
@@ -1230,7 +1320,37 @@
         <translation>Dimensione massima del file</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+17"/>
+        <source>Animated GIF without sound, with its own colours: for chats and web pages.</source>
+        <translation>GIF animata senza audio, con i suoi colori: per chat e pagine web.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The sound of the video alone.</source>
+        <translation>Solo l&apos;audio del video.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A folder with one PNG picture per frame.</source>
+        <translation>Una cartella con un&apos;immagine PNG per fotogramma.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>MOV video (ProRes and uncompressed sound): for editing in another program.</source>
+        <translation>Video MOV (ProRes e audio non compresso): per montarlo in un altro programma.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>MOV video: plays on Apple devices and in editing programs.</source>
+        <translation>Video MOV: si apre sui dispositivi Apple e nei programmi di montaggio.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>WebM video (%1 and Opus): for web pages.</source>
+        <translation>Video WebM (%1 e Opus): per le pagine web.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>MP4 video (H.264 and AAC): plays everywhere.</source>
         <translation>Video MP4 (H.264 e AAC): si riproduce ovunque.</translation>
     </message>
@@ -1250,7 +1370,7 @@
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+36"/>
         <source>%1% · about %2 s left</source>
         <translation>%1% · mancano circa %2 s</translation>
     </message>
@@ -5117,7 +5237,7 @@
         <translation>Sostituisci</translation>
     </message>
     <message>
-        <location line="+144"/>
+        <location line="+148"/>
         <source>Group into a compound clip</source>
         <translation>Raggruppa in una clip composta</translation>
     </message>
@@ -8137,7 +8257,12 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+217"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+123"/>
+        <source>The captions cannot be saved in %1.</source>
+        <translation type="unfinished">Impossibile salvare i sottotitoli in %1.</translation>
+    </message>
+    <message>
+        <location line="+108"/>
         <location line="+1394"/>
         <source>Rename project</source>
         <translation>Rinomina progetto</translation>
@@ -8532,7 +8657,7 @@
         <translation>copertina</translation>
     </message>
     <message>
-        <location line="+76"/>
+        <location line="+95"/>
         <source>%1 GB</source>
         <translation>%1 GB</translation>
     </message>
@@ -8542,12 +8667,25 @@
         <translation>%1 MB</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
+        <source>Sound only · %1 · about %2</source>
+        <translation>Solo audio · %1 · circa %2</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+4"/>
+        <source>%1 × %2 · %n picture(s) · about %3</source>
+        <translation>
+            <numerusform>%1 × %2 · %n immagine · circa %3</numerusform>
+            <numerusform>%1 × %2 · %n immagini · circa %3</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>%1 × %2 · %3 · about %4</source>
         <translation>%1 × %2 · %3 · circa %4</translation>
     </message>
     <message>
-        <location line="+304"/>
+        <location line="+333"/>
         <source>Select at least 2 clips to synchronize by audio.</source>
         <translation>Seleziona almeno 2 clip da sincronizzare con l&apos;audio.</translation>
     </message>

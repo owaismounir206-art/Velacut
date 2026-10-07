@@ -43,6 +43,7 @@
 #include <QLoggingCategory>
 #include <QPointer>
 #include <QRegularExpression>
+#include <QSaveFile>
 #include <QThreadPool>
 #include <QUuid>
 
@@ -115,8 +116,21 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
         pendingImportDone(path, std::nullopt);
     });
     connect(m_importer.get(), &engine::MediaImporter::busyChanged, this, &EditorController::importingChanged);
-    connect(m_exportJob.get(), &engine::RenderJob::finished, this, [this](const QString &path) { emit exportFinished(path); });
-    connect(m_exportJob.get(), &engine::RenderJob::failed, this, [this](const QString &text) { emit message(text, false); });
+    connect(m_exportJob.get(), &engine::RenderJob::finished, this, [this](const QString &path) {
+        if (m_pendingCaptions) {
+            QSaveFile file(m_pendingCaptions->first);
+            if (!file.open(QIODevice::WriteOnly) || file.write(m_pendingCaptions->second.toUtf8()) < 0 || !file.commit()) {
+                emit message(tr("The captions cannot be saved in %1.").arg(m_pendingCaptions->first), false);
+            }
+            m_pendingCaptions.reset();
+        }
+        emit exportFinished(path);
+    });
+    connect(m_exportJob.get(), &engine::RenderJob::failed, this, [this](const QString &text) {
+        m_pendingCaptions.reset();
+        emit message(text, false);
+    });
+    connect(m_exportJob.get(), &engine::RenderJob::cancelled, this, [this] { m_pendingCaptions.reset(); });
 
     connect(&project, &Project::changed, this, &EditorController::onProjectChanged);
     connect(m_document.get(), &document::Document::saveStateChanged, this, &EditorController::saveStateChanged);
@@ -2779,13 +2793,30 @@ QVariantMap EditorController::exportDefaults() const
             {u"codec"_s, saved.contains(u"codec"_s) ? saved.value(u"codec"_s).toString() : u"h264"_s},
             {u"hardware"_s, saved.contains(u"hardware"_s) ? saved.value(u"hardware"_s).toBool() : true},
             {u"maxFileSizeMB"_s, saved.contains(u"maxFileSizeMB"_s) ? saved.value(u"maxFileSizeMB"_s).toInt() : 0},
+            {u"format"_s, last.contains(u"format"_s) ? last.value(u"format"_s).toString() : u"mp4"_s},
+            {u"captionsFile"_s, last.value(u"captionsFile"_s).toBool()},
+            {u"hasCaptions"_s, std::ranges::any_of(data().mainSequence() ? data().mainSequence()->visualTracks : std::vector<Track>{},
+                                                  [](const Track &track) { return track.captions && !track.clips.empty(); })},
             // What the machine can really do (SPEC §5.15): verified by the probe at startup.
             {u"hardwareAvailable"_s, !m_hardwareEncoders.isEmpty()},
             {u"gpuName"_s, m_gpuName}};
 }
 
+TimeRange EditorController::exportRange(bool onlyInOut) const
+{
+    const Sequence *sequence = data().mainSequence();
+    if (!onlyInOut || !hasInOut() || !sequence) {
+        return {};
+    }
+    const Rational rate = data().settings.frameRate;
+    const std::int64_t length = sequence->duration(rate).value();
+    const std::int64_t in = std::clamp<std::int64_t>(std::max(0, m_inPoint), 0, std::max<std::int64_t>(0, length - 1));
+    const std::int64_t out = std::clamp<std::int64_t>(m_outPoint >= 0 ? m_outPoint : length - 1, in, std::max<std::int64_t>(in, length - 1));
+    return TimeRange(RationalTime(in, rate), RationalTime(out - in + 1, rate));
+}
+
 QString EditorController::exportEstimate(int shortSide, const QString &frameRate, int quality, const QString &codec,
-                                         int maxFileSizeMB) const
+                                         int maxFileSizeMB, const QString &format, bool onlyInOut) const
 {
     const Sequence *sequence = data().mainSequence();
     const std::optional<Rational> rate = Rational::fromString(frameRate);
@@ -2793,43 +2824,63 @@ QString EditorController::exportEstimate(int shortSide, const QString &frameRate
         return {};
     }
     engine::ExportSettings settings;
+    settings.format = engine::exportFormatFromName(format).value_or(engine::ExportFormat::Mp4);
     settings.size = engine::scaledToShortSide(canvasSize(), shortSide);
     settings.frameRate = *rate;
     settings.quality = static_cast<engine::ExportQuality>(std::clamp(quality, 0, 2));
     settings.videoCodec = engine::videoCodecFromName(codec).value_or(engine::VideoCodec::H264);
     settings.maxFileSizeMB = maxFileSizeMB;
-    const RationalTime duration = sequence->duration(data().settings.frameRate);
+    settings.range = exportRange(onlyInOut);
+    const RationalTime duration = engine::exportedDuration(settings, sequence->duration(data().settings.frameRate));
     const double megabytes = static_cast<double>(engine::estimatedFileSize(settings, duration)) / 1e6;
     const QString size = megabytes >= 1000 ? tr("%1 GB").arg(QLocale().toString(megabytes / 1000, 'f', 1))
                                            : tr("%1 MB").arg(QLocale().toString(std::max(1.0, std::round(megabytes)), 'f', 0));
+    const QString length = MediaPoolModel::durationText(duration.toSecondsDouble());
+    if (!engine::hasVideo(settings.format)) {
+        return tr("Sound only · %1 · about %2").arg(length, size);
+    }
+    if (settings.format == engine::ExportFormat::Images) {
+        const auto pictures = duration.rescaled(*rate, Rounding::NearestEven).value();
+        return tr("%1 × %2 · %n picture(s) · about %3", "", static_cast<int>(pictures))
+            .arg(settings.size.width())
+            .arg(settings.size.height())
+            .arg(size);
+    }
     return tr("%1 × %2 · %3 · about %4")
         .arg(settings.size.width())
         .arg(settings.size.height())
-        .arg(MediaPoolModel::durationText(duration.toSecondsDouble()), size);
+        .arg(length, size);
 }
 
 bool EditorController::startExport(const QString &fileName, const QString &folder, int shortSide,
                                    const QString &frameRate, int quality, bool normalizeLoudness,
-                                   double targetLufs, const QString &codec, bool hardware, int maxFileSizeMB)
+                                   double targetLufs, const QString &codec, bool hardware, int maxFileSizeMB,
+                                   const QString &format, bool onlyInOut, bool captionsFile)
 {
     const std::optional<Rational> rate = Rational::fromString(frameRate);
     if (!rate || m_exportJob->running()) {
         return false;
     }
+    const engine::ExportFormat exportFormat = engine::exportFormatFromName(format).value_or(engine::ExportFormat::Mp4);
+    // "video.mp4" typed in the name: the suffix comes from the format.
     QString base = fileName.trimmed();
-    if (base.endsWith(u".mp4"_s, Qt::CaseInsensitive)) {
-        base.chop(4);
-    }
+    static const QRegularExpression knownSuffix(u"\\.(mp4|mov|webm|gif|png|mp3|wav|m4a|flac|srt)$"_s,
+                                                QRegularExpression::CaseInsensitiveOption);
+    base.remove(knownSuffix);
     if (base.isEmpty()) {
         base = u"video"_s;
     }
-    // Never overwrite an existing video: "name (2).mp4".
-    QString path = QDir(folder).filePath(base + u".mp4"_s);
+    // Never overwrite an existing video (or folder of pictures): "name (2).mp4".
+    const QString suffix = engine::exportSuffix(exportFormat);
+    const auto named = [&](const QString &name) { return QDir(folder).filePath(suffix.isEmpty() ? name : name + u'.' + suffix); };
+    QString path = named(base);
     for (int n = 2; QFileInfo::exists(path); ++n) {
-        path = QDir(folder).filePath(u"%1 (%2).mp4"_s.arg(base).arg(n));
+        path = named(u"%1 (%2)"_s.arg(base).arg(n));
     }
     engine::ExportSettings settings;
     settings.outputPath = path;
+    settings.format = exportFormat;
+    settings.range = exportRange(onlyInOut);
     settings.size = engine::scaledToShortSide(canvasSize(), shortSide);
     settings.frameRate = *rate;
     settings.quality = static_cast<engine::ExportQuality>(std::clamp(quality, 0, 2));
@@ -2842,14 +2893,36 @@ bool EditorController::startExport(const QString &fileName, const QString &folde
     settings.normalizeLoudness = normalizeLoudness;
     settings.coverImage = coverPath(); // the cover chosen by the user goes into the file
     settings.targetLufs = targetLufs;
+    // The captions as an SRT file next to the video, written when the video is complete.
+    m_pendingCaptions.reset();
+    if (captionsFile && engine::hasVideo(exportFormat) && exportFormat != engine::ExportFormat::Images) {
+        if (const Sequence *sequence = data().mainSequence()) {
+            for (const Track &track : sequence->visualTracks) {
+                if (track.captions && !track.clips.empty()) {
+                    const std::vector<SubtitleEntry> entries = captions::entriesOf(track, settings.range);
+                    if (!entries.empty()) {
+                        m_pendingCaptions = std::pair{QFileInfo(path).absolutePath() + u'/' + QFileInfo(path).completeBaseName() + u".srt"_s,
+                                                      SubtitleFormat::formatSRT(entries)};
+                    }
+                    break;
+                }
+            }
+        }
+    }
     QJsonObject state = m_document->uiState();
     state.insert(u"export"_s, QJsonObject{{u"folder"_s, folder},
                                          {u"quality"_s, quality},
+                                         {u"format"_s, engine::exportFormatName(exportFormat)},
+                                         {u"captionsFile"_s, captionsFile},
                                          {u"advanced"_s, QJsonObject{{u"codec"_s, engine::videoCodecName(settings.videoCodec)},
                                                                      {u"hardware"_s, hardware},
                                                                      {u"maxFileSizeMB"_s, settings.maxFileSizeMB}}}});
     m_document->setUiState(state);
-    return m_exportJob->start(data(), data().mainSequenceId, settings);
+    if (!m_exportJob->start(data(), data().mainSequenceId, settings)) {
+        m_pendingCaptions.reset();
+        return false;
+    }
+    return true;
 }
 
 QString EditorController::folderPath(const QUrl &url) const

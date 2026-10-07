@@ -343,12 +343,17 @@ public:
 
     // Export (one screen, SPEC §5.15)
     Q_INVOKABLE QVariantMap exportDefaults() const;
+    // `format`: an engine::ExportFormat name ("mp4", "mov", "webm", "gif", "png", "mp3", "wav", "m4a", "flac");
+    // `onlyInOut`: only the part between the In and Out points (when set).
     Q_INVOKABLE QString exportEstimate(int shortSide, const QString &frameRate, int quality, const QString &codec = QStringLiteral("h264"),
-                                       int maxFileSizeMB = 0) const;
+                                       int maxFileSizeMB = 0, const QString &format = QStringLiteral("mp4"),
+                                       bool onlyInOut = false) const;
+    // `captionsFile`: the captions also saved next to the video as an SRT file (SPEC §5.8, "traccia separata").
     Q_INVOKABLE bool startExport(const QString &fileName, const QString &folder, int shortSide, const QString &frameRate,
                                  int quality, bool normalizeLoudness = false, double targetLufs = -14.0,
                                  const QString &codec = QStringLiteral("h264"), bool hardware = true,
-                                 int maxFileSizeMB = 0);
+                                 int maxFileSizeMB = 0, const QString &format = QStringLiteral("mp4"),
+                                 bool onlyInOut = false, bool captionsFile = false);
     Q_INVOKABLE QString folderPath(const QUrl &url) const;
     // Hardware encoders verified by the probe and the name of the GPU that has them (shown in the export window).
     void setHardwareEncoding(QStringList encoders, QString gpuName);
@@ -448,6 +453,10 @@ private:
     int m_insertStart = 0;  // where the files were dropped: music starts here, under the video
     int m_insertCursor = 0; // after the last video or photo placed
     bool m_snappingEnabled = true;
+    // The part of the timeline an export covers: between In and Out when asked and set, else empty (all of it).
+    TimeRange exportRange(bool onlyInOut) const;
+    // Captions written next to the exported video once it is complete (path, SRT text).
+    std::optional<std::pair<QString, QString>> m_pendingCaptions;
     int m_inPoint = -1;
     int m_outPoint = -1;
     int m_coverSerial = 0; // cache-busting part of coverUrl

@@ -17,6 +17,7 @@
 #include <mlt++/Mlt.h>
 
 #include <chrono>
+#include <memory>
 #include <filesystem>
 #include <thread>
 
@@ -54,6 +55,31 @@ QByteArray kbps(qint64 bitsPerSecond)
     return QByteArray::number((bitsPerSecond + 500) / 1000) + "k";
 }
 
+// FFmpeg's muxer for a format (a GIF is first an MP4, see render()).
+const char *containerOf(ExportFormat format)
+{
+    switch (format) {
+    case ExportFormat::Mp4:
+    case ExportFormat::Gif:
+        return "mp4";
+    case ExportFormat::Mov:
+        return "mov";
+    case ExportFormat::WebM:
+        return "webm";
+    case ExportFormat::Images:
+        return "image2";
+    case ExportFormat::Mp3:
+        return "mp3";
+    case ExportFormat::Wav:
+        return "wav";
+    case ExportFormat::M4a:
+        return "ipod";
+    case ExportFormat::Flac:
+        return "flac";
+    }
+    return "mp4";
+}
+
 } // namespace
 
 Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &sequenceId, const ExportSettings &settings,
@@ -71,16 +97,37 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
         return failure(RenderError::NothingToExport);
     }
 
-    // The encoder writes a hidden file in the destination folder, renamed when complete (same filesystem).
+    // The encoder writes a hidden file in the destination folder, renamed when complete (same filesystem). Pictures
+    // go in a hidden folder, renamed the same way.
     const QFileInfo output(settings.outputPath);
-    const QString partial = output.absolutePath() + u"/."_s + output.completeBaseName() + u".part-"_s +
-                            QUuid::createUuid().toString(QUuid::Id128).left(8) + u"."_s + output.suffix();
-    {
+    const bool pictures = settings.format == ExportFormat::Images;
+    const bool gif = settings.format == ExportFormat::Gif;
+    const QString partial = output.absolutePath() + u"/."_s + (pictures ? output.fileName() : output.completeBaseName()) +
+                            u".part-"_s + QUuid::createUuid().toString(QUuid::Id128).left(8) +
+                            (pictures ? QString() : u"."_s + output.suffix());
+    if (pictures) {
+        if (!QDir().mkpath(partial)) {
+            return failure(RenderError::OutputNotWritable, partial);
+        }
+    } else {
         QFile probe(partial);
         if (!probe.open(QIODevice::WriteOnly)) {
             return failure(RenderError::OutputNotWritable, probe.errorString());
         }
     }
+    // What the consumer writes: the file, the pictures' pattern, or for a GIF the video it is made from.
+    const QString encoded = pictures ? partial + u'/' + output.fileName() + u"_%05d.png"_s
+                          : gif ? partial + u".source.mp4"_s : partial;
+    const auto removePartial = [&] {
+        if (pictures) {
+            QDir(partial).removeRecursively();
+        } else {
+            QFile::remove(partial);
+        }
+        if (gif) {
+            QFile::remove(encoded);
+        }
+    };
 
     Result result;
     int total = 0;
@@ -91,7 +138,16 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
         TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
         projection.build(project, sequenceId);
         result.warnings = projection.warnings();
+        // The part between the In and Out points, if asked (SPEC §5.15).
+        int first = 0;
         total = projection.duration();
+        if (!settings.range.isEmpty()) {
+            first = static_cast<int>(std::clamp<std::int64_t>(
+                settings.range.start.rescaled(settings.frameRate, Rounding::NearestEven).value(), 0, std::max(0, total - 1)));
+            const int length = static_cast<int>(settings.range.duration.rescaled(settings.frameRate, Rounding::NearestEven).value());
+            total = std::clamp(length, 1, total - first);
+        }
+        std::unique_ptr<Mlt::Producer> part(projection.tractor()->cut(first, first + total - 1));
 
         const RationalTime duration(total, settings.frameRate);
         EncoderPlan plan = planEncoder(settings, hardwareEncoders, duration);
@@ -102,38 +158,59 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
         // `partial`; on failure the partial file is removed and `failureDetail` says where it stopped.
         const auto attempt = [&](const EncoderPlan &planToRun) -> std::optional<RenderError> {
             MltRuntime::clearLastError();
-            Mlt::Consumer consumer(*profile, "avformat", QFile::encodeName(partial).constData());
-            consumer.set("f", "mp4");
-            consumer.set("movflags", "+faststart");
-            consumer.set("vcodec", planToRun.vcodec.constData());
-            if (!planToRun.hardware) {
-                consumer.set("pix_fmt", "yuv420p");
+            Mlt::Consumer consumer(*profile, "avformat", QFile::encodeName(encoded).constData());
+            consumer.set("f", containerOf(settings.format));
+            if (settings.format == ExportFormat::Mp4 || settings.format == ExportFormat::Mov || gif) {
+                consumer.set("movflags", "+faststart");
             }
-            consumer.set(planToRun.qualityOption.constData(), planToRun.qualityValue);
-            if (!planToRun.preset.isEmpty()) {
-                consumer.set("preset", planToRun.preset.constData());
-            }
-            if (planToRun.videoBitrate > 0) {
-                consumer.set("vb", kbps(planToRun.videoBitrate).constData());
-                if (planToRun.twoPass) {
-                    consumer.set("v2pass", 1);
+            if (planToRun.vcodec.isEmpty()) {
+                consumer.set("vn", 1);
+            } else {
+                consumer.set("vcodec", planToRun.vcodec.constData());
+                if (!planToRun.hardware && !planToRun.pixelFormat.isEmpty()) {
+                    consumer.set("pix_fmt", planToRun.pixelFormat.constData());
+                }
+                if (!planToRun.qualityOption.isEmpty()) {
+                    consumer.set(planToRun.qualityOption.constData(), planToRun.qualityValue);
+                }
+                if (!planToRun.preset.isEmpty()) {
+                    consumer.set("preset", planToRun.preset.constData());
+                }
+                if (planToRun.videoBitrate > 0) {
+                    consumer.set("vb", kbps(planToRun.videoBitrate).constData());
+                    if (planToRun.twoPass) {
+                        consumer.set("v2pass", 1);
+                    }
+                }
+                if (planToRun.videoMaxBitrate > 0) {
+                    consumer.set("maxrate", kbps(planToRun.videoMaxBitrate).constData());
+                    consumer.set("bufsize", kbps(planToRun.videoMaxBitrate * 2).constData());
+                }
+                for (const auto &[key, value] : planToRun.options) {
+                    consumer.set(key.constData(), value.constData());
+                }
+                // A keyframe every 2 s: quick seeking in players and editors.
+                if (!pictures) {
+                    consumer.set("g", std::max(1, static_cast<int>(std::lround(2.0 * settings.frameRate.toDouble()))));
                 }
             }
-            consumer.set("maxrate", kbps(planToRun.videoMaxBitrate).constData());
-            consumer.set("bufsize", kbps(planToRun.videoMaxBitrate * 2).constData());
-            // A keyframe every 2 s: quick seeking in players and editors.
-            consumer.set("g", std::max(1, static_cast<int>(std::lround(2.0 * settings.frameRate.toDouble()))));
-            consumer.set("acodec", "aac");
-            consumer.set("ab", kbps(planToRun.audioBitrate).constData());
-            consumer.set("ar", 48000);
-            consumer.set("ac", 2);
+            if (planToRun.acodec.isEmpty()) {
+                consumer.set("an", 1);
+            } else {
+                consumer.set("acodec", planToRun.acodec.constData());
+                if (planToRun.acodec != "pcm_s16le" && planToRun.acodec != "flac") {
+                    consumer.set("ab", kbps(planToRun.audioBitrate).constData());
+                }
+                consumer.set("ar", 48000);
+                consumer.set("ac", 2);
+            }
             consumer.set("threads", 0);
             // Every frame is rendered (no dropping) by one read-ahead thread; see D-24 for why not worker threads.
             consumer.set("real_time", -1);
             consumer.set("terminate_on_pause", 1);
-            consumer.connect(*projection.tractor());
-            projection.tractor()->set_speed(1.0);
-            projection.tractor()->seek(0);
+            consumer.connect(*part);
+            part->set_speed(1.0);
+            part->seek(0);
             reached = -1;
             qCInfo(lcRender) << "exporting" << total << "frames" << settings.size << settings.frameRate.toString()
                              << "with" << planToRun.vcodec.constData() << "to" << settings.outputPath;
@@ -152,9 +229,10 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
             }
             reached = std::max(reached, consumer.position());
             consumer.stop();
-            const qint64 size = QFileInfo(partial).size();
+            const qint64 size = pictures ? static_cast<qint64>(QDir(partial).entryList(QDir::Files).size())
+                                         : QFileInfo(encoded).size();
             if (size <= 0 || reached < total - 1) {
-                QFile::remove(partial);
+                removePartial();
                 const QString mltError = MltRuntime::lastError();
                 failureDetail = u"stopped at frame %1 of %2 with %3 (encoder %4)%5"_s.arg(reached + 1)
                                     .arg(total)
@@ -169,6 +247,7 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
 
         if (attempt(plan)) {
             if (cancelled) {
+                removePartial();
                 result.status = Status::Cancelled;
                 return result;
             }
@@ -183,6 +262,7 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
                 plan = planEncoder(softwareSettings, {}, duration);
                 if (attempt(plan)) {
                     if (cancelled) {
+                        removePartial();
                         result.status = Status::Cancelled;
                         return result;
                     }
@@ -200,16 +280,36 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
         }
     }
 
-    if (settings.normalizeLoudness) {
+    // A GIF from the video just made: its own palette of 256 colours, then the picture dithered on it (one pass each).
+    if (gif) {
+        QProcess process;
+        process.start(u"ffmpeg"_s, {u"-hide_banner"_s, u"-loglevel"_s, u"error"_s, u"-y"_s, u"-i"_s, encoded, u"-vf"_s,
+                                     u"split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle"_s,
+                                     u"-loop"_s, u"0"_s, u"-f"_s, u"gif"_s, partial});
+        const bool made = process.waitForFinished(-1) && process.exitStatus() == QProcess::NormalExit
+                          && process.exitCode() == 0 && QFileInfo(partial).size() > 0;
+        QFile::remove(encoded);
+        if (!made) {
+            const QString detail = QString::fromLocal8Bit(process.readAllStandardError()).trimmed();
+            QFile::remove(partial);
+            return failure(RenderError::EncoderFailed, u"gif: "_s + detail);
+        }
+    }
+    if (settings.normalizeLoudness && hasAudio(settings.format)) {
         const auto stats = extractLoudness(partial);
         if (stats && std::isfinite(stats->integratedLufs) && stats->integratedLufs > -70.0) {
             const double gainDb = fx::gainAdjustmentForTargetLufs(stats->integratedLufs, settings.targetLufs);
             if (std::abs(gainDb) >= 0.1) {
-                const QString adjustedPartial = partial + u".lufs.mp4"_s;
+                const QString adjustedPartial = partial + u".lufs."_s + output.suffix();
+                const EncoderPlan audio = planEncoder(settings, {}, RationalTime(total, settings.frameRate));
                 QStringList args;
                 args << u"-y"_s << u"-i"_s << partial << u"-c:v"_s << u"copy"_s
                      << u"-af"_s << QString::asprintf("volume=%.2fdB", gainDb)
-                     << u"-c:a"_s << u"aac"_s << u"-b:a"_s << u"192k"_s << adjustedPartial;
+                     << u"-c:a"_s << QString::fromLatin1(audio.acodec);
+                if (audio.acodec != "pcm_s16le" && audio.acodec != "flac") {
+                    args << u"-b:a"_s << QString::fromLatin1(kbps(audio.audioBitrate));
+                }
+                args << u"-f"_s << QString::fromLatin1(containerOf(settings.format)) << adjustedPartial;
                 QProcess process;
                 process.start(u"ffmpeg"_s, args);
                 if (process.waitForFinished(60000) && process.exitCode() == 0) {
@@ -244,7 +344,7 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
     std::filesystem::rename(QFile::encodeName(partial).toStdString(), QFile::encodeName(output.absoluteFilePath()).toStdString(),
                             error);
     if (error) {
-        QFile::remove(partial);
+        removePartial();
         return failure(RenderError::OutputNotWritable, QString::fromStdString(error.message()));
     }
     if (progress) {

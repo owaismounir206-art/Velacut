@@ -185,7 +185,7 @@
 <context>
     <name>vedit::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+997"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+1011"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>
@@ -238,6 +238,14 @@
         <translation>
             <numerusform>%n clip deleted, gap closed</numerusform>
             <numerusform>%n clips deleted, gap closed</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+651"/>
+        <source>%1 × %2 · %n picture(s) · about %3</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
 </context>

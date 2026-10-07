@@ -432,6 +432,82 @@ private slots:
         QCOMPARE(video.value(u"nb_read_frames"_s).toString().toInt(), 195);
     }
 
+    // Every format of SPEC §5.15 through the whole renderer: MOV ProRes, WebM VP9, GIF with its own palette, a folder
+    // of PNG pictures and the sound alone; and only the part between In and Out.
+    void exportsEveryFormat()
+    {
+        const ProjectData data = editedProject();
+        std::atomic<bool> cancel{false};
+        const auto run = [&](ExportFormat format, const QString &name, VideoCodec codec = VideoCodec::H264) {
+            ExportSettings settings = settingsFor(data, outputPath(name));
+            settings.format = format;
+            settings.videoCodec = codec;
+            settings.hardwareEncoder = HardwareEncoder::Off;
+            return Renderer::render(data, data.mainSequenceId, settings, {}, cancel).status == Renderer::Status::Done;
+        };
+        const auto frameCount = [](const QJsonObject &stream) { return stream.value(u"nb_read_frames"_s).toString().toInt(); };
+
+        QVERIFY(run(ExportFormat::Mov, u"edit.mov"_s, VideoCodec::ProRes));
+        QJsonObject probe = ffprobe(outputPath(u"edit.mov"_s));
+        QCOMPARE(streamOfType(probe, u"video"_s).value(u"codec_name"_s).toString(), u"prores"_s);
+        QCOMPARE(streamOfType(probe, u"video"_s).value(u"pix_fmt"_s).toString(), u"yuv422p10le"_s);
+        QCOMPARE(streamOfType(probe, u"audio"_s).value(u"codec_name"_s).toString(), u"pcm_s16le"_s);
+        QCOMPARE(frameCount(streamOfType(probe, u"video"_s)), 195);
+
+        QVERIFY(run(ExportFormat::WebM, u"web.webm"_s, VideoCodec::H264)); // H.264 does not go in WebM: VP9
+        probe = ffprobe(outputPath(u"web.webm"_s));
+        QCOMPARE(streamOfType(probe, u"video"_s).value(u"codec_name"_s).toString(), u"vp9"_s);
+        QCOMPARE(streamOfType(probe, u"audio"_s).value(u"codec_name"_s).toString(), u"opus"_s);
+        QCOMPARE(frameCount(streamOfType(probe, u"video"_s)), 195);
+
+        QVERIFY(run(ExportFormat::Gif, u"loop.gif"_s));
+        probe = ffprobe(outputPath(u"loop.gif"_s));
+        QCOMPARE(streamOfType(probe, u"video"_s).value(u"codec_name"_s).toString(), u"gif"_s);
+        QCOMPARE(frameCount(streamOfType(probe, u"video"_s)), 195);
+        QVERIFY(streamOfType(probe, u"audio"_s).isEmpty());
+
+        QVERIFY(run(ExportFormat::Images, u"frames"_s));
+        const QStringList pictures = QDir(outputPath(u"frames"_s)).entryList({u"*.png"_s}, QDir::Files, QDir::Name);
+        QCOMPARE(pictures.size(), 195);
+        QCOMPARE(pictures.front(), u"frames_00001.png"_s);
+        QCOMPARE(QImage(outputPath(u"frames/"_s) + pictures.front()).size(), QSize(320, 180));
+
+        for (const auto &[format, name, codec] : {std::tuple{ExportFormat::Mp3, u"sound.mp3"_s, u"mp3"_s},
+                                                  std::tuple{ExportFormat::Wav, u"sound.wav"_s, u"pcm_s16le"_s},
+                                                  std::tuple{ExportFormat::M4a, u"sound.m4a"_s, u"aac"_s},
+                                                  std::tuple{ExportFormat::Flac, u"sound.flac"_s, u"flac"_s}}) {
+            QVERIFY2(run(format, name), qPrintable(name));
+            probe = ffprobe(outputPath(name));
+            QVERIFY2(streamOfType(probe, u"video"_s).isEmpty(), qPrintable(name));
+            QCOMPARE(streamOfType(probe, u"audio"_s).value(u"codec_name"_s).toString(), codec);
+            const double seconds = probe.value(u"format"_s).toObject().value(u"duration"_s).toString().toDouble();
+            QVERIFY2(std::abs(seconds - 6.5) < 0.15, qPrintable(u"%1: %2 s"_s.arg(name).arg(seconds))); // the music is 6 s, the video 6.5
+        }
+        // Nothing half-made is left in the folder.
+        QVERIFY(QDir(outputPath(QString())).entryList({u".*part*"_s}, QDir::Files | QDir::Dirs | QDir::Hidden).isEmpty());
+
+        // Only between In and Out: frames 30 to 89 of the timeline, the first frame being the timeline's frame 30.
+        ExportSettings part = settingsFor(data, outputPath(u"part.mp4"_s));
+        part.hardwareEncoder = HardwareEncoder::Off;
+        part.range = TimeRange(RationalTime(30, Rational(30)), RationalTime(60, Rational(30)));
+        QCOMPARE(Renderer::render(data, data.mainSequenceId, part, {}, cancel).status, Renderer::Status::Done);
+        QCOMPARE(frameCount(streamOfType(ffprobe(outputPath(u"part.mp4"_s)), u"video"_s)), 60);
+        {
+            auto profile = makeProfile(data, data.mainSequenceId);
+            MediaProducerCache cache(*profile);
+            TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+            projection.build(data, data.mainSequenceId);
+            const QImage first = decodeFrame(outputPath(u"part.mp4"_s), 0, m_dir.path());
+            QVERIFY(meanDifference(first, projection.renderFrame(30)) < 6.0);
+            QVERIFY(meanDifference(first, projection.renderFrame(0)) > meanDifference(first, projection.renderFrame(30)));
+        }
+        QCOMPARE(exportedDuration(part, RationalTime(195, Rational(30))), RationalTime(60, Rational(30)));
+        part.range = TimeRange(RationalTime(180, Rational(30)), RationalTime(60, Rational(30)));
+        QCOMPARE(exportedDuration(part, RationalTime(195, Rational(30))), RationalTime(15, Rational(30)));
+        // Settings with a format and a range survive the job file.
+        QCOMPARE(ExportSettings::fromJson(part.toJson()), part);
+    }
+
     // "Under N MB" (SPEC §5.15): the file must exist, be complete and be smaller than the target.
     void exportRespectsMaximumSize()
     {

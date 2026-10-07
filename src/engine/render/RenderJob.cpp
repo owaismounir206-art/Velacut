@@ -103,14 +103,14 @@ bool RenderJob::start(const ProjectData &project, const SequenceId &sequenceId, 
 
     const Sequence *sequence = project.findSequence(sequenceId);
     const RationalTime duration = sequence ? sequence->duration(settings.frameRate) : RationalTime();
-    if (!sequence || duration.isZero()) {
+    if (!sequence || duration.isZero() || exportedDuration(settings, duration).isZero()) {
         emit failed(errorMessage(RenderError::NothingToExport), {});
         return false;
     }
     // Check the space before starting rather than failing at 90% (SPEC §5.15).
     const QString folder = QFileInfo(settings.outputPath).absolutePath();
     const QStorageInfo storage(folder);
-    const qint64 needed = estimatedFileSize(settings, duration);
+    const qint64 needed = estimatedFileSize(settings, exportedDuration(settings, duration));
     if (storage.isValid() && storage.bytesAvailable() >= 0 && storage.bytesAvailable() < needed) {
         emit failed(tr("There is not enough free space in this folder: about %1 MB are needed, %2 MB are free.")
                         .arg(std::ceil(needed / 1e6))
@@ -255,11 +255,18 @@ void RenderJob::finish()
 
 void RenderJob::removePartialFiles() const
 {
-    // Left only if vedit-render was killed: ".<name>.part-XXXXXXXX.<ext>" next to the output (see Renderer).
+    // Left only if vedit-render was killed: ".<name>.part-XXXXXXXX.<ext>" next to the output (see Renderer), with
+    // ".source.mp4" for a GIF, or the hidden folder ".<name>.part-XXXXXXXX" of pictures.
     const QFileInfo output(m_settings.outputPath);
-    const QString pattern = u"."_s + output.completeBaseName() + u".part-*."_s + output.suffix();
     QDir folder(output.absolutePath());
-    for (const QString &name : folder.entryList({pattern}, QDir::Files | QDir::Hidden)) {
+    if (m_settings.format == ExportFormat::Images) {
+        for (const QString &name : folder.entryList({u"."_s + output.fileName() + u".part-*"_s}, QDir::Dirs | QDir::Hidden)) {
+            QDir(folder.filePath(name)).removeRecursively();
+        }
+        return;
+    }
+    for (const QString &name : folder.entryList({u"."_s + output.completeBaseName() + u".part-*."_s + output.suffix() + u'*'},
+                                                QDir::Files | QDir::Hidden)) {
         folder.remove(name);
     }
 }

@@ -9,6 +9,8 @@
 #include <QStringList>
 
 #include <optional>
+#include <utility>
+#include <vector>
 
 namespace vedit::engine {
 
@@ -21,15 +23,41 @@ enum class ExportQuality
 };
 
 // Video codec offered in the export window's "Advanced" section (SPEC §5.15). H.264 is the default: it plays
-// everywhere; HEVC and AV1 make smaller files.
+// everywhere; HEVC and AV1 make smaller files; ProRes (MOV) is for editing elsewhere; VP9 and AV1 go in WebM.
 enum class VideoCodec
 {
     H264,
     HEVC,
     AV1,
+    ProRes,
+    VP9,
 };
-QString videoCodecName(VideoCodec codec);      // "h264", "hevc", "av1": also the JSON value
+QString videoCodecName(VideoCodec codec);      // "h264", "hevc", "av1", "prores", "vp9": also the JSON value
 std::optional<VideoCodec> videoCodecFromName(QStringView name);
+
+// What the export makes (SPEC §5.15): a video file, an animated GIF, a folder of PNG pictures (one per frame) or the
+// sound alone.
+enum class ExportFormat
+{
+    Mp4,
+    Mov,
+    WebM,
+    Gif,
+    Images,
+    Mp3,
+    Wav,
+    M4a,
+    Flac,
+};
+QString exportFormatName(ExportFormat format); // "mp4", "mov", "webm", "gif", "png", "mp3", "wav", "m4a", "flac"
+std::optional<ExportFormat> exportFormatFromName(QStringView name);
+// The file's suffix; empty for Images (the output is a folder).
+QString exportSuffix(ExportFormat format);
+bool hasVideo(ExportFormat format);
+bool hasAudio(ExportFormat format);
+// The codec really used for a video format: the chosen one if the format holds it, otherwise the format's own (MP4:
+// H.264, HEVC, AV1; MOV: ProRes, H.264, HEVC; WebM: VP9, AV1).
+VideoCodec codecFor(ExportFormat format, VideoCodec chosen);
 
 // Hardware encoding (SPEC §5.15): Auto uses the GPU encoder when the probe verified one, Off always encodes in
 // software. There is no "forced" mode: if the GPU encoder fails, the export restarts in software (never a failed
@@ -42,11 +70,14 @@ enum class HardwareEncoder
 QString hardwareEncoderName(HardwareEncoder encoder); // "auto" | "off": the JSON value
 std::optional<HardwareEncoder> hardwareEncoderFromName(QStringView name);
 
-// What the user chose in the export window. Phase 1: MP4, H.264 + AAC, software encoder (hardware encoders with
-// fallback arrive in Phase 8).
+// What the user chose in the export window.
 struct ExportSettings
 {
+    // A file, or for Images the folder that receives the pictures ("name_00001.png"…).
     QString outputPath;
+    ExportFormat format = ExportFormat::Mp4;
+    // Only this part of the sequence (between the In and Out points); empty = all of it.
+    TimeRange range;
     QSize size;
     Rational frameRate;
     ExportQuality quality = ExportQuality::Recommended;
@@ -79,15 +110,19 @@ EncoderParameters encoderParameters(const ExportSettings &settings);
 // rule 3). Pure function, tested: the renderer just follows it.
 struct EncoderPlan
 {
-    QByteArray vcodec;         // "libx264", "h264_vaapi", "libsvtav1"…
+    QByteArray vcodec;         // "libx264", "h264_vaapi", "libsvtav1", "prores_ks", "libvpx-vp9"…
+    QByteArray pixelFormat;    // forced on software encoders ("yuv420p", ProRes "yuv422p10le")
     bool hardware = false;     // a GPU encoder (no pix_fmt forcing, no x264 preset)
-    QByteArray qualityOption;  // "crf" (software) or "quality" (VA-API & co.)
+    QByteArray qualityOption;  // "crf" (software), "quality" (VA-API & co.), "profile" (ProRes)
     int qualityValue = 21;     // scale: lower = better looking
     QByteArray preset;         // only for x264/x265 (SVT-AV1 takes a numeric preset)
     qint64 videoBitrate = 0;   // > 0: average-bitrate mode (maximum file size)
     qint64 videoMaxBitrate = 0; // constant quality cap, or the average bitrate's ceiling
     int audioBitrate = 192000;  // bit/s
     bool twoPass = false;       // software only: two passes to respect a size target
+    QByteArray acodec = "aac";  // the sound's codec for the format; empty = no sound
+    // Other options of the encoder, as MLT passes them to FFmpeg (VP9: "row-mt", "cpu-used"…).
+    std::vector<std::pair<QByteArray, QByteArray>> options;
 };
 // `availableHardwareEncoders`: verified by the GPU probe (GpuCapabilities::video.encoders), passed to
 // vedit-render through the job. `duration` of the sequence, needed only by the size-target mode.
@@ -97,6 +132,9 @@ EncoderPlan planEncoder(const ExportSettings &settings, const QStringList &avail
 // Video average bitrate that respects settings.maxFileSizeMB (0 when there is no size target). The container
 // and audio take a share; the codec family needs fewer bits for the same look (HEVC ~0.6×, AV1 ~0.5× H.264).
 qint64 targetVideoBitrate(const ExportSettings &settings, const RationalTime &duration);
+
+// How long the export is: the range if there is one (clamped to the sequence), else the sequence.
+RationalTime exportedDuration(const ExportSettings &settings, const RationalTime &sequenceDuration);
 
 // Expected size in bytes of an export of `duration` (an estimate: constant quality varies with the content).
 qint64 estimatedFileSize(const ExportSettings &settings, const RationalTime &duration);

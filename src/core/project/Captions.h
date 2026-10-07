@@ -61,6 +61,9 @@ int activeWord(const std::vector<TimedWord> &words, const RationalTime &time);
 
 // The lines of a caption track as subtitle file entries (SRT/VTT export).
 std::vector<SubtitleEntry> entriesOf(const Track &track);
+// The same for a part of the timeline (an export between In and Out): the lines that show during `range`, cut to it
+// and timed from its start. An empty range is the whole track.
+std::vector<SubtitleEntry> entriesOf(const Track &track, const TimeRange &range);
 // Entries of a subtitle file as caption lines.
 std::vector<CaptionLine> linesOf(const std::vector<SubtitleEntry> &entries);
 

@@ -157,6 +157,26 @@ std::vector<SubtitleEntry> entriesOf(const Track &track)
     return entries;
 }
 
+std::vector<SubtitleEntry> entriesOf(const Track &track, const TimeRange &range)
+{
+    std::vector<SubtitleEntry> entries = entriesOf(track);
+    if (range.isEmpty()) {
+        return entries;
+    }
+    std::vector<SubtitleEntry> inside;
+    for (const SubtitleEntry &entry : entries) {
+        const Rational rate = entry.start.rate();
+        const RationalTime from = range.start.rescaled(rate, Rounding::NearestEven);
+        const RationalTime to = range.end().rescaled(rate, Rounding::NearestEven);
+        const RationalTime start = std::max(entry.start, from);
+        const RationalTime end = std::min(entry.end, to);
+        if (start < end) {
+            inside.push_back(SubtitleEntry{start - from, end - from, entry.text});
+        }
+    }
+    return inside;
+}
+
 std::vector<CaptionLine> linesOf(const std::vector<SubtitleEntry> &entries)
 {
     std::vector<CaptionLine> lines;
