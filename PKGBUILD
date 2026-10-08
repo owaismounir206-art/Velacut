@@ -1,10 +1,10 @@
-# Maintainer: velacut team
+# Maintainer: velacut team <https://github.com/owaismounir206-art/Velacut>
 pkgname=velacut
-pkgver=0.9.0
+pkgver=0.1.0
 pkgrel=1
 pkgdesc="Video editor desktop per Linux, completamente offline"
 arch=('x86_64')
-url="https://github.com/yourusername/velacut"
+url="https://github.com/owaismounir206-art/Velacut"
 license=('GPL3')
 depends=(
     'qt6-base'
@@ -18,6 +18,7 @@ depends=(
     'sdl2'
     'frei0r-plugins'
     'rubberband'
+    'hicolor-icon-theme'
 )
 makedepends=(
     'cmake'
@@ -29,8 +30,11 @@ optdepends=(
     'intel-media-driver: hardware encoding on Intel GPUs'
     'libva-mesa-driver: hardware encoding on AMD GPUs'
     'nvidia-utils: hardware encoding on NVIDIA GPUs'
+    'whisper.cpp: automatic speech-to-text subtitling'
+    'piper-tts: local text-to-speech audio generation'
+    'rembg: local background removal'
 )
-source=("git+https://github.com/yourusername/velacut.git#tag=v${pkgver}")
+source=("git+https://github.com/owaismounir206-art/Velacut.git")
 sha256sums=('SKIP')
 
 build() {
@@ -50,16 +54,4 @@ check() {
 package() {
     cd "$pkgname"
     DESTDIR="$pkgdir" cmake --install build
-
-    # Desktop file
-    install -Dm644 packaging/velacut.desktop "$pkgdir/usr/share/applications/velacut.desktop"
-
-    # Icon
-    install -Dm644 src/assets/icons/app-icon.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/velacut.svg"
-
-    # Man page
-    install -Dm644 docs/velacut.1 "$pkgdir/usr/share/man/man1/velacut.1"
-
-    # License
-    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

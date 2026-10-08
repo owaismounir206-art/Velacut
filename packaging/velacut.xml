@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+    <mime-type type="application/x-velacut-project">
+        <comment>Velacut Video Project</comment>
+        <comment xml:lang="it">Progetto Video Velacut</comment>
+        <glob pattern="*.vproj"/>
+        <icon name="velacut"/>
+    </mime-type>
+</mime-info>

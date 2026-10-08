@@ -797,8 +797,8 @@ cat > "$out.json" <<JSON
   {"text": " tut", "offsets": {"from": 700, "to": 1000}}, {"text": "ti", "offsets": {"from": 1000, "to": 1200}},
   {"text": ".", "offsets": {"from": 1200, "to": 1200}}]},
  {"offsets": {"from": 2000, "to": 3000}, "text": " Ecco velacut.", "tokens": [
-  {"text": " Ecco", "offsets": {"from": 2000, "to": 2400}}, {"text": " ved", "offsets": {"from": 2400, "to": 2700}},
-  {"text": "it.", "offsets": {"from": 2700, "to": 3000}}]}]}
+  {"text": " Ecco", "offsets": {"from": 2000, "to": 2400}}, {"text": " vela", "offsets": {"from": 2400, "to": 2700}},
+  {"text": "cut.", "offsets": {"from": 2700, "to": 3000}}]}]}
 JSON
 echo "whisper_print_progress_callback: progress = 100%" >&2
 )");

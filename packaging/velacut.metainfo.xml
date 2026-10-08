@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>velacut.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Velacut</name>
+  <summary>Offline desktop video editor for Linux</summary>
+  <summary xml:lang="it">Editor video desktop per Linux, completamente offline</summary>
+  <description>
+    <p>
+      Velacut is a high-performance, CapCut-inspired offline video editor for Linux built with modern C++20 and Qt 6.
+      It features a Material Design 3 interface, instant timeline cuts, GPU hardware acceleration with automatic fallbacks,
+      transitions, effects, automated AI transcription with whisper.cpp, and multiple export formats.
+    </p>
+    <p xml:lang="it">
+      Velacut è un editor video desktop per Linux moderno e performante, ispirato a CapCut, realizzato in C++20 e Qt 6.
+      Offre un'interfaccia Material Design 3, tagli istantanei, accelerazione hardware con fallback GPU/CPU, transizioni,
+      effetti, sottotitoli automatici con intelligenza artificiale locale (whisper.cpp) e molteplici profili di esportazione.
+    </p>
+  </description>
+  <launchable type="desktop-id">velacut.desktop</launchable>
+  <url type="homepage">https://github.com/owaismounir206-art/Velacut</url>
+  <url type="bugtracker">https://github.com/owaismounir206-art/Velacut/issues</url>
+  <provides>
+    <binary>velacut</binary>
+    <binary>velacut-render</binary>
+    <binary>velacut-gpuprobe</binary>
+  </provides>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Video</category>
+    <category>AudioVideoEditing</category>
+  </categories>
+</component>

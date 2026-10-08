@@ -1,13 +1,15 @@
 [Desktop Entry]
 Type=Application
-Name=velacut
+Name=Velacut
 GenericName=Video Editor
-Comment=Editor video desktop per Linux, completamente offline
+GenericName[it]=Editor Video
+Comment=Offline desktop video editor for Linux
+Comment[it]=Editor video desktop per Linux, completamente offline
 Icon=velacut
 Exec=velacut %F
 Terminal=false
-Categories=AudioVideo;Video;VideoEditing;Qt;
+Categories=AudioVideo;Video;VideoEditing;Qt;AudioVideoEditing;
 MimeType=video/mp4;video/x-matroska;video/quicktime;video/webm;video/mpeg;video/x-msvideo;application/x-velacut-project;
-Keywords=video;editor;editing;montaggio;timeline;
+Keywords=video;editor;editing;montaggio;timeline;cut;clips;velacut;
 StartupWMClass=velacut
 StartupNotify=true

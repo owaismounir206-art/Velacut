@@ -52,40 +52,109 @@ cronologia delle versioni, tour iniziale.
 - GPU: Intel/AMD/NVIDIA con driver Vulkan o OpenGL 3.3+
 - Fallback software completo disponibile (`--safe-mode`)
 
-## Compilazione
+## Installazione come Applicazione
+
+Puoi installare Velacut come una vera applicazione desktop per Linux (con icona nel menu di sistema, associazione file `.vproj` e lanciatore desktop).
+
+### Metodo 1: Script Diretto (Consigliato)
+
+```bash
+git clone https://github.com/owaismounir206-art/Velacut.git
+cd Velacut
+
+# Installazione per l'utente corrente (senza sudo, in ~/.local):
+./install.sh
+
+# Oppure installazione di sistema (in /usr/local):
+sudo ./install.sh
+```
+
+### Metodo 2: Arch Linux / EndeavourOS (Pacman)
+
+```bash
+cd Velacut
+makepkg -si
+```
+
+### Metodo 3: CMake Standard
+
+```bash
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DVELACUT_DEV_SANDBOX=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --build build
+sudo cmake --install build
+```
+
+---
+
+## Tutorial e Guida all'Uso
+
+Consulta la guida dettagliata passo-passo in [**docs/TUTORIAL.md**](docs/TUTORIAL.md).
+
+### Guida Rapida:
+1. **Avvio**: Apri "Velacut" dal menu delle applicazioni o digita `velacut` nel terminale.
+2. **Nuovo progetto**: Clicca su "Nuovo Progetto" o trascina un video nella schermata iniziale.
+3. **Importazione media**: Trascina video, musica o immagini sulla timeline.
+4. **Montaggio**:
+   - `S`: Taglia (split) la clip nel punto del cursore.
+   - `Q` / `W`: Ripple-trim (cancella ed elimina lo spazio a sinistra o a destra).
+   - `Canc`: Elimina la clip selezionata.
+   - `Spazio`: Riproduci o metti in pausa.
+5. **Transizioni ed Effetti**: Clicca sui tagli per scegliere tra oltre 100 transizioni, oppure seleziona una clip per applicare filtri ed effetti video.
+6. **Sottotitoli**: Genera automaticamente i sottotitoli sincronizzati parola per parola con AI locale (`whisper.cpp`).
+7. **Esportazione**: Premi `Ctrl+E` per aprire la finestra di export (MP4, HEVC, AV1, ProRes, GIF) con accelerazione hardware.
+
+Vedi anche [SHORTCUTS.md](docs/SHORTCUTS.md) per l'elenco completo delle scorciatoie.
+
+---
+
+## Disinstallazione
+
+Per rimuovere completamente Velacut dal sistema:
+
+```bash
+cd Velacut
+
+# Disinstallazione automatica dei binari, icona e lanciatore:
+./uninstall.sh
+
+# Oppure per rimuovere anche tutte le impostazioni, bozze e cache utente:
+./uninstall.sh --purge
+```
+
+Se hai installato tramite `makepkg` su Arch Linux:
+```bash
+sudo pacman -R velacut
+```
+
+Se hai installato tramite CMake:
+```bash
+cd Velacut/build && sudo ninja uninstall
+```
+
+---
+
+## Compilazione per Sviluppatori
 
 ```bash
 # Clone
-git clone https://github.com/yourusername/velacut.git
-cd velacut
+git clone https://github.com/owaismounir206-art/Velacut.git
+cd Velacut
 
-# Build
+# Build con sandbox di sviluppo
 cmake --preset dev
 cmake --build build
 
 # Test
 ctest --test-dir build --output-on-failure
 
-# Run
+# Esegui dalla cartella di build
 ./build/velacut
 ```
 
 ### Preset CMake Disponibili
-- `dev`: RelWithDebInfo, ottimizzato per sviluppo
+- `dev`: RelWithDebInfo, ottimizzato per sviluppo (con sandbox dev-home)
 - `debug`: Debug con ASan+UBSan per trovare bug
 - `release`: Release ottimizzato per produzione
-
-## Uso Base
-
-1. **Nuovo progetto**: avvia velacut o trascina un video
-2. **Import media**: trascina file sulla timeline o usa "+"
-3. **Editing**: trim con maniglie, split con `S`, cancella con `Del`
-4. **Testo**: pannello Testo → scegli stile → scrivi sul canvas
-5. **Transizioni**: clicca sul taglio tra due clip → scegli dalla libreria
-6. **Effetti**: seleziona clip → Effetti → scegli dalla libreria
-7. **Export**: `Ctrl+E` → scegli risoluzione e qualità → Esporta
-
-Vedi [SHORTCUTS.md](docs/SHORTCUTS.md) per tutte le scorciatoie.
 
 ## Test
 
