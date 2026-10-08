@@ -2,8 +2,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Theme
+import Velacut.UI
 
 Item {
     id: editor

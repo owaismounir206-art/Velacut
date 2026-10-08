@@ -12,7 +12,7 @@
 
 #include <optional>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 class EditorController;
 
@@ -199,10 +199,10 @@ private:
     bool playheadMatters();
     // The clip a library item applies to: the focused one, else the one under the playhead (not selected).
     const Clip *libraryClip() const;
-    const vedit::Transition *focusTransition(const Track **track = nullptr) const;
+    const velacut::Transition *focusTransition(const Track **track = nullptr) const;
     // The track "all the transitions" act on.
     const Track *transitionTrack() const;
-    std::optional<vedit::Transition> plannedTransition(const QString &typeId, const Track **track) const;
+    std::optional<velacut::Transition> plannedTransition(const QString &typeId, const Track **track) const;
     // The selected clips that have `section`.
     std::vector<ClipId> targets(const QString &section) const;
     bool supports(const Clip &clip, const QString &section) const;
@@ -218,4 +218,4 @@ private:
     QString m_canvasMode;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

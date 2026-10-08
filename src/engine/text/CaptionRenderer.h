@@ -12,7 +12,7 @@
 #include <memory>
 #include <vector>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // A caption line ready to be drawn: its words as outlines laid out on the canvas, grouped as the caption style shows
 // them, with their times in frames from the clip's start. Built once with fonts (CaptionRenderer::layout), then
@@ -66,4 +66,4 @@ public:
     static QRectF bounds(const CaptionLayout &layout, std::int64_t frame);
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

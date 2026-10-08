@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -372,4 +372,4 @@ void boxBlur(ImageView image, int radius)
     }
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

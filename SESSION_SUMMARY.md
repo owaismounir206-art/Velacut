@@ -20,7 +20,7 @@ Completare l'implementazione della SPEC (SPEC-editor-video.md) per tutte le 8 fa
 - ⚠️ Manca: UI QML per selezione template, Alt+drag sostituisci, salva come template
 
 **P5.9 — Gestore Asset**
-- ✅ `PackageManager` gestisce pacchetti in `~/.local/share/vedit/packs/`
+- ✅ `PackageManager` gestisce pacchetti in `~/.local/share/velacut/packs/`
 - ✅ Installazione/rimozione pacchetti da cartelle
 - ✅ Protezione pacchetto core
 - ⚠️ Manca: UI QML, supporto ZIP completo, integrazione fx::Library

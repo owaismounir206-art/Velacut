@@ -5,7 +5,7 @@
 #include <cmath>
 #include <numbers>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -215,4 +215,4 @@ LoudnessResult measureLoudness(const float *samples, int channels, int sampleRat
     return result;
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

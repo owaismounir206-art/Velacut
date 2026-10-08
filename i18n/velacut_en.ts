@@ -117,7 +117,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::AiController</name>
+    <name>velacut::ui::AiController</name>
     <message numerus="yes">
         <location filename="../src/ui/controllers/AiController.cpp" line="+607"/>
         <source>Highlights: %n s kept from the best moments</source>
@@ -144,7 +144,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::CaptionsController</name>
+    <name>velacut::ui::CaptionsController</name>
     <message numerus="yes">
         <location filename="../src/ui/controllers/CaptionsController.cpp" line="+222"/>
         <source>%n caption line(s) added</source>
@@ -163,7 +163,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::ClipInspector</name>
+    <name>velacut::ui::ClipInspector</name>
     <message numerus="yes">
         <location filename="../src/ui/controllers/ClipInspector.cpp" line="+2032"/>
         <location line="+454"/>
@@ -183,7 +183,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::EditorController</name>
+    <name>velacut::ui::EditorController</name>
     <message numerus="yes">
         <location filename="../src/ui/controllers/EditorController.cpp" line="+1011"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
@@ -250,7 +250,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::TranscriptController</name>
+    <name>velacut::ui::TranscriptController</name>
     <message numerus="yes">
         <location filename="../src/ui/controllers/TranscriptController.cpp" line="+196"/>
         <source>%n word(s) cut from the video</source>

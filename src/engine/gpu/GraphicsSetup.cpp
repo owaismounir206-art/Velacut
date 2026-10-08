@@ -19,7 +19,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::gpu {
+namespace velacut::gpu {
 
 namespace {
 
@@ -452,4 +452,4 @@ void StartupGuard::save(bool inProgress) const
     }
 }
 
-} // namespace vedit::gpu
+} // namespace velacut::gpu

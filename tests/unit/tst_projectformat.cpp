@@ -4,8 +4,8 @@
 
 #include "core/edit/ProjectFormat.h"
 
-using namespace vedit;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 namespace {

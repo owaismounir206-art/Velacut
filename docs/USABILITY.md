@@ -1,4 +1,4 @@
-# vedit — Test di semplicità (SPEC §0bis)
+# velacut — Test di semplicità (SPEC §0bis)
 
 Alla fine di ogni fase si ripetono gli scenari applicabili, si **contano le azioni** (clic, tasti, trascinamenti;
 la digitazione di un testo non conta) e si riporta il risultato. Se uno scenario supera il limite, si semplifica
@@ -27,7 +27,7 @@ file, oppure trascinamento del file sulla finestra = 1 azione) e la riproduzione
 ### Fase 1 — MVP editor
 Conteggi misurati da `tests/integration/tst_ui.cpp`, che guida l'interfaccia reale con mouse e tastiera (ogni clic,
 tasto o trascinamento conta 1; il test fallisce se si supera il limite). Ripetibili con
-`tools/run-test.sh build tst_ui` (con `VEDIT_UI_SHOTS=<cartella>` salva uno screenshot per passo).
+`tools/run-test.sh build tst_ui` (con `VELACUT_UI_SHOTS=<cartella>` salva uno screenshot per passo).
 
 | # | Scenario | Limite | Risultato | Percorso |
 |---|---|---|---|---|
@@ -105,7 +105,7 @@ azioni non dipende dal programma.
 |---|---|---|---|---|
 | 5 | Sottotitoli automatici con uno stile animato | 3 | ✅ **2** | "Sottotitoli" nella barra (nessuna selezione) → "Sottotitoli automatici" (stile animato parola per parola già applicato; un clic in più per cambiarlo, gli stili si aprono da soli) |
 | — | Tagliare una frase dalla trascrizione (criterio Fase 6) | — | **3** | scheda "Trascrizione" → clic sulla prima parola → Maiusc+clic sull'ultima → "Taglia N parole dal video" (4 con la prima trascrizione: "Trascrivi") |
-| — | Rimuovere lo sfondo di una clip (criterio Fase 6) | — | **2** | selezione della clip → "Rimuovi sfondo" nella barra (3 la prima volta: rembg scarica il modello e vedit chiede conferma) |
+| — | Rimuovere lo sfondo di una clip (criterio Fase 6) | — | **2** | selezione della clip → "Rimuovi sfondo" nella barra (3 la prima volta: rembg scarica il modello e velacut chiede conferma) |
 | — | Rimuovere le pause | — | **2** | selezione della clip → "Rimuovi pause" |
 | — | Adattare a 9:16 seguendo il soggetto | — | **2** | formato sotto il player → "Adatta a 9:16 — segui il soggetto" |
 | 1–4, 6, 8 | Scenari delle fasi precedenti | — | ✅ | invariati |

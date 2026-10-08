@@ -1,4 +1,4 @@
-# vedit — Formato del progetto `.vproj` (versione 1)
+# velacut — Formato del progetto `.vproj` (versione 1)
 
 > Stato: **proposta, in attesa di approvazione.** Va approvata prima di implementare la serializzazione (sezione 3).
 > Il formato ricalca uno a uno il modello del core descritto in `docs/ARCHITECTURE.md` §4.
@@ -22,9 +22,9 @@
   migrazione (§8).
 
 ## 2. Identificazione
-- Estensione `.vproj`, tipo MIME `application/x-vedit-project` (glob `*.vproj`; il riconoscimento per contenuto usa
-  `"format": "vedit.project"`).
-- Il file deve essere un oggetto JSON con `format == "vedit.project"` e `formatVersion` intero ≥ 1.
+- Estensione `.vproj`, tipo MIME `application/x-velacut-project` (glob `*.vproj`; il riconoscimento per contenuto usa
+  `"format": "velacut.project"`).
+- Il file deve essere un oggetto JSON con `format == "velacut.project"` e `formatVersion` intero ≥ 1.
 
 ---
 
@@ -84,9 +84,9 @@ Un parametro è **o** un valore letterale **o** un oggetto con `keyframes`:
 
 ```json
 {
-    "format": "vedit.project",
+    "format": "velacut.project",
     "formatVersion": 1,
-    "generator": { "app": "vedit", "version": "0.1.0" },
+    "generator": { "app": "velacut", "version": "0.1.0" },
     "id": "…",
     "name": "Viaggio a Roma",
     "createdAt": "2026-09-24T17:40:12Z",
@@ -101,7 +101,7 @@ Un parametro è **o** un valore letterale **o** un oggetto con `keyframes`:
 
 | Campo | Tipo | Note |
 |---|---|---|
-| `format` | stringa | sempre `"vedit.project"` |
+| `format` | stringa | sempre `"velacut.project"` |
 | `formatVersion` | intero | questa specifica: `1` |
 | `generator` | oggetto | app e versione che hanno scritto il file (informativo) |
 | `id` | Id | identità del progetto (anche id della bozza) |
@@ -412,7 +412,7 @@ Non sono ammessi cicli (A contiene B che contiene A): il file verrebbe rifiutato
     "params": { "exposure": 0.2, "contrast": { "keyframes": [ … ] }, "temperature": 0.0 }
 }
 ```
-- `type`: id dal registro degli effetti (manifest in `resources/` o pacchetti utente). Spazi dei nomi: `vedit.*` (inclusi
+- `type`: id dal registro degli effetti (manifest in `resources/` o pacchetti utente). Spazi dei nomi: `velacut.*` (inclusi
   nell'app), `mlt:<servizio>` (filtro MLT/frei0r usato direttamente), `pack:<pacchetto>/<id>` (pacchetti installati).
 - `typeVersion`: versione dei parametri dell'effetto; il manifest può dichiarare migrazioni dei parametri.
 - `preset`: `AssetRef` per filtri e look pronti (es. un filtro della libreria basato su LUT); `intensity` 0..1 (animabile).
@@ -420,7 +420,7 @@ Non sono ammessi cicli (A contiene B che contiene A): il file verrebbe rifiutato
 - Tipo sconosciuto: l'oggetto viene conservato così com'è e l'effetto viene saltato nel rendering con un avviso.
 
 **`vedit.stabilize`** ("Stabilizza"): il movimento della camera misurato una volta e salvato nel progetto, così il
-progetto resta completo (anche per l'export in `vedit-render`) senza cache esterne:
+progetto resta completo (anche per l'export in `velacut-render`) senza cache esterne:
 ```json
 { "type": "vedit.stabilize", "params": { "strength": 0.6, "motion": "AAAAAAAA…", "motionRate": "30000/1001",
                                           "motionStart": "3/2" } }
@@ -484,7 +484,7 @@ e l'interfaccia propone di reinstallarlo.
 
 ### 6.1 Bozze (il caso normale)
 ```
-~/.local/share/vedit/drafts/<projectId>/
+~/.local/share/velacut/drafts/<projectId>/
 ├── project.vproj          # il progetto (unica fonte di verità)
 ├── draft.json             # cache per la schermata iniziale (sotto)
 ├── thumbnail.jpg          # miniatura della bozza (fotogramma in anteprima alla chiusura, larga al massimo 320 px)
@@ -508,10 +508,10 @@ l'id del progetto. "Elimina" sposta la cartella nel cestino del sistema (recuper
 ### 6.2 Progetti su file
 "Salva con nome" scrive un `.vproj` dove sceglie l'utente (con `relativePath` compilato). Un `.vproj` aperto da file
 viene salvato automaticamente al suo posto; stato UI, cronologia e lock stanno in
-`~/.local/state/vedit/external/<sha1 del percorso assoluto>/` per non sporcare la cartella dell'utente.
+`~/.local/state/velacut/external/<sha1 del percorso assoluto>/` per non sporcare la cartella dell'utente.
 
 ### 6.3 Cache (mai nel progetto)
-`~/.cache/vedit/media/<fingerprint>/` (miniature, waveform, beat, scene, trascrizioni) e `~/.cache/vedit/proxy/`.
+`~/.cache/velacut/media/<fingerprint>/` (miniature, waveform, beat, scene, trascrizioni) e `~/.cache/velacut/proxy/`.
 Cancellarle non perde nulla: si rigenerano.
 
 ### 6.4 Archivio `.vpack` (esporta/importa progetto)
@@ -547,7 +547,7 @@ viene salvato; i media non trovati restano segnalati senza bloccare l'apertura.
 - Prima di migrare, il file originale viene copiato nella cronologia (`history/…-pre-migration-v1.vproj.gz`); il file
   migrato viene scritto solo al primo salvataggio.
 - File con `formatVersion` **maggiore** di quella supportata: non viene aperto né modificato; messaggio chiaro
-  ("Creato con una versione più recente di vedit: aggiorna l'app per aprirlo").
+  ("Creato con una versione più recente di velacut: aggiorna l'app per aprirlo").
 
 ## 9. Salvataggio, cronologia, recupero
 
@@ -592,9 +592,9 @@ viene salvato; i media non trovati restano segnalati senza bloccare l'apertura.
 ```json
 {
     "createdAt": "2026-09-24T17:40:12Z",
-    "format": "vedit.project",
+    "format": "velacut.project",
     "formatVersion": 1,
-    "generator": { "app": "vedit", "version": "0.1.0" },
+    "generator": { "app": "velacut", "version": "0.1.0" },
     "id": "5f0c1a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5b",
     "mainSequenceId": "0b6f1d6e-7a8b-4c9d-8e0f-1a2b3c4d5e6f",
     "media": [
@@ -683,7 +683,7 @@ viene salvato; i media non trovati restano segnalati senza bloccare l'apertura.
 
 ## Appendice B — Kit del marchio (`kit.json`)
 Dati dell'applicazione, non del progetto (SPEC §5.13ter): ogni kit è una cartella in
-`$XDG_DATA_HOME/vedit/brandkits/<uuid>/` con `kit.json` e le **copie** dei suoi file, così un kit continua a funzionare
+`$XDG_DATA_HOME/velacut/brandkits/<uuid>/` con `kit.json` e le **copie** dei suoi file, così un kit continua a funzionare
 se gli originali vengono spostati.
 ```json
 { "format": "vedit.brandkit", "formatVersion": 1, "name": "Canale",

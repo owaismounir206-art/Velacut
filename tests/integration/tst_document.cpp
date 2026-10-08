@@ -16,9 +16,9 @@
 #include <QStandardPaths>
 #include <QTemporaryDir>
 
-using namespace vedit;
-using namespace vedit::document;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::document;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 namespace {
@@ -214,7 +214,7 @@ private slots:
         recovered.reset();
         // A live pid running another program (pid reused after the crash) is stale too.
         json.insert(u"pid"_s, QCoreApplication::applicationPid());
-        json.insert(u"program"_s, u"not-vedit"_s);
+        json.insert(u"program"_s, u"not-velacut"_s);
         QVERIFY(projectfile::writeAtomically(directory + u"/lock"_s, QJsonDocument(json).toJson()));
         auto reused = store.openDraft(id, &error);
         QVERIFY(reused);
@@ -265,7 +265,7 @@ private slots:
         const std::optional<ProjectId> copy = store.duplicateDraft(first, &error);
         QVERIFY(copy);
         QVERIFY(*copy != first);
-        QCOMPARE(store.info(*copy)->name, QCoreApplication::translate("vedit::document::DraftStore", "%1 copy").arg(u"Holiday"_s));
+        QCOMPARE(store.info(*copy)->name, QCoreApplication::translate("velacut::document::DraftStore", "%1 copy").arg(u"Holiday"_s));
         QCOMPARE(store.info(*copy)->duration, frames(300));
         QVERIFY(!store.info(*copy)->thumbnailPath.isEmpty());
         auto opened = store.openDraft(*copy, &error);

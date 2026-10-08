@@ -9,11 +9,11 @@
 #include <QJsonObject>
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(lcReverse, "vedit.engine.reverse")
+Q_LOGGING_CATEGORY(lcReverse, "velacut.engine.reverse")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 QString reverseProxyPath(const Media &media)
 {
@@ -27,7 +27,7 @@ bool reverseProxyReady(const Media &media)
 
 ReverseProxyQueue::ReverseProxyQueue(QObject *parent)
     : QObject(parent)
-    , m_executable(QCoreApplication::applicationDirPath() + u"/vedit-render"_s)
+    , m_executable(QCoreApplication::applicationDirPath() + u"/velacut-render"_s)
 {
 }
 
@@ -35,7 +35,7 @@ ReverseProxyQueue::~ReverseProxyQueue()
 {
     if (m_process) {
         m_process->disconnect(this);
-        m_process->terminate(); // vedit-render removes its partial file
+        m_process->terminate(); // velacut-render removes its partial file
         if (!m_process->waitForFinished(5000)) {
             m_process->kill();
             m_process->waitForFinished(1000);
@@ -119,4 +119,4 @@ void ReverseProxyQueue::onFinished(int exitCode, QProcess::ExitStatus status)
     startNext();
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

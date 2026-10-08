@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 
-namespace vedit {
+namespace velacut {
 
 // A reversible primitive change. Commands are ordered lists of edits (EditScript): redo applies them
 // in order, undo reverts them in reverse order. Edits store only what they change (by id), so undo
@@ -68,4 +68,4 @@ std::unique_ptr<Edit> replaceTransition(TrackId trackId, Transition before, Tran
 
 } // namespace edits
 
-} // namespace vedit
+} // namespace velacut

@@ -1,8 +1,8 @@
 // Material 3 linear progress indicator (determinate or indeterminate).
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Components
-import Vedit.Theme
+import Velacut.Components
+import Velacut.Theme
 
 T.ProgressBar {
     id: control

@@ -12,7 +12,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 
-using namespace vedit::fx;
+using namespace velacut::fx;
 using namespace Qt::StringLiterals;
 
 class TestPackages : public QObject

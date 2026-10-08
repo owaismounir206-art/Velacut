@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <utility>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 enum class VideoPixelFormat {
     Rgba8888,
@@ -189,4 +189,4 @@ private:
 
 using LruFrameCache = BoundedLruCache<int64_t, VideoFrame>;
 
-} // namespace vedit::engine
+} // namespace velacut::engine

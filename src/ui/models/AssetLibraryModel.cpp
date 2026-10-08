@@ -9,7 +9,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 AssetLibraryModel::AssetLibraryModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -208,4 +208,4 @@ QString AssetLibraryModel::nameOf(const QString &assetId) const
     return {};
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

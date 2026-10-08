@@ -16,7 +16,7 @@ class Producer;
 class Profile;
 } // namespace Mlt
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // Plays a media file (Phase 0) through MLT: opening happens in a worker thread, rendering and audio in
 // MLT's consumer threads (sdl2_audio -> PipeWire/PulseAudio), frames go to a FrameSink. The object itself
@@ -24,7 +24,7 @@ namespace vedit::engine {
 class Player : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(vedit::engine::FrameSink *sink READ sink CONSTANT FINAL)
+    Q_PROPERTY(velacut::engine::FrameSink *sink READ sink CONSTANT FINAL)
     Q_PROPERTY(QString source READ source NOTIFY sourceChanged FINAL)
     Q_PROPERTY(bool loading READ loading NOTIFY stateChanged FINAL)
     Q_PROPERTY(bool ready READ ready NOTIFY stateChanged FINAL)
@@ -96,4 +96,4 @@ private:
     quint64 m_request = 0;
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

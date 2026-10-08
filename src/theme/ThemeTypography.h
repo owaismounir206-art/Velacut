@@ -6,7 +6,7 @@
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit::theme {
+namespace velacut::theme {
 
 class ThemeTypography : public QObject
 {
@@ -93,4 +93,4 @@ private:
     qreal m_scale = 1.0;
 };
 
-} // namespace vedit::theme
+} // namespace velacut::theme

@@ -7,7 +7,7 @@
 #include <numeric>
 #include <vector>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -107,4 +107,4 @@ AudioSyncResult alignAudioFiles(const QString &refPath, const QString &targetPat
     return alignWaveforms(*refWf, *tgtWf, maxSearchSeconds);
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

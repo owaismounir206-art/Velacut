@@ -37,7 +37,7 @@
 #include <cmath>
 #include <cstring>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -1800,4 +1800,4 @@ std::unique_ptr<Mlt::Filter> makeBeatFilter(Mlt::Profile &profile, const BeatEff
     return filter;
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

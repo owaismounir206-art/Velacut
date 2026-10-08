@@ -38,6 +38,7 @@
 #include <QPainter>
 #include <QLocale>
 #include <QDateTime>
+#include <QElapsedTimer>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QLoggingCategory>
@@ -50,11 +51,11 @@
 #include <cmath>
 #include <limits>
 
-Q_LOGGING_CATEGORY(lcEditor, "vedit.ui.editor")
+Q_LOGGING_CATEGORY(lcEditor, "velacut.ui.editor")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 namespace {
 
@@ -2057,16 +2058,20 @@ bool EditorController::split()
         return false;
     }
     const RationalTime at(playhead(), data().settings.frameRate);
-    QUndoStack &stack = m_document->undoStack();
-    if (targets.size() > 1) {
-        stack.beginMacro(tr("Split clips"));
-    }
-    bool ok = true;
-    for (const ClipId &id : targets) {
-        ok = apply(TimelineEditor(data(), data().mainSequenceId).splitClip(id, at), targets.size() == 1) && ok;
-    }
-    if (targets.size() > 1) {
-        stack.endMacro();
+    // One command for every target (TimelineEditor::splitClips): one change notification, one
+    // projection patch — not one per clip. The whole path is timed: the split is logical (same
+    // producer, in/out only) and the projection patches just the changed entries, so this stays
+    // well under 50 ms even with 100 clips on the timeline; anything slower is a regression,
+    // not a user-perceivable hiccup.
+    QElapsedTimer splitClock;
+    splitClock.start();
+    const bool ok = apply(TimelineEditor(data(), data().mainSequenceId).splitClips(targets, at),
+                          targets.size() == 1);
+    const qint64 elapsedMs = splitClock.elapsed();
+    if (elapsedMs > 50) {
+        qCWarning(lcEditor) << "split of" << targets.size() << "clips took" << elapsedMs << "ms (target: <50)";
+    } else {
+        qCDebug(lcEditor) << "split of" << targets.size() << "clips in" << elapsedMs << "ms";
     }
     return ok;
 }
@@ -2623,7 +2628,7 @@ QString uniqueFilePath(const QString &folder, QString base, const QString &exten
     base.replace(QRegularExpression(u"[/\\\\:*?\"<>|]"_s), u"-"_s);
     base = base.trimmed();
     if (base.isEmpty()) {
-        base = u"vedit"_s;
+        base = u"velacut"_s;
     }
     QString path = QDir(folder).filePath(base + u"."_s + extension);
     for (int n = 2; QFileInfo::exists(path); ++n) {
@@ -3300,4 +3305,4 @@ void EditorController::startRecord(int mode)
     }
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

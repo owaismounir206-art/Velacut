@@ -12,7 +12,7 @@
 #include <variant>
 #include <vector>
 
-namespace vedit {
+namespace velacut {
 
 // sRGB color with straight (non-premultiplied) alpha; serialized as "#RRGGBBAA".
 struct Color
@@ -99,4 +99,4 @@ private:
     std::vector<Keyframe> m_keyframes;
 };
 
-} // namespace vedit
+} // namespace velacut

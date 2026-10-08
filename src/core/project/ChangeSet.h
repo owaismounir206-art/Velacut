@@ -5,7 +5,7 @@
 
 #include <QSet>
 
-namespace vedit {
+namespace velacut {
 
 // What a transaction (one redo/undo) touched. Listeners (UI models, engine projection, autosave) use it
 // to update only what changed (docs/ARCHITECTURE.md §4.3).
@@ -35,4 +35,4 @@ struct ChangeSet
     }
 };
 
-} // namespace vedit
+} // namespace velacut

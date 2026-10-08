@@ -8,7 +8,7 @@
 #include <QSize>
 #include <QSizeF>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // Where a clip appears on the canvas: the geometry vedit.transform renders, shared with the handles on the preview.
 
@@ -29,4 +29,4 @@ struct CanvasBox
 };
 CanvasBox canvasBox(const Clip &clip, const Media *media, QSize canvas);
 
-} // namespace vedit::engine
+} // namespace velacut::engine

@@ -5,9 +5,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
-import Vedit.Components
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Components
+import Velacut.Theme
+import Velacut.UI
 
 Dialog {
     id: dialog
@@ -77,7 +77,7 @@ Dialog {
                 color: Theme.color.onSurfaceVariant
                 wrapMode: Text.WordWrap
                 text: dialog.files.length > 0 ? qsTr("%n file(s): the best moments of each are used", "", dialog.files.length)
-                                              : qsTr("As many as you like: vedit picks the best moments.")
+                                              : qsTr("As many as you like: velacut picks the best moments.")
             }
         }
 

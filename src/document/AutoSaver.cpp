@@ -11,11 +11,11 @@
 #include <QLoggingCategory>
 #include <QPointer>
 
-Q_LOGGING_CATEGORY(lcAutoSave, "vedit.document.autosave")
+Q_LOGGING_CATEGORY(lcAutoSave, "velacut.document.autosave")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::document {
+namespace velacut::document {
 
 struct AutoSaver::Job
 {
@@ -234,4 +234,4 @@ projectfile::WriteResult AutoSaver::flush()
     return result;
 }
 
-} // namespace vedit::document
+} // namespace velacut::document

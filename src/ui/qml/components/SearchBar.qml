@@ -1,7 +1,7 @@
 // Material 3 search bar (library panels, universal search Ctrl+K). `compact`: the dense form of the editor's panels.
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Theme
+import Velacut.Theme
 
 T.TextField {
     id: control

@@ -13,7 +13,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 namespace {
 
@@ -469,4 +469,4 @@ bool ActionRegistry::activate(const QString &kind, const QString &id)
     return false;
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

@@ -1,4 +1,4 @@
-# vedit — Scorciatoie da tastiera
+# velacut — Scorciatoie da tastiera
 
 Le stesse sono nell'app: Menu → **Scorciatoie da tastiera**. I tasti singoli funzionano quando non si sta scrivendo in
 un campo di testo. Tutte le azioni si trovano anche con la ricerca universale (`Ctrl+K`) e nel menu del tasto destro.

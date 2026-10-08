@@ -9,7 +9,7 @@
 #include <functional>
 #include <memory>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // The optional GPU path of the transitions (SPEC §5.11bis "implementazione CPU e, opzionalmente, GPU", 1bis rules 1-4):
 // GLSL 1.00/1.10 programs (shaders/transitions.frag), one per transition, run in an offscreen OpenGL 2.1 / ES 2.0
@@ -46,4 +46,4 @@ private:
     std::unique_ptr<Private> d;
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

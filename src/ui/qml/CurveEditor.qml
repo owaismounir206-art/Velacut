@@ -2,8 +2,8 @@
 // upwards (a little room above and below for overshoot). Drag the two points; one undo step per drag.
 pragma ComponentBehavior: Bound
 import QtQuick
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Theme
+import Velacut.UI
 
 Item {
     id: editor

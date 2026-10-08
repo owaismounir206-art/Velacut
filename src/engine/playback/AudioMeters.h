@@ -3,7 +3,7 @@
 
 #include <QByteArray>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // Audio levels for the mixer's meters (SPEC §5.9): the vedit.gain filters report the peak of every audio block they
 // process, per key (a track id, or "master"); the interface reads them ~30 times per second. Levels fall back to
@@ -17,4 +17,4 @@ public:
     static void clear();
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

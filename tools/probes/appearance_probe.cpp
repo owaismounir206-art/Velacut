@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Probe program: prints what vedit reads from the desktop (portal, accent fallbacks, wallpaper) and the
+// Probe program: prints what velacut reads from the desktop (portal, accent fallbacks, wallpaper) and the
 // resulting theme seed. Read-only. Run: ./build/tools/probes/appearance_probe
 #include "common/DevSandbox.h"
 #include "theme/SchemeGenerator.h"
@@ -10,11 +10,11 @@
 #include <QImageReader>
 #include <QTextStream>
 
-using namespace vedit::theme;
+using namespace velacut::theme;
 
 int main(int argc, char **argv)
 {
-    vedit::applyDevSandbox();
+    velacut::applyDevSandbox();
     QGuiApplication app(argc, argv);
     QTextStream out(stdout);
     SystemAppearance appearance;

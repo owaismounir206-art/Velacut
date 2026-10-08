@@ -5,7 +5,7 @@
 #include <cmath>
 #include <limits>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 PointTracker::PointTracker(const std::vector<std::uint8_t> &first, int width, int height, double x, double y, int radius)
     : m_width(width)
@@ -119,4 +119,4 @@ PointTracker::Point PointTracker::update(const std::vector<std::uint8_t> &frame)
     return m_point;
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

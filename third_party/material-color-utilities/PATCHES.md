@@ -1,4 +1,4 @@
-# material-color-utilities — copia vendored per vedit
+# material-color-utilities — copia vendored per Velacut
 
 - Origine: https://github.com/material-foundation/material-color-utilities (cartella `cpp/`)
 - Commit: 5b3618b16fdc3825e21d5679bafd144662088ea1 (2026-08-21)

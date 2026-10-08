@@ -6,7 +6,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit {
+namespace velacut {
 
 namespace {
 
@@ -272,4 +272,4 @@ QStringList Easing::presetNames()
     return names;
 }
 
-} // namespace vedit
+} // namespace velacut

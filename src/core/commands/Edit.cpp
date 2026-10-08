@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "Edit.h"
 
-namespace vedit {
+namespace velacut {
 
 namespace {
 
@@ -256,4 +256,4 @@ std::unique_ptr<Edit> replaceTransition(TrackId trackId, Transition before, Tran
 
 } // namespace edits
 
-} // namespace vedit
+} // namespace velacut

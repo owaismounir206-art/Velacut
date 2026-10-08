@@ -8,7 +8,7 @@
 #include <optional>
 #include <vector>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 struct AudioSyncResult
 {
@@ -24,4 +24,4 @@ AudioSyncResult alignWaveforms(const Waveform &ref, const Waveform &target, doub
 // Extracts waveforms and correlates audio files directly.
 AudioSyncResult alignAudioFiles(const QString &refPath, const QString &targetPath, double maxSearchSeconds = 60.0);
 
-} // namespace vedit::engine
+} // namespace velacut::engine

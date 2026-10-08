@@ -4,9 +4,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
-import Vedit.Components
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Components
+import Velacut.Theme
+import Velacut.UI
 
 Item {
     id: root
@@ -34,7 +34,7 @@ Item {
                 rail.currentIndex = index
         }
         function onExportFinished(path) {
-            // A desktop notification when vedit is in background (SPEC §5.15).
+            // A desktop notification when velacut is in background (SPEC §5.15).
             if (!root.Window.window.active)
                 App.notify(qsTr("Video exported"), path)
         }

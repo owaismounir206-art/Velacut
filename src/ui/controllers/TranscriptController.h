@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 class EditorController;
 
@@ -82,4 +82,4 @@ private:
     int m_current = -1;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

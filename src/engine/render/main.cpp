@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// vedit-render: exports a frozen copy of a project in a separate process (docs/ARCHITECTURE.md §5.4, D-07/D-08).
+// velacut-render: exports a frozen copy of a project in a separate process (docs/ARCHITECTURE.md §5.4, D-07/D-08).
 //
-//   vedit-render --job job.json
+//   velacut-render --job job.json
 //   job.json: {"project": "<frozen .vproj>", "sequence": "<sequence id>", "settings": ExportSettings}
 //
 // Writes one JSON object per line on stdout:
@@ -9,10 +9,10 @@
 //   {"event":"done","output":"…"}   {"event":"error","code":"…","detail":"…"}   {"event":"cancelled"}
 // Exit code 0 = done, 1 = error, 2 = cancelled. SIGTERM/SIGINT cancel cleanly (no partial file is left).
 //
-//   vedit-render --backwards file --output copy.mp4
+//   velacut-render --backwards file --output copy.mp4
 // The file played backwards for the preview of reversed clips; progress lines as for an export.
 //
-//   vedit-render --probe file…
+//   velacut-render --probe file…
 // Reads the metadata of media files for the import (D-07: a file that crashes the demuxer is rejected instead of
 // crashing the editor). For each file: {"event":"probing","path":"…"} then {"event":"media","path":"…","media":{…}}
 // or {"event":"media-error","path":"…","code":"…","detail":"…"}.
@@ -35,8 +35,8 @@
 #include <csignal>
 #include <cstdio>
 
-using namespace vedit;
-using namespace vedit::engine;
+using namespace velacut;
+using namespace velacut::engine;
 using namespace Qt::StringLiterals;
 
 namespace {
@@ -172,9 +172,9 @@ int main(int argc, char *argv[])
         qputenv("QT_QPA_PLATFORM", "offscreen");
     }
     QGuiApplication app(argc, argv);
-    QCoreApplication::setApplicationName(u"vedit-render"_s);
+    QCoreApplication::setApplicationName(u"velacut-render"_s);
     QCommandLineParser parser;
-    parser.setApplicationDescription(u"Exports a vedit project (used by vedit)."_s);
+    parser.setApplicationDescription(u"Exports a velacut project (used by velacut)."_s);
     parser.addHelpOption();
     const QCommandLineOption jobOption(u"job"_s, u"Export job (JSON)."_s, u"file"_s);
     const QCommandLineOption probeOption(u"probe"_s, u"Read the metadata of the media files given as arguments."_s);

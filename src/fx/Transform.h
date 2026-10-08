@@ -3,7 +3,7 @@
 
 #include "fx/Image.h"
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // 2D affine map p' = M p + d (pixel coordinates, y down).
 struct Affine
@@ -50,4 +50,4 @@ inline void resizeBilinear(ImageView destination, ConstImageView source)
     resizeBilinear(destination, source, 0, destination.height);
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

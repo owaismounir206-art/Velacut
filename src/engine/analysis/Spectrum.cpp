@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 void Spectrum::levelsAt(double seconds, std::vector<float> &out) const
 {
@@ -102,4 +102,4 @@ std::optional<Spectrum> cachedSpectrum(const Media &media, const std::atomic<boo
     return computed;
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

@@ -9,7 +9,7 @@
 #include <cstring>
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -1092,4 +1092,4 @@ void renderVideoEffect(EffectKernel kernel, const ImageView &image, const VideoE
     (void)cy;
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

@@ -7,7 +7,7 @@
 
 #include <algorithm>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 namespace {
 
@@ -246,4 +246,4 @@ QString BackgroundRemoval::run()
     return engine::makeCutoutCopy(m_copy, [this](double share) { report(share); }, cancelFlag());
 }
 
-} // namespace vedit::ai
+} // namespace velacut::ai

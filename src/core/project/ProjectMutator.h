@@ -5,7 +5,7 @@
 
 #include <vector>
 
-namespace vedit {
+namespace velacut {
 
 // The only way to modify a Project. A mutator is a transaction: primitives record what they touch
 // into a ChangeSet, and when the outermost mutator is destroyed the project emits changed() once.
@@ -66,4 +66,4 @@ private:
     ChangeSet &changes() { return m_project.m_pending; }
 };
 
-} // namespace vedit
+} // namespace velacut

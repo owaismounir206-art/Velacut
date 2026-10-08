@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-namespace vedit {
+namespace velacut {
 
 Project::Project(ProjectData data, QObject *parent)
     : QObject(parent)
@@ -314,4 +314,4 @@ void ProjectMutator::replaceTransition(const TrackId &trackId, const Transition 
     changes().tracks.insert(trackId);
 }
 
-} // namespace vedit
+} // namespace velacut

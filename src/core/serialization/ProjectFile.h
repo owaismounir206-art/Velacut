@@ -6,7 +6,7 @@
 #include <QByteArray>
 #include <QString>
 
-namespace vedit::projectfile {
+namespace velacut::projectfile {
 
 struct WriteResult
 {
@@ -24,4 +24,4 @@ WriteResult writeAtomically(const QString &path, const QByteArray &bytes);
 WriteResult save(const QString &path, const ProjectData &project);
 ProjectLoadResult load(const QString &path);
 
-} // namespace vedit::projectfile
+} // namespace velacut::projectfile

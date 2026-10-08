@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 namespace {
 
@@ -100,4 +100,4 @@ std::vector<double> findSceneCuts(const std::vector<float> &differences, const s
     return cuts;
 }
 
-} // namespace vedit::ai
+} // namespace velacut::ai

@@ -4,7 +4,7 @@
 #include "fx/Image.h"
 #include <cstdint>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 struct ChromaKeySettings
 {
@@ -25,4 +25,4 @@ inline void applyChromaKey(ImageView image, const ChromaKeySettings &settings)
     applyChromaKey(image, settings, 0, image.height);
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

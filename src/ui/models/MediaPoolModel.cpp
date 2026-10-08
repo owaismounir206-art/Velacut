@@ -7,7 +7,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 MediaPoolModel::MediaPoolModel(Project &project, QObject *parent)
     : QAbstractListModel(parent)
@@ -116,4 +116,4 @@ void MediaPoolModel::reload()
     }
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

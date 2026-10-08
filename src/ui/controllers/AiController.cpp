@@ -24,7 +24,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 AiController::AiController(EditorController &editor)
     : QObject(&editor)
@@ -1150,4 +1150,4 @@ void AiController::applyScenes(const ClipId &clipId, const std::vector<double> &
     }
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

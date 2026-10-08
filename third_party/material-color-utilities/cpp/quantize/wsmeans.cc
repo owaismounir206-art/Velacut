@@ -27,7 +27,7 @@
 #include <unordered_set>
 #include <vector>
 
-// vedit patch: abseil removed (see ../PATCHES.md)
+// Velacut patch: abseil removed (see ../PATCHES.md)
 #include "cpp/quantize/lab.h"
 
 constexpr int kMaxIterations = 100;

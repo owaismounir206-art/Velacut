@@ -18,11 +18,11 @@
       "Bash(wc *)",
       "Bash(file *)",
       "Bash(ffprobe *)",
-      "Bash(./build/vedit *)",
-      "Bash(QT_QUICK_BACKEND=software ./build/vedit *)",
-      "Bash(LIBGL_ALWAYS_SOFTWARE=1 ./build/vedit *)",
-      "Bash(QT_QUICK_BACKEND=software LIBGL_ALWAYS_SOFTWARE=1 ./build/vedit *)",
-      "Bash(LIBGL_ALWAYS_SOFTWARE=1 QT_QUICK_BACKEND=software ./build/vedit *)"
+      "Bash(./build/velacut *)",
+      "Bash(QT_QUICK_BACKEND=software ./build/velacut *)",
+      "Bash(LIBGL_ALWAYS_SOFTWARE=1 ./build/velacut *)",
+      "Bash(QT_QUICK_BACKEND=software LIBGL_ALWAYS_SOFTWARE=1 ./build/velacut *)",
+      "Bash(LIBGL_ALWAYS_SOFTWARE=1 QT_QUICK_BACKEND=software ./build/velacut *)"
     ],
     "ask": [
       "Bash(git reset *)",

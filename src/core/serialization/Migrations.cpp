@@ -5,7 +5,7 @@
 
 #include <span>
 
-namespace vedit::migrations {
+namespace velacut::migrations {
 
 namespace {
 
@@ -32,20 +32,20 @@ Result migrate(QJsonObject project, int version, int targetVersion)
 {
     Result result;
     if (version < 1) {
-        result.error = QCoreApplication::translate("vedit::migrations", "The project file has an invalid format version.");
+        result.error = QCoreApplication::translate("velacut::migrations", "The project file has an invalid format version.");
         return result;
     }
     if (version > targetVersion) {
         result.error = QCoreApplication::translate(
-            "vedit::migrations", "This project was created with a newer version of vedit (format %1). "
-                                 "Update vedit to open it.")
+            "velacut::migrations", "This project was created with a newer version of velacut (format %1). "
+                                 "Update velacut to open it.")
                            .arg(version);
         return result;
     }
     while (version < targetVersion) {
         const Migration *step = find(version);
         if (!step) {
-            result.error = QCoreApplication::translate("vedit::migrations",
+            result.error = QCoreApplication::translate("velacut::migrations",
                                                        "No migration is available from project format %1.")
                                .arg(version);
             return result;
@@ -58,4 +58,4 @@ Result migrate(QJsonObject project, int version, int targetVersion)
     return result;
 }
 
-} // namespace vedit::migrations
+} // namespace velacut::migrations

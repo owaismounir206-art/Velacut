@@ -24,11 +24,11 @@ class Frame;
 class Profile;
 } // namespace Mlt
 
-namespace vedit {
+namespace velacut {
 class Project;
 }
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 class MediaProducerCache;
 class ReverseProxyQueue;
@@ -44,11 +44,14 @@ class TimelineProjection;
 class TimelinePlayer : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(vedit::engine::FrameSink *sink READ sink CONSTANT FINAL)
+    Q_PROPERTY(velacut::engine::FrameSink *sink READ sink CONSTANT FINAL)
     Q_PROPERTY(bool ready READ ready NOTIFY formatChanged FINAL)
     Q_PROPERTY(bool playing READ playing NOTIFY stateChanged FINAL)
     Q_PROPERTY(double rate READ rate NOTIFY stateChanged FINAL)
     Q_PROPERTY(bool skimming READ skimming NOTIFY stateChanged FINAL)
+    // True while a scrub drag holds the audio detached (MLT level, see setScrubMuted): the drag is
+    // silent, the commit lands with the audio back on (and playback resumed, if it was playing).
+    Q_PROPERTY(bool scrubMuted READ scrubMuted NOTIFY stateChanged FINAL)
     Q_PROPERTY(int position READ position NOTIFY positionChanged FINAL)
     Q_PROPERTY(int shownPosition READ shownPosition NOTIFY shownPositionChanged FINAL)
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged FINAL)
@@ -80,6 +83,7 @@ public:
     bool playing() const { return m_rate != 0.0; }
     double rate() const { return m_rate; }
     bool skimming() const { return m_skimming; }
+    bool scrubMuted() const { return m_isScrubMuted; }
     int position() const { return m_position; }
     int shownPosition() const { return m_shownPosition; }
     int duration() const { return m_duration; }
@@ -93,7 +97,7 @@ public:
     double reverseProgress() const;
     bool preparingSmooth() const;
     double smoothProgress() const;
-    // vedit-render, for the backwards copies (default: next to the running executable).
+    // velacut-render, for the backwards copies (default: next to the running executable).
     void setHelperExecutable(const QString &path);
     // Preview rendered with at most this short side (0 = the canvas size). The frames get smaller, not the
     // timeline (frame rate and positions are untouched); the export always renders at full size. For
@@ -111,6 +115,11 @@ public:
     Q_INVOKABLE void seek(int frame);
     // Non-blocking scrub seeking with backpressure/coalescing for smooth UI dragging.
     Q_INVOKABLE void scrubSeek(int frame);
+    // Detaches the audio for a whole scrub drag, at the MLT level (not a Qt volume dip): sdl2_audio
+    // plays the audio of every frame it shows, refresh (speed 0) frames included, so each frame the
+    // drag lands on would be heard. The commit (commitSeek) switches the audio back on. `muted` is
+    // also where the playing state before the drag is remembered, to be restored on the commit.
+    Q_INVOKABLE void setScrubMuted(bool muted);
     // Frame-accurate seek commit on drag release or debounce.
     Q_INVOKABLE void commitSeek(int frame);
     Q_INVOKABLE void step(int frames);
@@ -150,6 +159,13 @@ private:
     void afterProjectionChange();
     void setRate(double rate);
     void showFrame(int frame);
+    // Audio back on after a scrub drag, wherever the commit lands (see setScrubMuted).
+    void restoreAudioAfterScrub();
+    // Playback resumed where the drag had paused it, on the commit (see setScrubMuted).
+    void resumeAfterScrub();
+    // The audio of the hover preview (skim): off while it lasts, back with the playhead frame.
+    void startSkimMute();
+    void stopSkimMute();
     void onFrameShown(int position, quint64 generation);
     void setPosition(int position);
     void updateWarnings();
@@ -185,6 +201,12 @@ private:
     std::optional<int> m_pendingScrubFrame;
     QElapsedTimer m_seekClock;
     qint64 m_lastSeekMs = 0;
+    // Audio detached while scrubbing (see setScrubMuted): the drag is silent, the commit is not.
+    bool m_isScrubMuted = false;
+    bool m_wasPlayingBeforeScrub = false;
+    // Same MLT switch, held by the hover preview instead of a drag (see skim): the skim is silent,
+    // and its mute never unmutes a drag that has taken over in the meantime.
+    bool m_skimMuted = false;
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

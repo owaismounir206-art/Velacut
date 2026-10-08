@@ -6,7 +6,7 @@
 
 #include <array>
 
-namespace vedit::theme {
+namespace velacut::theme {
 
 // Every Material 3 color role (docs/DESIGN_SYSTEM.md). Generated list: keep in sync with kColorRoleNames.
 enum class ColorRole
@@ -85,4 +85,4 @@ struct ColorScheme
 // WCAG 2.x contrast ratio between two opaque colors (1..21).
 double contrastRatio(const QColor &a, const QColor &b);
 
-} // namespace vedit::theme
+} // namespace velacut::theme

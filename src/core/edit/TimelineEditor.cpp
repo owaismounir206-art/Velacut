@@ -11,13 +11,13 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit {
+namespace velacut {
 
 namespace {
 
 QString tr(const char *text)
 {
-    return QCoreApplication::translate("vedit::TimelineEditor", text);
+    return QCoreApplication::translate("velacut::TimelineEditor", text);
 }
 
 struct ClipRef
@@ -660,6 +660,10 @@ QString TimelineEditor::splitIn(Sequence &modified, const ClipId &clipId, const 
         second.payload = std::move(after);
     }
     first.duration = offset;
+    // The two halves are contiguous: the second starts exactly where the first ends, no 1-frame
+    // black gap between them (the projection turns this into adjacent MLT playlist cuts,
+    // ClipA [in, F-1] then ClipB [F, out], both of the same shared producer).
+    Q_ASSERT(second.start == first.end());
     // A transition that left the original clip now leaves its second half.
     for (Transition &transition : track.transitions) {
         if (transition.from == first.id) {
@@ -719,6 +723,30 @@ EditResult TimelineEditor::splitClipAt(const ClipId &clipId, std::vector<Rationa
         piece = next;
     }
     return finish(std::move(modified), tr("Split clip"), clipId);
+}
+
+EditResult TimelineEditor::splitClips(const std::vector<ClipId> &clipIds, const RationalTime &time)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    // Every clip is split on the same copy of the sequence: one diff script, one undo step,
+    // one change notification (one projection patch) for the whole "S" press.
+    Sequence modified = *m_sequence;
+    std::vector<ClipId> halves;
+    for (const ClipId &clipId : clipIds) {
+        // Like splitClipAt with its times: a clip that cannot be split at `time` (not covering
+        // it, on a locked track, already deleted…) is skipped, not an error.
+        ClipId second;
+        if (splitIn(modified, clipId, time, &second).isEmpty()) {
+            halves.push_back(second);
+        }
+    }
+    if (halves.empty()) {
+        return fail(tr("Move the playhead inside the clips to split them."));
+    }
+    return finish(std::move(modified), halves.size() == 1 ? tr("Split clip") : tr("Split clips"),
+                  halves.back());
 }
 
 QString TimelineEditor::removeRangesIn(Sequence &modified, const ClipId &clipId,
@@ -2430,4 +2458,4 @@ EditResult TimelineEditor::shiftCaptions(const TrackId &trackId, const RationalT
     return finish(std::move(modified), tr("Move captions"), {});
 }
 
-} // namespace vedit
+} // namespace velacut

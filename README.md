@@ -1,4 +1,4 @@
-# vedit — Editor Video Locale
+# velacut — Editor Video Locale
 
 Video editor desktop nativo per Linux, progettato per essere veloce, semplice e completamente locale (nessun cloud, nessun account richiesto).
 
@@ -56,8 +56,8 @@ cronologia delle versioni, tour iniziale.
 
 ```bash
 # Clone
-git clone https://github.com/yourusername/vedit.git
-cd vedit
+git clone https://github.com/yourusername/velacut.git
+cd velacut
 
 # Build
 cmake --preset dev
@@ -67,7 +67,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 
 # Run
-./build/vedit
+./build/velacut
 ```
 
 ### Preset CMake Disponibili
@@ -77,7 +77,7 @@ ctest --test-dir build --output-on-failure
 
 ## Uso Base
 
-1. **Nuovo progetto**: avvia vedit o trascina un video
+1. **Nuovo progetto**: avvia velacut o trascina un video
 2. **Import media**: trascina file sulla timeline o usa "+"
 3. **Editing**: trim con maniglie, split con `S`, cancella con `Del`
 4. **Testo**: pannello Testo → scegli stile → scrivi sul canvas

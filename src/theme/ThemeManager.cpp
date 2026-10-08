@@ -15,9 +15,9 @@
 
 using namespace Qt::StringLiterals;
 
-Q_LOGGING_CATEGORY(lcTheme, "vedit.theme")
+Q_LOGGING_CATEGORY(lcTheme, "velacut.theme")
 
-namespace vedit::theme {
+namespace velacut::theme {
 
 namespace {
 
@@ -28,7 +28,7 @@ const QHash<QString, char32_t> &iconCodepoints()
 {
     static const QHash<QString, char32_t> codepoints = [] {
         QHash<QString, char32_t> map;
-        QFile file(u":/vedit/icons/MaterialSymbolsRounded.codepoints"_s);
+        QFile file(u":/velacut/icons/MaterialSymbolsRounded.codepoints"_s);
         if (!file.open(QIODevice::ReadOnly)) {
             qCWarning(lcTheme) << "icon codepoints not found";
             return map;
@@ -150,7 +150,7 @@ void ThemeManager::loadFonts()
     if (s_fontFamily.isEmpty()) {
         qCWarning(lcTheme) << "cannot load the bundled Inter font";
     }
-    s_iconFontFamily = load(u":/vedit/icons/MaterialSymbolsRounded.woff2"_s);
+    s_iconFontFamily = load(u":/velacut/icons/MaterialSymbolsRounded.woff2"_s);
     if (s_instance) {
         s_instance->m_typography.configure(s_instance->fontFamily(), 1.0);
     }
@@ -478,4 +478,4 @@ void ThemeManager::saveSettings() const
     settings.endGroup();
 }
 
-} // namespace vedit::theme
+} // namespace velacut::theme

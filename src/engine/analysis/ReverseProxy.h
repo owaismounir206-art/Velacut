@@ -11,13 +11,13 @@
 
 #include <deque>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // Where the backwards copy of a media item lives (cache, by fingerprint: shared by every project).
 QString reverseProxyPath(const Media &media);
 bool reverseProxyReady(const Media &media);
 
-// Prepares the backwards copies for the preview of reversed clips, one at a time, in vedit-render (--backwards).
+// Prepares the backwards copies for the preview of reversed clips, one at a time, in velacut-render (--backwards).
 // Until one is ready, the clip still plays backwards, directly from the original (correct but slow).
 class ReverseProxyQueue : public QObject
 {
@@ -35,8 +35,8 @@ public:
     double progress() const { return m_progress; }
 
 signals:
-    void ready(const vedit::MediaId &mediaId);
-    void failed(const vedit::MediaId &mediaId);
+    void ready(const velacut::MediaId &mediaId);
+    void failed(const velacut::MediaId &mediaId);
     void busyChanged();
     void progressChanged();
 
@@ -54,4 +54,4 @@ private:
     double m_progress = 0.0;
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -212,4 +212,4 @@ QImage renderGraphic(const GraphicParams &params, double elapsed, double total, 
     return image;
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

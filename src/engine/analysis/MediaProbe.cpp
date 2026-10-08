@@ -18,7 +18,7 @@ extern "C" {
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -256,4 +256,4 @@ ProbeError probeErrorFromCode(const QString &code)
     return ProbeError::Damaged;
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

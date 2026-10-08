@@ -9,7 +9,7 @@
 #include <functional>
 #include <optional>
 
-namespace vedit {
+namespace velacut {
 
 // Stable identifier of a project entity (UUID v4), typed per category so that a ClipId can never be
 // passed where a TrackId is expected. Commands always refer to entities by id, never by pointer.
@@ -63,10 +63,10 @@ using GroupId = Id<struct GroupTag>;
 using LinkId = Id<struct LinkTag>;
 using MaskId = Id<struct MaskTag>;
 
-} // namespace vedit
+} // namespace velacut
 
 template<typename Tag>
-struct std::hash<vedit::Id<Tag>>
+struct std::hash<velacut::Id<Tag>>
 {
-    size_t operator()(const vedit::Id<Tag> &id) const noexcept { return qHash(id); }
+    size_t operator()(const velacut::Id<Tag> &id) const noexcept { return qHash(id); }
 };

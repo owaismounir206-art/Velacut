@@ -13,11 +13,11 @@
 #include <optional>
 #include <vector>
 
-namespace vedit {
+namespace velacut {
 class Project;
 }
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // The clips of a sequence for the QML timeline (D-16): one row per clip *in the visible time range* (plus a margin),
 // so that 500+ clips cost only the delegates on screen. Updated from Project::changed() with a diff (rows are
@@ -142,4 +142,4 @@ private:
     int m_lastFrame = std::numeric_limits<int>::max() / 4;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

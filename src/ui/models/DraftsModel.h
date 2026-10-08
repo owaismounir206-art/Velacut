@@ -6,7 +6,7 @@
 #include <QAbstractListModel>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // The drafts of the home screen (SPEC 0bis rule 2): thumbnail, name, duration, date; rename, duplicate, delete.
 class DraftsModel : public QAbstractListModel
@@ -52,4 +52,4 @@ private:
     QList<document::DraftInfo> m_drafts;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

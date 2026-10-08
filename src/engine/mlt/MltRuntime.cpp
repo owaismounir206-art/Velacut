@@ -12,9 +12,9 @@
 #include <future>
 #include <mutex>
 
-Q_LOGGING_CATEGORY(lcMlt, "vedit.engine.mlt")
+Q_LOGGING_CATEGORY(lcMlt, "velacut.engine.mlt")
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -96,4 +96,4 @@ void MltRuntime::clearLastError()
     s_lastError.clear();
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

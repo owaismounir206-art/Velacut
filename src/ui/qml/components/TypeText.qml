@@ -1,6 +1,6 @@
 // Text with a Material 3 type role (inside components; application code uses Label from QtQuick.Controls).
 import QtQuick
-import Vedit.Theme
+import Velacut.Theme
 
 Text {
     property string role: "bodyMedium"

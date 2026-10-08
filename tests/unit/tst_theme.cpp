@@ -13,7 +13,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 
-using namespace vedit::theme;
+using namespace velacut::theme;
 using namespace Qt::StringLiterals;
 
 namespace {
@@ -54,8 +54,8 @@ class TestTheme : public QObject
 private slots:
     void initTestCase()
     {
-        QCoreApplication::setOrganizationName(u"vedit"_s);
-        QCoreApplication::setApplicationName(u"vedit-tests"_s);
+        QCoreApplication::setOrganizationName(u"velacut"_s);
+        QCoreApplication::setApplicationName(u"velacut-tests"_s);
     }
 
     void everyRoleIsGenerated()

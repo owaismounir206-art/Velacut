@@ -10,7 +10,7 @@
 
 #include <vector>
 
-namespace vedit {
+namespace velacut {
 
 enum class CanvasPreset
 {
@@ -59,4 +59,4 @@ struct Sequence
     friend bool operator==(const Sequence &, const Sequence &) = default;
 };
 
-} // namespace vedit
+} // namespace velacut

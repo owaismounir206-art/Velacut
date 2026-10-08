@@ -9,7 +9,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 
-using namespace vedit::engine;
+using namespace velacut::engine;
 using namespace Qt::StringLiterals;
 
 class TestPlayer : public QObject

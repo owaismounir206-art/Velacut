@@ -14,7 +14,7 @@
 #include <atomic>
 #include <memory>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // Thumbnails and waveforms of media items, computed in background (never on the UI thread) and cached on disk by
 // fingerprint, so they survive restarts and are shared by every project (docs/FILE_FORMAT.md §6.3).
@@ -38,8 +38,8 @@ public:
     std::shared_ptr<const Waveform> waveform(const Media &media);
 
 signals:
-    void thumbnailsReady(const vedit::MediaId &mediaId);
-    void waveformReady(const vedit::MediaId &mediaId);
+    void thumbnailsReady(const velacut::MediaId &mediaId);
+    void waveformReady(const velacut::MediaId &mediaId);
 
 private:
     QString directoryOf(const Media &media) const;
@@ -56,4 +56,4 @@ private:
     QSet<QString> m_pending;                   // "t:" / "w:" + fingerprint
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

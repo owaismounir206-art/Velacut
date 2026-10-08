@@ -10,11 +10,11 @@
 
 #include <memory>
 
-namespace vedit {
+namespace velacut {
 class Project;
 }
 
-namespace vedit::document {
+namespace velacut::document {
 
 // Continuous save of a draft (docs/FILE_FORMAT.md §9.1): after a change, waits for 300 ms without changes but never
 // more than 2 s during continuous editing; serializes on the calling (UI) thread and writes atomically on a single
@@ -86,4 +86,4 @@ private:
     QString m_error;
 };
 
-} // namespace vedit::document
+} // namespace velacut::document

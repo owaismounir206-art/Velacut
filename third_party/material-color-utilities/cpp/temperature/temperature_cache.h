@@ -18,7 +18,7 @@
 #define CPP_TEMPERATURE_TEMPERATURE_CACHE_H_
 
 #include <map>
-#include <optional>  // vedit patch: missing include (see ../PATCHES.md)
+#include <optional>  // Velacut patch: missing include (see ../PATCHES.md)
 #include <vector>
 
 #include "cpp/cam/hct.h"

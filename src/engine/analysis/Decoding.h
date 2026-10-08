@@ -15,7 +15,7 @@
 #include <optional>
 #include <vector>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // Frames of a video (or the picture of an image) for thumbnails: `count` frames evenly spaced over the duration,
 // `height` pixels high, displayed as the file says (rotation, pixel aspect), side by side in one RGB32 image.
@@ -98,4 +98,4 @@ std::optional<std::vector<TrackedPoint>> extractTrackedPath(const QString &path,
 std::optional<fx::LoudnessResult> extractLoudness(const QString &path,
                                                   const std::atomic<bool> *cancel = nullptr);
 
-} // namespace vedit::engine
+} // namespace velacut::engine

@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit {
+namespace velacut {
 
 namespace {
 
@@ -57,4 +57,4 @@ RationalTime offsetOfKeyframeTime(const Clip &clip, const RationalTime &time)
     return RationalTime(std::clamp<std::int64_t>(offset, 0, length), rate);
 }
 
-} // namespace vedit
+} // namespace velacut

@@ -9,7 +9,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 namespace {
 
@@ -373,4 +373,4 @@ std::vector<std::pair<int, int>> TimelineModel::clipEdges(const QSet<ClipId> &ex
     return edges;
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

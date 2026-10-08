@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-namespace vedit::captions {
+namespace velacut::captions {
 
 // A line of captions on the timeline, with times from the start of the sequence (from a subtitle file, a transcription
 // or a script). `words` are optional (absolute times too).
@@ -67,4 +67,4 @@ std::vector<SubtitleEntry> entriesOf(const Track &track, const TimeRange &range)
 // Entries of a subtitle file as caption lines.
 std::vector<CaptionLine> linesOf(const std::vector<SubtitleEntry> &entries);
 
-} // namespace vedit::captions
+} // namespace velacut::captions

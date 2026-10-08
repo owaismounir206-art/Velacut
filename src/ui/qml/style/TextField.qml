@@ -1,8 +1,8 @@
 // Material 3 text field: variant "filled" (default) or "outlined", with floating label, supporting text and error.
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Components
-import Vedit.Theme
+import Velacut.Components
+import Velacut.Theme
 
 T.TextField {
     id: control
@@ -45,6 +45,7 @@ T.TextField {
             topRightRadius: Theme.shape.extraSmall
             border.width: control.variant === "outlined" ? (control.activeFocus ? 2 : 1) : 0
             border.color: control.error ? Theme.color.error : control.activeFocus ? control.accent : Theme.color.outline
+            FocusFrame { control: control }
             StateLayer {
                 radius: 0
                 color: Theme.color.onSurface

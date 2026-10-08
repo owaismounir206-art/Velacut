@@ -26,9 +26,9 @@
 
 #include <cstring>
 
-using namespace vedit;
-using namespace vedit::engine;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::engine;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 namespace {
@@ -554,7 +554,7 @@ private slots:
         const QImage under = renderFresh1(session.data(), 10);
         QVERIFY(session.apply(session.editor().insertMedia(alpha.id, frames(0), std::nullopt, Placement::Overlay)));
         const QImage frame = renderFresh1(session.data(), 10);
-        if (const QString folder = qEnvironmentVariable("VEDIT_UI_SHOTS"); !folder.isEmpty()) {
+        if (const QString folder = qEnvironmentVariable("VELACUT_UI_SHOTS"); !folder.isEmpty()) {
             frame.save(folder + u"/alpha.png"_s);
         }
         QCOMPARE(QColor(frame.pixel(60, 90)), QColor(255, 0, 0));
@@ -616,14 +616,14 @@ private slots:
         }, u"Stabilize"_s)));
         const double after = shake(session.data());
         qInfo("shake: %.2f -> %.2f pixels per frame", before, after);
-        if (const QString folder = qEnvironmentVariable("VEDIT_UI_SHOTS"); !folder.isEmpty()) {
+        if (const QString folder = qEnvironmentVariable("VELACUT_UI_SHOTS"); !folder.isEmpty()) {
             renderFresh1(session.data(), 40).save(folder + u"/stabilized-40.png"_s);
         }
         QVERIFY2(before > 2.0, qPrintable(QString::number(before)));
         QVERIFY2(after < before * 0.3, qPrintable(QStringLiteral("%1 → %2 pixels per frame").arg(before).arg(after)));
     }
 
-    // Every caption style of the library draws its words, in a vertical video (VEDIT_UI_SHOTS=<folder> saves a contact
+    // Every caption style of the library draws its words, in a vertical video (VELACUT_UI_SHOTS=<folder> saves a contact
     // sheet to look at them).
     void everyCaptionStyleDraws()
     {
@@ -659,7 +659,7 @@ private slots:
             ++index;
         }
         painter.end();
-        const QString folder = qEnvironmentVariable("VEDIT_UI_SHOTS");
+        const QString folder = qEnvironmentVariable("VELACUT_UI_SHOTS");
         if (!folder.isEmpty()) {
             sheet.save(folder + u"/caption-styles.png"_s);
         }

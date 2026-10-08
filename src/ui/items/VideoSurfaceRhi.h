@@ -8,7 +8,7 @@
 #include <QQuickRhiItem>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // Video preview for the hardware-accelerated scene graph (Vulkan, OpenGL, OpenGL ES): keeps one GPU
 // texture and uploads each new frame into it, drawn aspect-fit with a tiny shader (compiled with
@@ -17,7 +17,7 @@ class VideoSurfaceRhi : public QQuickRhiItem
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(VideoSurfaceRhi)
-    Q_PROPERTY(vedit::engine::FrameSink *sink READ sink WRITE setSink NOTIFY sinkChanged FINAL)
+    Q_PROPERTY(velacut::engine::FrameSink *sink READ sink WRITE setSink NOTIFY sinkChanged FINAL)
     Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY backgroundColorChanged FINAL)
 
 public:
@@ -40,4 +40,4 @@ private:
     QColor m_backgroundColor = Qt::black;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

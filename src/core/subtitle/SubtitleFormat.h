@@ -9,7 +9,7 @@
 #include <optional>
 #include <vector>
 
-namespace vedit {
+namespace velacut {
 
 // A subtitle entry with timing and text.
 struct SubtitleEntry
@@ -36,4 +36,4 @@ public:
     static QString formatVTT(const std::vector<SubtitleEntry> &entries);
 };
 
-} // namespace vedit
+} // namespace velacut

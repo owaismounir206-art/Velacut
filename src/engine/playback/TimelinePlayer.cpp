@@ -14,11 +14,11 @@
 #include <algorithm>
 #include <cmath>
 
-Q_LOGGING_CATEGORY(lcTimelinePlayer, "vedit.engine.timelineplayer")
+Q_LOGGING_CATEGORY(lcTimelinePlayer, "velacut.engine.timelineplayer")
 
 using namespace std::chrono_literals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 constexpr double kMaxShuttleRate = 8.0;
@@ -217,6 +217,11 @@ void TimelinePlayer::destroyGraph()
         m_consumer->stop();
         m_consumer->purge();
     }
+    // A graph rebuilt mid-drag (undo while scrubbing, a canvas change…) starts with its own consumer:
+    // its audio is on, and nothing is left to resume or unmute on the pending commit.
+    m_isScrubMuted = false;
+    m_skimMuted = false;
+    m_wasPlayingBeforeScrub = false;
     m_retiredTimer.stop();
     m_frameShowEvent.reset();
     m_consumer.reset();
@@ -320,6 +325,16 @@ void TimelinePlayer::setRate(double rate)
     if (rate != 0.0 && m_skimming) {
         m_skimming = false;
     }
+    if (rate != 0.0 && (m_isScrubMuted || m_skimMuted)) {
+        // Playback started while a drag or a hover preview was still holding the audio detached
+        // (e.g. the space bar): playing is never silent, so the mute ends here (nothing left to
+        // resume or unmute on the pending commit/endSkim).
+        m_isScrubMuted = false;
+        m_skimMuted = false;
+        m_wasPlayingBeforeScrub = false;
+        m_consumer->set("audio_off", 0);
+        emit stateChanged();
+    }
     Mlt::Producer *tractor = m_projection->tractor();
     if (rate > 0.0 && m_position >= m_duration - 1) {
         setPosition(0);
@@ -373,16 +388,35 @@ void TimelinePlayer::seek(int frame)
     commitSeek(frame);
 }
 
+void TimelinePlayer::setScrubMuted(bool muted)
+{
+    if (m_isScrubMuted == muted) {
+        return;
+    }
+    m_isScrubMuted = muted;
+    if (muted) {
+        // Remember whether the timeline was playing: the drag pauses it, the commit resumes it.
+        m_wasPlayingBeforeScrub = playing();
+    }
+    if (m_consumer) {
+        // MLT level, not a Qt volume dip: "audio_off" is sdl2_audio's own switch, checked in its
+        // consumer_play_audio() (the audio of every frame shown, refresh/speed-0 ones included,
+        // is skipped entirely while it is set).
+        m_consumer->set("audio_off", muted ? 1 : 0);
+    }
+    emit stateChanged(); // the scrubMuted property changed
+}
+
 void TimelinePlayer::scrubSeek(int frame)
 {
     const int target = std::clamp(frame, 0, std::max(0, m_duration - 1));
     setPosition(target);
-    // A drag takes over from hover skimming: stop it so the skim hairline doesn't stick on the playhead.
+    // A drag takes over from hover skimming: stop it so the skim hairline doesn't stick on the playhead
+    // (the skim's silence stays: the drag is a preview-only seek too, and it mutes on its own).
     if (m_skimming) {
         m_skimming = false;
         emit stateChanged();
     }
-
     const qint64 now = m_seekClock.elapsed();
     // Safety watchdog: reset stuck in-flight flag after 120ms
     if (m_seekInFlight && (now - m_lastSeekMs > 120)) {
@@ -407,19 +441,72 @@ void TimelinePlayer::commitSeek(int frame)
     const bool wasSkimming = m_skimming;
     m_skimming = false;
     // Already on the requested frame and nothing still rendering: skip the purge/refresh storm that
-    // the 60 ms debounce timer would otherwise send during fast scrubbing (async backlog prevention).
+    // the 80 ms debounce timer would otherwise send during fast scrubbing (async backlog prevention).
     if (!wasSkimming && target == m_position && target == m_shownPosition
         && !m_seekInFlight && !m_pendingScrubFrame.has_value()) {
+        restoreAudioAfterScrub();
+        resumeAfterScrub();
         return;
     }
     m_pendingScrubFrame.reset();
     m_seekInFlight = true;
     m_lastSeekMs = m_seekClock.elapsed();
     setPosition(target);
+    // The frame-accurate commit is where the audio detached for the drag comes back (before showing
+    // the target frame, so its chunk is heard only once, like a normal seek).
+    restoreAudioAfterScrub();
     showFrame(target);
     if (wasSkimming) {
         emit stateChanged();
     }
+    resumeAfterScrub();
+}
+
+void TimelinePlayer::restoreAudioAfterScrub()
+{
+    if (!m_isScrubMuted && !m_skimMuted) {
+        return;
+    }
+    m_isScrubMuted = false;
+    m_skimMuted = false;
+    if (m_consumer) {
+        m_consumer->set("audio_off", 0);
+    }
+    emit stateChanged(); // the scrubMuted property changed
+}
+
+void TimelinePlayer::startSkimMute()
+{
+    if (m_skimMuted || m_isScrubMuted) {
+        return; // already silent: a scrub drag holds the audio detached
+    }
+    m_skimMuted = true;
+    if (m_consumer) {
+        m_consumer->set("audio_off", 1);
+    }
+}
+
+void TimelinePlayer::stopSkimMute()
+{
+    if (!m_skimMuted) {
+        return;
+    }
+    m_skimMuted = false;
+    if (m_consumer) {
+        // A scrub drag that has taken over keeps the audio detached until its commit.
+        m_consumer->set("audio_off", m_isScrubMuted ? 1 : 0);
+    }
+}
+
+void TimelinePlayer::resumeAfterScrub()
+{
+    // The drag had paused the timeline: the commit resumes it where it was, whichever path
+    // the landing frame took (a fresh seek or an already-settled one).
+    if (!m_wasPlayingBeforeScrub) {
+        return;
+    }
+    m_wasPlayingBeforeScrub = false;
+    play();
 }
 
 void TimelinePlayer::step(int frames)
@@ -447,6 +534,9 @@ void TimelinePlayer::skim(int frame)
     const int target = std::clamp(frame, 0, std::max(0, m_duration - 1));
     if (!m_skimming) {
         m_skimming = true;
+        // The hover preview is silent like the scrub drag: every frame it shows would be
+        // heard otherwise (same sdl2_audio behaviour, same "audio_off" switch).
+        startSkimMute();
         emit stateChanged();
     }
     m_seekInFlight = true;
@@ -464,6 +554,9 @@ void TimelinePlayer::endSkim()
     if (!playing()) {
         showFrame(m_position);
     }
+    // After the frame of the playhead: the skim is over, its silence is too (a scrub drag
+    // that has taken over in the meantime keeps its own mute, see stopSkimMute).
+    stopSkimMute();
 }
 
 void TimelinePlayer::setPosition(int position)
@@ -572,4 +665,4 @@ void TimelinePlayer::updateWarnings()
     }
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

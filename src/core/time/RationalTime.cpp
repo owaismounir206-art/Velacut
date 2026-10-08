@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 
-namespace vedit {
+namespace velacut {
 
 namespace {
 // Rates are limited to 31-bit numerator and denominator (48000, 30000/1001 and even 705600000 fit),
@@ -13,10 +13,10 @@ constexpr std::int64_t kMaxRateTerm = 0x7fffffff;
 void validateRate(const Rational &rate)
 {
     if (!rate.isPositive()) {
-        throw std::invalid_argument("vedit::RationalTime: rate must be positive");
+        throw std::invalid_argument("velacut::RationalTime: rate must be positive");
     }
     if (rate.num() > kMaxRateTerm || rate.den() > kMaxRateTerm) {
-        throw std::invalid_argument("vedit::RationalTime: rate terms must fit in 31 bits");
+        throw std::invalid_argument("velacut::RationalTime: rate terms must fit in 31 bits");
     }
 }
 } // namespace
@@ -89,7 +89,7 @@ std::optional<RationalTime> RationalTime::fromString(QStringView text)
 void RationalTime::requireSameRate(const RationalTime &other) const
 {
     if (m_rate != other.m_rate) {
-        throw std::invalid_argument("vedit::RationalTime: arithmetic between different rates");
+        throw std::invalid_argument("velacut::RationalTime: arithmetic between different rates");
     }
 }
 
@@ -154,11 +154,11 @@ TimeRange::TimeRange(RationalTime rangeStart, RationalTime rangeDuration)
     , duration(rangeDuration)
 {
     if (!start.hasSameRate(duration)) {
-        throw std::invalid_argument("vedit::TimeRange: start and duration must share the rate");
+        throw std::invalid_argument("velacut::TimeRange: start and duration must share the rate");
     }
     if (duration.isNegative()) {
-        throw std::invalid_argument("vedit::TimeRange: negative duration");
+        throw std::invalid_argument("velacut::TimeRange: negative duration");
     }
 }
 
-} // namespace vedit
+} // namespace velacut

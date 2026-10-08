@@ -12,7 +12,7 @@
 
 #include <memory>
 
-namespace vedit::document {
+namespace velacut::document {
 
 class AutoSaver;
 
@@ -83,4 +83,4 @@ private:
     bool m_closed = false;
 };
 
-} // namespace vedit::document
+} // namespace velacut::document

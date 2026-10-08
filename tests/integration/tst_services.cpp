@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// vedit's own MLT services on real frames: transform, adjust, gain, transition, text (docs/ARCHITECTURE.md §5.2).
+// velacut's own MLT services on real frames: transform, adjust, gain, transition, text (docs/ARCHITECTURE.md §5.2).
 #include "TestMedia.h"
 
 #include "engine/analysis/BeatDetection.h"
@@ -16,9 +16,9 @@
 
 #include <cmath>
 
-using namespace vedit;
-using namespace vedit::engine;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::engine;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 namespace {

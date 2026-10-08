@@ -1,19 +1,19 @@
-# vedit — Design system (Material 3 / Material You)
+# velacut — Design system (Material 3 / Material You)
 
-Riferimento per chi scrive interfaccia. Verifica visiva: `./build/vedit --component-gallery`
+Riferimento per chi scrive interfaccia. Verifica visiva: `./build/velacut --component-gallery`
 (opzioni per screenshot automatici: `--theme light|dark|auto`, `--contrast standard|medium|high`,
 `--window-size 1280x3900`, `--screenshot file.png`).
 
 ## 1. Regole
-- **Nessun colore, dimensione, raggio o durata scritti a mano nei QML**: tutto viene da `Theme` (`import Vedit.Theme`).
+- **Nessun colore, dimensione, raggio o durata scritti a mano nei QML**: tutto viene da `Theme` (`import Velacut.Theme`).
 - I controlli con nome Qt Quick Controls (`Button`, `Slider`, `Switch`, `CheckBox`, `RadioButton`, `TextField`,
   `ProgressBar`, `BusyIndicator`, `ToolTip`, `Menu`, `MenuItem`, `MenuSeparator`, `Dialog`, `Label`) si usano con
-  `import QtQuick.Controls`: lo stile attivo è `Vedit.Style`. **Non importare `Vedit.Style` direttamente**: il suo
+  `import QtQuick.Controls`: lo stile attivo è `Velacut.Style`. **Non importare `Velacut.Style` direttamente**: il suo
   `qmldir` importa lo stile Material di Qt (fallback) e ne riesporterebbe i tipi, rendendo ambiguo `Button`.
-- I componenti M3 senza equivalente Qt si importano da `Vedit.Components`.
+- I componenti M3 senza equivalente Qt si importano da `Velacut.Components`.
 - Per i colori dei controlli Qt non ridefiniti (ScrollBar, ComboBox, ScrollView…) la finestra imposta gli attached
   `Material.*` dal `Theme` (vedi `Main.qml`), importando Material con un alias (`import QtQuick.Controls.Material as M`).
-- Testi visibili sempre con `qsTr()` (sorgenti in inglese, traduzione italiana in `i18n/vedit_it.ts`).
+- Testi visibili sempre con `qsTr()` (sorgenti in inglese, traduzione italiana in `i18n/velacut_it.ts`).
 - L'anteprima video e le miniature non vengono mai tinte dal tema.
 
 ## 2. Colori
@@ -57,11 +57,14 @@ oppure `Theme.type.<stile>` (QFont) e `Theme.type.<stile>LineHeight`.
 
 | Stile | Dimensione / interlinea | Spaziatura | Peso |
 |---|---|---|---|
-| displayLarge / Medium / Small | 57/64 · 45/52 · 36/44 | −0.25 · 0 · 0 | 400 |
-| headlineLarge / Medium / Small | 32/40 · 28/36 · 24/32 | 0 | 400 |
-| titleLarge / Medium / Small | 22/28 · 16/24 · 14/20 | 0 · 0.15 · 0.1 | 400 · 500 · 500 |
+| displayLarge / Medium / Small | 57/64 · 45/52 · 36/44 | −0.5 · −0.25 · −0.2 | 400 |
+| headlineLarge / Medium / Small | 32/40 · 28/36 · 24/32 | −0.5 · −0.25 · −0.2 | 400 |
+| titleLarge / Medium / Small | 22/28 · 16/24 · 14/20 | −0.15 · 0.15 · 0.1 | 400 · 500 · 500 |
 | bodyLarge / Medium / Small | 16/24 · 14/20 · 12/16 | 0.5 · 0.25 · 0.4 | 400 |
 | labelLarge / Medium / Small | 14/20 · 12/16 · 11/16 | 0.1 · 0.5 · 0.5 | 500 |
+
+Tracking ottico "SF" (§4bis): display e headline si compattano leggermente (più grande il testo,
+più stretto), i label restano aperti. Dimensioni, interlinee e pesi restano la baseline M3.
 
 ## 4. Altri token
 | Gruppo | Token |
@@ -70,7 +73,31 @@ oppure `Theme.type.<stile>` (QFont) e `Theme.type.<stile>LineHeight`.
 | `Theme.state` | hover 0.08, focus 0.10, pressed 0.10, dragged 0.16, disabledContent 0.38, disabledContainer 0.12 |
 | `Theme.space` | xxs 2, xs 4, sm 8, md 12, lg 16, xl 24, xxl 32, xxxl 48; `density` (0 / −1 compatta), `control(base)`, `minimumTarget` (48, 40 compatto) |
 | `Theme.elevation` | level0–5: 0, 1, 3, 6, 8, 12 dp (resa soprattutto con i colori tonali; ombra leggera `Shadow` solo dove serve, disattivata in rendering software) |
-| `Theme.motion` | short1–4 50–200, medium1–4 250–400, long1–4 450–600 ms (0 con "riduci animazioni"); `essentialMedium` 300 e `essentialLong` 500 restano (indicatori di progresso); curve `emphasized`, `emphasizedDecelerate`, `emphasizedAccelerate`, `standard`, `standardDecelerate`, `standardAccelerate` per `easing.type: Easing.BezierSpline` |
+| `Theme.motion` | short1–4 50–200, medium1–4 250–400, long1–4 450–600 ms (0 con "riduci animazioni"); `essentialMedium` 300 e `essentialLong` 500 restano (indicatori di progresso); curve `emphasized`, `emphasizedDecelerate`, `emphasizedAccelerate`, `standard`, `standardDecelerate`, `standardAccelerate` per `easing.type: Easing.BezierSpline`; micro-interazioni §4bis: `pressScaleSmall` 0.92, `pressScale` 0.97, `hoverLift` −1.5 dp, molle `springFast` 4/0.4, `springSoft` 3/0.3, `springMass` 0.9 |
+
+### 4bis. Apple slickness (polish di stato e moto sopra M3)
+I colori restano i 49 ruoli M3; sono cambiate solo le transizioni di stato, le ombre e la
+tipografia. Tutto senza shader (il backend software disegna tutto, le ombre come prima non ci
+vanno) e tutto spento con "riduci animazioni".
+- **Molle (feel Apple)**: IconButton si comprime a `pressScaleSmall` e torna con molla
+  `SpringAnimation` (`springFast`); Button e Fab a `pressScale`; Fab, Card `elevated`/`interactive`
+  e MediaTile si sollevano di `hoverLift` in hover (solo transform: mai width/height, niente scale
+  su card e tile — la griglia non si muove sotto il puntatore). Button filled si scurisce del 4%
+  alla pressione (`Qt.darker` del colore del tema, non un colore scritto a mano).
+- **Ombre morbide**: `Shadow` è uno stack di 8 rettangoli che si allarga con alpha calante
+  (bordo sfumato) e "pende" verso il basso, più in alto il livello; niente shader, nascosta in
+  rendering software come prima.
+- **Vibrancy "lite"** (frosted senza blur, dichiarato: il backdrop-blur vero è impossibile senza
+  shader): `Dialog`, `Menu` e `TopAppBar` (solo quando il contenuto scorre sotto) al 92% di
+  superficie su scrim con hairline `outlineVariant` come bordo del vetro. Sempre >90% opachi:
+  il contrasto testo/superficie resta quello della superficie piena. I pannelli dell'editor
+  restano opachi (l'occhio resta neutro sul video).
+- **Scrollbar macOS**: `style/ScrollBar` — pillola 6 dp (8 in hover/drag), traccia invisibile,
+  fade-out dopo `Theme.editor.autoHideDelay` di inattività; resta fuori mentre premuta, in hover
+  o in uso (`active`). Si applica a ogni `ScrollBar {}` via stile.
+- **Focus ring da tastiera**: `components/FocusFrame` — bordo 2 dp `primary` con gap 2 dp,
+  solo su `visualFocus` (o `focusReason` Tab per i tipi non-`Control`, come TextField); il
+  mouse-focus resta solo il layer M3, come su macOS. In Button, IconButton, TextField, Chip.
 
 ### 4.1 Token dell'editor (`Theme.editor`)
 Dimensioni delle superfici proprie dell'editor, così che nessun QML scriva numeri a mano:
@@ -116,7 +143,7 @@ Elementi C++ dell'editor (dipinti su CPU, quindi identici su ogni backend): `Med
 media: una tessera con skimming nel media pool, oppure tasselli lungo una clip) e `WaveformView` (picchi min/max
 dell'audio di una clip). Schermate e pannelli dell'editor: `HomeScreen`, `DraftCard`, `EditorScreen`, `EditorTopBar`,
 `MediaPanel`, `MediaTile`, `AudioPanel`, `PreviewPanel`, `ContextToolbar`, `TimelineView`, `TimelineClip`,
-`ExportDialog` (modulo `Vedit.UI`).
+`ExportDialog` (modulo `Velacut.UI`).
 
 Da aggiungere nelle fasi successive: side sheet / bottom sheet, rich tooltip, time/date picker se servono, liste con
 elementi M3. Nota: i componenti della Fase 0 contengono ancora alcune misure della specifica M3 scritte nel file

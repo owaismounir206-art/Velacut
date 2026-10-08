@@ -6,7 +6,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit {
+namespace velacut {
 
 namespace {
 
@@ -166,4 +166,4 @@ QString SubtitleFormat::formatVTT(const std::vector<SubtitleEntry> &entries)
     return result;
 }
 
-} // namespace vedit
+} // namespace velacut

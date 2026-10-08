@@ -1,6 +1,6 @@
-# vedit_fx: effect and transition kernels (CPU reference; GPU later) and the asset library; no MLT dependency
+# velacut_fx: effect and transition kernels (CPU reference; GPU later) and the asset library; no MLT dependency
 # (docs/ARCHITECTURE.md §6).
-add_library(vedit_fx STATIC
+add_library(velacut_fx STATIC
     Image.h
     Animation.h Animation.cpp
     Audio.h Audio.cpp
@@ -24,12 +24,12 @@ add_library(vedit_fx STATIC
     Transform.h Transform.cpp
     Transition.h Transition.cpp
 )
-target_include_directories(vedit_fx PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
-target_link_libraries(vedit_fx PUBLIC Qt6::Core Qt6::Gui)
+target_include_directories(velacut_fx PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_link_libraries(velacut_fx PUBLIC Qt6::Core Qt6::Gui)
 # The core pack is built in: the application works without any installed data file.
 set(core_pack "${CMAKE_SOURCE_DIR}/resources/packs/vedit.core")
-qt_add_resources(vedit_fx "vedit_core_pack"
-    PREFIX "/vedit/packs/vedit.core"
+qt_add_resources(velacut_fx "velacut_core_pack"
+    PREFIX "/velacut/packs/vedit.core"
     BASE "${core_pack}"
     FILES
         "${core_pack}/pack.json"
@@ -66,4 +66,4 @@ qt_add_resources(vedit_fx "vedit_core_pack"
         "${core_pack}/stickers/social_like.svg"
         "${core_pack}/stickers/social_subscribe.svg"
 )
-vedit_target_options(vedit_fx)
+velacut_target_options(velacut_fx)

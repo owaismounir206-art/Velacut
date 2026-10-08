@@ -7,7 +7,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 
-using namespace vedit::gpu;
+using namespace velacut::gpu;
 using namespace Qt::StringLiterals;
 
 namespace {
@@ -48,8 +48,8 @@ class TestGpu : public QObject
 private slots:
     void initTestCase()
     {
-        QCoreApplication::setOrganizationName(u"vedit"_s);
-        QCoreApplication::setApplicationName(u"vedit-tests"_s);
+        QCoreApplication::setOrganizationName(u"velacut"_s);
+        QCoreApplication::setApplicationName(u"velacut-tests"_s);
     }
 
     void preferVulkanOnHardware()
@@ -271,7 +271,7 @@ private slots:
     // The real probe binary answers with valid JSON for every mode, on any machine (headless included).
     void realProbeAnswers()
     {
-        const QString probe = QStringLiteral(VEDIT_GPUPROBE_PATH);
+        const QString probe = QStringLiteral(VELACUT_GPUPROBE_PATH);
         for (const QString &mode : {u"--vulkan"_s, u"--opengl"_s, u"--video"_s}) {
             QProcess process;
             process.start(probe, {mode});

@@ -10,7 +10,7 @@
 #include <optional>
 #include <vector>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 // What is said in a media file, word by word, in the file's own time (milliseconds). Made by speech recognition
 // (whisper.cpp); kept in the cache by fingerprint (FILE_FORMAT §6), never in the project: captions, cuts and markers
@@ -78,4 +78,4 @@ QString chapterList(const std::vector<Chapter> &chapters, std::int64_t durationM
 // words" takes out. Real words that are often fillers ("cioè", "like") are left to the user.
 bool isFillerWord(const QString &word);
 
-} // namespace vedit::ai
+} // namespace velacut::ai

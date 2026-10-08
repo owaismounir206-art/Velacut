@@ -12,7 +12,7 @@
 #include <optional>
 #include <vector>
 
-namespace vedit {
+namespace velacut {
 
 // Result of a timeline operation: a ready-to-push script with its (translated) undo text, or an error
 // message for the user when the operation is not possible (then the script is empty).
@@ -64,6 +64,11 @@ public:
     EditResult splitClip(const ClipId &clipId, const RationalTime &time);
     // Several cuts in one step ("Split scenes"); times outside the clip are ignored.
     EditResult splitClipAt(const ClipId &clipId, std::vector<RationalTime> times);
+    // Several clips split at the same time in one step (S over a multiple selection): one command,
+    // one change notification, one projection patch instead of one per clip. Clips that cannot be
+    // split at `time` (not covering it, on a locked track, already deleted…) are ignored; an error
+    // when none of them can.
+    EditResult splitClips(const std::vector<ClipId> &clipIds, const RationalTime &time);
     // Takes stretches of the clip's source out of it ("Remove pauses"): the rest stays together, the following clips
     // of the track move back. Ranges in the media's own time; media clips at a steady speed, played forwards.
     EditResult removeSourceRanges(const ClipId &clipId, const std::vector<std::pair<RationalTime, RationalTime>> &ranges);
@@ -191,4 +196,4 @@ private:
     Rational m_rate;
 };
 
-} // namespace vedit
+} // namespace velacut

@@ -9,7 +9,7 @@
 #include <map>
 #include <optional>
 
-namespace vedit {
+namespace velacut {
 
 // Reference to an item of an asset library (transitions, effects, filters, text presets, stickers…).
 // docs/FILE_FORMAT.md §5.9. Kept intact even when the pack is not installed.
@@ -39,4 +39,4 @@ struct Effect
     friend bool operator==(const Effect &, const Effect &) = default;
 };
 
-} // namespace vedit
+} // namespace velacut

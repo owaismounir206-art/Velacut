@@ -35,9 +35,9 @@
 #include <QTemporaryDir>
 #include <QTextStream>
 
-using namespace vedit;
-using namespace vedit::ui;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::ui;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 class TestEditor : public QObject
@@ -77,7 +77,7 @@ private slots:
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
         auto editor = std::make_unique<EditorController>(store.createDraft(&error), analysis,
-                                                         QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+                                                         QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor->player()->setVolume(0.0);
         const ProjectId id = editor->data().id;
         QSignalSpy messages(editor.get(), &EditorController::message);
@@ -138,7 +138,7 @@ private slots:
         QVERIFY(editor->close());
         editor.reset();
         auto reopened = std::make_unique<EditorController>(store.openDraft(id, &error), analysis,
-                                                           QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+                                                           QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         ProjectData after = reopened->data();
         before.modifiedAt = after.modifiedAt = {};
         QVERIFY2(before == after, qPrintable(firstDifference(before, after)));
@@ -155,7 +155,7 @@ private slots:
         document::DraftStore store(m_dir.filePath(u"drafts-inspector"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         ClipInspector &inspector = *editor.inspector();
         editor.importAndInsertPaths({m_files.landscape, m_files.photo}, 0, editor.timeline()->mainRow());
@@ -335,7 +335,7 @@ private slots:
         document::DraftStore store(m_dir.filePath(u"drafts-transitions"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         ClipInspector &inspector = *editor.inspector();
         editor.importAndInsertPaths({m_files.landscape, m_files.vertical, m_files.photo}, 0, editor.timeline()->mainRow());
@@ -396,7 +396,7 @@ private slots:
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
         auto editor = std::make_unique<EditorController>(store.createDraft(&error), analysis,
-                                                         QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+                                                         QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor->player()->setVolume(0.0);
         ClipInspector &inspector = *editor->inspector();
 
@@ -453,7 +453,7 @@ private slots:
         QVERIFY(editor->close());
         editor.reset();
         auto reopened = std::make_unique<EditorController>(store.openDraft(id, &error), analysis,
-                                                           QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+                                                           QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         ProjectData after = reopened->data();
         before.modifiedAt = after.modifiedAt = {};
         QVERIFY2(before == after, qPrintable(firstDifference(before, after)));
@@ -465,7 +465,7 @@ private slots:
         document::DraftStore store(m_dir.filePath(u"drafts-frame"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache-frame"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
@@ -491,7 +491,7 @@ private slots:
         document::DraftStore store(m_dir.filePath(u"drafts-markers"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.importAndInsertPaths({m_files.landscape, m_files.vertical}, 0, editor.timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(2), 20000);
@@ -565,7 +565,7 @@ private slots:
         document::DraftStore store(m_dir.filePath(u"drafts-ai"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.importAndInsertPaths({file}, 0, editor.timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
@@ -637,7 +637,7 @@ private slots:
         document::DraftStore store(m_dir.filePath(u"drafts-highlights"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.importAndInsertPaths({file}, 0, editor.timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
@@ -719,7 +719,7 @@ private slots:
         document::DraftStore store(m_dir.filePath(u"drafts-reframe"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.importAndInsertPaths({file}, 0, editor.timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
@@ -783,9 +783,9 @@ cat > "$out.json" <<JSON
 {"result": {"language": "$language"}, "transcription": [
  {"offsets": {"from": 200, "to": 1500}, "text": " Hello everyone.", "tokens": [
   {"text": " Hello", "offsets": {"from": 200, "to": 700}}, {"text": " everyone.", "offsets": {"from": 700, "to": 1400}}]},
- {"offsets": {"from": 2000, "to": 3000}, "text": " Here is vedit.", "tokens": [
+ {"offsets": {"from": 2000, "to": 3000}, "text": " Here is velacut.", "tokens": [
   {"text": " Here", "offsets": {"from": 2000, "to": 2300}}, {"text": " is", "offsets": {"from": 2300, "to": 2500}},
-  {"text": " vedit.", "offsets": {"from": 2500, "to": 3000}}]}]}
+  {"text": " velacut.", "offsets": {"from": 2500, "to": 3000}}]}]}
 JSON
 exit 0
 fi
@@ -796,7 +796,7 @@ cat > "$out.json" <<JSON
   {"text": " Ciao", "offsets": {"from": 200, "to": 600}}, {"text": " a", "offsets": {"from": 600, "to": 700}},
   {"text": " tut", "offsets": {"from": 700, "to": 1000}}, {"text": "ti", "offsets": {"from": 1000, "to": 1200}},
   {"text": ".", "offsets": {"from": 1200, "to": 1200}}]},
- {"offsets": {"from": 2000, "to": 3000}, "text": " Ecco vedit.", "tokens": [
+ {"offsets": {"from": 2000, "to": 3000}, "text": " Ecco velacut.", "tokens": [
   {"text": " Ecco", "offsets": {"from": 2000, "to": 2400}}, {"text": " ved", "offsets": {"from": 2400, "to": 2700}},
   {"text": "it.", "offsets": {"from": 2700, "to": 3000}}]}]}
 JSON
@@ -811,7 +811,7 @@ echo "whisper_print_progress_callback: progress = 100%" >&2
         document::DraftStore store(m_dir.filePath(u"drafts-speech"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         AiController &ai = *editor.ai();
         QCOMPARE(ai.speechStatus(), 0);
@@ -822,7 +822,7 @@ echo "whisper_print_progress_callback: progress = 100%" >&2
         const QVariantList lines = editor.captions()->lines();
         QCOMPARE(lines.size(), 2);
         QCOMPARE(lines[0].toMap().value(u"text"_s).toString(), u"Ciao a tutti."_s);
-        QCOMPARE(lines[1].toMap().value(u"text"_s).toString(), u"Ecco vedit."_s);
+        QCOMPARE(lines[1].toMap().value(u"text"_s).toString(), u"Ecco velacut."_s);
         QCOMPARE(lines[0].toMap().value(u"start"_s).toInt(), 6); // 0.2 s at 30 fps
         const Track &captions = editor.data().mainSequence()->visualTracks.back();
         QCOMPARE(captions.clips[0].subtitle()->words.size(), 3u);
@@ -835,9 +835,9 @@ echo "whisper_print_progress_callback: progress = 100%" >&2
         QCOMPARE(bilingual.size(), 2);
         QCOMPARE(bilingual[0].toMap().value(u"text"_s).toString(), u"Ciao a tutti."_s);
         QCOMPARE(bilingual[0].toMap().value(u"translation"_s).toString(), u"Hello everyone."_s);
-        QCOMPARE(bilingual[1].toMap().value(u"translation"_s).toString(), u"Here is vedit."_s);
-        QVERIFY(editor.captions()->setLineTranslation(1, u"This is vedit."_s));
-        QCOMPARE(editor.captions()->lines()[1].toMap().value(u"translation"_s).toString(), u"This is vedit."_s);
+        QCOMPARE(bilingual[1].toMap().value(u"translation"_s).toString(), u"Here is velacut."_s);
+        QVERIFY(editor.captions()->setLineTranslation(1, u"This is velacut."_s));
+        QCOMPARE(editor.captions()->lines()[1].toMap().value(u"translation"_s).toString(), u"This is velacut."_s);
         const QString srt = m_dir.filePath(u"bilingual.srt"_s);
         QVERIFY(editor.captions()->exportFile(QUrl::fromLocalFile(srt)));
         QFile srtFile(srt);
@@ -846,7 +846,7 @@ echo "whisper_print_progress_callback: progress = 100%" >&2
         editor.undo();
         editor.undo();
         QCOMPARE(editor.captions()->lines()[0].toMap().value(u"translation"_s).toString(), QString());
-        // From a script: the words as written, at the times they are said ("vedit" was heard, "Velacut" written).
+        // From a script: the words as written, at the times they are said ("velacut" was heard, "Velacut" written).
         QVERIFY(ai.captionsFromScript(u"Ciao a tutti!\nEcco Velacut."_s, u"it"_s));
         QTRY_VERIFY_WITH_TIMEOUT(!ai.busy(), 20000);
         const QVariantList scripted = editor.captions()->lines();
@@ -877,7 +877,7 @@ echo "whisper_print_progress_callback: progress = 100%" >&2
     // Editing by the transcript: delete words and they are cut from the video; filler words out at once.
     void editingByTheTranscript()
     {
-        // A model and a stand-in whisper-cli answering "Ciao ehm a tutti. Ecco vedit."
+        // A model and a stand-in whisper-cli answering "Ciao ehm a tutti. Ecco velacut."
         QDir().mkpath(ai::whisper::modelsFolder());
         QFile model(ai::whisper::modelPath(u"base"_s));
         QVERIFY(model.open(QIODevice::WriteOnly));
@@ -892,10 +892,10 @@ out=""
 while [ $# -gt 0 ]; do [ "$1" = "-of" ] && { out="$2"; shift; }; shift; done
 cat > "$out.json" <<JSON
 {"result": {"language": "it"}, "transcription": [
- {"offsets": {"from": 0, "to": 3500}, "text": " Ciao ehm a tutti. Ecco vedit.", "tokens": [
+ {"offsets": {"from": 0, "to": 3500}, "text": " Ciao ehm a tutti. Ecco velacut.", "tokens": [
   {"text": " Ciao", "offsets": {"from": 100, "to": 500}}, {"text": " ehm", "offsets": {"from": 600, "to": 1200}},
   {"text": " a", "offsets": {"from": 1300, "to": 1400}}, {"text": " tutti.", "offsets": {"from": 1400, "to": 1900}},
-  {"text": " Ecco", "offsets": {"from": 2800, "to": 3100}}, {"text": " vedit.", "offsets": {"from": 3100, "to": 3600}}]}]}
+  {"text": " Ecco", "offsets": {"from": 2800, "to": 3100}}, {"text": " velacut.", "offsets": {"from": 3100, "to": 3600}}]}]}
 JSON
 )");
         script.close();
@@ -911,7 +911,7 @@ JSON
         document::DraftStore store(m_dir.filePath(u"drafts-transcript"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache-transcript"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
@@ -936,7 +936,7 @@ JSON
         QVERIFY(transcript.deleteWords(3, 3));
         QCOMPARE(transcript.wordCount(), 4);
         const QVariantList words = transcript.paragraphs().last().toMap().value(u"words"_s).toList();
-        QCOMPARE(words.first().toMap().value(u"text"_s).toString(), u"vedit."_s);
+        QCOMPARE(words.first().toMap().value(u"text"_s).toString(), u"velacut."_s);
         editor.undo();
         editor.undo();
         QCOMPARE(mainTrack(editor).clips.size(), size_t(1));
@@ -977,7 +977,7 @@ echo "100%|==========|" >&2
         document::DraftStore store(m_dir.filePath(u"drafts-demucs"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache-demucs"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
@@ -1041,7 +1041,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         document::DraftStore store(m_dir.filePath(u"drafts-piper"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache-piper"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.player()->seek(15);
         QVERIFY(editor.addText());
@@ -1090,7 +1090,7 @@ done
         document::DraftStore store(m_dir.filePath(u"drafts-rembg"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache-rembg"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.importAndInsertPaths({m_files.vertical}, 0, editor.timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
@@ -1140,7 +1140,7 @@ done
         document::DraftStore store(m_dir.filePath(u"drafts-track"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.importAndInsertPaths({file}, 0, editor.timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
@@ -1171,7 +1171,7 @@ done
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
         {
-            EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+            EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
             editor.player()->setVolume(0.0);
             editor.buildFromScript(script, int(CanvasPreset::Portrait9x16), QUrl::fromLocalFile(m_files.music));
             QTRY_VERIFY_WITH_TIMEOUT(!editor.buildingFromScript(), 30000);
@@ -1217,7 +1217,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
                 models.removeVoice(v.toMap().value(u"path"_s).toString());
             }
         });
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.buildFromScript(script, int(CanvasPreset::Portrait9x16), QUrl::fromLocalFile(m_files.music));
         QTRY_VERIFY_WITH_TIMEOUT(!editor.buildingFromScript(), 60000);
@@ -1249,7 +1249,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         document::DraftStore store(m_dir.filePath(u"drafts-smooth"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.importAndInsertPaths({m_files.vertical}, 0, editor.timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
@@ -1276,7 +1276,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         document::DraftStore store(m_dir.filePath(u"drafts-actions"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         ActionRegistry &actions = *editor.actions();
         editor.importAndInsertPaths({m_files.landscape, m_files.photo}, 0, editor.timeline()->mainRow());
@@ -1351,7 +1351,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         document::DraftStore store(m_dir.filePath(u"drafts-keyframes"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         ClipInspector &inspector = *editor.inspector();
         editor.importAndInsertPaths({m_files.landscape, m_files.photo}, 0, editor.timeline()->mainRow());
@@ -1431,7 +1431,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         document::DraftStore store(m_dir.filePath(u"drafts-cutout"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         ClipInspector &inspector = *editor.inspector();
         editor.importAndInsertPaths({m_files.landscape, m_files.photo}, 0, editor.timeline()->mainRow());
@@ -1509,7 +1509,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         document::DraftStore store(m_dir.filePath(u"drafts2"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(editor).clips.size(), size_t(1), 20000);
@@ -1547,7 +1547,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         document::DraftStore store(m_dir.filePath(u"drafts-audio"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         ClipInspector &inspector = *editor.inspector();
         editor.importAndInsertPaths({m_files.landscape}, 0, editor.timeline()->mainRow());
@@ -1597,7 +1597,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         document::DraftStore store(m_dir.filePath(u"drafts-record"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         RecordController *recorder = editor.recorder();
         QVERIFY(recorder);
@@ -1610,10 +1610,10 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
 
         // 2. Teleprompter setup
         recorder->setTeleprompterVisible(true);
-        recorder->setTeleprompterText(u"Benvenuti a questa dimostrazione di vedit."_s);
+        recorder->setTeleprompterText(u"Benvenuti a questa dimostrazione di velacut."_s);
         recorder->setTeleprompterSpeed(120.0);
         recorder->setTeleprompterMirrored(true);
-        QCOMPARE(recorder->teleprompterText(), u"Benvenuti a questa dimostrazione di vedit."_s);
+        QCOMPARE(recorder->teleprompterText(), u"Benvenuti a questa dimostrazione di velacut."_s);
         QCOMPARE(recorder->teleprompterSpeed(), 120.0);
         QCOMPARE(recorder->teleprompterMirrored(), true);
 
@@ -1675,7 +1675,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         QString error;
         auto document = document::Document::create(store.directoryOf(data.id), data, &error);
         QVERIFY2(document, qPrintable(error));
-        EditorController editor(std::move(document), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(std::move(document), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         QCOMPARE(editor.timeline()->duration(), 15000);
 
@@ -1707,7 +1707,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
         auto editor = std::make_unique<EditorController>(store.createDraft(&error), analysis,
-                                                         QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+                                                         QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor->player()->setVolume(0.0);
         ClipInspector &inspector = *editor->inspector();
 
@@ -1840,7 +1840,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         QVERIFY(editor->close());
         editor.reset();
         auto reopened = std::make_unique<EditorController>(store.openDraft(id, &error), analysis,
-                                                           QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+                                                           QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         ProjectData after = reopened->data();
         before.modifiedAt = after.modifiedAt = {};
         QVERIFY2(before == after, qPrintable(firstDifference(before, after)));
@@ -1852,7 +1852,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache-ripple"_s));
         QString error;
         auto editor = std::make_unique<EditorController>(store.createDraft(&error), analysis,
-                                                         QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+                                                         QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor->player()->setVolume(0.0);
         editor->importAndInsertPaths({m_files.landscape, m_files.photo}, 0, editor->timeline()->mainRow());
         QTRY_COMPARE_WITH_TIMEOUT(mainTrack(*editor).clips.size(), size_t(2), 20000);
@@ -1897,7 +1897,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         document::DraftStore store(m_dir.filePath(u"drafts-template"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         const fx::TemplatePreset *preset = fx::Library::core().templatePreset(u"templates/vlog-day"_s);
         QVERIFY(preset);
@@ -1997,7 +1997,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
         // One editor at a time, as in the application (two SDL audio consumers closing crash inside SDL).
-        auto first = std::make_unique<EditorController>(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        auto first = std::make_unique<EditorController>(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         EditorController &editor = *first;
         editor.player()->setVolume(0.0);
         QList<QUrl> photos;
@@ -2042,7 +2042,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         const QString clicks = m_dir.filePath(u"clicks.wav"_s);
         QVERIFY(runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s, u"aevalsrc='if(lt(mod(t\\,0.7)\\,0.03)\\,sin(2*PI*1500*t)\\,0)':s=44100:d=12"_s,
                            clicks}));
-        EditorController beat(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController beat(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         beat.player()->setVolume(0.0);
         beat.buildSlideshow(photos, QUrl::fromLocalFile(clicks), 0, true); // soft: 3 s, on the beat
         QTRY_VERIFY_WITH_TIMEOUT(!beat.buildingSlideshow(), 60000);
@@ -2082,7 +2082,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         document::DraftStore store(m_dir.filePath(u"drafts-montage"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         editor.buildMontage(files, QUrl::fromLocalFile(song), u"vlog"_s, 15);
         QVERIFY(editor.buildingMontage());
@@ -2178,7 +2178,7 @@ ffmpeg -hide_banner -loglevel error -nostdin -y -f lavfi -i "sine=frequency=300:
         document::DraftStore store(m_dir.filePath(u"drafts-brand"_s));
         engine::MediaAnalysis analysis(m_dir.filePath(u"cache"_s));
         QString error;
-        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        EditorController editor(store.createDraft(&error), analysis, QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         editor.player()->setVolume(0.0);
         // The kit's colours first in the colour pickers.
         QCOMPARE(editor.inspector()->swatches().first().value<QColor>(), QColor(u"#ff5500"_s));

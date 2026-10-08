@@ -14,7 +14,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -123,7 +123,7 @@ Library Library::load(const QString &folder)
     library.m_packName = localized(pack.value(u"name"_s));
     library.m_packVersion = pack.value(u"version"_s).toInt(1);
     if (pack.value(u"format"_s).toString() != u"vedit.pack"_s || library.m_packId.isEmpty()) {
-        library.m_errors << u"pack.json: not a vedit pack (format \"vedit.pack\" and an id are required)"_s;
+        library.m_errors << u"pack.json: not a velacut pack (format \"vedit.pack\" and an id are required)"_s;
     }
 
     const QJsonObject filters = read(u"filters.json"_s);
@@ -277,7 +277,7 @@ const Library *loadInstalled()
     // Owned here until the program ends (never freed earlier: see currentLibrary()).
     static std::mutex mutex;
     static std::vector<std::unique_ptr<Library>> loaded;
-    auto owned = std::make_unique<Library>(Library::load(u":/vedit/packs/vedit.core"_s));
+    auto owned = std::make_unique<Library>(Library::load(u":/velacut/packs/vedit.core"_s));
     Library *library = owned.get();
     {
         std::lock_guard lock(mutex);
@@ -313,7 +313,7 @@ void Library::reload()
 
 QString Library::userPacksFolder()
 {
-    return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + u"/vedit/packs"_s;
+    return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + u"/velacut/packs"_s;
 }
 
 int Library::itemCount() const
@@ -448,4 +448,4 @@ const StickerPreset *Library::sticker(const QString &id) const
     return nullptr;
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

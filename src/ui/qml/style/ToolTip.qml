@@ -1,8 +1,8 @@
 // Material 3 plain tooltip (used by every control's ToolTip attached property).
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Components
-import Vedit.Theme
+import Velacut.Components
+import Velacut.Theme
 
 T.ToolTip {
     id: control

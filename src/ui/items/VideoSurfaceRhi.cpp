@@ -9,7 +9,7 @@
 
 #include <memory>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 namespace {
 
@@ -63,8 +63,8 @@ public:
         updateBindings();
         m_pipeline.reset(m_rhi->newGraphicsPipeline());
         m_pipeline->setTopology(QRhiGraphicsPipeline::TriangleStrip);
-        m_pipeline->setShaderStages({{QRhiShaderStage::Vertex, loadShader(QStringLiteral(":/vedit/shaders/preview.vert.qsb"))},
-                                     {QRhiShaderStage::Fragment, loadShader(QStringLiteral(":/vedit/shaders/preview.frag.qsb"))}});
+        m_pipeline->setShaderStages({{QRhiShaderStage::Vertex, loadShader(QStringLiteral(":/velacut/shaders/preview.vert.qsb"))},
+                                     {QRhiShaderStage::Fragment, loadShader(QStringLiteral(":/velacut/shaders/preview.frag.qsb"))}});
         QRhiVertexInputLayout layout;
         layout.setBindings({{4 * sizeof(float)}});
         layout.setAttributes({{0, 0, QRhiVertexInputAttribute::Float4, 0}});
@@ -229,4 +229,4 @@ QQuickRhiItemRenderer *VideoSurfaceRhi::createRenderer()
     return new Renderer;
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

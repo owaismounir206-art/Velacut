@@ -10,11 +10,11 @@
 
 #include <optional>
 
-namespace vedit {
+namespace velacut {
 
 // Version of docs/FILE_FORMAT.md implemented by this build.
 inline constexpr int kProjectFormatVersion = 1;
-inline constexpr QLatin1StringView kProjectFormatName("vedit.project");
+inline constexpr QLatin1StringView kProjectFormatName("velacut.project");
 
 struct ProjectLoadResult
 {
@@ -60,4 +60,4 @@ ProjectLoadResult fromBytes(const QByteArray &bytes);
 
 } // namespace projectjson
 
-} // namespace vedit
+} // namespace velacut

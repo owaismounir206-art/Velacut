@@ -15,7 +15,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 AudioLibraryModel::AudioLibraryModel(QString folder, QString probeExecutable, QObject *parent)
     : QAbstractListModel(parent)
@@ -51,7 +51,7 @@ AudioLibraryModel::~AudioLibraryModel() = default;
 QString AudioLibraryModel::defaultFolder()
 {
     // Tests point the library to their own folder.
-    if (const QString folder = qEnvironmentVariable("VEDIT_MUSIC_DIR"); !folder.isEmpty()) {
+    if (const QString folder = qEnvironmentVariable("VELACUT_MUSIC_DIR"); !folder.isEmpty()) {
         return folder;
     }
     // xdg-user-dirs: XDG_MUSIC_DIR="$HOME/Musica" (localized name), in the user's real configuration.
@@ -165,4 +165,4 @@ std::optional<Media> AudioLibraryModel::media(int row) const
     return *probed;
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

@@ -10,7 +10,7 @@
 
 #include <memory>
 
-namespace vedit::test {
+namespace velacut::test {
 
 inline const Rational kRate(30);
 
@@ -188,4 +188,4 @@ public:
     QUndoStack stack;
 };
 
-} // namespace vedit::test
+} // namespace velacut::test

@@ -13,7 +13,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::projectjson {
+namespace velacut::projectjson {
 
 namespace {
 
@@ -1651,7 +1651,7 @@ void repair(ProjectData &project, QStringList &warnings)
 
 QString damaged(const QString &detail)
 {
-    return QCoreApplication::translate("vedit::projectjson", "The project file is damaged (%1).").arg(detail);
+    return QCoreApplication::translate("velacut::projectjson", "The project file is damaged (%1).").arg(detail);
 }
 
 } // namespace
@@ -1667,7 +1667,7 @@ QJsonObject toJson(const ProjectData &project)
     QJsonObject object{
         {u"format"_s, QString(kProjectFormatName)},
         {u"formatVersion"_s, kProjectFormatVersion},
-        {u"generator"_s, QJsonObject{{u"app"_s, u"vedit"_s}, {u"version"_s, QCoreApplication::applicationVersion()}}},
+        {u"generator"_s, QJsonObject{{u"app"_s, u"velacut"_s}, {u"version"_s, QCoreApplication::applicationVersion()}}},
         {u"id"_s, idValue(project.id)},
         {u"name"_s, project.name},
         {u"createdAt"_s, isoDate(project.createdAt)},
@@ -1699,7 +1699,7 @@ TextStyle textStyleFromJson(const QJsonObject &json)
 
 QJsonObject textAnimationToJson(const TextAnimation &animation)
 {
-    return ::vedit::projectjson::textAnimationJson(animation);
+    return ::velacut::projectjson::textAnimationJson(animation);
 }
 
 std::optional<TextAnimation> textAnimationFromJson(const QJsonObject &json)
@@ -1798,7 +1798,7 @@ ProjectLoadResult fromJson(const QJsonObject &json)
 {
     ProjectLoadResult result;
     if (json.value(u"format"_s).toString() != kProjectFormatName) {
-        result.error = QCoreApplication::translate("vedit::projectjson", "This file is not a vedit project.");
+        result.error = QCoreApplication::translate("velacut::projectjson", "This file is not a velacut project.");
         return result;
     }
     const QJsonValue version = json.value(u"formatVersion"_s);
@@ -1852,4 +1852,4 @@ ProjectLoadResult fromBytes(const QByteArray &bytes)
     return fromJson(document.object());
 }
 
-} // namespace vedit::projectjson
+} // namespace velacut::projectjson

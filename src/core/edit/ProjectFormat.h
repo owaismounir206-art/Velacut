@@ -5,7 +5,7 @@
 
 #include <optional>
 
-namespace vedit {
+namespace velacut {
 
 // Canvas showing a media item as it is displayed (rotation and pixel aspect applied), with the preset of its
 // ratio; at most 4K (3840 on the long side, 2160 on the short one). None for audio.
@@ -21,4 +21,4 @@ EditResult insertMediaAdoptingFormat(const ProjectData &project, const SequenceI
                                      const RationalTime &position, Placement placement = Placement::Auto,
                                      std::optional<TimeRange> sourceRange = std::nullopt);
 
-} // namespace vedit
+} // namespace velacut

@@ -11,8 +11,8 @@
 #include <QJsonDocument>
 #include <QTemporaryDir>
 
-using namespace vedit;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 namespace {
@@ -394,7 +394,7 @@ private slots:
     {
         QVERIFY(!projectjson::fromBytes("{\"format\": \"something.else\"}").ok());
         QVERIFY(!projectjson::fromBytes("[1, 2, 3]").ok());
-        const ProjectLoadResult broken = projectjson::fromBytes("{\"format\": \"vedit.proj");
+        const ProjectLoadResult broken = projectjson::fromBytes("{\"format\": \"velacut.proj");
         QVERIFY(!broken.ok());
         QVERIFY(broken.error.contains(u"damaged"_s));
     }
@@ -471,7 +471,7 @@ private slots:
 
     void atomicFileWrite()
     {
-        QTemporaryDir dir(QDir::tempPath() + u"/vedit-test-XXXXXX"_s);
+        QTemporaryDir dir(QDir::tempPath() + u"/velacut-test-XXXXXX"_s);
         QVERIFY(dir.isValid());
         const QString path = dir.filePath(u"sub/project.vproj"_s);
         const ProjectData project = richProject();

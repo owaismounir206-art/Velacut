@@ -1,6 +1,6 @@
-# vedit_core: pure data model. Depends only on Qt Core/Gui (Gui is needed for QUndoStack).
+# velacut_core: pure data model. Depends only on Qt Core/Gui (Gui is needed for QUndoStack).
 # Must never depend on MLT or QML (docs/ARCHITECTURE.md §2).
-add_library(vedit_core STATIC
+add_library(velacut_core STATIC
     time/Rational.h time/Rational.cpp
     time/RationalTime.h time/RationalTime.cpp
     effects/Easing.h effects/Easing.cpp
@@ -30,6 +30,6 @@ add_library(vedit_core STATIC
     serialization/ProjectJson.h serialization/ProjectJson.cpp
     serialization/ProjectFile.h serialization/ProjectFile.cpp
 )
-target_include_directories(vedit_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
-target_link_libraries(vedit_core PUBLIC Qt6::Core Qt6::Gui)
-vedit_target_options(vedit_core)
+target_include_directories(velacut_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_link_libraries(velacut_core PUBLIC Qt6::Core Qt6::Gui)
+velacut_target_options(velacut_core)

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// vedit entry point: startup sequence of docs/ARCHITECTURE.md §7 (capabilities, fallback chains, safe mode).
+// velacut entry point: startup sequence of docs/ARCHITECTURE.md §7 (capabilities, fallback chains, safe mode).
 #include "app/Logging.h"
 #include "common/DevSandbox.h"
 #include "engine/gpu/GraphicsSetup.h"
@@ -29,15 +29,15 @@
 #include <QTimer>
 #include <QtQml/QQmlExtensionPlugin>
 
-Q_IMPORT_QML_PLUGIN(Vedit_ThemePlugin)
-Q_IMPORT_QML_PLUGIN(Vedit_StylePlugin)
-Q_IMPORT_QML_PLUGIN(Vedit_ComponentsPlugin)
-Q_IMPORT_QML_PLUGIN(Vedit_UIPlugin)
+Q_IMPORT_QML_PLUGIN(Velacut_ThemePlugin)
+Q_IMPORT_QML_PLUGIN(Velacut_StylePlugin)
+Q_IMPORT_QML_PLUGIN(Velacut_ComponentsPlugin)
+Q_IMPORT_QML_PLUGIN(Velacut_UIPlugin)
 
-Q_LOGGING_CATEGORY(lcApp, "vedit.app")
+Q_LOGGING_CATEGORY(lcApp, "velacut.app")
 
 using namespace Qt::StringLiterals;
-using namespace vedit;
+using namespace velacut;
 
 namespace {
 
@@ -56,10 +56,10 @@ QSGRendererInterface::GraphicsApi toGraphicsApi(gpu::UiBackend backend)
 
 QString probeExecutable()
 {
-    return QCoreApplication::applicationDirPath() + u"/vedit-gpuprobe"_s;
+    return QCoreApplication::applicationDirPath() + u"/velacut-gpuprobe"_s;
 }
 
-// Relaunches vedit with the same arguments (runtime fallback to the next backend).
+// Relaunches velacut with the same arguments (runtime fallback to the next backend).
 void relaunch()
 {
     QStringList arguments = QCoreApplication::arguments();
@@ -72,10 +72,10 @@ void relaunch()
 int main(int argc, char *argv[])
 {
     applyDevSandbox();
-    QCoreApplication::setOrganizationName(u"vedit"_s);
-    QCoreApplication::setApplicationName(u"vedit"_s);
-    QCoreApplication::setApplicationVersion(QStringLiteral(VEDIT_VERSION));
-    QGuiApplication::setDesktopFileName(u"vedit"_s);
+    QCoreApplication::setOrganizationName(u"velacut"_s);
+    QCoreApplication::setApplicationName(u"velacut"_s);
+    QCoreApplication::setApplicationVersion(QStringLiteral(VELACUT_VERSION));
+    QGuiApplication::setDesktopFileName(u"velacut"_s);
     QGuiApplication app(argc, argv);
     logging::install();
 
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
         QCoreApplication::installTranslator(&qtTranslator);
     }
     QTranslator appTranslator;
-    if (appTranslator.load(QLocale(), u"vedit"_s, u"_"_s, u":/i18n"_s)) {
+    if (appTranslator.load(QLocale(), u"velacut"_s, u"_"_s, u":/i18n"_s)) {
         QCoreApplication::installTranslator(&appTranslator);
     }
 
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
             }
         }
         themeManager.setSoftwareRendering(decision.ui == gpu::UiBackend::Software);
-        QQuickStyle::setStyle(u"Vedit.Style"_s);
+        QQuickStyle::setStyle(u"Velacut.Style"_s);
 
         ui::AppController controller(decision, capabilities);
         ui::AppController::setInstance(&controller);
@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
         }
 
         QQmlApplicationEngine qmlEngine;
-        qmlEngine.loadFromModule("Vedit.UI", parser.isSet(galleryOption) ? "Gallery" : "Main");
+        qmlEngine.loadFromModule("Velacut.UI", parser.isSet(galleryOption) ? "Gallery" : "Main");
         if (qmlEngine.rootObjects().isEmpty()) {
             qCCritical(lcApp) << "the user interface could not be loaded";
             return 1;
@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
             });
         }
 
-        // "Open with vedit": a new project with those files on the timeline.
+        // "Open with velacut": a new project with those files on the timeline.
         QStringList files;
         for (const QString &file : parser.positionalArguments()) {
             files << QDir::current().absoluteFilePath(file);

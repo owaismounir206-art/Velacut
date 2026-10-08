@@ -8,7 +8,7 @@
 #include <cmath>
 #include <vector>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 ScopeView::ScopeView(QQuickItem *parent)
     : QQuickPaintedItem(parent)
@@ -228,4 +228,4 @@ void ScopeView::drawVectorscope(QPainter *painter, const QImage &frame, const QR
     }
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

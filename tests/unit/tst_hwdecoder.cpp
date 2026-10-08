@@ -6,8 +6,8 @@
 #include <QFileInfo>
 #include <QTest>
 
-using namespace vedit::gpu;
-using namespace vedit::engine;
+using namespace velacut::gpu;
+using namespace velacut::engine;
 
 class TestHwDecoder : public QObject
 {

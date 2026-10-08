@@ -1,12 +1,12 @@
 add_subdirectory(qml/components)
 add_subdirectory(qml/style)
 
-# Vedit.UI: C++ items and controllers exposed to QML, and the application screens.
-qt_add_library(vedit_ui STATIC)
-qt_add_qml_module(vedit_ui
-    URI Vedit.UI
+# Velacut.UI: C++ items and controllers exposed to QML, and the application screens.
+qt_add_library(velacut_ui STATIC)
+qt_add_qml_module(velacut_ui
+    URI Velacut.UI
     VERSION 1.0
-    DEPENDENCIES QtQuick Vedit.Theme Vedit.Components
+    DEPENDENCIES QtQuick Velacut.Theme Velacut.Components
     SOURCES
         items/VideoFit.h
         items/VideoSurfaceRhi.h items/VideoSurfaceRhi.cpp
@@ -79,17 +79,17 @@ qt_add_qml_module(vedit_ui
         qml/TranscriptPanel.qml
         qml/FullScreenPreview.qml
 )
-qt_add_shaders(vedit_ui "vedit_preview_shaders"
-    PREFIX "/vedit/shaders"
+qt_add_shaders(velacut_ui "velacut_preview_shaders"
+    PREFIX "/velacut/shaders"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}/items/shaders"
     FILES
         items/shaders/preview.vert
         items/shaders/preview.frag
 )
-target_include_directories(vedit_ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_CURRENT_SOURCE_DIR}"
+target_include_directories(velacut_ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_CURRENT_SOURCE_DIR}"
                                    # the generated QML registration includes headers by file name
                                    PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/items" "${CMAKE_CURRENT_SOURCE_DIR}/controllers"
                                            "${CMAKE_CURRENT_SOURCE_DIR}/models")
-target_link_libraries(vedit_ui PUBLIC Qt6::Network vedit_engine vedit_ai vedit_document vedit_gpu vedit_theme Qt6::Quick Qt6::QuickControls2 Qt6::DBus
+target_link_libraries(velacut_ui PUBLIC Qt6::Network velacut_engine velacut_ai velacut_document velacut_gpu velacut_theme Qt6::Quick Qt6::QuickControls2 Qt6::DBus
                                PRIVATE Qt6::GuiPrivate)
-vedit_target_options(vedit_ui)
+velacut_target_options(velacut_ui)

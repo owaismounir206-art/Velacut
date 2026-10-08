@@ -15,9 +15,9 @@
 
 #include <mlt++/Mlt.h>
 
-using namespace vedit;
-using namespace vedit::engine;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::engine;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 namespace {
@@ -135,6 +135,55 @@ private slots:
         player.pause();
         QCOMPARE(player.rate(), 0.0);
         QVERIFY(!player.playing());
+    }
+
+    void scrubMutesTheAudioAndTheCommitRestoresIt()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        TimelinePlayer player;
+        player.setVolume(0.0);
+        player.setSequence(&session.project, session.data().mainSequenceId);
+        QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
+
+        // A scrub drag that starts while playing: muted (MLT level) and paused, exactly the
+        // sequence of calls the timeline view makes when the pointer press starts the drag.
+        player.play();
+        QVERIFY(player.playing());
+        player.setScrubMuted(true);
+        QVERIFY(player.scrubMuted());
+        player.pause();
+        player.scrubSeek(80);
+        QCOMPARE(player.position(), 80);
+        QVERIFY(!player.playing());
+        QVERIFY(waitForShown(player, 80));
+
+        // Release on the frame the preview already landed on: the commit takes the early-return
+        // path, and still restores the audio and resumes the playback where it was.
+        player.commitSeek(80);
+        QVERIFY(!player.scrubMuted());
+        QVERIFY(player.playing());
+        player.pause();
+
+        // A drag that started paused stays paused, and a commit to another frame is a real seek.
+        player.setScrubMuted(true);
+        QVERIFY(player.scrubMuted());
+        player.scrubSeek(10);
+        QVERIFY(waitForShown(player, 10));
+        player.commitSeek(60);
+        QCOMPARE(player.position(), 60);
+        QVERIFY(!player.scrubMuted());
+        QVERIFY(!player.playing());
+        QVERIFY(waitForShown(player, 60));
+
+        // The hover preview (skim) is silent too, and it never moves the playhead.
+        player.skim(20);
+        QVERIFY(player.skimming());
+        QVERIFY(waitForShown(player, 20));
+        player.endSkim();
+        QVERIFY(!player.skimming());
+        QVERIFY(waitForShown(player, 60));
+        QCOMPARE(player.position(), 60);
     }
 
     void playsToTheEndAndStops()
@@ -257,7 +306,7 @@ private slots:
         QFile::remove(reverseProxyPath(*session.data().findMedia(m_landscape.id))); // left by an earlier run
         TimelinePlayer player;
         player.setVolume(0.0);
-        player.setHelperExecutable(QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        player.setHelperExecutable(QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         player.setSequence(&session.project, session.data().mainSequenceId);
         QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
         const QImage lastForward = [&] {

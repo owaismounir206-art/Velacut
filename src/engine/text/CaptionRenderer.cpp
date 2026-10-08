@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -151,7 +151,7 @@ std::shared_ptr<CaptionLayout> CaptionRenderer::layout(const SubtitleClipData &l
     if (canvas.isEmpty() || lengthFrames <= 0) {
         return result;
     }
-    fonts::loadBundled(); // "Inter" is the font shipped with vedit, in every process
+    fonts::loadBundled(); // "Inter" is the font shipped with velacut, in every process
     const RationalTime duration(lengthFrames, frameRate);
     const std::vector<TimedWord> words = captions::timedWords(line, duration);
     const std::vector<captions::WordGroup> groups = captions::groupsOf(words, style.maxWordsPerLine, duration);
@@ -498,4 +498,4 @@ QImage CaptionRenderer::render(const CaptionLayout &layout, std::int64_t frame, 
     return image.convertToFormat(QImage::Format_RGBA8888);
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

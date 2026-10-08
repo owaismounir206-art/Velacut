@@ -5,7 +5,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::theme {
+namespace velacut::theme {
 
 namespace {
 constexpr QLatin1StringView kColorRoleNames[] = {
@@ -99,4 +99,4 @@ double contrastRatio(const QColor &a, const QColor &b)
     return (std::max(la, lb) + 0.05) / (std::min(la, lb) + 0.05);
 }
 
-} // namespace vedit::theme
+} // namespace velacut::theme

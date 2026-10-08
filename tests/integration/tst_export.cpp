@@ -17,9 +17,9 @@
 
 #include <mlt++/Mlt.h>
 
-using namespace vedit;
-using namespace vedit::engine;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::engine;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 class TestExport : public QObject
@@ -192,13 +192,13 @@ private slots:
         QVERIFY(QDir(folder).entryList(QDir::Files | QDir::Hidden).isEmpty());
     }
 
-    // The editor's path: a frozen copy rendered by the vedit-render process.
+    // The editor's path: a frozen copy rendered by the velacut-render process.
     void exportsInASeparateProcess()
     {
         const ProjectData data = editedProject();
         const QString path = outputPath(u"process.mp4"_s);
         RenderJob job;
-        job.setExecutable(QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        job.setExecutable(QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         QSignalSpy finished(&job, &RenderJob::finished);
         QSignalSpy failed(&job, &RenderJob::failed);
         QList<double> progress;
@@ -238,7 +238,7 @@ private slots:
         data = session.data();
         const QString path = outputPath(u"phase2.mp4"_s);
         RenderJob job;
-        job.setExecutable(QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        job.setExecutable(QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         QSignalSpy finished(&job, &RenderJob::finished);
         QSignalSpy failed(&job, &RenderJob::failed);
         QVERIFY(job.start(data, data.mainSequenceId, settingsFor(data, path)));
@@ -263,7 +263,7 @@ private slots:
         ExportSettings settings = settingsFor(data, folder + u"/c.mp4"_s);
         settings.size = QSize(1920, 1080);
         RenderJob job;
-        job.setExecutable(QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        job.setExecutable(QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         QSignalSpy cancelled(&job, &RenderJob::cancelled);
         QVERIFY(job.start(data, data.mainSequenceId, settings));
         QTRY_VERIFY_WITH_TIMEOUT(job.progress() > 0.0, 30000);
@@ -276,7 +276,7 @@ private slots:
     {
         const ProjectData data = editedProject();
         RenderJob job;
-        job.setExecutable(QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        job.setExecutable(QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         QSignalSpy failed(&job, &RenderJob::failed);
         QVERIFY(job.start(data, data.mainSequenceId, settingsFor(data, m_dir.filePath(u"no-such-folder/x.mp4"_s))));
         QVERIFY(failed.wait(30000));
@@ -287,7 +287,7 @@ private slots:
         QCOMPARE(failed.last().at(0).toString(), RenderJob::errorMessage(RenderError::NothingToExport));
     }
 
-    // Job files of an export killed with vedit are removed at the next start; recent ones are left alone.
+    // Job files of an export killed with velacut are removed at the next start; recent ones are left alone.
     void staleJobFilesAreRemoved()
     {
         const QString directory = paths::cacheDir() + u"/render"_s;
@@ -530,7 +530,7 @@ private slots:
     void exportsWithTheGpuEncoderWhenAvailable()
     {
         QProcess probe;
-        probe.start(QStringLiteral(VEDIT_GPUPROBE_EXECUTABLE), {u"--video"_s});
+        probe.start(QStringLiteral(VELACUT_GPUPROBE_EXECUTABLE), {u"--video"_s});
         QVERIFY(probe.waitForFinished(30000));
         const QJsonDocument report = QJsonDocument::fromJson(probe.readAllStandardOutput());
         QStringList encoders;
@@ -555,7 +555,7 @@ private slots:
         QCOMPARE(video.value(u"nb_read_frames"_s).toString().toInt(), 195);
     }
 
-    // No MltRuntime::shutdown(): see vedit-render's main() (FFmpeg/x264 globals reported by LeakSanitizer once
+    // No MltRuntime::shutdown(): see velacut-render's main() (FFmpeg/x264 globals reported by LeakSanitizer once
     // Mlt::Factory::close() unloads the modules that reference them).
 };
 

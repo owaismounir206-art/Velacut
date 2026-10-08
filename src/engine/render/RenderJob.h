@@ -11,9 +11,9 @@
 #include <chrono>
 #include <QStringList>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
-// One export run by vedit-render in a separate process (a crash of a codec or driver cannot close the editor,
+// One export run by velacut-render in a separate process (a crash of a codec or driver cannot close the editor,
 // and editing goes on while it exports). The project is frozen: a copy is written to the cache and the process
 // renders that copy, so later edits do not affect the running export.
 class RenderJob : public QObject
@@ -28,10 +28,10 @@ public:
     explicit RenderJob(QObject *parent = nullptr);
     ~RenderJob() override;
 
-    // Default: vedit-render next to the running executable.
+    // Default: velacut-render next to the running executable.
     void setExecutable(const QString &path) { m_executable = path; }
     // Hardware encoders verified by the GPU probe for this machine (GpuCapabilities::video.encoders): passed to
-    // vedit-render in the job, empty in software mode. Cleared when the user turns hardware encoding off.
+    // velacut-render in the job, empty in software mode. Cleared when the user turns hardware encoding off.
     void setHardwareEncoders(QStringList encoders) { m_hardwareEncoders = std::move(encoders); }
 
     // Starts the export; on a problem found before starting (no disk space, nothing to export…) emits failed()
@@ -46,7 +46,7 @@ public:
     QString outputPath() const { return m_settings.outputPath; }
 
     static QString errorMessage(RenderError error);
-    // Removes the job files (frozen project and job) left in the cache by exports that were killed with vedit. The
+    // Removes the job files (frozen project and job) left in the cache by exports that were killed with velacut. The
     // renderer reads them only when it starts, so files older than `olderThan` are never in use. Returns how many.
     static int removeStaleJobFiles(std::chrono::seconds olderThan = std::chrono::minutes(10));
 
@@ -82,4 +82,4 @@ private:
     QElapsedTimer m_elapsed;
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

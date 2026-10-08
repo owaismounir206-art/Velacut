@@ -1,13 +1,13 @@
-// Component gallery (vedit --component-gallery): every Material 3 component of vedit, the full color scheme
+// Component gallery (velacut --component-gallery): every Material 3 component of velacut, the full color scheme
 // and the type scale, in light, dark and high contrast, with the seed coming from the system (SPEC §4).
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material as M
 import QtQuick.Layouts
-import Vedit.Components
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Components
+import Velacut.Theme
+import Velacut.UI
 
 ApplicationWindow {
     id: window
@@ -15,7 +15,7 @@ ApplicationWindow {
     width: 1280
     height: 900
     visible: true
-    title: qsTr("Component gallery — vedit")
+    title: qsTr("Component gallery — velacut")
     color: Theme.color.surface
 
     M.Material.theme: Theme.dark ? M.Material.Dark : M.Material.Light

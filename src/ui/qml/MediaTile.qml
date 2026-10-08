@@ -3,9 +3,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Vedit.Components
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Components
+import Velacut.Theme
+import Velacut.UI
 
 Item {
     id: tile
@@ -20,6 +20,16 @@ Item {
     height: Theme.editor.mediaTileHeight + Theme.space.xl
     Accessible.role: Accessible.ListItem
     Accessible.name: name
+
+    // Apple-style hover feedback: a lift only (no scale: the grid of tiles must not move under
+    // the pointer). Transform only, nothing with "reduce motion".
+    transform: Translate {
+        y: hover.hovered ? Theme.motion.hoverLift : 0
+        Behavior on y {
+            enabled: !Theme.motion.reduced
+            NumberAnimation { duration: Theme.motion.short3; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.motion.standardDecelerate }
+        }
+    }
 
     Rectangle {
         id: picture
@@ -130,7 +140,7 @@ Item {
         color: Theme.color.primaryContainer
         border.width: Theme.editor.selectionBorder
         border.color: Theme.color.primary
-        Drag.keys: ["vedit/media"]
+        Drag.keys: ["velacut/media"]
         Drag.hotSpot.x: width / 2
         Drag.hotSpot.y: height / 2
         Icon {

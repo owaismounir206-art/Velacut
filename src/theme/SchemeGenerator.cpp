@@ -18,7 +18,7 @@
 using namespace Qt::StringLiterals;
 namespace mcu = material_color_utilities;
 
-namespace vedit::theme {
+namespace velacut::theme {
 
 namespace {
 
@@ -216,4 +216,4 @@ std::optional<QColor> seedFromImage(const QImage &image)
     return QColor::fromRgba(ranked.front());
 }
 
-} // namespace vedit::theme
+} // namespace velacut::theme

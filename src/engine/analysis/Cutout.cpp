@@ -15,7 +15,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 QString CutoutCopy::path() const
 {
@@ -185,4 +185,4 @@ QString makeCutoutCopy(const CutoutCopy &copy, const std::function<void(double)>
     return {};
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

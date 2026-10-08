@@ -8,7 +8,7 @@
 #include <cmath>
 #include <vector>
 
-using namespace vedit::fx;
+using namespace velacut::fx;
 
 namespace {
 using Pixel = std::array<std::uint8_t, 4>;

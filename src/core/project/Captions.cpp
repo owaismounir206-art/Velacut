@@ -7,7 +7,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::captions {
+namespace velacut::captions {
 
 QStringList splitWords(const QString &text)
 {
@@ -189,4 +189,4 @@ std::vector<CaptionLine> linesOf(const std::vector<SubtitleEntry> &entries)
     return lines;
 }
 
-} // namespace vedit::captions
+} // namespace velacut::captions

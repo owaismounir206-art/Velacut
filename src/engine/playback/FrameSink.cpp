@@ -3,7 +3,7 @@
 
 #include <QMetaObject>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 FrameSink::FrameSink(QObject *parent)
     : QObject(parent)
@@ -83,4 +83,4 @@ void FrameSink::markConsumed(quint64 serial)
     m_consumedSerial = serial;
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

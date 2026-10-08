@@ -9,7 +9,7 @@
 
 #include <atomic>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // Hands the most recent video frame from the MLT consumer thread to the preview item (docs/ARCHITECTURE.md
 // §5.3): a single "latest frame" slot supporting both QImage (RGBA8888) and zero-copy VideoFrame (NV12/P010).
@@ -56,4 +56,4 @@ private:
     std::atomic<bool> m_notifyPending{false};
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

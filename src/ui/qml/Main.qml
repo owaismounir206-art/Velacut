@@ -4,9 +4,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Material as M
 import QtQuick.Layouts
-import Vedit.Components
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Components
+import Velacut.Theme
+import Velacut.UI
 
 ApplicationWindow {
     id: window
@@ -16,7 +16,7 @@ ApplicationWindow {
     minimumWidth: 960
     minimumHeight: 600
     visible: true
-    title: App.editor ? qsTr("%1 — vedit").arg(App.editor.name) : "vedit"
+    title: App.editor ? qsTr("%1 — velacut").arg(App.editor.name) : "velacut"
     color: Theme.color.surface
 
     // Colors of the Qt Material controls this style does not redefine.

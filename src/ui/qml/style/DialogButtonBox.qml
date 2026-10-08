@@ -1,7 +1,7 @@
 // Material 3 dialog actions: text buttons at the bottom right (the confirming one last).
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Theme
+import Velacut.Theme
 
 T.DialogButtonBox {
     id: control

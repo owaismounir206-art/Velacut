@@ -2,8 +2,8 @@
 // file (SPEC 0bis rule 10): everything else uses an undoable action and a snackbar.
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Components
-import Vedit.Theme
+import Velacut.Components
+import Velacut.Theme
 
 T.Dialog {
     id: control
@@ -48,7 +48,21 @@ T.Dialog {
 
     background: Rectangle {
         radius: Theme.shape.extraLarge
-        color: Theme.color.surfaceContainerHigh
+        // Frosted material, "lite" (macOS feel without a backdrop blur, which is impossible
+        // without shaders — SPEC §4): 92% surface over the scrim, always >90% opaque, so the
+        // text keeps the contrast of the solid surface. The hairlines above and below are the
+        // "glass" edges.
+        color: Theme.alpha(Theme.color.surfaceContainerHigh, 0.92)
+        Rectangle {
+            anchors { top: parent.top; left: parent.left; right: parent.right; leftMargin: parent.radius; rightMargin: parent.radius }
+            height: Theme.editor.hairline
+            color: Theme.alpha(Theme.color.outlineVariant, 0.14)
+        }
+        Rectangle {
+            anchors { bottom: parent.bottom; left: parent.left; right: parent.right; leftMargin: parent.radius; rightMargin: parent.radius }
+            height: Theme.editor.hairline
+            color: Theme.alpha(Theme.color.outlineVariant, 0.08)
+        }
     }
 
     T.Overlay.modal: Rectangle {

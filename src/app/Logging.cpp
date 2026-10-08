@@ -12,7 +12,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::logging {
+namespace velacut::logging {
 
 namespace {
 
@@ -56,7 +56,7 @@ void handler(QtMsgType type, const QMessageLogContext &context, const QString &m
 
 QString logFilePath()
 {
-    return paths::stateDir() + u"/logs/vedit.log"_s;
+    return paths::stateDir() + u"/logs/velacut.log"_s;
 }
 
 void install()
@@ -76,4 +76,4 @@ void install()
     qInstallMessageHandler(handler);
 }
 
-} // namespace vedit::logging
+} // namespace velacut::logging

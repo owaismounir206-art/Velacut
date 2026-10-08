@@ -4,14 +4,14 @@
 #include <limits>
 #include <stdexcept>
 
-namespace vedit {
+namespace velacut {
 
 namespace detail {
 
 std::int64_t narrow(Int128 value)
 {
     if (value > std::numeric_limits<std::int64_t>::max() || value < std::numeric_limits<std::int64_t>::min()) {
-        throw std::overflow_error("vedit::Rational: value does not fit in 64 bits");
+        throw std::overflow_error("velacut::Rational: value does not fit in 64 bits");
     }
     return static_cast<std::int64_t>(value);
 }
@@ -19,7 +19,7 @@ std::int64_t narrow(Int128 value)
 Int128 divide(Int128 numerator, Int128 denominator, Rounding rounding)
 {
     if (denominator == 0) {
-        throw std::invalid_argument("vedit::Rational: division by zero");
+        throw std::invalid_argument("velacut::Rational: division by zero");
     }
     if (denominator < 0) {
         numerator = -numerator;
@@ -75,7 +75,7 @@ Int128 gcd(Int128 a, Int128 b)
 Rational::Rational(std::int64_t num, std::int64_t den)
 {
     if (den == 0) {
-        throw std::invalid_argument("vedit::Rational: zero denominator");
+        throw std::invalid_argument("velacut::Rational: zero denominator");
     }
     *this = fromWide(num, den);
 }
@@ -83,7 +83,7 @@ Rational::Rational(std::int64_t num, std::int64_t den)
 Rational Rational::fromWide(detail::Int128 num, detail::Int128 den)
 {
     if (den == 0) {
-        throw std::invalid_argument("vedit::Rational: zero denominator");
+        throw std::invalid_argument("velacut::Rational: zero denominator");
     }
     if (den < 0) {
         num = -num;
@@ -113,7 +113,7 @@ std::int64_t Rational::toInteger(Rounding rounding) const
 Rational Rational::inverse() const
 {
     if (m_num == 0) {
-        throw std::invalid_argument("vedit::Rational: inverse of zero");
+        throw std::invalid_argument("velacut::Rational: inverse of zero");
     }
     return fromWide(m_den, m_num);
 }
@@ -193,7 +193,7 @@ Rational Rational::operator*(const Rational &other) const
 Rational Rational::operator/(const Rational &other) const
 {
     if (other.m_num == 0) {
-        throw std::invalid_argument("vedit::Rational: division by zero");
+        throw std::invalid_argument("velacut::Rational: division by zero");
     }
     return fromWide(detail::Int128(m_num) * other.m_den, detail::Int128(m_den) * other.m_num);
 }
@@ -216,4 +216,4 @@ std::strong_ordering operator<=>(const Rational &a, const Rational &b) noexcept
     return std::strong_ordering::equal;
 }
 
-} // namespace vedit
+} // namespace velacut

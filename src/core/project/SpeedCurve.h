@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-namespace vedit {
+namespace velacut {
 
 class SpeedCurveUtil {
 public:
@@ -48,4 +48,4 @@ public:
                                                    bool reversed = false);
 };
 
-} // namespace vedit
+} // namespace velacut

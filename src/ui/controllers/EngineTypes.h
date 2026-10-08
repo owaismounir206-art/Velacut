@@ -9,12 +9,12 @@
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 struct TimelinePlayerForeign
 {
     Q_GADGET
-    QML_FOREIGN(vedit::engine::TimelinePlayer)
+    QML_FOREIGN(velacut::engine::TimelinePlayer)
     QML_NAMED_ELEMENT(TimelinePlayer)
     QML_UNCREATABLE("Provided by App.editor.player")
 };
@@ -22,7 +22,7 @@ struct TimelinePlayerForeign
 struct RenderJobForeign
 {
     Q_GADGET
-    QML_FOREIGN(vedit::engine::RenderJob)
+    QML_FOREIGN(velacut::engine::RenderJob)
     QML_NAMED_ELEMENT(RenderJob)
     QML_UNCREATABLE("Provided by App.editor.exportJob")
 };
@@ -30,8 +30,8 @@ struct RenderJobForeign
 struct FrameSinkForeign
 {
     Q_GADGET
-    QML_FOREIGN(vedit::engine::FrameSink)
+    QML_FOREIGN(velacut::engine::FrameSink)
     QML_ANONYMOUS
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

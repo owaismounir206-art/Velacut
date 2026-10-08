@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The real interface driven with the mouse and the keyboard, headless (software scene graph): the usability tests of
-// SPEC §0bis counted in actions (clicks, keys, drags), and the timeline gestures. Set VEDIT_UI_SHOTS=<folder> to also
+// SPEC §0bis counted in actions (clicks, keys, drags), and the timeline gestures. Set VELACUT_UI_SHOTS=<folder> to also
 // save screenshots of each step (visual review).
 #include "TestMedia.h"
 
@@ -37,13 +37,13 @@
 #include <mlt++/MltProfile.h>
 #include <QtQml/QQmlExtensionPlugin>
 
-Q_IMPORT_QML_PLUGIN(Vedit_ThemePlugin)
-Q_IMPORT_QML_PLUGIN(Vedit_StylePlugin)
-Q_IMPORT_QML_PLUGIN(Vedit_ComponentsPlugin)
-Q_IMPORT_QML_PLUGIN(Vedit_UIPlugin)
+Q_IMPORT_QML_PLUGIN(Velacut_ThemePlugin)
+Q_IMPORT_QML_PLUGIN(Velacut_StylePlugin)
+Q_IMPORT_QML_PLUGIN(Velacut_ComponentsPlugin)
+Q_IMPORT_QML_PLUGIN(Velacut_UIPlugin)
 
-using namespace vedit;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 class TestUi : public QObject
@@ -147,7 +147,7 @@ class TestUi : public QObject
     }
     void shot(const QString &name)
     {
-        const QString folder = qEnvironmentVariable("VEDIT_UI_SHOTS");
+        const QString folder = qEnvironmentVariable("VELACUT_UI_SHOTS");
         if (!folder.isEmpty()) {
             QTest::qWait(300);
             QDir().mkpath(folder);
@@ -174,7 +174,7 @@ private slots:
         // A music library with one song (usability test 2).
         QDir().mkpath(m_dir.filePath(u"music"_s));
         QVERIFY(QFile::copy(m_files.music, m_dir.filePath(u"music/song.mp3"_s)));
-        qputenv("VEDIT_MUSIC_DIR", QFile::encodeName(m_dir.filePath(u"music"_s)));
+        qputenv("VELACUT_MUSIC_DIR", QFile::encodeName(m_dir.filePath(u"music"_s)));
         QVERIFY(engine::MltRuntime::waitUntilReady());
 
         static QStringList *warnings = &m_warnings;
@@ -194,12 +194,12 @@ private slots:
         theme::ThemeManager::setInstance(m_theme.get());
         m_theme->setSessionOverrides(theme::ThemeManager::Mode::Dark, std::nullopt);
         m_theme->setSoftwareRendering(true);
-        QQuickStyle::setStyle(u"Vedit.Style"_s);
+        QQuickStyle::setStyle(u"Velacut.Style"_s);
         m_app = std::make_unique<ui::AppController>(gpu::GraphicsDecision{}, gpu::GpuCapabilities{},
-                                                    QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+                                                    QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         ui::AppController::setInstance(m_app.get());
         m_engine = std::make_unique<QQmlApplicationEngine>();
-        m_engine->loadFromModule("Vedit.UI", "Main");
+        m_engine->loadFromModule("Velacut.UI", "Main");
         QVERIFY(!m_engine->rootObjects().isEmpty());
         m_window = qobject_cast<QQuickWindow *>(m_engine->rootObjects().constFirst());
         QVERIFY(m_window);
@@ -920,7 +920,7 @@ private slots:
         QTRY_VERIFY(m_theme->dark());
         click(byName(u"preferencesSection_3"_s));
         QTRY_VERIFY(byName(u"installPackZip"_s));
-        QTRY_VERIFY(byText(u"vedit library"_s));
+        QTRY_VERIFY(byText(u"velacut library"_s));
         shot(u"14-preferences-packs"_s);
         click(byName(u"preferencesSection_2"_s));
         shot(u"15-preferences-performance"_s);
@@ -1108,11 +1108,11 @@ private slots:
         QFile srt(m_dir.filePath(u"captions.srt"_s));
         QVERIFY(srt.open(QIODevice::WriteOnly));
         srt.write("1\r\n00:00:00,200 --> 00:00:01,400\r\nCiao a tutti\r\n\r\n2\r\n00:00:01,500 --> 00:00:02,600\r\n"
-                  "questo \xc3\xa8 vedit\r\n\r\n3\r\n00:00:02,700 --> 00:00:03,800\r\nbuona visione\r\n");
+                  "questo \xc3\xa8 velacut\r\n\r\n3\r\n00:00:02,700 --> 00:00:03,800\r\nbuona visione\r\n");
         srt.close();
         QVERIFY(captions->importFile(QUrl::fromLocalFile(srt.fileName())));
         QTRY_COMPARE(captions->lines().size(), 3);
-        QCOMPARE(captions->lines()[1].toMap().value(u"text"_s).toString(), u"questo è vedit"_s);
+        QCOMPARE(captions->lines()[1].toMap().value(u"text"_s).toString(), u"questo è velacut"_s);
         QCOMPARE(captions->style().value(u"highlight"_s).toInt(), int(CaptionHighlight::Box));
         editor()->player()->seek(25);
         click(byText(u"Lines"_s));
@@ -1120,7 +1120,7 @@ private slots:
         shot(u"19-captions-lines"_s);
 
         // Find and replace in every line, one undo step.
-        QVERIFY(captions->replaceAll(u"vedit"_s, u"Velacut"_s) == 1);
+        QVERIFY(captions->replaceAll(u"velacut"_s, u"Velacut"_s) == 1);
         QCOMPARE(captions->lines()[1].toMap().value(u"text"_s).toString(), u"questo è Velacut"_s);
         // Another style from the library, then values of its own.
         click(byText(u"Styles"_s));
@@ -1166,7 +1166,7 @@ cat > "$out.json" <<JSON
   {"text": " Ciao", "offsets": {"from": 100, "to": 500}}, {"text": " ehm", "offsets": {"from": 600, "to": 1200}},
   {"text": " a", "offsets": {"from": 1300, "to": 1400}}, {"text": " tutti.", "offsets": {"from": 1400, "to": 1900}},
   {"text": " Questo", "offsets": {"from": 2800, "to": 3100}}, {"text": " è", "offsets": {"from": 3100, "to": 3200}},
-  {"text": " vedit.", "offsets": {"from": 3200, "to": 3600}}]}]}
+  {"text": " velacut.", "offsets": {"from": 3200, "to": 3600}}]}]}
 JSON
 )");
         script.close();
@@ -1456,7 +1456,7 @@ JSON
         QTRY_VERIFY_WITH_TIMEOUT(editor()->analysis().waveform(media), 20000);
         QQuickItem *waveform = nullptr;
         QTRY_VERIFY((waveform = findItem(m_window->contentItem(), [](QQuickItem *item) {
-                         return QByteArray(item->metaObject()->className()).startsWith("vedit::ui::WaveformView");
+                         return QByteArray(item->metaObject()->className()).startsWith("velacut::ui::WaveformView");
                      })));
         const double clipWidth = waveform->property("fullWidth").toDouble();
         QVERIFY2(clipWidth > 20000, qPrintable(u"clip width %1"_s.arg(clipWidth)));

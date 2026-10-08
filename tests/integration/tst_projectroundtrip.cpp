@@ -7,8 +7,8 @@
 #include <QDir>
 #include <QTemporaryDir>
 
-using namespace vedit;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 class TestProjectRoundTrip : public QObject
@@ -36,7 +36,7 @@ private slots:
         QCOMPARE(session.mainTrack().clips.front().id, appended);
         QCOMPARE(session.mainTrack().clips.back().id, second);
 
-        QTemporaryDir dir(QDir::tempPath() + u"/vedit-roundtrip-XXXXXX"_s);
+        QTemporaryDir dir(QDir::tempPath() + u"/velacut-roundtrip-XXXXXX"_s);
         QVERIFY(dir.isValid());
         const QString path = dir.filePath(u"edited.vproj"_s);
         QVERIFY(projectfile::save(path, session.data()));

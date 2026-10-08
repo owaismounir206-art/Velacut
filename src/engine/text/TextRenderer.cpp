@@ -15,7 +15,7 @@
 #include <cmath>
 #include <vector>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -58,7 +58,7 @@ struct Layout
 
 Layout layoutText(const TextClipData &text, QSize canvas)
 {
-    fonts::loadBundled(); // "Inter" is the font shipped with vedit, in every process
+    fonts::loadBundled(); // "Inter" is the font shipped with velacut, in every process
     Layout layout;
     const TextStyle &style = text.style;
     layout.pixelSize = std::max(1.0, numberOf(style.size, 0.06) * canvas.height());
@@ -680,4 +680,4 @@ QImage TextRenderer::render(const TextClipData &text, QSize canvas, double timeS
     return image.convertToFormat(QImage::Format_RGBA8888);
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

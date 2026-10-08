@@ -11,11 +11,11 @@
 #include <QJsonDocument>
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(lcDocument, "vedit.document")
+Q_LOGGING_CATEGORY(lcDocument, "velacut.document")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::document {
+namespace velacut::document {
 
 Document::Document(QString directory, ProjectData data)
     : m_directory(std::move(directory))
@@ -149,4 +149,4 @@ bool Document::close(QString *error)
     return true;
 }
 
-} // namespace vedit::document
+} // namespace velacut::document

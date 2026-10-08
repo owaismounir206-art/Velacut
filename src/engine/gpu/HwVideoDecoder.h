@@ -23,7 +23,7 @@ struct AVPacket;
 struct AVStream;
 }
 
-namespace vedit::gpu {
+namespace velacut::gpu {
 
 enum class TargetGpuArchitecture {
     Generic,
@@ -142,4 +142,4 @@ private:
     QStringList m_diagnostics;
 };
 
-} // namespace vedit::gpu
+} // namespace velacut::gpu

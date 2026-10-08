@@ -24,7 +24,7 @@
 #include <cstdio>
 #include <string>
 
-// vedit patch: abseil removed (see ../PATCHES.md)
+// Velacut patch: abseil removed (see ../PATCHES.md)
 
 namespace material_color_utilities {
 

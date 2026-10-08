@@ -1,4 +1,4 @@
-# vedit — Architettura
+# velacut — Architettura
 
 > Stato: **approvata** (2026-09-24) e implementata per la Fase 0. Le modifiche emerse durante l'implementazione sono
 > nel registro delle decisioni (§15, D-17 in poi) e nella sezione "Esiti delle verifiche" (§18).
@@ -32,7 +32,7 @@ sempre ciò che è stato **provato** da ciò che è solo **progettato**.
 ## 2. Vista d'insieme
 
 ```
-                        ┌─────────────────────────────── processo vedit ───────────────────────────────┐
+                        ┌─────────────────────────────── processo velacut ───────────────────────────────┐
                         │                                                                              │
  utente ──▶ QML (ui/qml) ──▶ Controller (ui/controllers) ──▶ Comandi (core/commands) ──▶ Modello (core)  │
                         │        ▲            ▲                  QUndoStack                 │          │
@@ -49,7 +49,7 @@ sempre ciò che è stato **provato** da ciò che è solo **progettato**.
                         └───────────────┬───────────────────────────┬──────────────────┬───────────────┘
                                         │ JSON su stdin/stdout      │                  │
                                         ▼                           ▼                  ▼
-                               vedit-gpuprobe              vedit-render           vedit-ai (Fase 6)
+                               velacut-gpuprobe              velacut-render           velacut-ai (Fase 6)
                              (capacità GPU/codec,      (export, proxy, frame     (whisper, onnxruntime…
                               crash isolato)            di test; crash isolato)   crash isolato)
 ```
@@ -70,7 +70,7 @@ fx:   kernel degli effetti (CPU, poi GPU), nessuna dipendenza da MLT.
 
 ## 3. Struttura del repository e target di build
 
-La radice del repository è **questa cartella** (corrisponde a `vedit/` nella specifica). Aggiunte rispetto all'albero
+La radice del repository è **questa cartella** (corrisponde a `velacut/` nella specifica). Aggiunte rispetto all'albero
 della sezione 2 della specifica, motivate in §15: `third_party/`, `cmake/`, `tools/`, `src/fx/`.
 
 ```
@@ -81,7 +81,7 @@ della sezione 2 della specifica, motivate in §15: `third_party/`, `cmake/`, `to
 ├── third_party/
 │   └── material-color-utilities/   # porting C++ vendored (Apache-2.0), con eventuali patch documentate
 ├── src/
-│   ├── app/                   # main di vedit, bootstrap, preferenze, safe mode, single instance
+│   ├── app/                   # main di velacut, bootstrap, preferenze, safe mode, single instance
 │   ├── core/
 │   │   ├── time/              # Rational, RationalTime, TimeRange
 │   │   ├── project/           # Project, Media, Sequence, Track, Clip, Transition, Marker, Group
@@ -92,39 +92,39 @@ della sezione 2 della specifica, motivate in §15: `third_party/`, `cmake/`, `to
 │   ├── document/              # bozza aperta (progetto + undo + salvataggio continuo + lock), cartella delle bozze
 │   ├── fx/                    # registro effetti/transizioni, manifest, kernel CPU (poi GPU)
 │   ├── engine/
-│   │   ├── mlt/               # proiezione modello -> grafo MLT, servizi MLT propri (vedit.*)
+│   │   ├── mlt/               # proiezione modello -> grafo MLT, servizi MLT propri (velacut.*)
 │   │   ├── playback/          # consumer, seek, scrubbing, FrameSink
-│   │   ├── render/            # export (+ main di vedit-render)
+│   │   ├── render/            # export (+ main di velacut-render)
 │   │   ├── proxy/             # coda proxy
 │   │   ├── analysis/          # probe media, miniature, waveform, fingerprint
-│   │   └── gpu/               # capacità, catene di fallback (+ main di vedit-gpuprobe)
+│   │   └── gpu/               # capacità, catene di fallback (+ main di velacut-gpuprobe)
 │   ├── theme/                 # M3: schemi, sorgenti del seme, token, ThemeManager
 │   ├── ai/                    # IAiTask + plugin (Fase 6)
 │   ├── ui/
 │   │   ├── controllers/       # QObject esposti a QML
 │   │   ├── models/            # QAbstractItemModel per timeline, media, librerie
 │   │   ├── items/             # QQuickItem C++: PreviewItem, ThumbnailStrip, WaveformItem
-│   │   └── qml/               # moduli QML: Vedit.UI (schermate: Main, Gallery), style/ = Vedit.Style,
-│   │                          #   components/ = Vedit.Components (D-18)
+│   │   └── qml/               # moduli QML: Velacut.UI (schermate: Main, Gallery), style/ = Velacut.Style,
+│   │                          #   components/ = Velacut.Components (D-18)
 │   └── assets/                # icone SVG originali, font, preset
 ├── resources/                 # librerie locali (transizioni, effetti, sticker, template)
-├── tools/probes/              # programmi di prova (regola 5): MLT, aspetto del desktop (-DVEDIT_BUILD_PROBES=ON)
+├── tools/probes/              # programmi di prova (regola 5): MLT, aspetto del desktop (-DVELACUT_BUILD_PROBES=ON)
 └── tests/ (unit/, integration/, render/)
 ```
 
 | Target | Tipo | Dipende da |
 |---|---|---|
-| `vedit_core` | libreria statica | Qt6::Core, Qt6::Gui |
-| `vedit_document` | libreria statica | vedit_core (bozze, salvataggio continuo, lock: FILE_FORMAT §6, §9) |
-| `vedit_fx` | libreria statica | vedit_core |
-| `vedit_engine` | libreria statica | vedit_core, vedit_fx, MLT++ 7, FFmpeg (libavformat/libavcodec/libavutil per probe e capacità) |
-| `vedit_fonts` | libreria statica | Qt6::Gui (font inclusi: Inter, registrato in ogni processo, "Inter" → "Inter Variable") |
-| `vedit_ai` | libreria statica | vedit_core, vedit_engine (funzioni AI locali: `AiTask`, analisi pause/scene) |
-| `vedit_theme` | libreria statica | Qt6::Gui, Qt6::DBus, material-color-utilities, vedit_fonts |
-| `vedit_ui` | libreria statica + moduli QML | tutto sopra, Qt6::Quick, Qt6::QuickControls2 |
-| `vedit` | eseguibile | vedit_ui |
-| `vedit-render` | eseguibile | vedit_engine (+ Qt6::Gui per il testo, piattaforma `offscreen`) |
-| `vedit-gpuprobe` | eseguibile | Qt6::Gui, FFmpeg, loader Vulkan tramite Qt |
+| `velacut_core` | libreria statica | Qt6::Core, Qt6::Gui |
+| `velacut_document` | libreria statica | velacut_core (bozze, salvataggio continuo, lock: FILE_FORMAT §6, §9) |
+| `velacut_fx` | libreria statica | velacut_core |
+| `velacut_engine` | libreria statica | velacut_core, velacut_fx, MLT++ 7, FFmpeg (libavformat/libavcodec/libavutil per probe e capacità) |
+| `velacut_fonts` | libreria statica | Qt6::Gui (font inclusi: Inter, registrato in ogni processo, "Inter" → "Inter Variable") |
+| `velacut_ai` | libreria statica | velacut_core, velacut_engine (funzioni AI locali: `AiTask`, analisi pause/scene) |
+| `velacut_theme` | libreria statica | Qt6::Gui, Qt6::DBus, material-color-utilities, velacut_fonts |
+| `velacut_ui` | libreria statica + moduli QML | tutto sopra, Qt6::Quick, Qt6::QuickControls2 |
+| `velacut` | eseguibile | velacut_ui |
+| `velacut-render` | eseguibile | velacut_engine (+ Qt6::Gui per il testo, piattaforma `offscreen`) |
+| `velacut-gpuprobe` | eseguibile | Qt6::Gui, FFmpeg, loader Vulkan tramite Qt |
 | test | eseguibili QtTest | il modulo sotto test |
 
 Build: C++20, `-Wall -Wextra -Wpedantic -Werror` sul nostro codice (non su `third_party/`), ASan+UBSan in `Debug`,
@@ -231,7 +231,7 @@ ricostruisce l'intero grafo da zero a partire dal modello: viene usato all'apert
 | Media | `Mlt::Chain` (producer `avformat`, o `qimage`/`pixbuf` per le immagini) condiviso da tutte le clip di quel media |
 | Clip media | `chain.cut(in, out)` nella playlist; spazi vuoti = `blank` |
 | Velocità costante | producer `timewarp:<velocità>:<file>` (uno per media e velocità, nella stessa cache); `warp_pitch=1` mantiene l'intonazione (**verificato**, `phase2_probe`) |
-| Clip invertita | `timewarp` a velocità negativa. All'export dal file originale; nell'anteprima da un proxy invertito (`vedit-render --backwards`, all-intra ≤720p) letto in avanti, perché leggere all'indietro un GOP lungo costa ~119 ms a fotogramma contro 10 (D-37); fino ad allora avviso "preparazione…" |
+| Clip invertita | `timewarp` a velocità negativa. All'export dal file originale; nell'anteprima da un proxy invertito (`velacut-render --backwards`, all-intra ≤720p) letto in avanti, perché leggere all'indietro un GOP lungo costa ~119 ms a fotogramma contro 10 (D-37); fino ad allora avviso "preparazione…" |
 | Effetti della clip | `Mlt::Filter` attaccati al cut, nell'ordine del modello |
 | Trasformazione, maschere, sfondo della clip | filtro proprio `vedit.transform` (produce un fotogramma RGBA del canvas con alfa); modalità di fusione e opacità passate come proprietà del frame e lette da `vedit.composite` |
 | Keyframe | filtri propri: la lista di keyframe (JSON) viene valutata dalla **stessa** funzione del core; filtri MLT/frei0r: stringa animata MLT, campionata fotogramma per fotogramma quando l'easing non esiste in MLT |
@@ -245,8 +245,8 @@ ricostruisce l'intero grafo da zero a partire dal modello: viene usato all'apert
 | Volume, dissolvenze audio, pan | filtro proprio `vedit.gain` sul cut (volume, dissolvenze, pan; posizioni del media, D-38) e un altro sulla playlist per il volume della traccia; misura dei picchi per il mixer (per traccia e master) |
 
 Servizi propri (`vedit.composite`, `vedit.transform`, `vedit.transition`, `vedit.text`, `vedit.gain`, …) sono registrati
-nel repository MLT all'avvio con `Mlt::Repository::register_service` (**verificato** con `tools/probes/mlt_probe.cpp`), sia in `vedit` sia in
-`vedit-render`, da un unico codice (`engine/mlt/services`). Il loro calcolo delega ai kernel di `vedit_fx`.
+nel repository MLT all'avvio con `Mlt::Repository::register_service` (**verificato** con `tools/probes/mlt_probe.cpp`), sia in `velacut` sia in
+`velacut-render`, da un unico codice (`engine/mlt/services`). Il loro calcolo delega ai kernel di `velacut_fx`.
 
 ### 5.3 Riproduzione e anteprima
 - Consumer MLT `sdl2_audio` (audio via SDL2 verso PipeWire/PulseAudio, detta anche il ritmo del video). I fotogrammi
@@ -276,7 +276,7 @@ nel repository MLT all'avvio con `Mlt::Repository::register_service` (**verifica
   iniziale, che non ha bisogno di MLT.
 
 ### 5.4 Export e rendering fuori processo
-- `vedit-render` riceve una **copia congelata del progetto** (`.vproj` in un file temporaneo) e un job JSON (formato,
+- `velacut-render` riceve una **copia congelata del progetto** (`.vproj` in un file temporaneo) e un job JSON (formato,
   codec, risoluzione, intervallo). Ricostruisce il grafo con lo stesso codice dell'engine: l'export è esattamente ciò
   che dice il modello. Usa il consumer `avformat` e scrive su stdout righe JSON di progresso, avvisi ed errori.
 - In un processo separato un crash dell'export non chiude l'editor, e si può continuare a montare mentre esporta.
@@ -292,7 +292,7 @@ nel repository MLT all'avvio con `Mlt::Repository::register_service` (**verifica
   (vedi FILE_FORMAT §7).
 - Proxy automatici per 4K, HEVC, 10 bit e VFR: H.264, altezza massima 720p (540p in modalità software), GOP corto senza
   B-frame per seek rapidi, frame rate costante. Encoder hardware se disponibile, altrimenti libx264 `veryfast`.
-  Salvati in `~/.cache/vedit/proxy/<fingerprint>-<profilo>.mp4`. Interruttore globale "anteprima a qualità ridotta".
+  Salvati in `~/.cache/velacut/proxy/<fingerprint>-<profilo>.mp4`. Interruttore globale "anteprima a qualità ridotta".
   L'export usa sempre i file originali.
 - Miniature e waveform: job del `TaskManager` (pool di thread, priorità "visibile ora" > "prefetch"), ognuno con il
   proprio producer MLT (mai condiviso con la riproduzione). Cache su disco per fingerprint: strisce JPEG per livello
@@ -323,7 +323,7 @@ nel repository MLT all'avvio con `Mlt::Repository::register_service` (**verifica
 ## 7. GPU: capacità, fallback, safe mode (`src/engine/gpu`)
 
 ### 7.1 Rilevamento in un processo separato
-`vedit-gpuprobe` stampa un JSON con:
+`velacut-gpuprobe` stampa un JSON con:
 - API grafiche: Vulkan (dispositivi, tipo, driver, versione API, VRAM; via `QVulkanInstance`, nessun link diretto a
   libvulkan), OpenGL/GLES (versione, renderer, vendor, se è un rasterizzatore software come llvmpipe);
 - video: per VA-API, NVDEC/NVENC (CUDA), QSV e Vulkan Video, prova **reale** di apertura dei dispositivi FFmpeg e di
@@ -335,7 +335,7 @@ Due livelli: `--quick` (solo API grafiche, serve prima di creare la finestra) e 
 l'avvio). Timeout 4 s; un crash o un blocco del probe vale come "API non utilizzabile".
 
 ### 7.2 Cache
-`~/.cache/vedit/gpu-caps.json`, invalidata quando cambia l'impronta dei driver: versione del kernel, id PCI delle schede
+`~/.cache/velacut/gpu-caps.json`, invalidata quando cambia l'impronta dei driver: versione del kernel, id PCI delle schede
 (`/sys/class/drm`), dimensione e data dei file dei driver (`libGLX_nvidia*`, `libgallium*`, `libvulkan_*`,
 `*_drv_video.so`), versione di Qt e del probe. Il calcolo dell'impronta costa pochi millisecondi. In condizioni normali
 all'avvio si legge solo la cache.
@@ -357,7 +357,7 @@ La misura delle prestazioni in solo software con un vero progetto è rimandata a
 
 ### 7.4 Safe mode e crash all'avvio
 - `--safe-mode`: backend software, nessun kernel GPU, decodifica ed encoding solo software.
-- All'avvio si scrive un marcatore "avvio in corso" in `~/.local/state/vedit/`, che viene rimosso dopo il primo frame
+- All'avvio si scrive un marcatore "avvio in corso" in `~/.local/state/velacut/`, che viene rimosso dopo il primo frame
   disegnato più qualche secondo di stabilità. Se al lancio successivo il marcatore c'è ancora, si incrementa il
   contatore dei crash consecutivi; a **2** si entra in safe mode automaticamente e l'utente viene avvisato.
 - Errore del grafo di scena a runtime (`sceneGraphError`, perdita del dispositivo): l'app salva, registra il backend
@@ -389,9 +389,9 @@ La misura delle prestazioni in solo software con un vero progetto è rimandata a
   "Riduci animazioni": dal portale se disponibile, altrimenti dalla preferenza dell'app.
 
 ### 8.2 Componenti QML
-- Modulo `Vedit.Style`: uno **stile Qt Quick Controls personalizzato** costruito su `QtQuick.Templates`, con **fallback
+- Modulo `Velacut.Style`: uno **stile Qt Quick Controls personalizzato** costruito su `QtQuick.Templates`, con **fallback
   sullo stile Material** di Qt per i controlli non ancora ridefiniti (**verificato**: l'import nel `qmldir` deve essere
-  senza versione). I componenti M3 senza equivalente Qt stanno in un modulo separato `Vedit.Components` (D-18).
+  senza versione). I componenti M3 senza equivalente Qt stanno in un modulo separato `Velacut.Components` (D-18).
   Motivo dello stile proprio: lo stile Material di Qt
   espone solo pochi colori (accent, primary, background, foreground), mentre la specifica chiede tutti i ruoli M3 e i
   componenti M3 (FAB esteso, segmented button, chip, navigation rail, search bar, snackbar, side sheet…).
@@ -400,7 +400,7 @@ La misura delle prestazioni in solo software con un vero progetto è rimandata a
 - Icone: Material Symbols (Apache-2.0) come font variabile (asse FILL per lo stato attivo); font UI: Inter o Roboto
   Flex (OFL), inclusi nell'app.
 - Backend software: niente shader per la leggibilità; ombre e sfocature decorative disattivate automaticamente.
-- `vedit --component-gallery`: tutti i componenti in chiaro, scuro e alto contrasto, con selettori di seme e variante.
+- `velacut --component-gallery`: tutti i componenti in chiaro, scuro e alto contrasto, con selettori di seme e variante.
 
 ### 8.3 Nota su questa macchina
 Qui il portale fornisce `color-scheme` ma **non** `accent-color` (risposta `NotFound`, sessione Hyprland), mentre GNOME
@@ -448,15 +448,15 @@ soddisfatto qui tramite l'accento GNOME. Se il portale lo rende disponibile, ver
 | Thread del grafo di scena | upload delle texture dell'anteprima | Legge solo dal `FrameSink` |
 | Pool `TaskManager` | probe, fingerprint, miniature, waveform, analisi | Priorità, progresso, annullamento cooperativo (`CancellationToken`) |
 | Thread I/O | scrittura atomica dell'autosave, snapshot della cronologia | Un solo scrittore per progetto |
-| `vedit-gpuprobe` | capacità GPU e codec | Timeout, crash isolato |
-| `vedit-render` | export, proxy, frame di test, miniature delle transizioni | Righe JSON su stdout, annullabile (SIGTERM → chiusura pulita del file) |
-| `vedit-ai` (Fase 6) | compiti AI | Plugin caricati a runtime; risultati convertiti in comandi sul thread UI |
+| `velacut-gpuprobe` | capacità GPU e codec | Timeout, crash isolato |
+| `velacut-render` | export, proxy, frame di test, miniature delle transizioni | Righe JSON su stdout, annullabile (SIGTERM → chiusura pulita del file) |
+| `velacut-ai` (Fase 6) | compiti AI | Plugin caricati a runtime; risultati convertiti in comandi sul thread UI |
 
 ---
 
 ## 11. Persistenza
 Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
-- Tutto è una **bozza** in `~/.local/share/vedit/drafts/<id>/` con `project.vproj`, miniatura, metadati per la schermata
+- Tutto è una **bozza** in `~/.local/share/velacut/drafts/<id>/` con `project.vproj`, miniatura, metadati per la schermata
   iniziale, stato UI e cronologia. Un `.vproj` aperto da file viene salvato automaticamente al suo posto.
 - Salvataggio continuo: dopo ogni comando, con attesa di 300 ms di inattività e al massimo ogni 2 s durante modifiche
   continue. Serializzazione sul thread UI, scrittura atomica (file temporaneo + fsync + rename + fsync della cartella)
@@ -472,7 +472,7 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 ## 12. AI locali (Fase 6–7, solo l'impianto)
 - `IAiTask`: id, nome, requisiti (componenti e modelli), `estimate()`, `run(input, params, progress, cancel)` →
   `AiResult` che il thread UI traduce in **normali comandi** (clip, sottotitoli, keyframe, maschere modificabili).
-- Backend come plugin (`libvedit-ai-whisper.so`, `-onnx.so`, …) compilati solo se l'SDK è presente e caricati a runtime:
+- Backend come plugin (`libvelacut-ai-whisper.so`, `-onnx.so`, …) compilati solo se l'SDK è presente e caricati a runtime:
   se la libreria manca, la funzione appare disattivata con il nome del pacchetto da installare. L'app si compila e si
   avvia sempre senza componenti AI.
 - Gestore modelli nelle preferenze: download solo su richiesta esplicita, dimensione mostrata prima, checksum verificato,
@@ -481,13 +481,13 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 ---
 
 ## 13. Log, errori, percorsi
-- `QLoggingCategory` per modulo (`vedit.core`, `vedit.engine`, `vedit.gpu`, `vedit.render`, …) → `~/.local/state/vedit/logs/`
+- `QLoggingCategory` per modulo (`vedit.core`, `velacut.engine`, `velacut.gpu`, `velacut.render`, …) → `~/.local/state/velacut/logs/`
   con rotazione e livello configurabile; i log di MLT e FFmpeg sono inoltrati nelle stesse categorie.
-- Percorsi XDG tramite `QStandardPaths`: config `~/.config/vedit/`, dati `~/.local/share/vedit/` (bozze, preset, pacchetti,
-  modelli), cache `~/.cache/vedit/` (proxy, miniature, waveform, capacità GPU), stato `~/.local/state/vedit/` (log,
+- Percorsi XDG tramite `QStandardPaths`: config `~/.config/velacut/`, dati `~/.local/share/velacut/` (bozze, preset, pacchetti,
+  modelli), cache `~/.cache/velacut/` (proxy, miniature, waveform, capacità GPU), stato `~/.local/state/velacut/` (log,
   contatori di crash, recenti).
-- **Sandbox di sviluppo (D-03):** nelle build di sviluppo (`VEDIT_DEV_SANDBOX=ON`, default fuori dal PKGBUILD) `vedit`,
-  `vedit-render` e i test puntano `XDG_CONFIG/DATA/CACHE/STATE_HOME` in `build/dev-home/`. Così, durante lo sviluppo,
+- **Sandbox di sviluppo (D-03):** nelle build di sviluppo (`VELACUT_DEV_SANDBOX=ON`, default fuori dal PKGBUILD) `velacut`,
+  `velacut-render` e i test puntano `XDG_CONFIG/DATA/CACHE/STATE_HOME` in `build/dev-home/`. Così, durante lo sviluppo,
   né l'app né i test scrivono fuori da questa cartella, e restano confinate anche le cache di Mesa e fontconfig.
 - Errori: mai crash silenziosi. File corrotti o codec non supportati diventano un messaggio chiaro e un segnaposto
   nella timeline; eccezioni catturate ai confini dei thread; handler di segnale che scrive il marcatore di crash
@@ -502,9 +502,9 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
   → colori attesi), logica di scelta del backend (output del probe simulati).
 - **Integrazione**: apri → modifica → salva → riapri → JSON canonico identico; proiezione incrementale uguale a quella
   ricostruita (hash dei frame); engine headless con consumer `null`.
-- **Rendering**: progetti in `tests/render/` esportati da `vedit-render --job frames` e confrontati con i PNG attesi
+- **Rendering**: progetti in `tests/render/` esportati da `velacut-render --job frames` e confrontati con i PNG attesi
   (PSNR ≥ soglia per test); eseguiti in CPU forzata e, quando ci sarà, in GPU.
-- **Smoke test headless**: `vedit --smoke-test <progetto>` (avvia, carica, riproduce N frame, esce con codice 0) con
+- **Smoke test headless**: `velacut --smoke-test <progetto>` (avvia, carica, riproduce N frame, esce con codice 0) con
   `QT_QPA_PLATFORM=offscreen` + `QT_QUICK_BACKEND=software` + `LIBGL_ALWAYS_SOFTWARE=1`.
 - I media di test si generano al momento con `ffmpeg -f lavfi` (testsrc2, sine) in una fixture CTest, dentro `build/`:
   niente file video binari nel repository.
@@ -515,14 +515,14 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 
 | Id | Decisione | Motivo |
 |---|---|---|
-| D-01 | Radice del repo = questa cartella | Evita un livello inutile; equivale a `vedit/` della specifica |
+| D-01 | Radice del repo = questa cartella | Evita un livello inutile; equivale a `velacut/` della specifica |
 | D-02 | Qt minimo 6.7 (non 6.6) | `QQuickRhiItem` per l'anteprima su tutti i backend RHI; Arch fornisce 6.11 |
 | D-03 | Sandbox XDG nelle build di sviluppo | Regola "non modificare file fuori da questa cartella" anche per app e test |
 | D-04 | Tutti i tempi di sequenza sulla griglia fps del progetto; fps unico per progetto | Proiezione esatta su MLT (un solo profilo); unico arrotondamento nel comando "Cambia frame rate" |
 | D-05 | Keyframe in tempo sorgente per le clip media, in tempo clip per le generate | Le animazioni restano agganciate al contenuto dopo trim, velocità e inversione |
 | D-06 | Transizioni centrate sul taglio, freeze automatico per il materiale mancante + alternative a un clic | Nessuna perdita di sincronizzazione silenziosa, nessuna finestra di dialogo |
 | D-07 | Export, proxy e probe in processi separati | Un crash di driver o codec non chiude l'editor; export in background |
-| D-08 | `vedit-render` legge una copia congelata del `.vproj` | Un'unica fonte di verità: stesso codice di proiezione per anteprima ed export |
+| D-08 | `velacut-render` legge una copia congelata del `.vproj` | Un'unica fonte di verità: stesso codice di proiezione per anteprima ed export |
 | D-09 | Pipeline interna RGBA 8 bit Rec.709, HDR convertito in SDR in ingresso | Semplicità e percorso CPU veloce; export HDR fuori dalla v1 (dichiarato) |
 | D-10 | Niente Movit; GPU tramite kernel propri GLSL 2.1/ES 2.0 | Parità CPU/GPU verificabile e compatibilità con GPU vecchie |
 | D-11 | Stile Qt Quick Controls personalizzato con fallback Material | Lo stile Material di Qt non espone tutti i ruoli e i componenti M3 |
@@ -532,7 +532,7 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | D-15 | Archivio `.vpack` = tar non compresso | Scrittura e lettura semplici senza nuove librerie; i video non si comprimono comunque |
 | D-16 | Timeline QML virtualizzata + item C++ per miniature e waveform | Prestazioni con 500+ clip senza rinunciare a tema e accessibilità |
 | D-17 | Anteprima RHI con `<rhi/qrhi.h>` (modulo `Qt6::GuiPrivate`) | API QRhi "semi-pubblica" (compatibilità garantita solo tra versioni minori vicine): è la via documentata da Qt per `QQuickRhiItem`; l'avviso di CMake è silenziato consapevolmente |
-| D-18 | Due moduli QML: `Vedit.Style` (controlli con nome Qt Quick Controls) e `Vedit.Components` (componenti solo-M3) | Il `qmldir` dello stile importa Material per il fallback e ne riesporta i tipi: importarlo direttamente rende ambiguo `Button` |
+| D-18 | Due moduli QML: `Velacut.Style` (controlli con nome Qt Quick Controls) e `Velacut.Components` (componenti solo-M3) | Il `qmldir` dello stile importa Material per il fallback e ne riesporta i tipi: importarlo direttamente rende ambiguo `Button` |
 | D-19 | Il `FrameSink` riceve una copia dei pixel del frame | Un frame MLT vivo dopo la chiusura del consumer impedisce di liberarlo (verificato con ASan); costo ~1 ms per frame in 1080p; ottimizzazione a copia zero rimandata |
 | D-20 | Test e smoke test con `TMPDIR` e XDG dentro `build/`; smoke test dell'app in CTest | Nessun file scritto fuori dalla cartella; verifica automatica di avvio e riproduzione headless (software, safe mode, galleria) |
 | D-21 | Icone risolte tramite il file `.codepoints` invece delle legature | Un nome errato mostra un'icona di riserva invece di disegnare testo sopra l'interfaccia |
@@ -544,16 +544,16 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | D-27 | Libreria `src/document` (Document, AutoSaver, DraftLock, DraftStore) separata dalla UI | Salvataggio continuo, lock e bozze testabili senza QML; la UI chiede solo "apri/crea/chiudi" |
 | D-28 | Data di modifica scritta nel file al salvataggio, non nel modello | Cambiarla nel modello richiederebbe un comando (e un passo di undo) a ogni salvataggio; il confronto "contenuto invariato, non scrivere" ignora la data |
 | D-29 | Eliminare una bozza la sposta nel cestino di sistema | Recuperabile dal file manager: nessuna finestra di conferma necessaria (regola 10) |
-| D-30 | `vedit-render` non chiude la factory MLT all'uscita | `Factory::close()` scarica moduli, FFmpeg e x264 mentre le loro cache globali sono allocate: LeakSanitizer le segnala come perdite di "<unknown module>" (verificato: nessuna senza lo scaricamento). Il processo termina subito dopo |
+| D-30 | `velacut-render` non chiude la factory MLT all'uscita | `Factory::close()` scarica moduli, FFmpeg e x264 mentre le loro cache globali sono allocate: LeakSanitizer le segnala come perdite di "<unknown module>" (verificato: nessuna senza lo scaricamento). Il processo termina subito dopo |
 | D-31 | Cronologia delle versioni (snapshot in `history/`) rimandata alla Fase 8 | È nella riga della Fase 8 della tabella di SPEC §8; in Fase 1 bastano salvataggio atomico, lock e recupero |
-| D-32 | Probe dei media in `vedit-render --probe` (processo), miniature e waveform in thread del processo principale | Un file che manda in crash il demuxer viene scartato come "danneggiato" prima che MLT lo apra nell'editor; miniature e waveform decodificano solo file già passati dal probe |
+| D-32 | Probe dei media in `velacut-render --probe` (processo), miniature e waveform in thread del processo principale | Un file che manda in crash il demuxer viene scartato come "danneggiato" prima che MLT lo apra nell'editor; miniature e waveform decodificano solo file già passati dal probe |
 | D-33 | Miniature e waveform con FFmpeg diretto (non MLT) | Seek al keyframe + decodifica fino al punto e scalatura con swscale: molto più rapido di un producer MLT per ogni fotogramma; rotazione e aspetto dei pixel applicati a mano (test contro i fotogrammi decodificati) |
 | D-34 | Canvas e fps dalla prima clip nello stesso comando dell'inserimento (`insertMediaAdoptingFormat`) | Un solo passo di annulla riporta tutto com'era; fps agganciato allo standard più vicino (29,99 → 30; 120 → 60), canvas al massimo 4K |
 | D-35 | Transizioni come piccoli tractor su una playlist "transizioni" per traccia, non `Playlist::mix()` | `mix` accorcia la playlist e sposta tutto ciò che segue: il modello (transizione centrata sul taglio, durata della timeline invariata) non corrisponderebbe al grafo. Il tractor copre esattamente la finestra; oltre la fine del materiale si ripete l'ultimo fotogramma (`repeat`, come CapCut). L'audio resta quello delle clip (taglio netto per ora) |
 | D-36 | Anteprima dal vivo delle librerie solo nella proiezione (`TimelineProjection::Preview`) | Passare sopra un filtro o una transizione non tocca il modello né la cronologia di annulla; si aggiornano solo le tracce interessate |
-| D-37 | Proxy invertiti generati da `vedit-render --backwards`, usati solo dall'anteprima | Leggere all'indietro è ~12× più lento (misurato su 1080p GOP lungo). L'opzione non si chiama `--reverse` perché `QGuiApplication` si prende `-reverse` dagli argomenti |
+| D-37 | Proxy invertiti generati da `velacut-render --backwards`, usati solo dall'anteprima | Leggere all'indietro è ~12× più lento (misurato su 1080p GOP lungo). L'opzione non si chiama `--reverse` perché `QGuiApplication` si prende `-reverse` dagli argomenti |
 | D-38 | I filtri sui cut ricevono le posizioni del media: `vedit.gain` riceve il primo fotogramma della clip | Verificato: un filtro attaccato a un cut vede la posizione nel producer, non nella clip; le dissolvenze sono calcolate su (posizione − primo fotogramma) |
-| D-39 | Il livello di testo si disegna alla creazione del producer, non nei thread di MLT | I font di Qt nei thread non-Qt lasciano dati FreeType per thread che Qt libera male all'uscita del thread (LeakSanitizer in `vedit-render`); il testo della Fase 2 è statico e il profilo ha dimensione fissa, quindi un solo disegno basta |
+| D-39 | Il livello di testo si disegna alla creazione del producer, non nei thread di MLT | I font di Qt nei thread non-Qt lasciano dati FreeType per thread che Qt libera male all'uscita del thread (LeakSanitizer in `velacut-render`); il testo della Fase 2 è statico e il profilo ha dimensione fissa, quindi un solo disegno basta |
 | D-40 | Pannello proprietà guidato da `ClipInspector` con valori per chiave (`values["opacity"]`, `set(chiave, valore)`) | Un solo punto C++ testabile per tutte le proprietà (e per "Applica a tutte", "Ripristina", copia/incolla attributi); il QML resta presentazione. Le chiamate di `set` di un trascinamento si fondono in un passo di annulla fino a `endGesture()` |
 | D-41 | "Migliora automaticamente": regolazioni calcolate dalle miniature già in cache (statistiche: esposizione verso il grigio medio, contrasto, alte luci/ombre, bilanciamento "grey world", vividezza) e volume dai picchi della forma d'onda (−1 dBFS) | Nessuna decodifica extra, risultato immediato e modificabile (valori normali di "Regola"); correzioni parziali e limitate: un'immagine già corretta non cambia. La normalizzazione LUFS arriva in Fase 4 |
 | D-42 | Librerie senza selezione: un filtro va sulla clip sullo schermo (che diventa selezionata), una transizione sul taglio della traccia principale più vicino al playhead, uno stile di testo crea un testo nuovo | Nessun "seleziona prima una clip" nel caso più comune (regola 10): il risultato si vede subito ed è annullabile. Con una clip selezionata: il taglio dopo di essa (o prima, se è l'ultima) |
@@ -597,10 +597,10 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
    merge) + test do/undo/redo.
 5. Serializzazione v1 + infrastruttura di migrazione + test di andata e ritorno.
 6. Tema: material-color-utilities vendored, `SchemeGenerator`, sorgenti del seme, `ThemeManager` + test.
-7. GPU: `vedit-gpuprobe`, cache, scelta del backend, `--safe-mode`, contatore dei crash + test.
+7. GPU: `velacut-gpuprobe`, cache, scelta del backend, `--safe-mode`, contatore dei crash + test.
 8. Engine minimo: init MLT in background, apertura di un file, `PreviewItem` (RHI e software), audio SDL2,
    play/pausa/seek in una finestra QML.
-9. `Vedit.Style` (primo insieme di componenti M3) e `vedit --component-gallery`.
+9. `Velacut.Style` (primo insieme di componenti M3) e `velacut --component-gallery`.
 10. Verifica del criterio: compilazione senza warning, test verdi, video riprodotto con GPU e con
     `QT_QUICK_BACKEND=software` + `LIBGL_ALWAYS_SOFTWARE=1`, galleria in chiaro e scuro con seme di sistema;
     riepilogo onesto.
@@ -629,7 +629,7 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 1. `src/fx` (composizione CPU di riferimento) + servizio `vedit.composite` + `MediaProducerCache` +
    `TimelineProjection` con aggiornamenti incrementali; test "incrementale = ricostruito" su fotogrammi reali.
 2. `TimelinePlayer`: riproduzione della timeline viva, modifiche durante la riproduzione, J/K/L, skimming.
-3. Export: `Renderer`, `vedit-render` (processo), `RenderJob`; test con ffprobe e confronto dei fotogrammi.
+3. Export: `Renderer`, `velacut-render` (processo), `RenderJob`; test con ffprobe e confronto dei fotogrammi.
 4. `src/document`: bozze, salvataggio continuo atomico, lock e recupero, `DraftStore`.
 5. Import: probe in processo separato, fingerprint, miniature e forme d'onda con cache; formato dalla prima clip.
 6. Core: duplica, sposta su nuova traccia. Interfaccia: schermata iniziale, editor, timeline, export a una schermata;
@@ -645,7 +645,7 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | Colori MLT a 8 cifre | ⚠️ sono `#AARRGGBB`: lo sfondo "nero" era blu trasparente → conversione esplicita (D-25) |
 | Durata del tractor | ✅ = traccia più lunga; lo sfondo viene dimensionato sulla durata |
 | Consumer `avformat` per l'export | ✅ `real_time = -1` (nessun fotogramma scartato), fine con `terminate_on_pause`, avanzamento con `position()` |
-| `Mlt::Factory::close()` a fine processo | ⚠️ scarica FFmpeg/x264 con le loro cache globali ancora allocate → falsi "leak" di LeakSanitizer; `vedit-render` non la chiama (D-30) |
+| `Mlt::Factory::close()` a fine processo | ⚠️ scarica FFmpeg/x264 con le loro cache globali ancora allocate → falsi "leak" di LeakSanitizer; `velacut-render` non la chiama (D-30) |
 | Fps diversi all'export | ✅ la proiezione converte i tempi (entrambi i bordi) al rate del profilo: 6,5 s a 25 fps = 162 fotogrammi (arrotondamento pari) |
 | `QFile::moveToTrash` | ⚠️ fallisce se la cartella dati XDG non esiste ancora: viene creata prima |
 | Drag interno QML da un elemento in `Overlay.overlay` | ❌ l'overlay è invisibile senza popup aperti: nessun evento di drag → il "fantasma" sta nel `contentItem` della finestra |

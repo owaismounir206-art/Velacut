@@ -1,8 +1,8 @@
 // Video preview that picks the surface matching the scene graph backend: shader-based on Vulkan/OpenGL,
 // plain image nodes on the software backend (SPEC 1bis).
 import QtQuick
-import Vedit.UI
-import Vedit.Theme
+import Velacut.UI
+import Velacut.Theme
 
 Item {
     id: root

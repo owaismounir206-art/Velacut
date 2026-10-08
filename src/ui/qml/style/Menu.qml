@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Components
-import Vedit.Theme
+import Velacut.Components
+import Velacut.Theme
 
 T.Menu {
     id: control
@@ -29,7 +29,13 @@ T.Menu {
     background: Rectangle {
         implicitWidth: 112
         radius: Theme.shape.extraSmall
-        color: Theme.color.surfaceContainer
+        // Frosted material, "lite" (see Dialog.qml): 92% surface, the hairline is the glass edge.
+        color: Theme.alpha(Theme.color.surfaceContainer, 0.92)
+        Rectangle {
+            anchors { top: parent.top; left: parent.left; right: parent.right; leftMargin: parent.radius; rightMargin: parent.radius }
+            height: Theme.editor.hairline
+            color: Theme.alpha(Theme.color.outlineVariant, 0.14)
+        }
         Shadow { level: 2; radius: parent.radius }
     }
 }

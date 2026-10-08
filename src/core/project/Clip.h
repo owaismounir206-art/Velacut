@@ -14,7 +14,7 @@
 #include <variant>
 #include <vector>
 
-namespace vedit {
+namespace velacut {
 
 enum class ClipKind
 {
@@ -582,4 +582,4 @@ struct Clip
     friend bool operator==(const Clip &, const Clip &) = default;
 };
 
-} // namespace vedit
+} // namespace velacut

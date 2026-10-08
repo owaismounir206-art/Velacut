@@ -1,7 +1,7 @@
 // Material 3 navigation rail (left library tabs). model: list of { text, iconName }. `compact` (dense desktop panels)
 // packs the destinations closer; when they do not fit in the height they scroll.
 import QtQuick
-import Vedit.Theme
+import Velacut.Theme
 
 FocusScope {
     id: root

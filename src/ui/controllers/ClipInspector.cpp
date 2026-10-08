@@ -29,7 +29,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 namespace {
 
@@ -268,7 +268,7 @@ const Clip *ClipInspector::libraryClip() const
     return id ? m_editor.data().findClip(*id) : nullptr;
 }
 
-const vedit::Transition *ClipInspector::focusTransition(const Track **track) const
+const velacut::Transition *ClipInspector::focusTransition(const Track **track) const
 {
     const std::optional<TransitionId> id = m_editor.focusTransition();
     const Sequence *sequence = m_editor.data().mainSequence();
@@ -276,7 +276,7 @@ const vedit::Transition *ClipInspector::focusTransition(const Track **track) con
         return nullptr;
     }
     for (const Track &candidate : sequence->visualTracks) {
-        for (const vedit::Transition &transition : candidate.transitions) {
+        for (const velacut::Transition &transition : candidate.transitions) {
             if (transition.id == *id) {
                 if (track) {
                     *track = &candidate;
@@ -909,7 +909,7 @@ QVariantMap ClipInspector::values() const
     QVariantMap map;
     const Clip *clip = focus();
     const Track *track = nullptr;
-    if (const vedit::Transition *transition = clip ? nullptr : focusTransition(&track)) {
+    if (const velacut::Transition *transition = clip ? nullptr : focusTransition(&track)) {
         const fx::TransitionPreset *preset = fx::Library::core().transition(transition->type.id);
         const Clip *from = track->findClip(transition->from);
         const Clip *to = track->findClip(transition->to);
@@ -1318,14 +1318,14 @@ void ClipInspector::endGesture()
 bool ClipInspector::set(const QString &key, const QVariant &value)
 {
     if (key == u"transition.duration"_s) {
-        const vedit::Transition *transition = focusTransition();
+        const velacut::Transition *transition = focusTransition();
         if (!transition) {
             return false;
         }
         const Rational rate = m_editor.data().settings.frameRate;
         const RationalTime duration(std::max<std::int64_t>(1, std::llround(value.toDouble() * rate.toDouble())), rate);
         EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
-                                .updateTransition(transition->id, [&duration](vedit::Transition &t) { t.duration = duration; });
+                                .updateTransition(transition->id, [&duration](velacut::Transition &t) { t.duration = duration; });
         result.text = tr("Change transition duration");
         return m_editor.push(std::move(result), gestureKey(u"transition:"_s + transition->id.toString()));
     }
@@ -2014,11 +2014,11 @@ bool ClipInspector::applyToAll(const QString &section)
 {
     if (section == u"transition"_s) {
         const Track *track = nullptr;
-        const vedit::Transition *transition = focusTransition(&track);
+        const velacut::Transition *transition = focusTransition(&track);
         if (!transition) {
             return false;
         }
-        const vedit::Transition source = *transition;
+        const velacut::Transition source = *transition;
         endGesture();
         EditResult result = TimelineEditor(m_editor.data(), m_editor.data().mainSequenceId)
                                 .applyTransitionToAll(track->id, source.type, source.duration, source.params);
@@ -2327,7 +2327,7 @@ bool ClipInspector::applyTextStyle(const QString &styleId)
     return done;
 }
 
-std::optional<vedit::Transition> ClipInspector::plannedTransition(const QString &typeId, const Track **track) const
+std::optional<velacut::Transition> ClipInspector::plannedTransition(const QString &typeId, const Track **track) const
 {
     const fx::TransitionPreset *preset = fx::Library::core().transition(typeId);
     const std::optional<ClipId> fromId = m_editor.transitionTarget();
@@ -2343,13 +2343,13 @@ std::optional<vedit::Transition> ClipInspector::plannedTransition(const QString 
         const Clip &from = candidate.clips[static_cast<size_t>(index)];
         const Clip &to = candidate.clips[static_cast<size_t>(index) + 1];
         const Rational rate = m_editor.data().settings.frameRate;
-        vedit::Transition transition;
+        velacut::Transition transition;
         transition.id = TransitionId::create();
         transition.type = coreAsset(preset->id, preset->version);
         transition.from = from.id;
         transition.to = to.id;
         transition.duration = RationalTime(std::max<std::int64_t>(1, std::llround(preset->defaultSeconds * rate.toDouble())), rate);
-        for (const vedit::Transition &existing : candidate.transitions) {
+        for (const velacut::Transition &existing : candidate.transitions) {
             if (existing.from == from.id && existing.to == to.id) {
                 transition.id = existing.id;
                 transition.duration = existing.duration; // another type keeps the length chosen
@@ -2365,7 +2365,7 @@ std::optional<vedit::Transition> ClipInspector::plannedTransition(const QString 
 QVariantMap ClipInspector::previewTransition(const QString &typeId)
 {
     const Track *track = nullptr;
-    const std::optional<vedit::Transition> transition = plannedTransition(typeId, &track);
+    const std::optional<velacut::Transition> transition = plannedTransition(typeId, &track);
     if (!transition) {
         return {};
     }
@@ -2383,15 +2383,15 @@ QVariantMap ClipInspector::previewTransition(const QString &typeId)
 bool ClipInspector::toggleTransition(const QString &typeId)
 {
     const Track *track = nullptr;
-    const std::optional<vedit::Transition> planned = plannedTransition(typeId, &track);
+    const std::optional<velacut::Transition> planned = plannedTransition(typeId, &track);
     clearPreview();
     if (!planned) {
         emit m_editor.message(tr("Put two clips next to each other first: the transition goes between them."), false);
         return false;
     }
     endGesture();
-    const vedit::Transition *existing = nullptr;
-    for (const vedit::Transition &transition : track->transitions) {
+    const velacut::Transition *existing = nullptr;
+    for (const velacut::Transition &transition : track->transitions) {
         if (transition.id == planned->id) {
             existing = &transition;
         }
@@ -2408,7 +2408,7 @@ bool ClipInspector::toggleTransition(const QString &typeId)
     }
     // The new transition becomes the selection: its duration and "Apply to all" are in the panel.
     if (const Track *updated = m_editor.data().findTrack(trackId)) {
-        for (const vedit::Transition &transition : updated->transitions) {
+        for (const velacut::Transition &transition : updated->transitions) {
             if (transition.from == from && transition.to == to) {
                 m_editor.selectTransition(transition.id.toString());
             }
@@ -2419,7 +2419,7 @@ bool ClipInspector::toggleTransition(const QString &typeId)
 
 bool ClipInspector::removeTransition()
 {
-    const vedit::Transition *transition = focusTransition();
+    const velacut::Transition *transition = focusTransition();
     if (!transition) {
         return false;
     }
@@ -2971,4 +2971,4 @@ bool ClipInspector::autoDuck(double duckingDb)
     return done;
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

@@ -10,7 +10,7 @@
 class QFile;
 class QNetworkReply;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // One download of a file to `destination`, written next to it and renamed when complete (never half a model).
 // Any URL Qt can read (https for the models, file:// in the tests).
@@ -92,7 +92,7 @@ public:
     Q_INVOKABLE void cancel(const QString &modelId);
     // An error for the user, empty when removed.
     Q_INVOKABLE QString remove(const QString &modelId);
-    // Looks again for whisper.cpp (installed while vedit runs).
+    // Looks again for whisper.cpp (installed while velacut runs).
     Q_INVOKABLE void refresh();
     // Tests: where the models are downloaded from instead of Hugging Face.
     void setSourceOverride(const QUrl &base) { m_sourceOverride = base; }
@@ -110,4 +110,4 @@ private:
     QUrl m_sourceOverride;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

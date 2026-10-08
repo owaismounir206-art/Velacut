@@ -26,7 +26,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 namespace {
 
@@ -369,4 +369,4 @@ void AssetThumbnail::paint(QPainter *painter)
     painter->drawImage(boundingRect(), m_image);
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

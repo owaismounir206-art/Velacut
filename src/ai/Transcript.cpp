@@ -10,7 +10,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 namespace {
 
@@ -384,4 +384,4 @@ bool isFillerWord(const QString &word)
     return !bare.isEmpty() && filler.match(bare).hasMatch();
 }
 
-} // namespace vedit::ai
+} // namespace velacut::ai

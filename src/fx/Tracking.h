@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // Follows a point of a video from frame to frame (motion tracking, SPEC §5.7: a text or a sticker that stays on what it
 // points at): the patch around the point in the first grey frame is looked for near its last place in each next frame
@@ -36,4 +36,4 @@ private:
     Point m_point;
 };
 
-} // namespace vedit::fx
+} // namespace velacut::fx

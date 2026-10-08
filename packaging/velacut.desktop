@@ -1,13 +1,13 @@
 [Desktop Entry]
 Type=Application
-Name=vedit
+Name=velacut
 GenericName=Video Editor
 Comment=Editor video desktop per Linux, completamente offline
-Icon=vedit
-Exec=vedit %F
+Icon=velacut
+Exec=velacut %F
 Terminal=false
 Categories=AudioVideo;Video;VideoEditing;Qt;
-MimeType=video/mp4;video/x-matroska;video/quicktime;video/webm;video/mpeg;video/x-msvideo;application/x-vedit-project;
+MimeType=video/mp4;video/x-matroska;video/quicktime;video/webm;video/mpeg;video/x-msvideo;application/x-velacut-project;
 Keywords=video;editor;editing;montaggio;timeline;
-StartupWMClass=vedit
+StartupWMClass=velacut
 StartupNotify=true

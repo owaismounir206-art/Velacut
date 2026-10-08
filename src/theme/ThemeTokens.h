@@ -7,7 +7,7 @@
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit::theme {
+namespace velacut::theme {
 
 // Corner radius tokens (dp).
 class ThemeShape : public QObject
@@ -319,6 +319,20 @@ class ThemeMotion : public QObject
     Q_PROPERTY(QVariantList standard READ standard CONSTANT FINAL)
     Q_PROPERTY(QVariantList standardDecelerate READ standardDecelerate CONSTANT FINAL)
     Q_PROPERTY(QVariantList standardAccelerate READ standardAccelerate CONSTANT FINAL)
+    // Apple-style press/hover micro-interactions (docs/DESIGN_SYSTEM.md §4bis): transforms only
+    // (scale and y), never width/height, so nothing re-layouts. Buttons squeeze a little on press
+    // and spring back; cards and media tiles lift on hover, without any scale (a grid must not
+    // move under the pointer). Cards stay in place: only floating things (Fab, elevated) lift.
+    Q_PROPERTY(qreal pressScaleSmall MEMBER m_pressScaleSmall CONSTANT FINAL) // IconButton
+    Q_PROPERTY(qreal pressScale MEMBER m_pressScale CONSTANT FINAL)          // Button, Fab
+    Q_PROPERTY(qreal hoverLift MEMBER m_hoverLift CONSTANT FINAL)            // dp, up (Card, MediaTile, Fab)
+    // Qt Quick SpringAnimation parameters (spring = stiffness, damping 0-1: < 1 overshoots like a
+    // real spring). `reduced` turns every one of these behaviors off (Behavior { enabled: false }).
+    Q_PROPERTY(qreal springFast MEMBER m_springFast CONSTANT FINAL)
+    Q_PROPERTY(qreal springFastDamping MEMBER m_springFastDamping CONSTANT FINAL)
+    Q_PROPERTY(qreal springSoft MEMBER m_springSoft CONSTANT FINAL)
+    Q_PROPERTY(qreal springSoftDamping MEMBER m_springSoftDamping CONSTANT FINAL)
+    Q_PROPERTY(qreal springMass MEMBER m_springMass CONSTANT FINAL)
 
 public:
     using QObject::QObject;
@@ -365,6 +379,14 @@ private:
     int value(int milliseconds) const { return m_reduced ? 0 : milliseconds; }
 
     bool m_reduced = false;
+    qreal m_pressScaleSmall = 0.92;
+    qreal m_pressScale = 0.97;
+    qreal m_hoverLift = -1.5;
+    qreal m_springFast = 4.0;
+    qreal m_springFastDamping = 0.4;
+    qreal m_springSoft = 3.0;
+    qreal m_springSoftDamping = 0.3;
+    qreal m_springMass = 0.9;
 };
 
-} // namespace vedit::theme
+} // namespace velacut::theme

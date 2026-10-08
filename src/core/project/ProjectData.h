@@ -14,7 +14,7 @@
 #include <optional>
 #include <vector>
 
-namespace vedit {
+namespace velacut {
 
 struct ProjectSettings
 {
@@ -90,4 +90,4 @@ struct ProjectData
     friend bool operator==(const ProjectData &, const ProjectData &) = default;
 };
 
-} // namespace vedit
+} // namespace velacut

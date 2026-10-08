@@ -8,7 +8,7 @@
 #include <cstring>
 #include <limits>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -230,4 +230,4 @@ void applyStabilization(ImageView destination, ConstImageView source, const Came
     drawAffine(destination, source, forward.inverted(), SourceWindow{0, 0, double(source.width), double(source.height)});
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

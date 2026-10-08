@@ -6,7 +6,7 @@
 #include <QQuickPaintedItem>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 class EditorController;
 
@@ -21,7 +21,7 @@ class MediaThumbnail : public QQuickPaintedItem
 {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(vedit::ui::EditorController *editor READ editor WRITE setEditor NOTIFY editorChanged FINAL)
+    Q_PROPERTY(velacut::ui::EditorController *editor READ editor WRITE setEditor NOTIFY editorChanged FINAL)
     Q_PROPERTY(QString mediaId READ mediaId WRITE setMediaId NOTIFY mediaIdChanged FINAL)
     Q_PROPERTY(bool tiled READ tiled WRITE setTiled NOTIFY tiledChanged FINAL)
     Q_PROPERTY(int sourceIn READ sourceIn WRITE setSourceIn NOTIFY sourceChanged FINAL)
@@ -81,4 +81,4 @@ private:
     qreal m_offset = 0.0;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

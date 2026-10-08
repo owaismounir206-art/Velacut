@@ -1,4 +1,4 @@
-# vedit — Stato di avanzamento
+# velacut — Stato di avanzamento
 
 Ultimo aggiornamento: 2026-10-05 (Fasi 0-5 ✅ — criteri della Fase 5 verificati; Fase 6 🔶 in corso: sottotitoli
 manuali/da file completi; Fase 8 🔶: preferenze reali, encoding hardware; Fase 7 da fare. L'utente ha dato il via a
@@ -50,7 +50,7 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
 - **Proposta per l'utente (da decidere)**: OpenCV 5 è installato su questa macchina ma non è nell'elenco delle
   dipendenze della SPEC (che chiede di domandare prima): con il suo consenso darebbe rilevamento dei volti (ritocco
   viso, sticker sul viso, auto reframe e montaggio sui volti), inpainting (rimozione oggetti), GrabCut (scontorno a un
-  clic) e i tracker di OpenCV, come programma separato facoltativo (`vedit-vision`) così che l'app parta anche senza.
+  clic) e i tracker di OpenCV, come programma separato facoltativo (`velacut-vision`) così che l'app parta anche senza.
 
 ## Sessione 2026-10-05 (pomeriggio) — Fase 6: sottotitoli
 - **Core** (`10f2f61`): clip `subtitle` tipizzate (testo, parole con tempi dall'inizio della clip, stile per riga) e
@@ -69,10 +69,10 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
   pagina **Sottotitoli** nelle proprietà (testo della riga, stile di tutte le righe), "Sottotitoli" nella barra
   contestuale senza selezione e nella ricerca universale; import/export SRT e WebVTT.
 - **Bug trovato e corretto**: i testi chiedevano il font "Inter" ma il font incluso si registra come "Inter Variable":
-  tutti i testi uscivano in Noto Sans, e vedit-render non caricava proprio il font. Ora `vedit_fonts` (libreria
+  tutti i testi uscivano in Noto Sans, e velacut-render non caricava proprio il font. Ora `velacut_fonts` (libreria
   comune) registra Inter in ogni processo e sostituisce "Inter" → "Inter Variable" (test in `tst_theme`).
 - Le proprietà ricordano la pagina scelta per tipo di clip (un testo o un sottotitolo si apre sulle sue parole).
-- **Funzioni AI senza modelli** (libreria `vedit_ai`, D-55): interfaccia `ai::AiTask` (thread, progresso, annullamento,
+- **Funzioni AI senza modelli** (libreria `velacut_ai`, D-55): interfaccia `ai::AiTask` (thread, progresso, annullamento,
   distruzione sicura; test), **Rimuovi pause** (livelli RMS → pause con soglia adattiva, tagliate con
   `TimelineEditor::removeSourceRanges`, il resto si ricompatta) e **Dividi le scene** (differenze tra fotogrammi →
   `splitClipAt`), nella barra della clip, con pillola di progresso e "Ferma" nella barra; un passo di annullamento.
@@ -80,7 +80,7 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
 - **Stabilizza** (`fx/Stabilization`, effetto `vedit.stabilize`, FILE_FORMAT §5.6): movimento della camera stimato su
   immagini grigie 160×90 (4 regioni, ricerca a blocchi grossolana+fine, sub-pixel, mediana; a parità vince lo
   spostamento minore, per le zone piatte), percorso levigato con una gaussiana (forza 0..1), ingrandimento unico per la
-  clip (≤ 25 %) che nasconde i bordi; dati salvati nel progetto (base64, ~8 byte/fotogramma) così anche `vedit-render`
+  clip (≤ 25 %) che nasconde i bordi; dati salvati nel progetto (base64, ~8 byte/fotogramma) così anche `velacut-render`
   li ha. Filtro CPU `vedit.stabilize` per primo nella catena. Test: tremolio 12,8 → 1,8 px/fotogramma su un video
   generato. **Limite**: corretta solo la traslazione; la stima della rotazione su immagini piccole è troppo rumorosa
   (≈ 0,4°/fotogramma) e sommata dava un'inclinazione visibile, quindi è misurata ma non applicata.
@@ -112,7 +112,7 @@ proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migl
 - **Separa voce e musica** (Demucs, `ai::VoiceSeparation`) e **Leggi ad alta voce** (Piper, `ai::SpeechSynthesis`):
   programmi esterni facoltativi come whisper.cpp; senza, un messaggio con il comando. I suoni ottenuti entrano nel
   progetto con `EditorController::importThen` e diventano clip audio sotto la clip/il testo (separazione: audio
-  originale silenziato, un passo di annullamento). Voci di Piper aggiunte dall'utente (nessuna offerta da vedit:
+  originale silenziato, un passo di annullamento). Voci di Piper aggiunte dall'utente (nessuna offerta da velacut:
   licenze diverse voce per voce). Verificati con programmi sostitutivi nei test.
 - **Rimuovi sfondo** (`engine/analysis/Cutout`, campo `cutout`): fotogrammi della parte usata (ffmpeg) → `rembg p`
   → video QuickTime RLE ARGB con l'audio originale, in cache; la proiezione lo usa al posto della sorgente (test: un
@@ -175,7 +175,7 @@ l'estetica". Fatto, un commit per incremento:
   unisce i pacchetti utente ed è sostituita atomicamente, i pannelli si aggiornano subito. Rimosso il modello
   `Preferences` finto (setter vuoti, mai usato). **Bug**: lo stile non aveva `DialogButtonBox`, quindi i dialoghi con
   `standardButtons` non mostravano pulsanti (Rinomina OK/Annulla, Informazioni). Test `tst_packages`, `tst_ui::preferences`.
-- Traduzioni italiane complete a ogni incremento (anche `vedit_fx`, prima esclusa dall'estrazione); `SHORTCUTS.md`
+- Traduzioni italiane complete a ogni incremento (anche `velacut_fx`, prima esclusa dall'estrazione); `SHORTCUTS.md`
   riscritto: elencava scorciatoie inesistenti (Ctrl+O, Ctrl+S, strumenti V/H/C/T, Ctrl+1..4 pannelli…).
 - Nota: un test aveva usato `QStandardPaths::setTestModeEnabled` creando cartelle vuote in `~/.qttest`, fuori dal
   progetto: rimosse subito (solo `rmdir` di cartelle vuote) e il test ora gira solo con `XDG_DATA_HOME` nella build.
@@ -267,7 +267,7 @@ l'estetica". Fatto, un commit per incremento:
   * Pulsante macchina fotografica nella barra di trasporto dell'anteprima + snackbar con il percorso;
     `AppController::videosFolder()` esposto a QML.
   * Test `tst_editor::exportsTheFrameOnScreen`. **Commit**: `3858c86`.
-- **Traduzioni**: nuove stringhe di export/anteprima estratte e tradotte (0 non tradotte in `vedit_it.ts`).
+- **Traduzioni**: nuove stringhe di export/anteprima estratte e tradotte (0 non tradotte in `velacut_it.ts`).
 
 ## Fase corrente
 **Fase 6 — AI locali: funzioni fatte, verifica con i programmi veri da fare.** Criterio SPEC §8 ("genero sottotitoli
@@ -276,7 +276,7 @@ green screen"): tutto il percorso è implementato e provato con programmi sostit
 documentato (whisper-cli `--output-json-full`, `rembg p`), ma **whisper.cpp e rembg non sono installati su questa
 macchina**, quindi il criterio non è verificato con i programmi reali. Comandi per l'utente in `docs/MODELS.md` §3.
 Limiti onesti: stabilizzazione solo traslazione; auto reframe senza volti; RIFE non integrato (c'è il percorso CPU
-`minterpolate`); nessuna voce di Piper offerta da vedit; rembg scarica il suo modello alla prima esecuzione (vedit
+`minterpolate`); nessuna voce di Piper offerta da velacut; rembg scarica il suo modello alla prima esecuzione (velacut
 chiede conferma).
 
 **Fase 5 — Libreria creativa: completa.** Criterio SPEC §8: "uso un template, sostituisco i media e ottengo un video
@@ -321,7 +321,7 @@ completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::t
 
 - **P5.9 — Gestore asset (fondamenta)**:
   * Implementato `PackageManager` (`src/fx/PackageManager.{h,cpp}`) per gestire pacchetti di asset utente.
-  * I pacchetti vengono installati in `~/.local/share/vedit/packs/` accanto al pacchetto core built-in.
+  * I pacchetti vengono installati in `~/.local/share/velacut/packs/` accanto al pacchetto core built-in.
   * `installPackage()` copia ricorsivamente una cartella di pacchetto nella directory utente.
   * `removePackage()` rimuove pacchetti utente (il core built-in è protetto).
   * `installedPackages()` elenca tutti i pacchetti (built-in + utente) con metadati da `manifest.json`.
@@ -413,7 +413,7 @@ completo" ✅ (`tst_editor::phaseFiveCriterionTemplate` fino all'MP4, `tst_ui::t
    - **Ancora da fare**: UI QML, Alt+trascina per sostituire, salva come template, slideshow foto
 
 8. **P5.9 — Gestore asset (in corso)**:
-   - ✅ `PackageManager` gestisce pacchetti in `~/.local/share/vedit/packs/`
+   - ✅ `PackageManager` gestisce pacchetti in `~/.local/share/velacut/packs/`
    - ✅ `installPackage()` e `removePackage()` per gestione pacchetti
    - ✅ `installedPackages()` elenca built-in + utente con metadati
    - **Ancora da fare**: UI QML, supporto ZIP completo, integrazione con `fx::Library`
@@ -646,13 +646,13 @@ Ancora nella barra contestuale secondo la SPEC ma di fasi successive: Animazione
    **patch** delle playlist (solo le voci cambiate: una modifica su 500 clip costa ~3–6 ms).
 2. `TimelinePlayer`: timeline viva in anteprima, modifiche anche durante la riproduzione, J/K/L fino a 8×, skimming
    (fotogramma sotto il puntatore senza spostare il playhead), nuovo profilo al cambio di canvas/fps.
-3. Export MP4 in `vedit-render` (processo separato: progetto congelato, avanzamento JSON, annullamento pulito, nessun
+3. Export MP4 in `velacut-render` (processo separato: progetto congelato, avanzamento JSON, annullamento pulito, nessun
    file parziale), anche a dimensioni/fps diversi; controllo dello spazio su disco; notifica di sistema a fine export
-   se vedit è in secondo piano; "Riproduci", "Apri cartella", "Copia percorso".
+   se velacut è in secondo piano; "Riproduci", "Apri cartella", "Copia percorso".
 4. `src/document`: bozze con salvataggio continuo atomico (300 ms / max 2 s, thread di I/O, nessuna scrittura se il
    contenuto non cambia, nuovi tentativi se il disco dà errore), lock con recupero dopo crash, `DraftStore`
    (elenco, crea, rinomina, duplica, cestino), stato dell'interfaccia (`state.json`).
-5. Import: probe in `vedit-render --probe` (un file che manda in crash il demuxer viene scartato come danneggiato e
+5. Import: probe in `velacut-render --probe` (un file che manda in crash il demuxer viene scartato come danneggiato e
    gli altri proseguono), fingerprint `sha256-sampled-v1`, miniature e forme d'onda con FFmpeg in background, cache su
    disco per fingerprint; canvas e fps dalla prima clip nello stesso comando (un solo annulla).
 6. Interfaccia: schermata iniziale (Nuovo progetto, bozze con miniatura/durata/data e menu), editor (barra in alto con
@@ -695,11 +695,11 @@ pannello proprietà, poi servizi MLT `vedit.transform`, `vedit.text`, `vedit.gai
 ## Criterio di completamento della Fase 0 (SPEC §8)
 | Requisito | Esito |
 |---|---|
-| Compila senza warning | ✅ `-Wall -Wextra -Wpedantic -Werror` su tutto il codice vedit, build RelWithDebInfo e Debug |
+| Compila senza warning | ✅ `-Wall -Wextra -Wpedantic -Werror` su tutto il codice velacut, build RelWithDebInfo e Debug |
 | Test verdi | ✅ 14/14 in `build` e in `build-debug` (ASan + UBSan) |
 | Un video si riproduce nell'anteprima con GPU | ✅ Vulkan (ANV) e OpenGL (iris) su Wayland, Vulkan e OpenGL su X11/XWayland |
 | … e con `QT_QUICK_BACKEND=software` + `LIBGL_ALWAYS_SOFTWARE=1` | ✅ anche headless in CTest (`smoke_software`), più `--safe-mode` |
-| Galleria componenti M3 in chiaro/scuro con seme dal sistema | ✅ `vedit --component-gallery`; seme `#3584e4` dall'accento GNOME (il portale di Hyprland non fornisce `accent-color`, vedi D-13) |
+| Galleria componenti M3 in chiaro/scuro con seme dal sistema | ✅ `velacut --component-gallery`; seme `#3584e4` dall'accento GNOME (il portale di Hyprland non fornisce `accent-color`, vedi D-13) |
 
 Gli smoke test verificano fotogrammi **decodificati e mostrati** dall'anteprima (≥ 44 su 45), non solo decodificati.
 
@@ -716,11 +716,11 @@ Gli smoke test verificano fotogrammi **decodificati e mostrati** dall'anteprima 
    test di integrazione apri → modifica → salva → riapri.
 6. Tema Material 3: 49 ruoli colore, varianti, contrasto, sorgenti del seme (portale, GNOME, KDE, sfondo, copertina,
    manuale, predefinito), singleton `Theme` con tipografia, forme, stati, spaziatura/densità, elevazione, motion.
-7. GPU: `vedit-gpuprobe` isolato (Vulkan, OpenGL, codec hardware con prove reali), cache per impronta dei driver,
+7. GPU: `velacut-gpuprobe` isolato (Vulkan, OpenGL, codec hardware con prove reali), cache per impronta dei driver,
    catene di fallback, safe mode automatico dopo 2 avvii instabili, fallback a runtime con riavvio.
 8. Engine MLT: runtime in background, Player (apertura asincrona, riproduzione, pausa, seek, passo, volume),
    anteprima su ogni backend (QQuickRhiItem con shader, oppure nodi immagine), finestra QML del player.
-9. Stile `Vedit.Style` + `Vedit.Components` (29 componenti), galleria, traduzione italiana completa, smoke test in CTest.
+9. Stile `Velacut.Style` + `Velacut.Components` (29 componenti), galleria, traduzione italiana completa, smoke test in CTest.
 
 ## Limiti rimasti dalla Fase 0 (ancora validi)
 - Tipi di clip testo, sottotitolo, sticker, effetto e regolazione: nel modello sono conservati come JSON (nessuna perdita
@@ -740,27 +740,27 @@ Gli smoke test verificano fotogrammi **decodificati e mostrati** dall'anteprima 
   prima di questa sessione, 3 volte su 5). Lo stack mostra tutti i thread di MLT in attesa; né ripetere il refresh né
   purge/seek lo sbloccano, la riproduzione (Play) sì. `tst_timelineplayer` gira da solo in CTest. Da valutare nella
   Fase 8: un consumer dell'anteprima proprio (rendering dei fotogrammi fermi senza `sdl2_audio`).
-- Se vedit viene chiuso a forza durante un export, i file del job (`~/.cache/vedit/render/<id>.json/.vproj`) restano
+- Se velacut viene chiuso a forza durante un export, i file del job (`~/.cache/velacut/render/<id>.json/.vproj`) restano
   nella cache: da ripulire all'avvio (piccoli, ma si accumulano).
-- Avviso Qt "Failed to register with host portal … App info not found for 'vedit'": manca il file `.desktop`
+- Avviso Qt "Failed to register with host portal … App info not found for 'velacut'": manca il file `.desktop`
   installato; sparirà con il packaging (Fase 8). Innocuo.
 - Moduli MLT opzionali non installati sul sistema (movit, rtaudio, sox): MLT lo scrive nel log all'avvio. Innocuo
-  (vedit non li usa).
+  (velacut non li usa).
 - LeakSanitizer: piccole allocazioni globali in MLT, SDL3, glib e libavcodec sono soppresse con motivazione in
-  `tests/lsan.supp`; nessuna perdita nel codice vedit.
+  `tests/lsan.supp`; nessuna perdita nel codice velacut.
 
 
 ## Come riprendere
 ```bash
 cmake --preset dev && cmake --build build && ctest --test-dir build --output-on-failure
-./build/vedit                        # schermata iniziale (le bozze di sviluppo stanno in build/dev-home)
-./build/vedit video.mp4              # nuovo progetto con quel file
-./build/vedit --component-gallery    # galleria M3
-VEDIT_UI_SHOTS=build/shots tools/run-test.sh build tst_ui   # interfaccia guidata + screenshot di ogni passo
-cmake -S . -B build -DVEDIT_BUILD_PROBES=ON   # programmi di prova in build/tools/
+./build/velacut                        # schermata iniziale (le bozze di sviluppo stanno in build/dev-home)
+./build/velacut video.mp4              # nuovo progetto con quel file
+./build/velacut --component-gallery    # galleria M3
+VELACUT_UI_SHOTS=build/shots tools/run-test.sh build tst_ui   # interfaccia guidata + screenshot di ogni passo
+cmake -S . -B build -DVELACUT_BUILD_PROBES=ON   # programmi di prova in build/tools/
 ```
-Traduzioni: `cmake --build build --target update_translations`, poi completare `i18n/vedit_it.ts` (nessuna voce
-`unfinished` deve restare) e le forme plurali in `i18n/vedit_en.ts`.
+Traduzioni: `cmake --build build --target update_translations`, poi completare `i18n/velacut_it.ts` (nessuna voce
+`unfinished` deve restare) e le forme plurali in `i18n/velacut_en.ts`.
 
 Scaricamenti non versionati in `.downloads/` (~1 GB): repository delle icone e dei font usati per il vendoring, e i
 sorgenti di MLT consultati per le verifiche (D-24, §20). Si possono cancellare: i file necessari sono già in

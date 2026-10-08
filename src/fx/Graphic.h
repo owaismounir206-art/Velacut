@@ -7,7 +7,7 @@
 #include <QSize>
 #include <QString>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // Animated graphic elements (SPEC §5.7) drawn on a transparent canvas-sized layer. CPU, QPainter without fonts (safe
 // in MLT's threads): the characters of numbers and clocks come pre-rendered in GraphicGlyphs.
@@ -57,4 +57,4 @@ QString graphicText(const GraphicParams &params, double elapsed, double total);
 QImage renderGraphic(const GraphicParams &params, double elapsed, double total, const QSize &canvas,
                      const GraphicGlyphs &glyphs);
 
-} // namespace vedit::fx
+} // namespace velacut::fx

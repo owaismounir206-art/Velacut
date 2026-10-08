@@ -9,7 +9,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 QStringList splitScript(const QString &script, int maxWords)
 {
@@ -53,4 +53,4 @@ double readingSeconds(const QString &text)
     return std::max(2.0, static_cast<double>(captions::splitWords(text).size()) / 2.6 + 0.4);
 }
 
-} // namespace vedit::ai
+} // namespace velacut::ai

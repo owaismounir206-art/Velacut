@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -96,4 +96,4 @@ std::vector<SubjectPoint> smoothSubjectPath(const std::vector<SubjectPoint> &poi
     return smooth;
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

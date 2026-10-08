@@ -11,7 +11,7 @@
 
 #include <memory>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 class EditorController;
 
@@ -162,4 +162,4 @@ private:
     qint64 m_accumulatedMs = 0;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

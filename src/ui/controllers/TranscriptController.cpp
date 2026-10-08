@@ -17,7 +17,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 namespace {
 
@@ -254,4 +254,4 @@ int TranscriptController::removeFillerWords()
     return count;
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

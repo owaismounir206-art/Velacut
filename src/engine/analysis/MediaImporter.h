@@ -8,9 +8,9 @@
 #include <QProcess>
 #include <QStringList>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
-// Reads media files for the import in the vedit-render process (--probe), one file after the other, in the order
+// Reads media files for the import in the velacut-render process (--probe), one file after the other, in the order
 // given. If a file crashes the probe it is reported as damaged and the others go on in a new process.
 class MediaImporter : public QObject
 {
@@ -21,7 +21,7 @@ public:
     explicit MediaImporter(QObject *parent = nullptr);
     ~MediaImporter() override;
 
-    // Default: vedit-render next to the running executable.
+    // Default: velacut-render next to the running executable.
     void setExecutable(const QString &path) { m_executable = path; }
 
     // Adds files to the queue (processed in order).
@@ -32,7 +32,7 @@ public:
     static QString errorMessage(ProbeError error, const QString &fileName);
 
 signals:
-    void imported(const vedit::Media &media);
+    void imported(const velacut::Media &media);
     void failed(const QString &path, const QString &message);
     // The queue is empty.
     void finished();
@@ -51,4 +51,4 @@ private:
     QByteArray m_buffer;
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

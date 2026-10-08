@@ -21,9 +21,9 @@ extern "C" {
 #include <algorithm>
 #include <cmath>
 
-Q_LOGGING_CATEGORY(lcHwDec, "vedit.engine.hwdec")
+Q_LOGGING_CATEGORY(lcHwDec, "velacut.engine.hwdec")
 
-namespace vedit::gpu {
+namespace velacut::gpu {
 
 namespace {
 
@@ -717,4 +717,4 @@ size_t HwVideoDecoder::umaCacheCapacityForFrameSize(const QSize &frameSize, bool
     return std::clamp<size_t>(capacity, 15, 30);
 }
 
-} // namespace vedit::gpu
+} // namespace velacut::gpu

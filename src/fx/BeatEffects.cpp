@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cstring>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -129,4 +129,4 @@ void applyBeatShake(uint8_t *dst, const uint8_t *src, int width, int height, dou
     }
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

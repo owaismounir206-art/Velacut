@@ -1,7 +1,7 @@
 // Material Symbols Rounded (Apache-2.0) icon by ligature name, e.g. Icon { name: "play_arrow" }.
 // `filled` animates the FILL axis (used for the active state).
 import QtQuick
-import Vedit.Theme
+import Velacut.Theme
 
 Text {
     id: root

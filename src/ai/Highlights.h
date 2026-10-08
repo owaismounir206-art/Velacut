@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 // What the highlights of a long video are found from (SPEC §5.12: audio, scenes and speech): the loudness of its sound
 // (dBFS, `levelsPerSecond` a second), its scene changes and, if known, the times of its words (seconds of the file).
@@ -37,4 +37,4 @@ std::vector<Span> findHighlights(const HighlightInput &input, double targetSecon
 // with a good score, not overlapping; best first.
 std::vector<Span> findShortClips(const HighlightInput &input, int count, double clipSeconds);
 
-} // namespace vedit::ai
+} // namespace velacut::ai

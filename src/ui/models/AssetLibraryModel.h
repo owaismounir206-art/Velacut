@@ -8,7 +8,7 @@
 
 #include <vector>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // The items of an asset library of the core pack (filters, transitions, text styles, animations) for the panels on the
 // left, filtered by category chip and by search text (name in either language, or id).
@@ -92,4 +92,4 @@ private:
     std::vector<Item> m_items;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

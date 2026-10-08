@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 namespace {
 
@@ -167,4 +167,4 @@ std::vector<Span> findShortClips(const HighlightInput &input, int count, double 
     return chosen;
 }
 
-} // namespace vedit::ai
+} // namespace velacut::ai

@@ -3,7 +3,7 @@
 
 #include "fx/Image.h"
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 enum class BlendMode
 {
@@ -47,4 +47,4 @@ inline void compositeBlend(ImageView destination, ConstImageView source, BlendMo
     compositeBlend(destination, source, mode, opacity, 0, destination.height);
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

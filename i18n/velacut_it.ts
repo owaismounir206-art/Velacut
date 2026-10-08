@@ -1526,8 +1526,8 @@
     <name>Gallery</name>
     <message>
         <location filename="../src/ui/qml/Gallery.qml" line="+18"/>
-        <source>Component gallery — vedit</source>
-        <translation>Galleria componenti — vedit</translation>
+        <source>Component gallery — velacut</source>
+        <translation>Galleria componenti — velacut</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -2075,8 +2075,8 @@
     <name>Main</name>
     <message>
         <location filename="../src/ui/qml/Main.qml" line="+19"/>
-        <source>%1 — vedit</source>
-        <translation>%1 — vedit</translation>
+        <source>%1 — velacut</source>
+        <translation>%1 — velacut</translation>
     </message>
     <message>
         <location line="+71"/>
@@ -2218,8 +2218,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>As many as you like: vedit picks the best moments.</source>
-        <translation>Quanti ne vuoi: vedit sceglie i momenti migliori.</translation>
+        <source>As many as you like: velacut picks the best moments.</source>
+        <translation>Quanti ne vuoi: velacut sceglie i momenti migliori.</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -2408,8 +2408,8 @@
     </message>
     <message>
         <location line="+155"/>
-        <source>Some changes apply when vedit starts again. Your project is saved.</source>
-        <translation>Alcune modifiche valgono dal prossimo avvio di vedit. Il progetto è salvato.</translation>
+        <source>Some changes apply when velacut starts again. Your project is saved.</source>
+        <translation>Alcune modifiche valgono dal prossimo avvio di velacut. Il progetto è salvato.</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -2475,8 +2475,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>vedit default</source>
-        <translation>Predefinito di vedit</translation>
+        <source>velacut default</source>
+        <translation>Predefinito di velacut</translation>
     </message>
     <message>
         <location line="+10"/>
@@ -2641,8 +2641,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>When the graphics card fails, vedit goes back to the processor by itself.</source>
-        <translation>Se la scheda grafica non ce la fa, vedit torna da solo al processore.</translation>
+        <source>When the graphics card fails, velacut goes back to the processor by itself.</source>
+        <translation>Se la scheda grafica non ce la fa, velacut torna da solo al processore.</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -2676,8 +2676,8 @@
     </message>
     <message>
         <location line="+41"/>
-        <source>Included in vedit</source>
-        <translation>Incluso in vedit</translation>
+        <source>Included in velacut</source>
+        <translation>Incluso in velacut</translation>
     </message>
     <message numerus="yes">
         <location line="+1"/>
@@ -5599,7 +5599,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::TimelineEditor</name>
+    <name>velacut::TimelineEditor</name>
     <message>
         <location filename="../src/core/edit/TimelineEditor.cpp" line="+331"/>
         <location line="+74"/>
@@ -6201,7 +6201,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ai::BackgroundRemoval</name>
+    <name>velacut::ai::BackgroundRemoval</name>
     <message>
         <location filename="../src/ai/Tasks.cpp" line="+238"/>
         <source>Removing the background</source>
@@ -6209,7 +6209,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ai::CameraMotionAnalysis</name>
+    <name>velacut::ai::CameraMotionAnalysis</name>
     <message>
         <location line="-167"/>
         <source>Steadying the shot</source>
@@ -6222,7 +6222,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ai::HighlightAnalysis</name>
+    <name>velacut::ai::HighlightAnalysis</name>
     <message>
         <location line="+124"/>
         <source>Finding the best moments</source>
@@ -6235,7 +6235,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ai::MotionTracking</name>
+    <name>velacut::ai::MotionTracking</name>
     <message>
         <location line="-36"/>
         <source>Tracking the movement</source>
@@ -6248,7 +6248,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ai::PauseDetection</name>
+    <name>velacut::ai::PauseDetection</name>
     <message>
         <location line="-157"/>
         <source>Finding the pauses</source>
@@ -6261,7 +6261,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ai::SceneDetection</name>
+    <name>velacut::ai::SceneDetection</name>
     <message>
         <location line="+14"/>
         <source>Finding the scenes</source>
@@ -6274,7 +6274,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ai::SpeechSynthesis</name>
+    <name>velacut::ai::SpeechSynthesis</name>
     <message>
         <location filename="../src/ai/Speech.cpp" line="+24"/>
         <source>Reading the text aloud</source>
@@ -6307,7 +6307,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ai::SubjectTracking</name>
+    <name>velacut::ai::SubjectTracking</name>
     <message>
         <location filename="../src/ai/Tasks.cpp" line="+37"/>
         <source>Following the subject</source>
@@ -6315,7 +6315,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ai::Transcription</name>
+    <name>velacut::ai::Transcription</name>
     <message>
         <location filename="../src/ai/Whisper.cpp" line="+112"/>
         <source>Recognising the speech</source>
@@ -6358,12 +6358,12 @@
     </message>
     <message>
         <location line="+5"/>
-        <source>whisper.cpp gave an answer vedit cannot read (%1).</source>
-        <translation>whisper.cpp ha dato una risposta che vedit non sa leggere (%1).</translation>
+        <source>whisper.cpp gave an answer velacut cannot read (%1).</source>
+        <translation>whisper.cpp ha dato una risposta che velacut non sa leggere (%1).</translation>
     </message>
 </context>
 <context>
-    <name>vedit::ai::VoiceSeparation</name>
+    <name>velacut::ai::VoiceSeparation</name>
     <message>
         <location filename="../src/ai/Separation.cpp" line="+42"/>
         <source>Separating voice and music</source>
@@ -6401,7 +6401,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::document::Document</name>
+    <name>velacut::document::Document</name>
     <message>
         <location filename="../src/document/Document.cpp" line="+71"/>
         <source>Cannot create the folder %1.</source>
@@ -6409,15 +6409,15 @@
     </message>
 </context>
 <context>
-    <name>vedit::document::DraftLock</name>
+    <name>velacut::document::DraftLock</name>
     <message>
         <location filename="../src/document/DraftLock.cpp" line="+79"/>
-        <source>This project is already open in another vedit window.</source>
-        <translation>Questo progetto è già aperto in un&apos;altra finestra di vedit.</translation>
+        <source>This project is already open in another velacut window.</source>
+        <translation>Questo progetto è già aperto in un&apos;altra finestra di velacut.</translation>
     </message>
 </context>
 <context>
-    <name>vedit::document::DraftStore</name>
+    <name>velacut::document::DraftStore</name>
     <message>
         <location filename="../src/document/DraftStore.cpp" line="+164"/>
         <source>The name cannot be empty.</source>
@@ -6441,7 +6441,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::engine::MediaImporter</name>
+    <name>velacut::engine::MediaImporter</name>
     <message>
         <location filename="../src/engine/analysis/MediaImporter.cpp" line="+40"/>
         <source>“%1” no longer exists.</source>
@@ -6454,8 +6454,8 @@
     </message>
     <message>
         <location line="+2"/>
-        <source>“%1” is not a video, audio or image file that vedit can open.</source>
-        <translation>«%1» non è un video, un audio o un&apos;immagine che vedit sa aprire.</translation>
+        <source>“%1” is not a video, audio or image file that velacut can open.</source>
+        <translation>«%1» non è un video, un audio o un&apos;immagine che velacut sa aprire.</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -6464,12 +6464,12 @@
     </message>
     <message>
         <location line="+34"/>
-        <source>“%1” was not imported: a part of vedit is missing (vedit-render). Reinstall vedit.</source>
-        <translation>«%1» non è stato importato: manca una parte di vedit (vedit-render). Reinstalla vedit.</translation>
+        <source>“%1” was not imported: a part of velacut is missing (velacut-render). Reinstall velacut.</source>
+        <translation>«%1» non è stato importato: manca una parte di velacut (velacut-render). Reinstalla velacut.</translation>
     </message>
 </context>
 <context>
-    <name>vedit::engine::MediaProducerCache</name>
+    <name>velacut::engine::MediaProducerCache</name>
     <message>
         <location filename="../src/engine/timeline/MediaProducerCache.cpp" line="+67"/>
         <source>The file is missing: %1</source>
@@ -6482,7 +6482,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::engine::Player</name>
+    <name>velacut::engine::Player</name>
     <message>
         <location filename="../src/engine/playback/Player.cpp" line="+65"/>
         <source>The video engine (MLT) could not be started.</source>
@@ -6506,7 +6506,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::engine::RenderJob</name>
+    <name>velacut::engine::RenderJob</name>
     <message>
         <location filename="../src/engine/render/RenderJob.cpp" line="+74"/>
         <source>The video engine could not be started.</source>
@@ -6549,7 +6549,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::engine::TimelinePlayer</name>
+    <name>velacut::engine::TimelinePlayer</name>
     <message>
         <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+137"/>
         <source>No audio output is available (SDL2).</source>
@@ -6557,7 +6557,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::fx::PackageManager</name>
+    <name>velacut::fx::PackageManager</name>
     <message>
         <location filename="../src/fx/PackageManager.cpp" line="+70"/>
         <source>The file does not exist: %1</source>
@@ -6570,8 +6570,8 @@
     </message>
     <message>
         <location line="+10"/>
-        <source>This is not a vedit pack: pack.json is missing.</source>
-        <translation>Questo non è un pacchetto di vedit: manca pack.json.</translation>
+        <source>This is not a velacut pack: pack.json is missing.</source>
+        <translation>Questo non è un pacchetto di velacut: manca pack.json.</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -6595,8 +6595,8 @@
     </message>
     <message>
         <location line="+11"/>
-        <source>The vedit library is part of the application and cannot be removed.</source>
-        <translation>La libreria di vedit fa parte dell&apos;applicazione e non si può rimuovere.</translation>
+        <source>The velacut library is part of the application and cannot be removed.</source>
+        <translation>La libreria di velacut fa parte dell&apos;applicazione e non si può rimuovere.</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -6630,7 +6630,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::migrations</name>
+    <name>velacut::migrations</name>
     <message>
         <location filename="../src/core/serialization/Migrations.cpp" line="+35"/>
         <source>The project file has an invalid format version.</source>
@@ -6638,8 +6638,8 @@
     </message>
     <message>
         <location line="+4"/>
-        <source>This project was created with a newer version of vedit (format %1). Update vedit to open it.</source>
-        <translation>Questo progetto è stato creato con una versione più recente di vedit (formato %1). Aggiorna vedit per aprirlo.</translation>
+        <source>This project was created with a newer version of velacut (format %1). Update velacut to open it.</source>
+        <translation>Questo progetto è stato creato con una versione più recente di velacut (formato %1). Aggiorna velacut per aprirlo.</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -6648,7 +6648,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::projectfile</name>
+    <name>velacut::projectfile</name>
     <message>
         <location filename="../src/core/serialization/ProjectFile.cpp" line="+40"/>
         <source>Cannot create the folder %1.</source>
@@ -6673,7 +6673,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::projectjson</name>
+    <name>velacut::projectjson</name>
     <message>
         <location filename="../src/core/serialization/ProjectJson.cpp" line="+1654"/>
         <source>The project file is damaged (%1).</source>
@@ -6681,12 +6681,12 @@
     </message>
     <message>
         <location line="+147"/>
-        <source>This file is not a vedit project.</source>
-        <translation>Questo file non è un progetto vedit.</translation>
+        <source>This file is not a velacut project.</source>
+        <translation>Questo file non è un progetto velacut.</translation>
     </message>
 </context>
 <context>
-    <name>vedit::ui::ActionRegistry</name>
+    <name>velacut::ui::ActionRegistry</name>
     <message>
         <location filename="../src/ui/controllers/ActionRegistry.cpp" line="+81"/>
         <source>Split</source>
@@ -7137,7 +7137,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::AiController</name>
+    <name>velacut::ui::AiController</name>
     <message>
         <location filename="../src/ui/controllers/AiController.cpp" line="+111"/>
         <source>Select a video or a sound with speech first.</source>
@@ -7417,7 +7417,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::AiModelsModel</name>
+    <name>velacut::ui::AiModelsModel</name>
     <message>
         <location filename="../src/ui/models/AiModelsModel.cpp" line="+117"/>
         <source>Speech — very fast</source>
@@ -7470,7 +7470,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::AppController</name>
+    <name>velacut::ui::AppController</name>
     <message>
         <location filename="../src/ui/controllers/AppController.cpp" line="+128"/>
         <source>GPU</source>
@@ -7488,8 +7488,8 @@
     </message>
     <message>
         <location line="+84"/>
-        <source>Project recovered: vedit did not close properly last time. Your latest changes are here.</source>
-        <translation>Progetto recuperato: l&apos;ultima volta vedit non si è chiuso correttamente. Le tue ultime modifiche sono qui.</translation>
+        <source>Project recovered: velacut did not close properly last time. Your latest changes are here.</source>
+        <translation>Progetto recuperato: l&apos;ultima volta velacut non si è chiuso correttamente. Le tue ultime modifiche sono qui.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -7498,7 +7498,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::AssetThumbnail</name>
+    <name>velacut::ui::AssetThumbnail</name>
     <message>
         <location filename="../src/ui/items/AssetThumbnail.cpp" line="+228"/>
         <source>Hi everyone here</source>
@@ -7511,7 +7511,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::BrandKitModel</name>
+    <name>velacut::ui::BrandKitModel</name>
     <message>
         <location filename="../src/ui/models/BrandKitModel.cpp" line="+221"/>
         <source>My brand</source>
@@ -7534,7 +7534,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::CaptionsController</name>
+    <name>velacut::ui::CaptionsController</name>
     <message>
         <location filename="../src/ui/controllers/CaptionsController.cpp" line="+206"/>
         <source>The file %1 cannot be read.</source>
@@ -7542,8 +7542,8 @@
     </message>
     <message>
         <location line="+6"/>
-        <source>%1 has no captions vedit can read (SRT or WebVTT).</source>
-        <translation>%1 non contiene sottotitoli che vedit sa leggere (SRT o WebVTT).</translation>
+        <source>%1 has no captions velacut can read (SRT or WebVTT).</source>
+        <translation>%1 non contiene sottotitoli che velacut sa leggere (SRT o WebVTT).</translation>
     </message>
     <message numerus="yes">
         <location line="+10"/>
@@ -7623,7 +7623,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::ClipInspector</name>
+    <name>velacut::ui::ClipInspector</name>
     <message>
         <location filename="../src/ui/controllers/ClipInspector.cpp" line="+367"/>
         <location line="+1046"/>
@@ -8242,7 +8242,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::DraftsModel</name>
+    <name>velacut::ui::DraftsModel</name>
     <message>
         <location filename="../src/ui/models/DraftsModel.cpp" line="+32"/>
         <source>Today, %1</source>
@@ -8255,7 +8255,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::EditorController</name>
+    <name>velacut::ui::EditorController</name>
     <message>
         <location filename="../src/ui/controllers/EditorController.cpp" line="+123"/>
         <source>The captions cannot be saved in %1.</source>
@@ -8696,7 +8696,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::FileDownload</name>
+    <name>velacut::ui::FileDownload</name>
     <message>
         <location filename="../src/ui/models/AiModelsModel.cpp" line="-224"/>
         <location line="+61"/>
@@ -8720,7 +8720,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::ScopeView</name>
+    <name>velacut::ui::ScopeView</name>
     <message>
         <location filename="../src/ui/items/ScopeView.cpp" line="+79"/>
         <location line="+60"/>
@@ -8730,7 +8730,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::TimelineModel</name>
+    <name>velacut::ui::TimelineModel</name>
     <message>
         <location filename="../src/ui/models/TimelineModel.cpp" line="+193"/>
         <source>Sticker</source>
@@ -8748,7 +8748,7 @@
     </message>
 </context>
 <context>
-    <name>vedit::ui::TranscriptController</name>
+    <name>velacut::ui::TranscriptController</name>
     <message>
         <location filename="../src/ui/controllers/TranscriptController.cpp" line="+193"/>
         <source>Delete words</source>

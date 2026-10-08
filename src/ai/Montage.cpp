@@ -8,7 +8,7 @@
 #include <numeric>
 #include <random>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 const std::vector<MontageStyle> &montageStyles()
 {
@@ -154,4 +154,4 @@ std::vector<MontagePiece> planMontage(const std::vector<MontageSource> &sources,
     return pieces;
 }
 
-} // namespace vedit::ai
+} // namespace velacut::ai

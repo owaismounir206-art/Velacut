@@ -29,20 +29,20 @@
 #include <functional>
 #include <memory>
 
-namespace vedit {
+namespace velacut {
 struct EditResult;
 struct Media;
 struct ProjectData;
 }
-namespace vedit::document {
+namespace velacut::document {
 class Document;
 }
-namespace vedit::engine {
+namespace velacut::engine {
 class MediaAnalysis;
 class MediaImporter;
 }
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 class ActionRegistry;
 class AiController;
@@ -66,16 +66,16 @@ class EditorController : public QObject
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY undoChanged FINAL)
     Q_PROPERTY(QString undoText READ undoText NOTIFY undoChanged FINAL)
     Q_PROPERTY(QString redoText READ redoText NOTIFY undoChanged FINAL)
-    Q_PROPERTY(vedit::engine::TimelinePlayer *player READ player CONSTANT FINAL)
-    Q_PROPERTY(vedit::ui::MediaPoolModel *media READ media CONSTANT FINAL)
-    Q_PROPERTY(vedit::ui::TimelineModel *timeline READ timeline CONSTANT FINAL)
-    Q_PROPERTY(vedit::engine::RenderJob *exportJob READ exportJob CONSTANT FINAL)
-    Q_PROPERTY(vedit::ui::ClipInspector *inspector READ inspector CONSTANT FINAL)
-    Q_PROPERTY(vedit::ui::CaptionsController *captions READ captions CONSTANT FINAL)
-    Q_PROPERTY(vedit::ui::AiController *ai READ ai CONSTANT FINAL)
-    Q_PROPERTY(vedit::ui::TranscriptController *transcript READ transcript CONSTANT FINAL)
-    Q_PROPERTY(vedit::ui::ActionRegistry *actions READ actions CONSTANT FINAL)
-    Q_PROPERTY(vedit::ui::RecordController *recorder READ recorder CONSTANT FINAL)
+    Q_PROPERTY(velacut::engine::TimelinePlayer *player READ player CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::MediaPoolModel *media READ media CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::TimelineModel *timeline READ timeline CONSTANT FINAL)
+    Q_PROPERTY(velacut::engine::RenderJob *exportJob READ exportJob CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::ClipInspector *inspector READ inspector CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::CaptionsController *captions READ captions CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::AiController *ai READ ai CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::TranscriptController *transcript READ transcript CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::ActionRegistry *actions READ actions CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::RecordController *recorder READ recorder CONSTANT FINAL)
     Q_PROPERTY(QStringList selection READ selection NOTIFY selectionChanged FINAL)
     // A transition selected on the timeline, or the cut (its first clip) chosen for a new one; "" = none.
     Q_PROPERTY(QString selectedTransition READ selectedTransition NOTIFY selectionChanged FINAL)
@@ -172,7 +172,7 @@ public:
     // Media
     Q_INVOKABLE void importFiles(const QList<QUrl> &urls);
     void importPaths(const QStringList &paths);
-    // Imports files made by vedit (separated sounds, generated speech…) and calls `done` with the media of each path
+    // Imports files made by velacut (separated sounds, generated speech…) and calls `done` with the media of each path
     // once all of them are in the project (a path that could not be imported is missing from the map).
     void importThen(const QStringList &paths, std::function<void(const QHash<QString, MediaId> &)> done);
     // Files dropped on the timeline: imported, then placed one after the other from `frame` on `trackRow`.
@@ -181,7 +181,7 @@ public:
     // "+" of a media item: at the playhead, on the right track.
     Q_INVOKABLE bool addMedia(const QString &mediaId);
     // "+" of the music library: under the video, at the playhead.
-    Q_INVOKABLE bool addFromLibrary(vedit::ui::AudioLibraryModel *library, int row);
+    Q_INVOKABLE bool addFromLibrary(velacut::ui::AudioLibraryModel *library, int row);
     // A media item dropped on the timeline.
     Q_INVOKABLE bool insertMedia(const QString &mediaId, int frame, int trackRow);
     // "Replace" (SPEC §5.2, §5.13): the clip shows another video or photo, keeping its place, length and look; a
@@ -501,4 +501,4 @@ private:
     bool setCover(const QImage &image);
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

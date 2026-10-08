@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // Effects on the beat (SPEC §5.9): a pulse at every beat that fades out in `decaySeconds`, driving a flash, a zoom or a
 // shake of the picture. CPU reference kernels on RGBA 8-bit images.
@@ -24,4 +24,4 @@ void applyBeatZoom(uint8_t *dst, const uint8_t *src, int width, int height, doub
 void applyBeatShake(uint8_t *dst, const uint8_t *src, int width, int height, double pulse,
                     double timeSeconds, double maxShakePixels = 12.0);
 
-} // namespace vedit::fx
+} // namespace velacut::fx

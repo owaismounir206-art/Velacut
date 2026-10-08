@@ -13,11 +13,11 @@
 
 #include <optional>
 
-namespace vedit {
+namespace velacut {
 struct Track;
 }
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 class EditorController;
 
@@ -105,4 +105,4 @@ private:
     std::optional<CaptionStyle> m_nextStyle;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

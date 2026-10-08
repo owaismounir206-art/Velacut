@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // How the camera moved from one frame to the next: a translation (shares of the picture's width and height) and a
 // rotation (degrees, clockwise on screen). Small grey frames are enough: a camera shake moves the whole picture.
@@ -47,4 +47,4 @@ Stabilization stabilize(const std::vector<CameraStep> &steps, double framesPerSe
 // Draws `source` steadied by `correction` and enlarged by `zoom` around the centre into `destination` (same size).
 void applyStabilization(ImageView destination, ConstImageView source, const CameraStep &correction, double zoom);
 
-} // namespace vedit::fx
+} // namespace velacut::fx

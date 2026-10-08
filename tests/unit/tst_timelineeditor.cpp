@@ -7,8 +7,8 @@
 
 #include <QSignalSpy>
 
-using namespace vedit;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 class TestTimelineEditor : public QObject
@@ -252,6 +252,41 @@ private slots:
         QCOMPARE(session.sequence().duration(kRate), frames(510));
         // Splitting outside the clip is refused with a message.
         QVERIFY(!session.editor().splitClip(a, frames(100)).ok());
+    }
+
+    void splitSeveralClipsInOneStep()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+        // A clip above the main track, so that two clips (A on the main track, D on the
+        // overlay) cover the same frame 100, like a selection the playhead crosses.
+        EditResult overlay = session.editor().insertMedia(session.data().media[1].id, frames(0),
+                                                          std::nullopt, Placement::Overlay);
+        const ClipId d = overlay.primaryClip;
+        QVERIFY(session.apply(std::move(overlay)));
+        QCOMPARE(session.sequence().visualTracks.size(), 2u);
+        // One step for both clips: one command, one undo step (apply also checks undo/redo).
+        EditResult result = session.editor().splitClips({a, d}, frames(100));
+        QVERIFY(result.ok());
+        const ClipId halfD = result.primaryClip; // the last clip's second half
+        QVERIFY(session.apply(std::move(result)));
+        const Track &main = session.mainTrack();
+        const Track &above = session.sequence().visualTracks[1];
+        QCOMPARE(main.clips.size(), 4u); // A, its second half, B, C
+        QCOMPARE(above.clips.size(), 2u);
+        QCOMPARE(main.clips[0].id, a);
+        QCOMPARE(main.clips[0].duration, frames(100));
+        QCOMPARE(main.clips[1].id != a, true);
+        QCOMPARE(main.clips[1].start, main.clips[0].start + main.clips[0].duration); // no gap
+        QCOMPARE(main.clips[1].duration, frames(200));
+        QCOMPARE(above.clips[0].id, d);
+        QCOMPARE(above.clips[0].duration, frames(100));
+        QCOMPARE(above.clips[1].id, halfD);
+        QCOMPARE(above.clips[1].start, frames(100));
+        QCOMPARE(above.clips[1].duration, frames(20));
+        // Clips that cannot be split at the time are skipped; none of them = an error.
+        QVERIFY(!session.editor().splitClips({b, c}, frames(100)).ok());
     }
 
     void splitRespectsSpeed()

@@ -7,7 +7,7 @@
 
 #include <optional>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 enum class ProbeError
 {
@@ -25,11 +25,11 @@ struct ProbeResult
     QString detail; // technical, untranslated
 };
 
-// Reads the metadata of a media file with libavformat (docs/ARCHITECTURE.md §5.5). Runs in vedit-render --probe,
+// Reads the metadata of a media file with libavformat (docs/ARCHITECTURE.md §5.5). Runs in velacut-render --probe,
 // so that a file which crashes the demuxer is rejected instead of crashing the editor (D-07).
 ProbeResult probeMedia(const QString &path);
 
 QString probeErrorCode(ProbeError error);
 ProbeError probeErrorFromCode(const QString &code);
 
-} // namespace vedit::engine
+} // namespace velacut::engine

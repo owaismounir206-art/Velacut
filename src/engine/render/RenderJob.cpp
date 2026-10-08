@@ -20,15 +20,15 @@
 
 #include <cmath>
 
-Q_LOGGING_CATEGORY(lcRenderJob, "vedit.engine.renderjob")
+Q_LOGGING_CATEGORY(lcRenderJob, "velacut.engine.renderjob")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 RenderJob::RenderJob(QObject *parent)
     : QObject(parent)
-    , m_executable(QCoreApplication::applicationDirPath() + u"/vedit-render"_s)
+    , m_executable(QCoreApplication::applicationDirPath() + u"/velacut-render"_s)
 {
 }
 
@@ -170,7 +170,7 @@ void RenderJob::cancel()
 {
     if (m_process && m_process->state() != QProcess::NotRunning) {
         m_cancelled = true;
-        m_process->terminate(); // SIGTERM: vedit-render stops and removes its partial file
+        m_process->terminate(); // SIGTERM: velacut-render stops and removes its partial file
     }
 }
 
@@ -223,14 +223,14 @@ void RenderJob::onFinished(int exitCode, QProcess::ExitStatus status)
     }
     onOutput();
     const bool crashed = status == QProcess::CrashExit && !m_cancelled;
-    qCInfo(lcRenderJob) << "vedit-render finished with" << exitCode << (crashed ? "(crash)" : "");
+    qCInfo(lcRenderJob) << "velacut-render finished with" << exitCode << (crashed ? "(crash)" : "");
     const bool done = m_done && exitCode == 0;
     const bool cancelledRun = m_cancelled && !done;
     const QString errorCode = m_errorCode;
     const QString detail = m_errorDetail;
     finish();
     if (!done) {
-        removePartialFiles(); // normally already removed by vedit-render, unless it was killed
+        removePartialFiles(); // normally already removed by velacut-render, unless it was killed
     }
     if (done) {
         emit finished(m_settings.outputPath, m_warnings);
@@ -255,7 +255,7 @@ void RenderJob::finish()
 
 void RenderJob::removePartialFiles() const
 {
-    // Left only if vedit-render was killed: ".<name>.part-XXXXXXXX.<ext>" next to the output (see Renderer), with
+    // Left only if velacut-render was killed: ".<name>.part-XXXXXXXX.<ext>" next to the output (see Renderer), with
     // ".source.mp4" for a GIF, or the hidden folder ".<name>.part-XXXXXXXX" of pictures.
     const QFileInfo output(m_settings.outputPath);
     QDir folder(output.absolutePath());
@@ -271,4 +271,4 @@ void RenderJob::removePartialFiles() const
     }
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

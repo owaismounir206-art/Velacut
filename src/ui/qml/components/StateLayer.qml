@@ -1,7 +1,7 @@
 // Material 3 state layer (hover 8%, focus 10%, pressed 10%, dragged 16%) with a ripple that grows from the
 // press point to the exact shape of the control (no shaders: works with the software backend too).
 import QtQuick
-import Vedit.Theme
+import Velacut.Theme
 
 Item {
     id: root

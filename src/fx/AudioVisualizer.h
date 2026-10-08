@@ -7,7 +7,7 @@
 
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // Audio visualizers (SPEC §5.9): bars, spectrum, wave and pulsing circle drawn from the frequency bands of the audio
 // under them, on a transparent canvas-sized layer (CPU, QPainter without text: safe in MLT's threads).
@@ -47,4 +47,4 @@ VisualizerFrameData exampleVisualizerFrame(double seconds, int barCount);
 
 QImage renderAudioVisualizer(const VisualizerSettings &settings, const VisualizerFrameData &data, const QSize &canvasSize);
 
-} // namespace vedit::fx
+} // namespace velacut::fx

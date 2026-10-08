@@ -8,7 +8,7 @@
 
 #include <memory>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // sdl2_audio (audio to PipeWire/PulseAudio, which also paces the video), parallel rendering with frame
 // dropping, RGBA frames. Returns null if no audio output is available.
@@ -39,4 +39,4 @@ std::unique_ptr<Mlt::Event> listenFrameShow(Mlt::Consumer &consumer, Receiver *r
         consumer.listen("consumer-frame-show", receiver, detail::onConsumerFrameShow<Receiver>));
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

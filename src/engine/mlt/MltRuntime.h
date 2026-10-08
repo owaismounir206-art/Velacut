@@ -7,7 +7,7 @@ namespace Mlt {
 class Repository;
 }
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // Owns the MLT factory. Initialization (loading every MLT module, ~100–300 ms) runs in a background
 // thread started at application startup, off the critical path (docs/ARCHITECTURE.md §5.3).
@@ -29,4 +29,4 @@ public:
     static void clearLastError();
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

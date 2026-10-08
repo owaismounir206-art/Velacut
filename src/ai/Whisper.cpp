@@ -18,7 +18,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 namespace whisper {
 
@@ -58,7 +58,7 @@ const Model *model(const QString &id)
 
 QString modelsFolder()
 {
-    return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + u"/vedit/models/whisper"_s;
+    return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + u"/velacut/models/whisper"_s;
 }
 
 QString modelPath(const QString &id)
@@ -218,7 +218,7 @@ QString Transcription::transcribe(const File &file, double shareBefore, double s
     QJsonParseError error;
     const QJsonDocument document = QJsonDocument::fromJson(json.readAll(), &error);
     if (error.error != QJsonParseError::NoError) {
-        return tr("whisper.cpp gave an answer vedit cannot read (%1).").arg(error.errorString());
+        return tr("whisper.cpp gave an answer velacut cannot read (%1).").arg(error.errorString());
     }
     *result = parseWhisperJson(document.object());
     if (m_translate) {
@@ -229,4 +229,4 @@ QString Transcription::transcribe(const File &file, double shareBefore, double s
     return {};
 }
 
-} // namespace vedit::ai
+} // namespace velacut::ai

@@ -9,7 +9,7 @@
 #include <functional>
 #include <vector>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 class AudioLibraryModel;
 class EditorController;
@@ -80,4 +80,4 @@ private:
     QPointer<AudioLibraryModel> m_music;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

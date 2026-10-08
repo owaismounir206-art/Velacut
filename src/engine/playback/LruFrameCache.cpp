@@ -3,7 +3,7 @@
 
 #include <algorithm>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -103,4 +103,4 @@ QImage VideoFrame::toImage() const
     return {};
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

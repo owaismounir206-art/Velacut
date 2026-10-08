@@ -6,7 +6,7 @@
 
 #include <QObject>
 
-namespace vedit {
+namespace velacut {
 
 // The live project: the single source of truth of the editor (docs/ARCHITECTURE.md §4).
 // Read access is const; every change goes through a ProjectMutator transaction (used by the commands),
@@ -21,7 +21,7 @@ public:
     const ProjectData &data() const noexcept { return m_data; }
 
 signals:
-    void changed(const vedit::ChangeSet &changes);
+    void changed(const velacut::ChangeSet &changes);
 
 private:
     friend class ProjectMutator;
@@ -31,4 +31,4 @@ private:
     ChangeSet m_pending;
 };
 
-} // namespace vedit
+} // namespace velacut

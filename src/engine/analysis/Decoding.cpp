@@ -22,7 +22,7 @@ extern "C" {
 #include <limits>
 #include <memory>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -936,4 +936,4 @@ std::optional<std::vector<TrackedPoint>> extractTrackedPath(const QString &path,
     return points;
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

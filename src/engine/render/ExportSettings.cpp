@@ -10,7 +10,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -499,4 +499,4 @@ RenderError renderErrorFromCode(const QString &code)
     return RenderError::EncoderFailed;
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

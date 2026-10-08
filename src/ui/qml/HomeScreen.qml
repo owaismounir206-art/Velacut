@@ -5,9 +5,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Vedit.Components
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Components
+import Velacut.Theme
+import Velacut.UI
 
 Item {
     id: root
@@ -49,7 +49,7 @@ Item {
             }
             Label {
                 role: "titleMedium"
-                text: "vedit"
+                text: "velacut"
             }
         }
         Row {

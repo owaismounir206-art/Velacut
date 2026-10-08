@@ -25,7 +25,7 @@ class Tractor;
 class Transition;
 } // namespace Mlt
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 class MediaProducerCache;
 
@@ -247,4 +247,4 @@ private:
     std::vector<Retired> m_retired;
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

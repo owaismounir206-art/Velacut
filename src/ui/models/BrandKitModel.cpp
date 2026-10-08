@@ -13,7 +13,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 namespace {
 
@@ -41,7 +41,7 @@ void BrandKitModel::setInstance(BrandKitModel *model)
 
 QString BrandKitModel::folder()
 {
-    return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + u"/vedit/brandkits"_s;
+    return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + u"/velacut/brandkits"_s;
 }
 
 QString BrandKitModel::kitFolder(const QString &id) const
@@ -473,4 +473,4 @@ void BrandKitModel::removeMusic(int index)
     changed();
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit {
+namespace velacut {
 
 namespace {
 
@@ -407,4 +407,4 @@ RationalTime SpeedCurveUtil::timelineOffsetAtSourceTime(const SpeedCurve &curve,
     return RationalTime(std::llround(u * durSec * rate.toDouble()), rate);
 }
 
-} // namespace vedit
+} // namespace velacut

@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // Colour grading (SPEC §5.10): white balance gains, colour wheels, HSL per colour range and curves. Every value 0 (or
 // an empty curve) changes nothing. Like the adjustments, a grade is a function of the colour of a pixel, so it is
@@ -83,4 +83,4 @@ private:
     std::vector<std::array<float, 3>> m_table; // 3D: index r + g·N + b·N² (red fastest, as in the file)
 };
 
-} // namespace vedit::fx
+} // namespace velacut::fx

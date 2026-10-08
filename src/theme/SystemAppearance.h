@@ -9,7 +9,7 @@
 
 class QDBusVariant;
 
-namespace vedit::theme {
+namespace velacut::theme {
 
 // Desktop appearance settings read (never written) from the system: the xdg-desktop-portal
 // "org.freedesktop.appearance" namespace, with fallbacks for desktops whose portal does not expose
@@ -69,4 +69,4 @@ private:
     bool m_portalAccent = false;
 };
 
-} // namespace vedit::theme
+} // namespace velacut::theme

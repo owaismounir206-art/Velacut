@@ -17,7 +17,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::document {
+namespace velacut::document {
 
 namespace {
 
@@ -76,8 +76,8 @@ DraftLock::Outcome DraftLock::acquire(const QString &directory, QString *error)
         const QJsonObject existing = readLock(directory);
         if (heldByLiveProcess(existing)) {
             if (error) {
-                *error = QCoreApplication::translate("vedit::document::DraftLock",
-                                                     "This project is already open in another vedit window.");
+                *error = QCoreApplication::translate("velacut::document::DraftLock",
+                                                     "This project is already open in another velacut window.");
             }
             return Outcome::HeldElsewhere;
         }
@@ -111,4 +111,4 @@ bool DraftLock::isHeld(const QString &directory)
     return QFileInfo::exists(lockPath(directory)) && heldByLiveProcess(readLock(directory));
 }
 
-} // namespace vedit::document
+} // namespace velacut::document

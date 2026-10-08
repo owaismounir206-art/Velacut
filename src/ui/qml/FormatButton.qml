@@ -2,7 +2,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
-import Vedit.UI
+import Velacut.UI
 
 Button {
     id: button

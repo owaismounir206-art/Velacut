@@ -13,7 +13,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -190,4 +190,4 @@ void SmoothCopyQueue::startNext()
     emit progressChanged();
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

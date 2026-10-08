@@ -2,8 +2,8 @@
 // click on the name puts back the neutral value, the value can be typed in.
 pragma ComponentBehavior: Bound
 import QtQuick
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Theme
+import Velacut.UI
 
 SliderRow {
     id: root

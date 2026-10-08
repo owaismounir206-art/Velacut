@@ -12,7 +12,7 @@
 #include <memory>
 #include <optional>
 
-namespace vedit::document {
+namespace velacut::document {
 
 class Document;
 
@@ -29,7 +29,7 @@ struct DraftInfo
     bool openElsewhere = false;
 };
 
-// The drafts folder (~/.local/share/vedit/drafts/<projectId>/, docs/FILE_FORMAT.md §6.1).
+// The drafts folder (~/.local/share/velacut/drafts/<projectId>/, docs/FILE_FORMAT.md §6.1).
 class DraftStore
 {
 public:
@@ -60,4 +60,4 @@ private:
     QString m_root;
 };
 
-} // namespace vedit::document
+} // namespace velacut::document

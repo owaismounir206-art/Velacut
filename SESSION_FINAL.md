@@ -14,7 +14,7 @@ Completare l'implementazione di SPEC-editor-video.md (tutte le 8 fasi).
 3. ✅ Test rendering transizioni CPU (P5.10)
 4. ✅ Supporto sottotitoli SRT/VTT (P6 preparazione)
 5. ✅ PKGBUILD + packaging Arch Linux (P8)
-6. ✅ Man page vedit(1) (P8)
+6. ✅ Man page velacut(1) (P8)
 7. ✅ Sistema preferenze utente (P8)
 8. ✅ Documentazione completa (README, SHORTCUTS, STATUS)
 

@@ -11,11 +11,11 @@
 
 #include <vector>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // Brand kits (SPEC §5.13ter): logos, colours, fonts, intro and outro, a watermark and favourite music, saved once and
 // used in any project with a click; several kits (a personal channel, work). Each kit is a folder in
-// <XDG data>/vedit/brandkits/<id>/ with kit.json and copies of its files (docs/FILE_FORMAT.md, appendix B), so a
+// <XDG data>/velacut/brandkits/<id>/ with kit.json and copies of its files (docs/FILE_FORMAT.md, appendix B), so a
 // kit keeps working when the originals are moved. The kit in use is remembered; its colours come first in every
 // colour picker (ClipInspector::swatches).
 class BrandKitModel : public QAbstractListModel
@@ -109,4 +109,4 @@ private:
     int m_current = -1;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

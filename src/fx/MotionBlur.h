@@ -3,7 +3,7 @@
 
 #include "fx/Image.h"
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 struct MotionBlurSettings {
     double intensity = 0.5; // 0.0 (off) to 1.0 (maximum blur)
@@ -17,4 +17,4 @@ void applyMotionBlur(const ImageView &dest, const ConstImageView &src, const Mot
 // Full image motion blur on straight-alpha RGBA pixels in-place.
 void applyMotionBlur(const ImageView &view, const MotionBlurSettings &settings);
 
-} // namespace vedit::fx
+} // namespace velacut::fx

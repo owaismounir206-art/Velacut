@@ -5,7 +5,7 @@
 #include <QFile>
 #include <QtEndian>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 constexpr qint64 kMiB = 1024 * 1024;
@@ -47,4 +47,4 @@ std::optional<MediaFingerprint> sampledFingerprint(const QString &path, QString 
     return MediaFingerprint{QStringLiteral("sha256-sampled-v1"), QString::fromLatin1(hash.result().toHex()), size};
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

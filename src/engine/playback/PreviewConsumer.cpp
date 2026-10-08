@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "PreviewConsumer.h"
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 std::unique_ptr<Mlt::Consumer> createPreviewConsumer(Mlt::Profile &profile, double volume)
 {
@@ -37,4 +37,4 @@ QImage copyFrameImage(Mlt::Frame &frame)
     return QImage(data, width, height, width * 4, QImage::Format_RGBA8888).copy();
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

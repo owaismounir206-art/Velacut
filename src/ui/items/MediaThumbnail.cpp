@@ -8,7 +8,7 @@
 
 #include <cmath>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 MediaThumbnail::MediaThumbnail(QQuickItem *parent)
     : QQuickPaintedItem(parent)
@@ -152,4 +152,4 @@ void MediaThumbnail::paint(QPainter *painter)
     }
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

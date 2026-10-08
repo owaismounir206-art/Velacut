@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit {
+namespace velacut {
 
 namespace {
 
@@ -161,4 +161,4 @@ double Param::numberAt(const RationalTime &time, double fallback) const
     return fallback;
 }
 
-} // namespace vedit
+} // namespace velacut

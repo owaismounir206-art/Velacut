@@ -5,7 +5,7 @@
 
 #include <vector>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 // A stretch of a media file, in its own time.
 struct SourceRange
@@ -33,4 +33,4 @@ std::vector<SourceRange> findPauses(const std::vector<float> &levels, int window
 std::vector<double> findSceneCuts(const std::vector<float> &differences, const std::vector<double> &times,
                                   double minimumSeconds = 0.6);
 
-} // namespace vedit::ai
+} // namespace velacut::ai

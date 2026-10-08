@@ -12,7 +12,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -45,8 +45,8 @@ PackageManager &PackageManager::instance()
 std::vector<PackageInfo> PackageManager::installedPackages() const
 {
     std::vector<PackageInfo> packages;
-    const Library core = Library::load(u":/vedit/packs/vedit.core"_s);
-    packages.push_back({core.packId(), core.packName(), core.packVersion(), core.itemCount(), u":/vedit/packs/vedit.core"_s, true});
+    const Library core = Library::load(u":/velacut/packs/vedit.core"_s);
+    packages.push_back({core.packId(), core.packName(), core.packVersion(), core.itemCount(), u":/velacut/packs/vedit.core"_s, true});
     const QDir folder(Library::userPacksFolder());
     for (const QString &entry : folder.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
         const Library pack = Library::load(folder.filePath(entry));
@@ -83,7 +83,7 @@ bool PackageManager::installPackage(const QString &sourcePath, QString *error)
     }
     const QString root = packRoot(folder);
     if (root.isEmpty()) {
-        return failed(tr("This is not a vedit pack: pack.json is missing."));
+        return failed(tr("This is not a velacut pack: pack.json is missing."));
     }
     const Library pack = Library::load(root);
     if (!pack.errors().isEmpty()) {
@@ -119,7 +119,7 @@ bool PackageManager::removePackage(const QString &packageId, QString *error)
 {
     if (packageId == QLatin1String(Library::kCorePack) || packageId.contains(u'/') || packageId.startsWith(u'.')) {
         if (error) {
-            *error = tr("The vedit library is part of the application and cannot be removed.");
+            *error = tr("The velacut library is part of the application and cannot be removed.");
         }
         return false;
     }
@@ -201,4 +201,4 @@ bool PackageManager::copyRecursively(const QString &source, const QString &desti
     return true;
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

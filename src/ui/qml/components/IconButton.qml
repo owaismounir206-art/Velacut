@@ -2,7 +2,7 @@
 // checkable icon buttons show the filled icon and the selected colors when checked.
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Theme
+import Velacut.Theme
 
 T.AbstractButton {
     id: control
@@ -51,6 +51,14 @@ T.AbstractButton {
     T.ToolTip.delay: 600
     T.ToolTip.text: shortcutText !== "" ? label + " (" + shortcutText + ")" : label
 
+    // Apple-style press feedback: a light squeeze that springs back on release. Transform only
+    // (never size), and nothing at all with "reduce motion".
+    scale: pressed ? Theme.motion.pressScaleSmall : 1.0
+    Behavior on scale {
+        enabled: !Theme.motion.reduced
+        SpringAnimation { spring: Theme.motion.springFast; damping: Theme.motion.springFastDamping; mass: Theme.motion.springMass }
+    }
+
     contentItem: Icon {
         name: control.iconName
         size: control.iconSize
@@ -63,6 +71,7 @@ T.AbstractButton {
         color: control.containerColor
         border.width: control.variant === "outlined" && !control._selected ? 1 : 0
         border.color: control.enabled ? Theme.color.outline : Theme.alpha(Theme.color.onSurface, Theme.state.disabledContainer)
+        FocusFrame { control: control }
         StateLayer {
             radius: parent.radius
             color: control.contentColor

@@ -7,9 +7,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
-import Vedit.Components
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Components
+import Velacut.Theme
+import Velacut.UI
 
 Dialog {
     id: dialog
@@ -186,7 +186,7 @@ Dialog {
                         role: "bodyMedium"
                         wrapMode: Text.WordWrap
                         color: Theme.color.onTertiaryContainer
-                        text: qsTr("Some changes apply when vedit starts again. Your project is saved.")
+                        text: qsTr("Some changes apply when velacut starts again. Your project is saved.")
                     }
                     Button {
                         objectName: "restartButton"
@@ -231,7 +231,7 @@ Dialog {
                             Choice {
                                 objectName: "seedSource"
                                 options: [qsTr("Desktop accent"), qsTr("Wallpaper"), qsTr("Project cover"), qsTr("Chosen by me"),
-                                          qsTr("vedit default")]
+                                          qsTr("velacut default")]
                                 current: Theme.seedSource
                                 onChosen: (value) => Theme.seedSource = value
                             }
@@ -358,7 +358,7 @@ Dialog {
                         }
                         Group {
                             title: qsTr("Acceleration")
-                            detail: qsTr("When the graphics card fails, vedit goes back to the processor by itself.")
+                            detail: qsTr("When the graphics card fails, velacut goes back to the processor by itself.")
                             SwitchRow {
                                 text: qsTr("Effects on the graphics card")
                                 checked: App.gpuEffects
@@ -436,7 +436,7 @@ Dialog {
                                             role: "bodySmall"
                                             color: Theme.color.onSurfaceVariant
                                             elide: Text.ElideRight
-                                            text: (pack.builtIn ? qsTr("Included in vedit") + " · " : "")
+                                            text: (pack.builtIn ? qsTr("Included in velacut") + " · " : "")
                                                   + qsTr("%n item(s)", "", pack.items) + " · " + qsTr("version %1").arg(pack.version)
                                                   + " · " + pack.packId
                                         }
@@ -651,7 +651,7 @@ Dialog {
                         spacing: Theme.space.md
                         Label {
                             role: "headlineSmall"
-                            text: "vedit " + App.version
+                            text: "velacut " + App.version
                         }
                         Label {
                             Layout.fillWidth: true

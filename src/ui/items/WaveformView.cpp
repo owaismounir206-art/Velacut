@@ -8,7 +8,7 @@
 
 #include <cmath>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 WaveformView::WaveformView(QQuickItem *parent)
     : QQuickPaintedItem(parent)
@@ -132,4 +132,4 @@ void WaveformView::paint(QPainter *painter)
     }
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

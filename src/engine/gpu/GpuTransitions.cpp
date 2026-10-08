@@ -19,11 +19,11 @@
 #include <mutex>
 #include <vector>
 
-Q_LOGGING_CATEGORY(lcGpuTransitions, "vedit.engine.gpu.transitions")
+Q_LOGGING_CATEGORY(lcGpuTransitions, "velacut.engine.gpu.transitions")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -145,7 +145,7 @@ bool GpuTransitions::Private::ensureContext()
         description = u"%1 · %2"_s.arg(QString::fromLatin1(reinterpret_cast<const char *>(gl->glGetString(GL_VERSION))),
                                         QString::fromLatin1(reinterpret_cast<const char *>(gl->glGetString(GL_RENDERER))));
     }
-    QFile source(u":/vedit/gpu/transitions.frag"_s);
+    QFile source(u":/velacut/gpu/transitions.frag"_s);
     if (!source.open(QIODevice::ReadOnly)) {
         fail(u"the transition shaders are missing"_s);
         return false;
@@ -352,7 +352,7 @@ GpuTransitions::GpuTransitions()
     d->surface->create();
     d->worker = new QObject();
     d->worker->moveToThread(&d->thread);
-    d->thread.setObjectName(u"vedit-gpu-transitions"_s);
+    d->thread.setObjectName(u"velacut-gpu-transitions"_s);
     d->thread.start();
 }
 
@@ -442,4 +442,4 @@ bool GpuTransitions::render(fx::TransitionKind kind, fx::ImageView out, fx::Cons
     return done;
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

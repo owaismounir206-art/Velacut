@@ -4,7 +4,7 @@
 
 #include <QTest>
 
-using namespace vedit;
+using namespace velacut;
 using namespace Qt::StringLiterals;
 
 namespace {

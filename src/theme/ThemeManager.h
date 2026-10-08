@@ -18,9 +18,9 @@
 class QQmlEngine;
 class QJSEngine;
 
-namespace vedit::theme {
+namespace velacut::theme {
 
-// The QML singleton `Theme` (import Vedit.Theme): every color, size, radius and duration used by the UI
+// The QML singleton `Theme` (import Velacut.Theme): every color, size, radius and duration used by the UI
 // comes from here (SPEC §4, "Sistema di design a token"). Owns the user's theme preferences, resolves the
 // seed color from the chosen source, generates the Material 3 scheme and animates scheme changes.
 class ThemeManager : public QObject
@@ -29,14 +29,14 @@ class ThemeManager : public QObject
     QML_NAMED_ELEMENT(Theme)
     QML_SINGLETON
 
-    Q_PROPERTY(vedit::theme::ThemeColors *color READ color CONSTANT FINAL)
-    Q_PROPERTY(vedit::theme::ThemeTypography *type READ type CONSTANT FINAL)
-    Q_PROPERTY(vedit::theme::ThemeShape *shape READ shape CONSTANT FINAL)
-    Q_PROPERTY(vedit::theme::ThemeState *state READ state CONSTANT FINAL)
-    Q_PROPERTY(vedit::theme::ThemeSpace *space READ space CONSTANT FINAL)
-    Q_PROPERTY(vedit::theme::ThemeElevation *elevation READ elevation CONSTANT FINAL)
-    Q_PROPERTY(vedit::theme::ThemeMotion *motion READ motion CONSTANT FINAL)
-    Q_PROPERTY(vedit::theme::ThemeEditor *editor READ editor CONSTANT FINAL)
+    Q_PROPERTY(velacut::theme::ThemeColors *color READ color CONSTANT FINAL)
+    Q_PROPERTY(velacut::theme::ThemeTypography *type READ type CONSTANT FINAL)
+    Q_PROPERTY(velacut::theme::ThemeShape *shape READ shape CONSTANT FINAL)
+    Q_PROPERTY(velacut::theme::ThemeState *state READ state CONSTANT FINAL)
+    Q_PROPERTY(velacut::theme::ThemeSpace *space READ space CONSTANT FINAL)
+    Q_PROPERTY(velacut::theme::ThemeElevation *elevation READ elevation CONSTANT FINAL)
+    Q_PROPERTY(velacut::theme::ThemeMotion *motion READ motion CONSTANT FINAL)
+    Q_PROPERTY(velacut::theme::ThemeEditor *editor READ editor CONSTANT FINAL)
 
     Q_PROPERTY(Mode mode READ mode WRITE setMode NOTIFY settingsChanged FINAL)
     Q_PROPERTY(Contrast contrast READ contrast WRITE setContrast NOTIFY settingsChanged FINAL)
@@ -229,4 +229,4 @@ private:
     bool m_sessionOverride = false;
 };
 
-} // namespace vedit::theme
+} // namespace velacut::theme

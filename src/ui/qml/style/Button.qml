@@ -2,8 +2,8 @@
 // Optional leading icon: iconName (Material Symbols).
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Components
-import Vedit.Theme
+import Velacut.Components
+import Velacut.Theme
 
 T.Button {
     id: control
@@ -40,6 +40,21 @@ T.Button {
     Accessible.role: Accessible.Button
     Accessible.name: text
 
+    // Apple-style press feedback: a small squeeze that springs back, and a lift while pointed
+    // at. Transforms only (never size: nothing re-layouts), nothing with "reduce motion".
+    scale: pressed ? Theme.motion.pressScale : 1.0
+    Behavior on scale {
+        enabled: !Theme.motion.reduced
+        SpringAnimation { spring: Theme.motion.springSoft; damping: Theme.motion.springSoftDamping; mass: Theme.motion.springMass }
+    }
+    transform: Translate {
+        y: control.hovered && control.enabled ? Theme.motion.hoverLift : 0
+        Behavior on y {
+            enabled: !Theme.motion.reduced
+            NumberAnimation { duration: Theme.motion.short3; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.motion.standardDecelerate }
+        }
+    }
+
     contentItem: Row {
         spacing: control.spacing
         Icon {
@@ -60,11 +75,13 @@ T.Button {
     background: Rectangle {
         implicitHeight: Theme.space.control(40)
         radius: Theme.shape.full
-        color: control.containerColor
+        // A filled button darkens slightly under the finger, like macOS controls.
+        color: control._filled && control.pressed ? Qt.darker(control.containerColor, 1.04) : control.containerColor
         border.width: control._outlined ? 1 : 0
         border.color: control.enabled ? (control.visualFocus ? Theme.color.primary : Theme.color.outline)
                                       : Theme.alpha(Theme.color.onSurface, Theme.state.disabledContainer)
 
+        FocusFrame { control: control }
         Shadow {
             level: control._elevated && control.enabled ? (control.hovered ? 2 : 1) : 0
             radius: parent.radius

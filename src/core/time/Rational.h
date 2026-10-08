@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace vedit {
+namespace velacut {
 
 // Rounding policy for every conversion that cannot be exact. NearestEven rounds halves to the even
 // neighbour, so repeated conversions do not drift in one direction.
@@ -70,4 +70,4 @@ private:
     std::int64_t m_den = 1;
 };
 
-} // namespace vedit
+} // namespace velacut

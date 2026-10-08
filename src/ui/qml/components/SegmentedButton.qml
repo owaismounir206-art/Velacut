@@ -1,7 +1,7 @@
 // Material 3 segmented button for exclusive choices (e.g. 16:9 / 9:16 / 1:1).
 // model: list of { text, iconName? }; currentIndex is the selected segment.
 import QtQuick
-import Vedit.Theme
+import Velacut.Theme
 
 FocusScope {
     id: root

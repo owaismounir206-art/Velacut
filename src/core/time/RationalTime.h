@@ -10,7 +10,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace vedit {
+namespace velacut {
 
 // A point in time (or a duration) expressed as an integer number of units at an exact rate:
 // `value` frames at `rate` frames per second (or samples at a sample rate). Never a double.
@@ -89,4 +89,4 @@ struct TimeRange
     friend bool operator==(const TimeRange &a, const TimeRange &b) = default;
 };
 
-} // namespace vedit
+} // namespace velacut

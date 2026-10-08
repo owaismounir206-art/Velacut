@@ -8,7 +8,7 @@
 #include <QQuickItem>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // Video preview for the software scene graph (QT_QUICK_BACKEND=software, no GPU): plain image nodes,
 // no shaders (SPEC 1bis).
@@ -16,7 +16,7 @@ class VideoSurfaceSoftware : public QQuickItem
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(VideoSurfaceSoftware)
-    Q_PROPERTY(vedit::engine::FrameSink *sink READ sink WRITE setSink NOTIFY sinkChanged FINAL)
+    Q_PROPERTY(velacut::engine::FrameSink *sink READ sink WRITE setSink NOTIFY sinkChanged FINAL)
     Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY backgroundColorChanged FINAL)
 
 public:
@@ -41,4 +41,4 @@ private:
     QSize m_frameSize;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

@@ -30,10 +30,10 @@ class Repository;
 class Transition;
 } // namespace Mlt
 
-namespace vedit::engine {
+namespace velacut::engine {
 
-// Registers vedit's own MLT services (docs/ARCHITECTURE.md §5.2), in every process that renders. Each delegates the
-// pixels to the CPU reference kernels of vedit_fx:
+// Registers velacut's own MLT services (docs/ARCHITECTURE.md §5.2), in every process that renders. Each delegates the
+// pixels to the CPU reference kernels of velacut_fx:
 //  - transition "vedit.composite": track compositing, `b` over `a` (blank frames skipped: gaps never paint black);
 //  - filter "vedit.transform": the clip placed on the canvas (fit, position, scale, rotation, flip, crop, opacity)
 //    over its canvas background (main track: colour or the clip itself blurred);
@@ -304,4 +304,4 @@ std::unique_ptr<Mlt::Filter> makeVideoEffectFilter(Mlt::Profile &profile, const 
 // (docs/EFFECT_FORMAT.md §9).
 fx::VideoEffectParams videoEffectParams(const QJsonObject &preset, const std::map<QString, Param> &own);
 
-} // namespace vedit::engine
+} // namespace velacut::engine

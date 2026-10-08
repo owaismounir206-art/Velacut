@@ -12,7 +12,7 @@
 #include <map>
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // A name in the languages of the interface (manifests are data: no qsTr).
 struct LocalizedText
@@ -139,7 +139,7 @@ struct StickerPreset
     int version = 1;
     QString category;
     LocalizedText name;
-    QString path; // absolute (":/vedit/packs/…" for the built-in pack); empty for emoji and visualizers
+    QString path; // absolute (":/velacut/packs/…" for the built-in pack); empty for emoji and visualizers
     QString emoji;
     bool animated = false;
     double defaultDuration = 3.0;
@@ -147,7 +147,7 @@ struct StickerPreset
     QJsonObject graphic; // an animated graphic element (FILE_FORMAT §5.5)
 };
 
-// The assets of a pack (docs/EFFECT_FORMAT.md): the core pack is built into the application (:/vedit/packs/…).
+// The assets of a pack (docs/EFFECT_FORMAT.md): the core pack is built into the application (:/velacut/packs/…).
 class Library
 {
 public:
@@ -158,7 +158,7 @@ public:
     static const Library &core();
     // Loads the packs again (a pack was installed or removed): later calls of core() see the new library.
     static void reload();
-    // Where the user's packs live: <XDG data>/vedit/packs/<id>/ (docs/EFFECT_FORMAT.md §1).
+    // Where the user's packs live: <XDG data>/velacut/packs/<id>/ (docs/EFFECT_FORMAT.md §1).
     static QString userPacksFolder();
     // Loads a pack folder. Only pack.json is required; problems end up in errors().
     static Library load(const QString &folder);
@@ -225,4 +225,4 @@ private:
     std::vector<EffectSpec> m_effects;
 };
 
-} // namespace vedit::fx
+} // namespace velacut::fx

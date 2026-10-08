@@ -1,7 +1,7 @@
 // The header of a library panel (Media, Audio, Text…): its name on the left, its few actions on the right, compact.
 import QtQuick
 import QtQuick.Controls
-import Vedit.Theme
+import Velacut.Theme
 
 Item {
     id: header

@@ -7,7 +7,7 @@
 
 #include <cmath>
 
-using namespace vedit::fx;
+using namespace velacut::fx;
 using namespace Qt::StringLiterals;
 
 class TestTransitions : public QObject

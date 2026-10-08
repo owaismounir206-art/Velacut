@@ -9,7 +9,7 @@
 
 #include <optional>
 
-namespace vedit::gpu {
+namespace velacut::gpu {
 
 enum class UiBackend
 {
@@ -79,7 +79,7 @@ EnvironmentInfo probeEnvironment();
 // environment variables change, which invalidates the capability cache (docs/ARCHITECTURE.md §7.2).
 QString driverFingerprint();
 
-// Runs vedit-gpuprobe in child processes, with timeouts; a crash or hang marks only that API unusable.
+// Runs velacut-gpuprobe in child processes, with timeouts; a crash or hang marks only that API unusable.
 class CapabilityProber
 {
 public:
@@ -93,7 +93,7 @@ private:
     QString m_executable;
 };
 
-// ~/.cache/vedit/gpu-caps.json
+// ~/.cache/velacut/gpu-caps.json
 class CapabilityCache
 {
 public:
@@ -135,4 +135,4 @@ private:
     QList<UiBackend> m_failedBackends;
 };
 
-} // namespace vedit::gpu
+} // namespace velacut::gpu

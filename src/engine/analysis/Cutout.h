@@ -10,7 +10,7 @@
 #include <functional>
 #include <optional>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // "Remove background" (MediaClipData::cutout, SPEC §5.12): the part of a file a clip plays with the background made
 // transparent, as a copy in the cache (QuickTime RLE with alpha — kept by MLT, verified — and the original sound).
@@ -40,4 +40,4 @@ bool hasModel();
 QString makeCutoutCopy(const CutoutCopy &copy, const std::function<void(double)> &progress = {},
                        const std::atomic<bool> *cancel = nullptr);
 
-} // namespace vedit::engine
+} // namespace velacut::engine

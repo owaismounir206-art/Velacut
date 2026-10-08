@@ -6,7 +6,7 @@
 
 #include <stdexcept>
 
-using namespace vedit;
+using namespace velacut;
 using namespace Qt::StringLiterals;
 
 class TestRational : public QObject

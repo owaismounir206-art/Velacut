@@ -5,7 +5,7 @@
 #include <QSize>
 #include <QSizeF>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // Aspect-fit ("contain") of a frame inside a target: the fraction of the target covered on each axis.
 inline QSizeF fitScale(const QSize &frame, const QSize &target)
@@ -26,4 +26,4 @@ inline QRectF fitRect(const QSize &frame, const QSizeF &target)
     return QRectF(QPointF((target.width() - size.width()) / 2, (target.height() - size.height()) / 2), size);
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

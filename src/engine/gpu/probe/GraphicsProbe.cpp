@@ -13,7 +13,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::gpu::probe {
+namespace velacut::gpu::probe {
 
 namespace {
 
@@ -143,4 +143,4 @@ OpenGLInfo probeOpenGL()
     return info;
 }
 
-} // namespace vedit::gpu::probe
+} // namespace velacut::gpu::probe

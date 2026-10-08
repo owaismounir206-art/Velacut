@@ -3,7 +3,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 PackagesModel::PackagesModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -76,4 +76,4 @@ QString PackagesModel::remove(const QString &packId)
     return fx::PackageManager::instance().removePackage(packId, &error) ? QString() : error;
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 Affine Affine::rotation(double degrees)
 {
@@ -221,4 +221,4 @@ void resizeBilinear(ImageView destination, ConstImageView source, int rowBegin, 
     }
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

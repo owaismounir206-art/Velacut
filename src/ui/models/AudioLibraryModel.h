@@ -10,11 +10,11 @@
 #include <memory>
 #include <optional>
 
-namespace vedit::engine {
+namespace velacut::engine {
 class MediaImporter;
 }
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // Local music library (SPEC 0bis rule 4, usability test 2): the audio files of the user's Music folder, read by the
 // probe process in background; each one can be added under the video with its "+".
@@ -71,4 +71,4 @@ private:
     quint64 m_generation = 0;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

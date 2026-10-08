@@ -5,7 +5,7 @@
 #include <array>
 #include <cmath>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -1042,4 +1042,4 @@ void renderTransition(TransitionKind kind, ImageView out, ConstImageView a, Cons
     }
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

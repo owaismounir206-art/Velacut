@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // Where the subject of a picture is, for "Auto reframe" (SPEC §5.12, 0bis rule 9): what moves and what has detail,
 // slightly favouring the centre, from two consecutive grey frames of `width` × `height`. x and y are shares of the
@@ -22,4 +22,4 @@ SubjectPoint findSubject(const std::vector<std::uint8_t> &previous, const std::v
 // the rest (a camera operator follows the subject calmly, without jerks).
 std::vector<SubjectPoint> smoothSubjectPath(const std::vector<SubjectPoint> &points, double sigma);
 
-} // namespace vedit::fx
+} // namespace velacut::fx

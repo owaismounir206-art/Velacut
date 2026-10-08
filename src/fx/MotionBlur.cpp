@@ -7,7 +7,7 @@
 #include <cstring>
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -135,4 +135,4 @@ void applyMotionBlur(const ImageView &view, const MotionBlurSettings &settings)
     applyMotionBlur(view, src, settings, 0, view.height);
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

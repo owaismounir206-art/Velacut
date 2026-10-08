@@ -7,7 +7,7 @@
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // The asset packs for Preferences → Packs (SPEC §5.13, §5.16): installed packs, install from a folder or a .zip,
 // remove. Backed by the process-wide fx::PackageManager.
@@ -48,4 +48,4 @@ private:
     std::vector<fx::PackageInfo> m_packages;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

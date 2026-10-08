@@ -2,7 +2,7 @@
 // is one undo step, a double click on the name puts back the effect's own value.
 pragma ComponentBehavior: Bound
 import QtQuick
-import Vedit.UI
+import Velacut.UI
 
 SliderRow {
     id: root

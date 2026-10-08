@@ -1,6 +1,6 @@
 // Material 3 badge: small dot (count 0) or large badge with a number.
 import QtQuick
-import Vedit.Theme
+import Velacut.Theme
 
 Rectangle {
     property int count: 0

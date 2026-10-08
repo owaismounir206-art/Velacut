@@ -11,5 +11,5 @@ mkdir -p "$home/tmp"
 binary=$(find "$build/tests" -name "$test" -type f -perm -u+x | head -1)
 exec env QT_QPA_PLATFORM=offscreen SDL_AUDIODRIVER=dummy TMPDIR="$home/tmp" XDG_CONFIG_HOME="$home/config" \
     XDG_DATA_HOME="$home/data" XDG_CACHE_HOME="$home/cache" XDG_STATE_HOME="$home/state" \
-    VEDIT_TEST_DATA="$root/tests/data" ASAN_OPTIONS=fast_unwind_on_malloc=0 \
+    VELACUT_TEST_DATA="$root/tests/data" ASAN_OPTIONS=fast_unwind_on_malloc=0 \
     LSAN_OPTIONS="suppressions=$root/tests/lsan.supp:print_suppressions=0" "$binary" "$@"

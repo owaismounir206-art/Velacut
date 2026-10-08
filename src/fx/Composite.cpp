@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 // Rounded integer division for non-negative values.
@@ -266,4 +266,4 @@ void compositeBlend(ImageView destination, ConstImageView source, BlendMode mode
     }
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -83,4 +83,4 @@ void applyChromaKey(ImageView image, const ChromaKeySettings &settings, int rowB
     }
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

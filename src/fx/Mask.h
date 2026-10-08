@@ -5,7 +5,7 @@
 
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 enum class MaskShape
 {
@@ -54,4 +54,4 @@ inline void applyMasks(ImageView image, const std::vector<MaskParams> &masks)
     applyMasks(image, masks, 0, image.height);
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

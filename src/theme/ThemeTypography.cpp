@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ThemeTypography.h"
 
-namespace vedit::theme {
+namespace velacut::theme {
 
 namespace {
 struct TypeStyle
@@ -12,15 +12,18 @@ struct TypeStyle
     int weight;
 };
 
-// Material 3 baseline type scale.
+// Material 3 baseline type scale, with Apple-style optical tracking: display and headline
+// sizes compact slightly (the larger the text, the tighter, like SF Pro), titles stay neutral,
+// labels stay slightly open (they are small and dense). Only the tracking was tuned (SF feel),
+// sizes, line heights and weights are the M3 baseline.
 constexpr TypeStyle kScale[] = {
-    {57, 64, -0.25, 400}, // displayLarge
-    {45, 52, 0, 400}, // displayMedium
-    {36, 44, 0, 400}, // displaySmall
-    {32, 40, 0, 400}, // headlineLarge
-    {28, 36, 0, 400}, // headlineMedium
-    {24, 32, 0, 400}, // headlineSmall
-    {22, 28, 0, 400}, // titleLarge
+    {57, 64, -0.5, 400}, // displayLarge
+    {45, 52, -0.25, 400}, // displayMedium
+    {36, 44, -0.2, 400}, // displaySmall
+    {32, 40, -0.5, 400}, // headlineLarge
+    {28, 36, -0.25, 400}, // headlineMedium
+    {24, 32, -0.2, 400}, // headlineSmall
+    {22, 28, -0.15, 400}, // titleLarge
     {16, 24, 0.15, 500}, // titleMedium
     {14, 20, 0.1, 500}, // titleSmall
     {16, 24, 0.5, 400}, // bodyLarge
@@ -56,4 +59,4 @@ qreal ThemeTypography::lineHeight(int style) const
     return kScale[style].lineHeight * m_scale;
 }
 
-} // namespace vedit::theme
+} // namespace velacut::theme

@@ -8,7 +8,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit {
+namespace velacut {
 
 ClipKind Clip::kind() const
 {
@@ -464,4 +464,4 @@ QStringList ProjectData::checkInvariants() const
     return InvariantChecker(*this).run();
 }
 
-} // namespace vedit
+} // namespace velacut

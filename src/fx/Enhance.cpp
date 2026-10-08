@@ -5,7 +5,7 @@
 #include <array>
 #include <cmath>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -115,4 +115,4 @@ double autoGainDb(double peak)
     return std::clamp(-1.0 - 20.0 * std::log10(peak), -6.0, 12.0);
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

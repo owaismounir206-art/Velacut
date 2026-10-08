@@ -28,11 +28,11 @@
 #include <cmath>
 #include <vector>
 
-using vedit::Rational;
-using vedit::RationalTime;
-using vedit::SpeedCurve;
-using vedit::SpeedCurveUtil;
-using namespace vedit::fx;
+using velacut::Rational;
+using velacut::RationalTime;
+using velacut::SpeedCurve;
+using velacut::SpeedCurveUtil;
+using namespace velacut::fx;
 using namespace Qt::StringLiterals;
 
 namespace {
@@ -341,12 +341,12 @@ private slots:
         };
         const Buffer good = ramp(1.0, {1, 1, 1});
         const std::array<ConstImageView, 1> goodFrames{good.constView()};
-        QVERIFY(vedit::fx::autoEnhance(goodFrames).isIdentity());
+        QVERIFY(velacut::fx::autoEnhance(goodFrames).isIdentity());
 
         // Dark and bluish: brighter and warmer, and the result is closer to neutral grey at a middle level.
         Buffer dark = ramp(0.4, {0.75, 0.9, 1.0});
         const std::array<ConstImageView, 1> darkFrames{dark.constView()};
-        const ColorAdjust fix = vedit::fx::autoEnhance(darkFrames);
+        const ColorAdjust fix = velacut::fx::autoEnhance(darkFrames);
         QVERIFY(fix.exposure > 0.3);
         QVERIFY(fix.temperature > 0.1);
         QVERIFY(fix.contrast > 0.0);
@@ -360,12 +360,12 @@ private slots:
         // Nothing to measure: no change.
         const Buffer empty(8, 8);
         const std::array<ConstImageView, 1> emptyFrames{empty.constView()};
-        QVERIFY(vedit::fx::autoEnhance(emptyFrames).isIdentity());
+        QVERIFY(velacut::fx::autoEnhance(emptyFrames).isIdentity());
 
-        QCOMPARE(vedit::fx::autoGainDb(1.0), -1.0);
-        QVERIFY(std::abs(vedit::fx::autoGainDb(0.5) - 5.0206) < 1e-3);
-        QCOMPARE(vedit::fx::autoGainDb(0.01), 12.0);
-        QCOMPARE(vedit::fx::autoGainDb(0.0), 0.0);
+        QCOMPARE(velacut::fx::autoGainDb(1.0), -1.0);
+        QVERIFY(std::abs(velacut::fx::autoGainDb(0.5) - 5.0206) < 1e-3);
+        QCOMPARE(velacut::fx::autoGainDb(0.01), 12.0);
+        QCOMPARE(velacut::fx::autoGainDb(0.0), 0.0);
     }
 
     void gradeHslCurvesWheels()
@@ -689,7 +689,7 @@ private slots:
         QVERIFY2(library.captionStyles().size() >= 30, qPrintable(QString::number(library.captionStyles().size())));
         check(library.captionStyles(), library.captionStyleCategories());
         for (const CaptionStylePreset &preset : library.captionStyles()) {
-            const QJsonObject written = vedit::projectjson::captionStyleToJson(vedit::projectjson::captionStyleFromJson(preset.style));
+            const QJsonObject written = velacut::projectjson::captionStyleToJson(velacut::projectjson::captionStyleFromJson(preset.style));
             for (const char *key : {"highlight", "animation", "maxWordsPerLine", "position", "highlightColor"}) {
                 QVERIFY2(written.value(QLatin1StringView(key)) == preset.style.value(QLatin1StringView(key)),
                          qPrintable(preset.id + u' ' + QLatin1StringView(key)));

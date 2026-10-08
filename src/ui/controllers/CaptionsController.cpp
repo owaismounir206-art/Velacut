@@ -21,7 +21,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 namespace {
 
@@ -209,7 +209,7 @@ bool CaptionsController::importFile(const QUrl &file)
     const auto entries = SubtitleFormat::parse(readText(input.readAll()), m_editor.data().settings.frameRate);
     const std::vector<captions::CaptionLine> lines = entries ? captions::linesOf(*entries) : std::vector<captions::CaptionLine>{};
     if (lines.empty()) {
-        emit m_editor.message(tr("%1 has no captions vedit can read (SRT or WebVTT).").arg(QFileInfo(path).fileName()), false);
+        emit m_editor.message(tr("%1 has no captions velacut can read (SRT or WebVTT).").arg(QFileInfo(path).fileName()), false);
         return false;
     }
     const std::optional<CaptionStyle> style = hasCaptions() ? std::nullopt : m_nextStyle;
@@ -516,4 +516,4 @@ int CaptionsController::replaceAll(const QString &text, const QString &replaceme
     return count;
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

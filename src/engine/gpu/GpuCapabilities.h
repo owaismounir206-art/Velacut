@@ -8,7 +8,7 @@
 #include <optional>
 #include <vector>
 
-namespace vedit::gpu {
+namespace velacut::gpu {
 
 enum class DeviceType
 {
@@ -115,4 +115,4 @@ struct GpuCapabilities
 QString probeStatusName(ProbeStatus status);
 QString deviceTypeName(DeviceType type);
 
-} // namespace vedit::gpu
+} // namespace velacut::gpu

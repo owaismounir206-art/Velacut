@@ -6,10 +6,10 @@
 #include <QString>
 #include <QStringList>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 // Piper (MIT) as an optional external program for "Read aloud" (text to speech, SPEC §5.12). Voices are files the
-// user adds (a .onnx model with its .onnx.json): their licences differ from voice to voice, so vedit offers none of its
+// user adds (a .onnx model with its .onnx.json): their licences differ from voice to voice, so velacut offers none of its
 // own (docs/MODELS.md).
 namespace piper {
 // "piper-tts" (the name of the Arch packages: "piper" is a mouse configuration tool there), else a "piper" that is
@@ -44,4 +44,4 @@ private:
     QString m_voice;
 };
 
-} // namespace vedit::ai
+} // namespace velacut::ai

@@ -27,11 +27,11 @@
 #include <QSettings>
 #include <QSysInfo>
 
-Q_LOGGING_CATEGORY(lcAppController, "vedit.ui.app")
+Q_LOGGING_CATEGORY(lcAppController, "velacut.ui.app")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 namespace {
 AppController *s_instance = nullptr;
@@ -43,7 +43,7 @@ AppController::AppController(gpu::GraphicsDecision decision, gpu::GpuCapabilitie
     : QObject(parent)
     , m_decision(std::move(decision))
     , m_capabilities(std::move(capabilities))
-    , m_helper(helperExecutable.isEmpty() ? QCoreApplication::applicationDirPath() + u"/vedit-render"_s
+    , m_helper(helperExecutable.isEmpty() ? QCoreApplication::applicationDirPath() + u"/velacut-render"_s
                                           : std::move(helperExecutable))
     , m_store(std::make_unique<document::DraftStore>(document::DraftStore::defaultRoot()))
     , m_analysis(std::make_unique<engine::MediaAnalysis>(engine::MediaAnalysis::defaultCacheRoot()))
@@ -51,7 +51,7 @@ AppController::AppController(gpu::GraphicsDecision decision, gpu::GpuCapabilitie
     , m_audioLibrary(std::make_unique<AudioLibraryModel>(AudioLibraryModel::defaultFolder(), m_helper))
     , m_brandKits(std::make_unique<BrandKitModel>())
 {
-    // Exports killed together with vedit leave their job files in the cache.
+    // Exports killed together with velacut leave their job files in the cache.
     engine::RenderJob::removeStaleJobFiles();
     BrandKitModel::setInstance(m_brandKits.get());
 }
@@ -85,7 +85,7 @@ QString AppController::version() const
 QString AppController::systemInformation() const
 {
     QStringList lines;
-    lines << u"vedit %1, Qt %2, %3 (%4)"_s.arg(version(), QString::fromLatin1(qVersion()), QSysInfo::prettyProductName(),
+    lines << u"velacut %1, Qt %2, %3 (%4)"_s.arg(version(), QString::fromLatin1(qVersion()), QSysInfo::prettyProductName(),
                                              QSysInfo::kernelVersion());
     lines << u"UI backend: %1%2"_s.arg(uiBackend(), m_decision.safeMode ? u" (safe mode)"_s : QString());
     lines << u"GPU effects: %1, hardware decoding: %2, hardware encoding: %3"_s.arg(
@@ -285,7 +285,7 @@ bool AppController::openDraft(const QString &draftId)
     makeEditor(std::move(document));
     emit editorChanged();
     if (recovered) {
-        emit message(tr("Project recovered: vedit did not close properly last time. Your latest changes are here."));
+        emit message(tr("Project recovered: velacut did not close properly last time. Your latest changes are here."));
     }
     return true;
 }
@@ -336,13 +336,13 @@ void AppController::notify(const QString &title, const QString &body) const
         qCInfo(lcAppController) << "no notification service";
         return;
     }
-    notifications.call(QDBus::NoBlock, u"Notify"_s, u"vedit"_s, 0u, u"vedit"_s, title, body, QStringList{},
+    notifications.call(QDBus::NoBlock, u"Notify"_s, u"velacut"_s, 0u, u"velacut"_s, title, body, QStringList{},
                        QVariantMap{}, 8000);
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 QString AppController::savedLanguage()
 {
@@ -432,4 +432,4 @@ void AppController::restart()
     QCoreApplication::exit(0);
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

@@ -9,15 +9,15 @@
 #include <QJsonObject>
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(lcImport, "vedit.engine.import")
+Q_LOGGING_CATEGORY(lcImport, "velacut.engine.import")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 MediaImporter::MediaImporter(QObject *parent)
     : QObject(parent)
-    , m_executable(QCoreApplication::applicationDirPath() + u"/vedit-render"_s)
+    , m_executable(QCoreApplication::applicationDirPath() + u"/velacut-render"_s)
 {
 }
 
@@ -41,7 +41,7 @@ QString MediaImporter::errorMessage(ProbeError error, const QString &fileName)
     case ProbeError::Unreadable:
         return tr("“%1” cannot be read: check that you have permission to open it.").arg(fileName);
     case ProbeError::Unsupported:
-        return tr("“%1” is not a video, audio or image file that vedit can open.").arg(fileName);
+        return tr("“%1” is not a video, audio or image file that velacut can open.").arg(fileName);
     case ProbeError::Damaged:
         return tr("“%1” seems to be damaged and was not imported.").arg(fileName);
     }
@@ -77,7 +77,7 @@ void MediaImporter::startProcess()
         m_process->deleteLater();
         m_process = nullptr;
         for (const QString &path : all) {
-            emit failed(path, tr("“%1” was not imported: a part of vedit is missing (vedit-render). Reinstall vedit.")
+            emit failed(path, tr("“%1” was not imported: a part of velacut is missing (velacut-render). Reinstall velacut.")
                                   .arg(QFileInfo(path).fileName()));
         }
         emit busyChanged();
@@ -147,4 +147,4 @@ void MediaImporter::onFinished(int exitCode, QProcess::ExitStatus status)
     startProcess(); // still busy: no busyChanged
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

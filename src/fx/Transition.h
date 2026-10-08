@@ -7,7 +7,7 @@
 #include <optional>
 #include <string_view>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // Comprehensive transition library (SPEC §5.11bis, Phase 5: 100+ transitions across 10 categories).
 enum class TransitionKind
@@ -175,4 +175,4 @@ float transitionNoise(int x, int y);
 void renderTransition(TransitionKind kind, ImageView out, ConstImageView a, ConstImageView b, double progress,
                       const TransitionParams &params, int rowBegin, int rowEnd);
 
-} // namespace vedit::fx
+} // namespace velacut::fx

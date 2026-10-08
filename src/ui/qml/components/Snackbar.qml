@@ -2,7 +2,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Templates as T
-import Vedit.Theme
+import Velacut.Theme
 
 Item {
     id: root

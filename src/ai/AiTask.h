@@ -9,7 +9,7 @@
 
 class QThread;
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 // A local AI function (SPEC §2 principle 4, §5.12): it runs away from the interface thread, reports its progress, can be
 // cancelled at any time, and gives a result that the editor turns into ordinary, editable model changes (cuts, clips,
@@ -60,4 +60,4 @@ private:
     double m_progress = 0.0;
 };
 
-} // namespace vedit::ai
+} // namespace velacut::ai

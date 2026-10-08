@@ -8,7 +8,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -162,4 +162,4 @@ void applyMasks(ImageView image, const std::vector<MaskParams> &masks, int rowBe
     }
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

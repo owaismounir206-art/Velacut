@@ -9,7 +9,7 @@
 
 #include <optional>
 
-namespace vedit::theme {
+namespace velacut::theme {
 
 // Scheme variants offered to the user (SPEC §4, "colori dinamici").
 enum class SchemeVariant
@@ -46,4 +46,4 @@ ColorScheme generateScheme(const QColor &seed, SchemeVariant variant, bool dark,
 // Returns nullopt for an empty image.
 std::optional<QColor> seedFromImage(const QImage &image);
 
-} // namespace vedit::theme
+} // namespace velacut::theme

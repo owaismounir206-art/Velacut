@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace vedit {
+namespace velacut {
 
 enum class MediaKind
 {
@@ -98,4 +98,4 @@ struct Media
     friend bool operator==(const Media &, const Media &) = default;
 };
 
-} // namespace vedit
+} // namespace velacut

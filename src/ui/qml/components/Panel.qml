@@ -2,7 +2,7 @@
 // desktop video editor (library, player, properties, timeline) read as separate cards. Tonal, no shadow (M3: the
 // elevation is the surface colour), so it looks the same on every rendering backend.
 import QtQuick
-import Vedit.Theme
+import Velacut.Theme
 
 Rectangle {
     id: root

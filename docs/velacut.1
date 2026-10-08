@@ -1,11 +1,11 @@
-.TH VEDIT 1 "October 2026" "vedit 0.9.0" "User Commands"
+.TH VELACUT 1 "October 2026" "velacut 0.9.0" "User Commands"
 .SH NAME
-vedit \- offline desktop video editor for Linux
+velacut \- offline desktop video editor for Linux
 .SH SYNOPSIS
-.B vedit
+.B velacut
 [\fIOPTIONS\fR] [\fIFILE\fR]
 .SH DESCRIPTION
-.B vedit
+.B velacut
 is a desktop video editor for Linux, designed to be fast, simple, and completely local (no cloud, no account required).
 .PP
 Features include:
@@ -38,29 +38,29 @@ Display help information and exit.
 Display version information and exit.
 .SH FILES
 .TP
-.I ~/.local/share/vedit/
+.I ~/.local/share/velacut/
 Application data directory containing drafts and user assets.
 .TP
-.I ~/.local/share/vedit/packs/
+.I ~/.local/share/velacut/packs/
 User-installed asset packages (effects, transitions, templates).
 .TP
-.I ~/.cache/vedit/
+.I ~/.cache/velacut/
 Cache directory for GPU probes, thumbnails, and render jobs.
 .TP
-.I ~/.config/vedit/
+.I ~/.config/velacut/
 Configuration files (graphics preferences, UI state).
 .SH EXAMPLES
 .TP
-.B vedit
+.B velacut
 Start with the home screen showing existing drafts.
 .TP
-.B vedit video.mp4
+.B velacut video.mp4
 Create a new project and import the video file.
 .TP
-.B vedit --safe-mode
+.B velacut --safe-mode
 Start in software rendering mode (fallback for GPU issues).
 .TP
-.B vedit project.vproj
+.B velacut project.vproj
 Open an existing project file.
 .SH PROJECT FORMAT
 Projects are saved as
@@ -87,7 +87,7 @@ Universal search (effects, transitions, commands)
 Export video
 .PP
 See
-.I /usr/share/doc/vedit/SHORTCUTS.md
+.I /usr/share/doc/velacut/SHORTCUTS.md
 for the complete list.
 .SH ENVIRONMENT
 .TP
@@ -101,12 +101,12 @@ Force Mesa software rendering.
 .BR melt (1)
 .PP
 Full documentation:
-.I /usr/share/doc/vedit/
+.I /usr/share/doc/velacut/
 .PP
-Project website: https://github.com/yourusername/vedit
+Project website: https://github.com/yourusername/velacut
 .SH BUGS
-Report bugs to the issue tracker: https://github.com/yourusername/vedit/issues
+Report bugs to the issue tracker: https://github.com/yourusername/velacut/issues
 .SH AUTHORS
-vedit team
+velacut team
 .SH LICENSE
 GPL-3.0-or-later

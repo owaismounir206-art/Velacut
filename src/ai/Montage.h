@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 // How a shot looks, a few times a second (engine::extractShotSamples).
 using ShotSample = engine::ShotSample;
@@ -52,4 +52,4 @@ struct MontagePiece
 std::vector<MontagePiece> planMontage(const std::vector<MontageSource> &sources, const std::vector<double> &beats,
                                       const MontageStyle &style, double targetSeconds, std::uint32_t seed);
 
-} // namespace vedit::ai
+} // namespace velacut::ai

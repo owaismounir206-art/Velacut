@@ -5,7 +5,7 @@
 
 #include <QString>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 // Demucs (MIT, models MIT: docs/MODELS.md) as an optional external program for "Separate voice and music".
 namespace demucs {
@@ -35,4 +35,4 @@ private:
     QString m_fingerprint;
 };
 
-} // namespace vedit::ai
+} // namespace velacut::ai

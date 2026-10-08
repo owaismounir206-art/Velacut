@@ -20,7 +20,7 @@
             "displayName": "Release (packaging, no dev sandbox)",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build-release",
-            "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "VEDIT_DEV_SANDBOX": "OFF" }
+            "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "VELACUT_DEV_SANDBOX": "OFF" }
         }
     ],
     "buildPresets": [

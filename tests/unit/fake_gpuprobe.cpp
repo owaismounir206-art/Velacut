@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Stand-in for vedit-gpuprobe in tests: behaviour chosen per API through environment variables
+// Stand-in for velacut-gpuprobe in tests: behaviour chosen per API through environment variables
 // FAKE_VULKAN / FAKE_OPENGL / FAKE_VIDEO = ok | crash | hang | fail.
 #include <chrono>
 #include <cstdio>

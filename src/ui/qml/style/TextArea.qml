@@ -1,8 +1,8 @@
 // Material 3 filled text field for several lines (e.g. the content of a text clip): label above the text.
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Components
-import Vedit.Theme
+import Velacut.Components
+import Velacut.Theme
 
 T.TextArea {
     id: control

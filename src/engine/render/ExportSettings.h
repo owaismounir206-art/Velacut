@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // "Quality" in the export window (plain language, SPEC 0bis rule 7): mapped to encoder settings here.
 enum class ExportQuality
@@ -106,7 +106,7 @@ struct EncoderParameters
 };
 EncoderParameters encoderParameters(const ExportSettings &settings);
 
-// The encoder vedit-render will actually use, after the user's choice meets the machine (SPEC §5.15 and 1bis
+// The encoder velacut-render will actually use, after the user's choice meets the machine (SPEC §5.15 and 1bis
 // rule 3). Pure function, tested: the renderer just follows it.
 struct EncoderPlan
 {
@@ -125,7 +125,7 @@ struct EncoderPlan
     std::vector<std::pair<QByteArray, QByteArray>> options;
 };
 // `availableHardwareEncoders`: verified by the GPU probe (GpuCapabilities::video.encoders), passed to
-// vedit-render through the job. `duration` of the sequence, needed only by the size-target mode.
+// velacut-render through the job. `duration` of the sequence, needed only by the size-target mode.
 EncoderPlan planEncoder(const ExportSettings &settings, const QStringList &availableHardwareEncoders,
                         const RationalTime &duration);
 
@@ -139,7 +139,7 @@ RationalTime exportedDuration(const ExportSettings &settings, const RationalTime
 // Expected size in bytes of an export of `duration` (an estimate: constant quality varies with the content).
 qint64 estimatedFileSize(const ExportSettings &settings, const RationalTime &duration);
 
-// Failures reported by vedit-render: codes on the wire, translated messages in the editor.
+// Failures reported by velacut-render: codes on the wire, translated messages in the editor.
 enum class RenderError
 {
     None,
@@ -153,4 +153,4 @@ enum class RenderError
 QString renderErrorCode(RenderError error);
 RenderError renderErrorFromCode(const QString &code);
 
-} // namespace vedit::engine
+} // namespace velacut::engine

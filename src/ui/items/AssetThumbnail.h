@@ -6,7 +6,7 @@
 #include <QQuickPaintedItem>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 class EditorController;
 
@@ -21,7 +21,7 @@ class AssetThumbnail : public QQuickPaintedItem
 {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(vedit::ui::EditorController *editor READ editor WRITE setEditor NOTIFY editorChanged FINAL)
+    Q_PROPERTY(velacut::ui::EditorController *editor READ editor WRITE setEditor NOTIFY editorChanged FINAL)
     Q_PROPERTY(int kind READ kind WRITE setKind NOTIFY assetChanged FINAL) // AssetLibraryModel::Kind
     Q_PROPERTY(QString assetId READ assetId WRITE setAssetId NOTIFY assetChanged FINAL)
     Q_PROPERTY(double progress READ progress WRITE setProgress NOTIFY progressChanged FINAL)
@@ -62,4 +62,4 @@ private:
     QString m_pending;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

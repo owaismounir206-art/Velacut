@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // Colour adjustments and "looks" (filters). Every value 0 = unchanged; most range −1…+1.
 // Filters of the library are sets of these values (data, not code): one kernel renders them all.
@@ -79,4 +79,4 @@ int denoiseRadius(int height, double amount);
 // callers blur small downscaled copies).
 void boxBlur(ImageView image, int radius);
 
-} // namespace vedit::fx
+} // namespace velacut::fx

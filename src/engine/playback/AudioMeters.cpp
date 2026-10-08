@@ -7,7 +7,7 @@
 
 #include <cmath>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -58,4 +58,4 @@ void AudioMeters::clear()
     s_meters.clear();
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

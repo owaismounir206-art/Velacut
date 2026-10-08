@@ -21,11 +21,11 @@
 #include <filesystem>
 #include <thread>
 
-Q_LOGGING_CATEGORY(lcRender, "vedit.engine.render")
+Q_LOGGING_CATEGORY(lcRender, "velacut.engine.render")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -446,4 +446,4 @@ Renderer::Result Renderer::renderReversed(const QString &inputPath, const QStrin
     return result;
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

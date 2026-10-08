@@ -10,13 +10,13 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace vedit::projectfile {
+namespace velacut::projectfile {
 
 namespace {
 
 QString tr(const char *text)
 {
-    return QCoreApplication::translate("vedit::projectfile", text);
+    return QCoreApplication::translate("velacut::projectfile", text);
 }
 
 bool syncDirectory(const QString &directory)
@@ -81,4 +81,4 @@ ProjectLoadResult load(const QString &path)
     return projectjson::fromBytes(file.readAll());
 }
 
-} // namespace vedit::projectfile
+} // namespace velacut::projectfile

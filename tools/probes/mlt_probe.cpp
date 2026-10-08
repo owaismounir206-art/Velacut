@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Probe program (SPEC §9 rule 5): observes the real behaviour of the MLT APIs used by the engine.
-// Build with -DVEDIT_BUILD_PROBES=ON and run: ./build/tools/probes/mlt_probe <video file>
+// Build with -DVELACUT_BUILD_PROBES=ON and run: ./build/tools/probes/mlt_probe <video file>
 #include <mlt++/Mlt.h>
 
 #include <atomic>

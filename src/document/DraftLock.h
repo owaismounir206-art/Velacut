@@ -3,7 +3,7 @@
 
 #include <QString>
 
-namespace vedit::document {
+namespace velacut::document {
 
 // The "lock" file of an open draft (docs/FILE_FORMAT.md §9.3): {pid, hostname, bootId, program, openedAt}.
 // A lock whose process no longer exists (or from an earlier boot) means the previous session ended abnormally.
@@ -14,7 +14,7 @@ public:
     {
         Acquired,
         Recovered,     // acquired after an abnormal end of the previous session
-        HeldElsewhere, // open in another running vedit
+        HeldElsewhere, // open in another running velacut
         Failed,        // the lock could not be written (see error)
     };
 
@@ -24,4 +24,4 @@ public:
     static bool isHeld(const QString &directory);
 };
 
-} // namespace vedit::document
+} // namespace velacut::document

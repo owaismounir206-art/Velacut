@@ -1,5 +1,5 @@
 import QtQuick
-import Vedit.Theme
+import Velacut.Theme
 
 Item {
     id: root

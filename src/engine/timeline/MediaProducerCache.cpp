@@ -10,11 +10,11 @@
 
 #include <mlt++/Mlt.h>
 
-Q_LOGGING_CATEGORY(lcMedia, "vedit.engine.media")
+Q_LOGGING_CATEGORY(lcMedia, "velacut.engine.media")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -64,7 +64,7 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media, doub
     std::shared_ptr<Mlt::Producer> producer;
     QString error;
     if (!QFileInfo::exists(media.path) && media.kind != MediaKind::ImageSequence) {
-        error = QCoreApplication::translate("vedit::engine::MediaProducerCache", "The file is missing: %1").arg(media.path);
+        error = QCoreApplication::translate("velacut::engine::MediaProducerCache", "The file is missing: %1").arg(media.path);
     } else {
         // The "loader" producer adds MLT's normalizers: the image keeps its aspect ratio inside the profile with
         // transparent borders, and the rotation stored in the file is applied (verified by projection_probe).
@@ -84,7 +84,7 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media, doub
         }
         if (!producer->is_valid()) {
             producer.reset();
-            error = QCoreApplication::translate("vedit::engine::MediaProducerCache",
+            error = QCoreApplication::translate("velacut::engine::MediaProducerCache",
                                                 "This file cannot be opened: the format is not supported or the file is damaged.");
         } else if (media.kind == MediaKind::Image) {
             // Stills: any duration (the default length of MLT's image producer is only 10 minutes at 25 fps).
@@ -218,4 +218,4 @@ std::shared_ptr<const Spectrum> MediaProducerCache::spectrumOrRequest(const Medi
     return nullptr;
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

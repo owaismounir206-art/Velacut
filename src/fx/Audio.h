@@ -3,7 +3,7 @@
 
 #include <cstddef>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // Volume of a clip's audio (SPEC §5.9): a gain ramping linearly from `gainStart` to `gainEnd` (linear factors) over
 // the block, and a constant-power pan −1 (left) … +1 (right) for stereo. Interleaved float samples, in place.
@@ -13,4 +13,4 @@ float applyGain(float *samples, int channels, int frames, float gainStart, float
 // dB → linear factor (−60 dB and below = silence).
 float dbToGain(double db);
 
-} // namespace vedit::fx
+} // namespace velacut::fx

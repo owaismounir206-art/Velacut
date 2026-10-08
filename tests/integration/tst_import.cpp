@@ -16,9 +16,9 @@
 #include <QTransform>
 #include <QtEndian>
 
-using namespace vedit;
-using namespace vedit::engine;
-using namespace vedit::test;
+using namespace velacut;
+using namespace velacut::engine;
+using namespace velacut::test;
 using namespace Qt::StringLiterals;
 
 class TestImport : public QObject
@@ -135,7 +135,7 @@ private slots:
     void importsInOrderThroughTheProbeProcess()
     {
         MediaImporter importer;
-        importer.setExecutable(QStringLiteral(VEDIT_RENDER_EXECUTABLE));
+        importer.setExecutable(QStringLiteral(VELACUT_RENDER_EXECUTABLE));
         QSignalSpy imported(&importer, &MediaImporter::imported);
         QSignalSpy failed(&importer, &MediaImporter::failed);
         QSignalSpy finished(&importer, &MediaImporter::finished);
@@ -160,7 +160,7 @@ private slots:
         file.write(QStringLiteral("#!/bin/sh\nshift\nfor f in \"$@\"; do\n"
                                   "  case \"$f\" in *crash*) printf '{\"event\":\"probing\",\"path\":\"%s\"}\\n' \"$f\"; kill -SEGV $$;; esac\n"
                                   "  '%1' --probe \"$f\" || exit 1\ndone\n")
-                       .arg(QStringLiteral(VEDIT_RENDER_EXECUTABLE))
+                       .arg(QStringLiteral(VELACUT_RENDER_EXECUTABLE))
                        .toUtf8());
         file.close();
         QVERIFY(file.setPermissions(file.permissions() | QFile::ExeOwner));

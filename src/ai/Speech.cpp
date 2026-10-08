@@ -12,7 +12,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 namespace piper {
 
@@ -45,7 +45,7 @@ QString installCommand()
 
 QString voicesFolder()
 {
-    return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + u"/vedit/models/piper"_s;
+    return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + u"/velacut/models/piper"_s;
 }
 
 QStringList voices()
@@ -158,4 +158,4 @@ QString SpeechSynthesis::run()
     return {};
 }
 
-} // namespace vedit::ai
+} // namespace velacut::ai

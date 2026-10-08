@@ -8,11 +8,11 @@
 
 #include <memory>
 
-namespace vedit::engine {
+namespace velacut::engine {
 struct Waveform;
 }
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 class EditorController;
 
@@ -24,7 +24,7 @@ class WaveformView : public QQuickPaintedItem
 {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(vedit::ui::EditorController *editor READ editor WRITE setEditor NOTIFY editorChanged FINAL)
+    Q_PROPERTY(velacut::ui::EditorController *editor READ editor WRITE setEditor NOTIFY editorChanged FINAL)
     Q_PROPERTY(QString mediaId READ mediaId WRITE setMediaId NOTIFY mediaIdChanged FINAL)
     Q_PROPERTY(int sourceIn READ sourceIn WRITE setSourceIn NOTIFY sourceChanged FINAL)
     Q_PROPERTY(int sourceDuration READ sourceDuration WRITE setSourceDuration NOTIFY sourceChanged FINAL)
@@ -75,4 +75,4 @@ private:
     std::shared_ptr<const engine::Waveform> m_waveform;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

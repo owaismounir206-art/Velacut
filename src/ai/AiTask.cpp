@@ -6,7 +6,7 @@
 
 #include <algorithm>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 AiTask::AiTask(QObject *parent)
     : QObject(parent)
@@ -75,4 +75,4 @@ void AiTask::stopThread()
     }
 }
 
-} // namespace vedit::ai
+} // namespace velacut::ai

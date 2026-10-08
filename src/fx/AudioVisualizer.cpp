@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -276,4 +276,4 @@ QImage renderAudioVisualizer(const VisualizerSettings &settings, const Visualize
     return image;
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

@@ -1,4 +1,4 @@
-# vedit — istruzioni per Claude
+# velacut — istruzioni per Claude
 
 ## All'inizio di OGNI sessione
 1. Rileggi per intero `SPEC-editor-video.md`: è la specifica vincolante del progetto.
@@ -50,7 +50,7 @@
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build
 ctest --test-dir build --output-on-failure
-./build/vedit
+./build/velacut
 # modalità software (verifica sezione 1bis)
-QT_QUICK_BACKEND=software LIBGL_ALWAYS_SOFTWARE=1 ./build/vedit
+QT_QUICK_BACKEND=software LIBGL_ALWAYS_SOFTWARE=1 ./build/velacut
 ```

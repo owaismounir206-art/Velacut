@@ -7,11 +7,11 @@
 #include <QAbstractListModel>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit {
+namespace velacut {
 class Project;
 }
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // The media of the project for the media pool (SPEC §5.1): most recently imported first.
 class MediaPoolModel : public QAbstractListModel
@@ -54,4 +54,4 @@ private:
     QSet<MediaId> m_used;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

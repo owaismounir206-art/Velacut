@@ -9,7 +9,7 @@
 
 #include <vector>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 // whisper.cpp (MIT, models MIT: docs/MODELS.md) as an optional external program: when it is missing, the functions
 // that need it are shown disabled with the command that installs it (SPEC §1 "Regole sulle dipendenze").
@@ -31,7 +31,7 @@ struct Model
 // The models offered by the model manager (multilingual, from the whisper.cpp project on Hugging Face).
 const std::vector<Model> &catalog();
 const Model *model(const QString &id);
-// Where downloaded models live: <XDG data>/vedit/models/whisper/.
+// Where downloaded models live: <XDG data>/velacut/models/whisper/.
 QString modelsFolder();
 QString modelPath(const QString &id);
 bool installed(const QString &id);
@@ -77,4 +77,4 @@ private:
     QHash<QString, Transcript> m_transcripts;
 };
 
-} // namespace vedit::ai
+} // namespace velacut::ai

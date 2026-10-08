@@ -5,7 +5,7 @@
 #include <array>
 #include <cmath>
 
-namespace vedit {
+namespace velacut {
 
 namespace {
 
@@ -129,4 +129,4 @@ EditResult insertMediaAdoptingFormat(const ProjectData &project, const SequenceI
     return insert;
 }
 
-} // namespace vedit
+} // namespace velacut

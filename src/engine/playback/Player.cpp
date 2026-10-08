@@ -14,9 +14,9 @@
 
 #include <cmath>
 
-Q_LOGGING_CATEGORY(lcPlayer, "vedit.engine.player")
+Q_LOGGING_CATEGORY(lcPlayer, "velacut.engine.player")
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 struct Player::Loaded
 {
@@ -258,4 +258,4 @@ QString Player::timecode(int frame) const
         .arg(frames, 2, 10, QLatin1Char('0'));
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

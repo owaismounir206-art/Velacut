@@ -15,7 +15,7 @@
 
 class QThread;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // Smooth slow motion (MediaClipData::smooth, SPEC §5.12): the part of a file a slowed clip plays, at a higher frame
 // rate with the new frames computed by motion-compensated interpolation (FFmpeg's minterpolate: the CPU path; RIFE on
@@ -56,8 +56,8 @@ public:
 
 signals:
     // `mediaId`: the original media item (its clips are projected again).
-    void ready(const vedit::MediaId &mediaId);
-    void failed(const vedit::MediaId &mediaId, const QString &error);
+    void ready(const velacut::MediaId &mediaId);
+    void failed(const velacut::MediaId &mediaId, const QString &error);
     void busyChanged();
     void progressChanged();
 
@@ -71,4 +71,4 @@ private:
     double m_progress = 0.0;
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

@@ -11,7 +11,7 @@
 #include <map>
 #include <vector>
 
-namespace vedit {
+namespace velacut {
 
 enum class TrackKind
 {
@@ -75,4 +75,4 @@ struct Track
     friend bool operator==(const Track &, const Track &) = default;
 };
 
-} // namespace vedit
+} // namespace velacut

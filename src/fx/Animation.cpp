@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -312,4 +312,4 @@ void applyLoopAnimation(QStringView id, double cycleT, double &posX, double &pos
     }
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

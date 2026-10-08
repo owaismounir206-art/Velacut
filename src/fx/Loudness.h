@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 struct LoudnessResult
 {
@@ -35,4 +35,4 @@ inline double gainAdjustmentForTargetLufs(double currentLufs, double targetLufs 
     return targetLufs - currentLufs;
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

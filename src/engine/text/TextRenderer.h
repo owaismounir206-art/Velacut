@@ -7,12 +7,12 @@
 #include <QRectF>
 #include <QSize>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // Draws a text clip (SPEC §5.7 base text) as a transparent canvas-sized layer, the text block centred on the canvas;
 // the clip's transform (vedit.transform) then places it. Font size, stroke, shadow and background are relative to the
 // canvas, so the text looks the same at every resolution. CPU (QPainter): works in every process with a
-// QGuiApplication (vedit-render runs one on the "offscreen" platform).
+// QGuiApplication (velacut-render runs one on the "offscreen" platform).
 class TextRenderer
 {
 public:
@@ -27,4 +27,4 @@ public:
     static QRectF bounds(const TextClipData &text, QSize canvas);
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

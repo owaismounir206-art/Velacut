@@ -1,4 +1,4 @@
-# vedit — Formato dei pacchetti di asset (effetti, filtri, transizioni, stili di testo)
+# velacut — Formato dei pacchetti di asset (effetti, filtri, transizioni, stili di testo)
 
 Versione 1 (Fase 2). Riferimento: SPEC §5.11 ("formato di effetto documentato… nuovi effetti si aggiungano come file in
 `resources/` senza ricompilare"), ARCHITECTURE §6.
@@ -19,10 +19,10 @@ resources/packs/vedit.core/
 ```
 Ogni file di elementi è `{ "categories": [ { "id", "name" } ], "items": [ … ] }`. I nomi sono oggetti
 `{ "en": …, "it": … }` (i manifest sono dati: l'interfaccia sceglie la lingua). Il pacchetto `vedit.core` è incorporato
-nell'applicazione (risorse Qt `:/vedit/packs/vedit.core`), quindi l'app funziona anche senza file installati.
+nell'applicazione (risorse Qt `:/velacut/packs/vedit.core`), quindi l'app funziona anche senza file installati.
 
 **Pacchetti dell'utente** (Fase 5, Preferenze → Pacchetti di asset): stessa struttura, in
-`$XDG_DATA_HOME/vedit/packs/<id>/` (di solito `~/.local/share/vedit/packs/`). Si installano da una cartella o da un
+`$XDG_DATA_HOME/velacut/packs/<id>/` (di solito `~/.local/share/velacut/packs/`). Si installano da una cartella o da un
 archivio `.zip` (estratto con `bsdtar`, altrimenti `unzip`; rifiutati collegamenti e percorsi fuori dal pacchetto).
 Requisiti: `pack.json` con `"format": "vedit.pack"` e un `id` di soli `A-Z a-z 0-9 . _ -` diverso da `vedit.core`;
 almeno un elemento; nessun errore di caricamento (es. un `kernel` sconosciuto). I file di elementi sono facoltativi: un

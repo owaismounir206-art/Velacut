@@ -8,7 +8,7 @@
 
 #include <vector>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // An asset pack as Preferences → Packs shows it.
 struct PackageInfo
@@ -49,4 +49,4 @@ private:
     static bool copyRecursively(const QString &source, const QString &destination, QString *error);
 };
 
-} // namespace vedit::fx
+} // namespace velacut::fx

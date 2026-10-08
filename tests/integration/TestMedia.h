@@ -15,7 +15,7 @@
 #include <QStandardPaths>
 #include <QString>
 
-namespace vedit::test {
+namespace velacut::test {
 
 struct TestMediaFiles
 {
@@ -143,4 +143,4 @@ inline Media testMedia(MediaKind kind, const QString &path, std::optional<Ration
     return media;
 }
 
-} // namespace vedit::test
+} // namespace velacut::test

@@ -1,8 +1,8 @@
 {
     "createdAt": "2026-09-24T17:40:12Z",
-    "format": "vedit.project",
+    "format": "velacut.project",
     "formatVersion": 1,
-    "generator": { "app": "vedit", "version": "0.1.0" },
+    "generator": { "app": "velacut", "version": "0.1.0" },
     "id": "5f0c1a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5b",
     "mainSequenceId": "0b6f1d6e-7a8b-4c9d-8e0f-1a2b3c4d5e6f",
     "media": [

@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 std::vector<double> detectBeats(const Spectrum &spectrum, double sensitivity, double minInterval)
 {
@@ -57,4 +57,4 @@ std::vector<double> detectBeats(const Spectrum &spectrum, double sensitivity, do
     return beats;
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

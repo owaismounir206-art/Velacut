@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 class EditorController;
 
@@ -99,7 +99,7 @@ public:
     const ai::Transcript *transcriptOf(const Media &media) const;
     int speechStatus() const;
     QString speechInstallCommand() const;
-    // Looks again for whisper.cpp and the models (installed while vedit runs).
+    // Looks again for whisper.cpp and the models (installed while velacut runs).
     Q_INVOKABLE void refreshSpeech();
     Q_INVOKABLE void cancel();
 
@@ -143,4 +143,4 @@ private:
     void synthesizeNext(QStringList texts, QStringList done, std::function<void(const QStringList &)> finished);
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

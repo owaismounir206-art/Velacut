@@ -1,10 +1,10 @@
 add_subdirectory(gpu)
 
-# vedit_engine: MLT adapter (docs/ARCHITECTURE.md §5).
+# velacut_engine: MLT adapter (docs/ARCHITECTURE.md §5).
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(MLTPP REQUIRED IMPORTED_TARGET mlt++-7>=7.20)
 pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET libavformat libavcodec libavutil libswscale libswresample)
-add_library(vedit_engine STATIC
+add_library(velacut_engine STATIC
     analysis/AudioSync.h analysis/AudioSync.cpp
     analysis/BeatDetection.h analysis/BeatDetection.cpp
     analysis/Decoding.h analysis/Decoding.cpp
@@ -34,13 +34,13 @@ add_library(vedit_engine STATIC
     gpu/GpuTransitions.h gpu/GpuTransitions.cpp
 )
 # The GLSL of the GPU path (OpenGL 2.1 / ES 2.0), read at run time from the resources.
-qt_add_resources(vedit_engine "vedit_gpu_shaders" PREFIX "/vedit/gpu" BASE gpu/shaders FILES gpu/shaders/transitions.frag)
-target_include_directories(vedit_engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
-target_link_libraries(vedit_engine PUBLIC Qt6::Core Qt6::Gui Qt6::OpenGL Qt6::Svg vedit_core vedit_common vedit_fonts vedit_gpu PkgConfig::MLTPP PUBLIC vedit_fx PRIVATE PkgConfig::FFMPEG)
-vedit_target_options(vedit_engine)
+qt_add_resources(velacut_engine "velacut_gpu_shaders" PREFIX "/velacut/gpu" BASE gpu/shaders FILES gpu/shaders/transitions.frag)
+target_include_directories(velacut_engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_link_libraries(velacut_engine PUBLIC Qt6::Core Qt6::Gui Qt6::OpenGL Qt6::Svg velacut_core velacut_common velacut_fonts velacut_gpu PkgConfig::MLTPP PUBLIC velacut_fx PRIVATE PkgConfig::FFMPEG)
+velacut_target_options(velacut_engine)
 
-# vedit-render: export in a separate process (docs/ARCHITECTURE.md §5.4).
-add_executable(vedit-render render/main.cpp)
-target_link_libraries(vedit-render PRIVATE vedit_engine)
-set_target_properties(vedit-render PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
-vedit_target_options(vedit-render)
+# velacut-render: export in a separate process (docs/ARCHITECTURE.md §5.4).
+add_executable(velacut-render render/main.cpp)
+target_link_libraries(velacut-render PRIVATE velacut_engine)
+set_target_properties(velacut-render PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+velacut_target_options(velacut-render)

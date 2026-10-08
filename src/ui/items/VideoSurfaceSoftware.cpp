@@ -7,7 +7,7 @@
 #include <QSGImageNode>
 #include <QSGRectangleNode>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 namespace {
 // Node layout: root -> [background rectangle, image].
@@ -89,4 +89,4 @@ QSGNode *VideoSurfaceSoftware::updatePaintNode(QSGNode *old, UpdatePaintNodeData
     return root;
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

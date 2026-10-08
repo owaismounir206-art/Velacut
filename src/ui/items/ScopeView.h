@@ -8,7 +8,7 @@
 #include <QQuickPaintedItem>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 // Live video scopes (SPEC §5.10): histogram, waveform and vectorscope rendered from preview frames.
 class ScopeView : public QQuickPaintedItem
@@ -16,7 +16,7 @@ class ScopeView : public QQuickPaintedItem
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(vedit::engine::FrameSink *sink READ sink WRITE setSink NOTIFY sinkChanged FINAL)
+    Q_PROPERTY(velacut::engine::FrameSink *sink READ sink WRITE setSink NOTIFY sinkChanged FINAL)
     Q_PROPERTY(int mode READ mode WRITE setMode NOTIFY modeChanged FINAL)
 
 public:
@@ -53,4 +53,4 @@ private:
     QMetaObject::Connection m_frameConnection;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui

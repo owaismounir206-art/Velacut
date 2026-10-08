@@ -7,7 +7,7 @@
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
 
-namespace vedit::theme {
+namespace velacut::theme {
 
 class ThemeColors : public QObject
 {
@@ -141,4 +141,4 @@ private:
     ColorScheme m_scheme;
 };
 
-} // namespace vedit::theme
+} // namespace velacut::theme

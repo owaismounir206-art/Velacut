@@ -5,7 +5,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::gpu {
+namespace velacut::gpu {
 
 namespace {
 
@@ -201,4 +201,4 @@ QString GpuCapabilities::summary() const
     return lines.join(u'\n');
 }
 
-} // namespace vedit::gpu
+} // namespace velacut::gpu

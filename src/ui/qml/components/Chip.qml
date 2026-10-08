@@ -1,7 +1,7 @@
 // Material 3 chip: variant "assist", "filter" (checkable, shows a check when selected), "input" (removable).
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Theme
+import Velacut.Theme
 
 T.AbstractButton {
     id: control
@@ -57,6 +57,7 @@ T.AbstractButton {
         color: control._selected ? Theme.color.secondaryContainer : "transparent"
         border.width: control._selected ? 0 : 1
         border.color: control.enabled ? Theme.color.outlineVariant : Theme.alpha(Theme.color.onSurface, Theme.state.disabledContainer)
+        FocusFrame { control: control }
         StateLayer {
             radius: parent.radius
             color: control.contentColor

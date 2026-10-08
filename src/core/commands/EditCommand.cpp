@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "EditCommand.h"
 
-namespace vedit {
+namespace velacut {
 
 namespace {
 constexpr int kEditCommandId = 0x7ed17;
@@ -64,4 +64,4 @@ bool EditCommand::mergeWith(const QUndoCommand *other)
     return true;
 }
 
-} // namespace vedit
+} // namespace velacut

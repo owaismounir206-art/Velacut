@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // Views on RGBA8888 images with straight (non-premultiplied) alpha, the format of the whole CPU pipeline
 // (docs/ARCHITECTURE.md §6). `stride` is in bytes.
@@ -43,4 +43,4 @@ struct ConstImageView
     const std::uint8_t *row(int y) const { return data + static_cast<long>(y) * stride; }
 };
 
-} // namespace vedit::fx
+} // namespace velacut::fx

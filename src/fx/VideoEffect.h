@@ -7,7 +7,7 @@
 
 #include <optional>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 // The CPU reference kernels of the video effects library (SPEC §5.11, docs/EFFECT_FORMAT.md §9). A preset of the
 // library names a kernel and its parameters; several presets share a kernel with different parameters.
@@ -91,4 +91,4 @@ struct VideoEffectParams
 // Applies `kernel` to `image` in place.
 void renderVideoEffect(EffectKernel kernel, const ImageView &image, const VideoEffectParams &params);
 
-} // namespace vedit::fx
+} // namespace velacut::fx

@@ -6,7 +6,7 @@
 #include <cmath>
 #include <numbers>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -85,4 +85,4 @@ CanvasBox canvasBox(const Clip &clip, const Media *media, QSize canvas)
     return box;
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

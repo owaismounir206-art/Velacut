@@ -8,7 +8,7 @@
 #include <array>
 #include <optional>
 
-namespace vedit {
+namespace velacut {
 
 // Easing of a keyframe segment: a named preset or a custom cubic Bézier (CSS cubic-bezier semantics).
 // Named presets use the exact Penner formulas, so evaluation is deterministic and identical everywhere.
@@ -78,4 +78,4 @@ private:
     std::array<double, 4> m_bezier{0.0, 0.0, 1.0, 1.0};
 };
 
-} // namespace vedit
+} // namespace velacut

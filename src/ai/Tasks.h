@@ -11,7 +11,7 @@
 
 #include <vector>
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 // "Remove pauses": the quiet stretches of a media file's sound (its own time).
 class PauseDetection : public AiTask
@@ -165,4 +165,4 @@ private:
     engine::CutoutCopy m_copy;
 };
 
-} // namespace vedit::ai
+} // namespace velacut::ai

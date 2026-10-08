@@ -16,7 +16,7 @@ extern "C" {
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::gpu::probe {
+namespace velacut::gpu::probe {
 
 namespace {
 
@@ -309,4 +309,4 @@ VideoInfo probeVideo()
     return info;
 }
 
-} // namespace vedit::gpu::probe
+} // namespace velacut::gpu::probe

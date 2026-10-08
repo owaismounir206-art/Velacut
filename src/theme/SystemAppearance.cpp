@@ -15,7 +15,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::theme {
+namespace velacut::theme {
 
 namespace {
 
@@ -32,7 +32,7 @@ QProcessEnvironment hostEnvironment()
 {
     QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
     for (const char *variable : {"XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"}) {
-        const QString host = u"VEDIT_HOST_"_s + QLatin1StringView(variable);
+        const QString host = u"VELACUT_HOST_"_s + QLatin1StringView(variable);
         if (environment.contains(host)) {
             const QString value = environment.value(host);
             if (value.isEmpty()) {
@@ -332,4 +332,4 @@ std::optional<QString> SystemAppearance::parseSwww(const QString &queryOutput)
     return std::nullopt;
 }
 
-} // namespace vedit::theme
+} // namespace velacut::theme

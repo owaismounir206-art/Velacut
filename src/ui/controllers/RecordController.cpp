@@ -11,11 +11,11 @@
 
 #include <cmath>
 
-Q_LOGGING_CATEGORY(lcRecord, "vedit.ui.record")
+Q_LOGGING_CATEGORY(lcRecord, "velacut.ui.record")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 RecordController::RecordController(EditorController &editor)
     : QObject(&editor)
@@ -374,4 +374,4 @@ void RecordController::tickTeleprompter()
     }
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

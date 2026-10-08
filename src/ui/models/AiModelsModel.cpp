@@ -13,7 +13,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 FileDownload::FileDownload(QNetworkAccessManager &network, const QUrl &url, QString destination, QObject *parent)
     : QObject(parent)
@@ -257,4 +257,4 @@ void AiModelsModel::refresh()
     emit componentsChanged();
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

@@ -10,7 +10,7 @@
 #include <optional>
 #include <vector>
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // Loudness of the audio in log-spaced frequency bands over time, for the audio visualizers and the beat detection
 // (docs/ARCHITECTURE.md D-49). The audio is mixed down to mono at 22 050 Hz; every 1/`framesPerSecond` s a 2048-sample
@@ -49,4 +49,4 @@ std::optional<Spectrum> decodeSpectrum(const QByteArray &bytes);
 std::optional<Spectrum> cachedSpectrum(const Media &media, const std::atomic<bool> *cancel = nullptr);
 QString spectrumCacheFile(const Media &media);
 
-} // namespace vedit::engine
+} // namespace velacut::engine

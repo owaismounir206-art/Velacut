@@ -8,7 +8,7 @@
 ## 0. Ruolo e obiettivo
 
 Sei un ingegnere software senior esperto di video editing non lineare (NLE), C++, Qt e pipeline multimediali su Linux.
-Il tuo compito è progettare e implementare **vedit**: un editor video desktop nativo per Arch Linux che offra
+Il tuo compito è progettare e implementare **velacut**: un editor video desktop nativo per Arch Linux che offra
 **tutte le funzionalità di CapCut Desktop**, con la stessa immediatezza d'uso, ma:
 
 - completamente **offline**: ogni funzione "AI" gira in locale, nessun servizio cloud, nessun account;
@@ -33,7 +33,7 @@ salvataggio automatico e recupero dopo crash.
 ## 0bis. Semplicità come CapCut (priorità assoluta)
 
 La ragione per cui le persone usano CapCut non è il numero di funzioni: è che **chiunque, senza aver mai montato un video,
-riesce a fare un video bello in pochi minuti**. vedit deve dare la stessa sensazione. Quando una scelta di design mette
+riesce a fare un video bello in pochi minuti**. velacut deve dare la stessa sensazione. Quando una scelta di design mette
 in conflitto potenza e semplicità, **vince la semplicità** nell'interfaccia principale, e la potenza va in "Avanzate".
 
 ### Regole di semplicità (vincolanti)
@@ -199,7 +199,7 @@ dipendere da un vendor, da un'API grafica specifica o dalla presenza di una GPU.
 ## 2. Architettura
 
 ```
-vedit/
+velacut/
 ├── CMakeLists.txt
 ├── PKGBUILD
 ├── README.md
@@ -351,7 +351,7 @@ L'intera interfaccia segue **Material Design 3** (m3.material.io), adattato a un
   per essere leggibili; ombre e sfocature decorative si disattivano automaticamente in modalità software.
 
 Documenta token, schemi e componenti in `docs/DESIGN_SYSTEM.md`, con una pagina di galleria dei componenti
-(`vedit --component-gallery`) per verificarli tutti in chiaro, scuro e alto contrasto.
+(`velacut --component-gallery`) per verificarli tutti in chiaro, scuro e alto contrasto.
 
 ### Requisiti UX
 - Supporto HiDPI e scaling frazionario su Wayland.
@@ -631,7 +631,7 @@ non un video finito e bloccato.
 
 ### 5.16 Preferenze e sistema
 - Cartelle predefinite, cache (dimensione, pulizia), proxy, qualità anteprima, accelerazione hardware, lingua, tema, scorciatoie, gestore modelli AI e asset.
-- Log su file in `~/.local/state/vedit/` con livello configurabile; rispetto delle specifiche XDG per config, cache e dati.
+- Log su file in `~/.local/state/velacut/` con livello configurabile; rispetto delle specifiche XDG per config, cache e dati.
 - Integrazione desktop: file `.desktop`, icona, associazione del tipo MIME `.vproj`, apertura file da riga di comando.
 
 ---
@@ -718,7 +718,7 @@ delle azioni riportato in `docs/USABILITY.md`.
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build
 ctest --test-dir build --output-on-failure
-./build/vedit
+./build/velacut
 
 # installazione come pacchetto Arch
 makepkg -si

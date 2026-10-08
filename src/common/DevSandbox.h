@@ -6,19 +6,19 @@
 #include <QFile>
 #include <QString>
 
-namespace vedit {
+namespace velacut {
 
 // In development builds, redirect every XDG base directory into the build tree before any Qt
 // object is created, so that the app, helper processes and caches (Mesa, fontconfig) never write
-// into the user's home. Disabled in packaged builds (VEDIT_DEV_SANDBOX=OFF) or with VEDIT_NO_SANDBOX=1.
+// into the user's home. Disabled in packaged builds (VELACUT_DEV_SANDBOX=OFF) or with VELACUT_NO_SANDBOX=1.
 // Returns the sandbox root, or an empty string when the sandbox is not active.
 inline QString applyDevSandbox()
 {
-#ifdef VEDIT_DEV_HOME
-    if (qEnvironmentVariableIntValue("VEDIT_NO_SANDBOX") != 0) {
+#ifdef VELACUT_DEV_HOME
+    if (qEnvironmentVariableIntValue("VELACUT_NO_SANDBOX") != 0) {
         return {};
     }
-    const QString root = QString::fromUtf8(VEDIT_DEV_HOME);
+    const QString root = QString::fromUtf8(VELACUT_DEV_HOME);
     const struct
     {
         const char *variable;
@@ -32,7 +32,7 @@ inline QString applyDevSandbox()
         QDir().mkpath(path);
         // Remember the user's real value: reading desktop settings (accent color, wallpaper) must still
         // look at the real configuration. Only the first call records it.
-        const QByteArray hostVariable = QByteArray("VEDIT_HOST_") + dir.variable;
+        const QByteArray hostVariable = QByteArray("VELACUT_HOST_") + dir.variable;
         if (!qEnvironmentVariableIsSet(hostVariable.constData())) {
             qputenv(hostVariable.constData(), qgetenv(dir.variable));
         }
@@ -48,12 +48,12 @@ inline QString applyDevSandbox()
 // Used only to *read* desktop settings; the app never writes there.
 inline QString hostConfigHome()
 {
-    const QByteArray host = qgetenv("VEDIT_HOST_XDG_CONFIG_HOME");
-    const QByteArray value = qEnvironmentVariableIsSet("VEDIT_HOST_XDG_CONFIG_HOME") ? host : qgetenv("XDG_CONFIG_HOME");
+    const QByteArray host = qgetenv("VELACUT_HOST_XDG_CONFIG_HOME");
+    const QByteArray value = qEnvironmentVariableIsSet("VELACUT_HOST_XDG_CONFIG_HOME") ? host : qgetenv("XDG_CONFIG_HOME");
     if (!value.isEmpty()) {
         return QFile::decodeName(value);
     }
     return QDir::homePath() + QLatin1StringView("/.config");
 }
 
-} // namespace vedit
+} // namespace velacut

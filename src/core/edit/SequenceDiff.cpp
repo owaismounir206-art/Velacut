@@ -7,7 +7,7 @@
 #include <map>
 #include <stdexcept>
 
-namespace vedit {
+namespace velacut {
 
 namespace {
 
@@ -192,4 +192,4 @@ EditScript diffSequence(const Sequence &before, const Sequence &after)
     return script;
 }
 
-} // namespace vedit
+} // namespace velacut

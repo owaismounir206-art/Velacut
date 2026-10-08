@@ -13,11 +13,11 @@
 
 #include <cmath>
 
-Q_LOGGING_CATEGORY(lcAnalysis, "vedit.engine.analysis")
+Q_LOGGING_CATEGORY(lcAnalysis, "velacut.engine.analysis")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -192,4 +192,4 @@ void MediaAnalysis::finishWaveform(const Media &media, std::shared_ptr<const Wav
     emit waveformReady(media.id);
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

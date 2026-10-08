@@ -24,11 +24,11 @@
 #include <cmath>
 #include <numeric>
 
-Q_LOGGING_CATEGORY(lcProjection, "vedit.engine.projection")
+Q_LOGGING_CATEGORY(lcProjection, "velacut.engine.projection")
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 namespace {
 
@@ -966,7 +966,7 @@ std::shared_ptr<const TimelineProjection::ClipRender> TimelineProjection::render
         transform.cropRight = std::clamp(numberOf(clip.transform.crop.right, 0.0), 0.0, 1.0);
         transform.cropBottom = std::clamp(numberOf(clip.transform.crop.bottom, 0.0), 0.0, 1.0);
         transform.opacity = std::clamp(numberOf(clip.opacity, 1.0), 0.0, 1.0);
-        transform.blendMode = static_cast<vedit::fx::BlendMode>(clip.blendMode);
+        transform.blendMode = static_cast<velacut::fx::BlendMode>(clip.blendMode);
 
         transform.positionParam = clip.transform.position;
         transform.scaleParam = clip.transform.scale;
@@ -1776,4 +1776,4 @@ QImage TimelineProjection::renderFrame(int position)
     return QImage(data, width, height, width * 4, QImage::Format_RGBA8888).copy();
 }
 
-} // namespace vedit::engine
+} // namespace velacut::engine

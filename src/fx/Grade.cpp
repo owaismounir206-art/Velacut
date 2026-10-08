@@ -9,7 +9,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 namespace {
 
@@ -426,4 +426,4 @@ std::array<double, 3> CubeLut::sample(std::array<double, 3> rgb) const
     return out;
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

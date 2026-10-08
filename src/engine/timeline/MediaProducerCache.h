@@ -18,7 +18,7 @@ class Producer;
 class Profile;
 } // namespace Mlt
 
-namespace vedit::engine {
+namespace velacut::engine {
 
 // One MLT producer per media item, shared by every clip that uses it (clips are cuts of it).
 // Producers are bound to a profile, so a cache belongs to one profile.
@@ -56,7 +56,7 @@ public:
 
 signals:
     // Emitted in the owner's thread when a requested producer is ready (or failed: error() is set).
-    void ready(const vedit::MediaId &mediaId);
+    void ready(const velacut::MediaId &mediaId);
 
 private:
     Mlt::Profile &m_profile;
@@ -73,4 +73,4 @@ private:
     bool m_useReverseProxies = false;
 };
 
-} // namespace vedit::engine
+} // namespace velacut::engine

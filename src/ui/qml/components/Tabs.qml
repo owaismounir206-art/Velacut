@@ -2,7 +2,7 @@
 // The tabs share the width equally, each at least as wide as its label: when they do not fit they scroll sideways
 // (M3 scrollable tabs) and the active one is kept in view; the side with more tabs fades out. Labels are never cut.
 import QtQuick
-import Vedit.Theme
+import Velacut.Theme
 
 FocusScope {
     id: root

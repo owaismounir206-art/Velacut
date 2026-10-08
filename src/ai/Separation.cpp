@@ -14,7 +14,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ai {
+namespace velacut::ai {
 
 namespace demucs {
 
@@ -144,4 +144,4 @@ QString VoiceSeparation::run()
     return {};
 }
 
-} // namespace vedit::ai
+} // namespace velacut::ai

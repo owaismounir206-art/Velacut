@@ -12,7 +12,7 @@
 #include <cmath>
 #include <vector>
 
-using namespace vedit;
+using namespace velacut;
 using namespace Qt::StringLiterals;
 
 namespace {

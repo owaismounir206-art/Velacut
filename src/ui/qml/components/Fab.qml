@@ -2,7 +2,7 @@
 // color: "primary" (default), "secondary", "tertiary", "surface".
 import QtQuick
 import QtQuick.Templates as T
-import Vedit.Theme
+import Velacut.Theme
 
 T.AbstractButton {
     id: control
@@ -27,6 +27,21 @@ T.AbstractButton {
     rightPadding: extended ? 20 : 16
     focusPolicy: Qt.StrongFocus
     opacity: enabled ? 1 : 0.38
+
+    // Apple-style press feedback: a small squeeze that springs back; floating things lift while
+    // pointed at. Transforms only (never size), nothing with "reduce motion".
+    scale: pressed ? Theme.motion.pressScale : 1.0
+    Behavior on scale {
+        enabled: !Theme.motion.reduced
+        SpringAnimation { spring: Theme.motion.springSoft; damping: Theme.motion.springSoftDamping; mass: Theme.motion.springMass }
+    }
+    transform: Translate {
+        y: control.hovered ? Theme.motion.hoverLift : 0
+        Behavior on y {
+            enabled: !Theme.motion.reduced
+            NumberAnimation { duration: Theme.motion.short3; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.motion.standardDecelerate }
+        }
+    }
 
     Accessible.role: Accessible.Button
     Accessible.name: text

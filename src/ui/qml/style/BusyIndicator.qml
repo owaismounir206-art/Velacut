@@ -2,8 +2,8 @@
 import QtQuick
 import QtQuick.Shapes
 import QtQuick.Templates as T
-import Vedit.Components
-import Vedit.Theme
+import Velacut.Components
+import Velacut.Theme
 
 T.BusyIndicator {
     id: control

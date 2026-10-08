@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vedit::fx {
+namespace velacut::fx {
 
 float dbToGain(double db)
 {
@@ -36,4 +36,4 @@ float applyGain(float *samples, int channels, int frames, float gainStart, float
     return peak;
 }
 
-} // namespace vedit::fx
+} // namespace velacut::fx

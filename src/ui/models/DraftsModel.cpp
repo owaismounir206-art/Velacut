@@ -8,7 +8,7 @@
 
 using namespace Qt::StringLiterals;
 
-namespace vedit::ui {
+namespace velacut::ui {
 
 DraftsModel::DraftsModel(const document::DraftStore &store, QObject *parent)
     : QAbstractListModel(parent)
@@ -114,4 +114,4 @@ QString DraftsModel::remove(const QString &draftId)
     return {};
 }
 
-} // namespace vedit::ui
+} // namespace velacut::ui

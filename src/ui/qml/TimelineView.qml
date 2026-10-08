@@ -8,9 +8,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
-import Vedit.Components
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Components
+import Velacut.Theme
+import Velacut.UI
 
 Rectangle {
     id: view
@@ -39,11 +39,13 @@ Rectangle {
 
     Timer {
         id: scrubDebounceTimer
-        interval: 60 // 50-80ms debounce for frame-accurate commit
+        interval: 80 // 80 ms debounce: mid-drag only a muted preview lands, never an audio seek
         repeat: false
         onTriggered: {
             if (view.isScrubbing) {
-                view.player.commitSeek(view.visualPlayheadFrame)
+                // Preview only while the drag goes on: scrubSeek is muted at the MLT level and
+                // coalesced; the frame-accurate (audio on) commitSeek lands once, on release.
+                view.player.scrubSeek(view.visualPlayheadFrame)
             }
         }
     }
@@ -86,9 +88,11 @@ Rectangle {
     function startScrubbing(x) {
         view.scrubX = x
         const target = scrubFrameAt(x)
-        view.player.pause()
         view.isScrubbing = true
         view.visualPlayheadFrame = target
+        // Before pause(): it remembers whether the timeline was playing, to resume it on commit.
+        view.player.setScrubMuted(true)
+        view.player.pause()
         view.player.scrubSeek(target)
         scrubDebounceTimer.restart()
     }
@@ -97,9 +101,13 @@ Rectangle {
         view.scrubX = x
         if (!view.isScrubbing) {
             view.isScrubbing = true
+            view.player.setScrubMuted(true)
             view.player.pause()
         }
         const target = scrubFrameAt(x)
+        // Same frame as before (a slow drag, or the edge auto-scroll): no MLT seek, no timer.
+        if (target === view.visualPlayheadFrame)
+            return
         view.visualPlayheadFrame = target
         view.player.scrubSeek(target)
         scrubDebounceTimer.restart()
@@ -108,6 +116,7 @@ Rectangle {
     function finishScrubbing() {
         if (view.isScrubbing) {
             scrubDebounceTimer.stop()
+            // The commit is where the audio comes back (and playback resumes if it was playing).
             view.player.commitSeek(view.visualPlayheadFrame)
             view.isScrubbing = false
         }
@@ -182,6 +191,12 @@ Rectangle {
                 // A seek from elsewhere: the timeline scrolls, the playhead centred in the view.
                 flick.contentX = Math.max(0, Math.min(flick.contentWidth - flick.width, x - flick.width / 2))
             }
+        }
+        // A split, a delete or an undo during a scrub drag can shorten the timeline: the visual
+        // playhead would point past its end until the next pointer move. Keep it inside.
+        function onDurationChanged() {
+            if (view.isScrubbing)
+                view.visualPlayheadFrame = view.clampFrame(view.visualPlayheadFrame)
         }
     }
 

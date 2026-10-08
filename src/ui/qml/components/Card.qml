@@ -1,6 +1,6 @@
 // Material 3 card: variant "filled" (default), "elevated", "outlined". Clickable when `interactive`.
 import QtQuick
-import Vedit.Theme
+import Velacut.Theme
 
 Item {
     id: root
@@ -19,6 +19,16 @@ Item {
     implicitHeight: 120
 
     Accessible.role: interactive ? Accessible.Button : Accessible.Pane
+
+    // Apple-style hover feedback: a lift (no scale — a grid must not move under the pointer),
+    // with the shadow rising a level. Transform only, nothing with "reduce motion".
+    transform: Translate {
+        y: root.interactive && hover.hovered ? Theme.motion.hoverLift : 0
+        Behavior on y {
+            enabled: !Theme.motion.reduced
+            NumberAnimation { duration: Theme.motion.short3; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.motion.standardDecelerate }
+        }
+    }
 
     Rectangle {
         id: surface

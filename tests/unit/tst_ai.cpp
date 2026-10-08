@@ -15,7 +15,7 @@
 namespace {
 
 // Counts to `steps`, reporting its progress; stops when cancelled.
-class CountingTask : public vedit::ai::AiTask
+class CountingTask : public velacut::ai::AiTask
 {
 public:
     explicit CountingTask(int steps)
@@ -42,8 +42,8 @@ private:
 
 } // namespace
 
-using namespace vedit;
-using namespace vedit::ai;
+using namespace velacut;
+using namespace velacut::ai;
 using namespace Qt::StringLiterals;
 
 class TestAi : public QObject

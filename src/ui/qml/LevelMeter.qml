@@ -3,8 +3,8 @@
 // level while the video plays and until the peak has fallen back.
 pragma ComponentBehavior: Bound
 import QtQuick
-import Vedit.Theme
-import Vedit.UI
+import Velacut.Theme
+import Velacut.UI
 
 Item {
     id: meter

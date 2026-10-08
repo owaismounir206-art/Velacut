@@ -5,7 +5,7 @@
 
 #include <QUndoCommand>
 
-namespace vedit {
+namespace velacut {
 
 // Identifies a continuous user gesture (slider drag, handle drag) on one target. Commands with the same
 // non-empty key merge into a single undo step; a new gesture gets a new gestureId, so two separate drags
@@ -39,4 +39,4 @@ private:
     MergeKey m_mergeKey;
 };
 
-} // namespace vedit
+} // namespace velacut

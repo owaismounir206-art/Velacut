@@ -18,26 +18,26 @@
 class QQmlEngine;
 class QJSEngine;
 
-namespace vedit::document {
+namespace velacut::document {
 class DraftStore;
 }
-namespace vedit::engine {
+namespace velacut::engine {
 class MediaAnalysis;
 }
 
-namespace vedit::ui {
+namespace velacut::ui {
 
-// The QML singleton `App` (import Vedit.UI): home screen (drafts), the open editor, application services.
+// The QML singleton `App` (import Velacut.UI): home screen (drafts), the open editor, application services.
 class AppController : public QObject
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(App)
     QML_SINGLETON
 
-    Q_PROPERTY(vedit::ui::DraftsModel *drafts READ drafts CONSTANT FINAL)
-    Q_PROPERTY(vedit::ui::AudioLibraryModel *audioLibrary READ audioLibrary CONSTANT FINAL)
-    Q_PROPERTY(vedit::ui::BrandKitModel *brandKits READ brandKits CONSTANT FINAL)
-    Q_PROPERTY(vedit::ui::EditorController *editor READ editor NOTIFY editorChanged FINAL)
+    Q_PROPERTY(velacut::ui::DraftsModel *drafts READ drafts CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::AudioLibraryModel *audioLibrary READ audioLibrary CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::BrandKitModel *brandKits READ brandKits CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::EditorController *editor READ editor NOTIFY editorChanged FINAL)
     Q_PROPERTY(QString version READ version CONSTANT FINAL)
     Q_PROPERTY(QString uiBackend READ uiBackend CONSTANT FINAL)
     Q_PROPERTY(bool softwareRendering READ softwareRendering CONSTANT FINAL)
@@ -53,7 +53,7 @@ class AppController : public QObject
     Q_PROPERTY(bool restartNeeded READ restartNeeded NOTIFY preferencesChanged FINAL)
 
 public:
-    // `helperExecutable`: vedit-render (default: next to the running executable).
+    // `helperExecutable`: velacut-render (default: next to the running executable).
     AppController(gpu::GraphicsDecision decision, gpu::GpuCapabilities capabilities, QString helperExecutable = {},
                   QObject *parent = nullptr);
     ~AppController() override;
@@ -103,7 +103,7 @@ public:
     Q_INVOKABLE void openFile(const QString &path) const;
     // The default folder of the system for videos (where the frame export puts its images).
     Q_INVOKABLE QString videosFolder() const;
-    // A desktop notification (org.freedesktop.Notifications), e.g. when an export ends while vedit is in background.
+    // A desktop notification (org.freedesktop.Notifications), e.g. when an export ends while velacut is in background.
     Q_INVOKABLE void notify(const QString &title, const QString &body) const;
 
     // "auto" (the system's), "it" or "en": read by main() before the interface exists.
@@ -119,7 +119,7 @@ public:
     bool hardwareEncoding() const;
     void setHardwareEncoding(bool enabled);
     bool restartNeeded() const { return m_restartNeeded; }
-    // Starts vedit again (after saving everything) so that language and graphics choices apply.
+    // Starts velacut again (after saving everything) so that language and graphics choices apply.
     Q_INVOKABLE void restart();
 
 signals:
@@ -150,4 +150,4 @@ private:
     int previewLimit() const;
 };
 
-} // namespace vedit::ui
+} // namespace velacut::ui
