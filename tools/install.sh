@@ -62,6 +62,50 @@ else
     fi
 fi
 
+# Pulizia automatica della vecchia versione (vedit) se presente
+log_info "Controllo ed eventuale rimozione di vecchi lanciatori della versione precedente..."
+OLD_APP="${PREFIX}/share/applications/vedit.desktop"
+if [ -f "$OLD_APP" ]; then
+    rm -f "$OLD_APP"
+    log_info "Rimosso vecchio lanciatore desktop: ${OLD_APP}"
+fi
+rm -f "${PREFIX}/share/icons/hicolor/scalable/apps/vedit.svg" 2>/dev/null || true
+rm -f "${PREFIX}/share/mime/packages/vedit.xml" 2>/dev/null || true
+rm -f "${PREFIX}/bin/vedit-render" "${PREFIX}/bin/vedit-gpuprobe" 2>/dev/null || true
+# Rimuovi solo l'eseguibile vedit utente (non toccare /usr/bin/vedit che è il vi di sistema)
+if [ -f "${PREFIX}/bin/vedit" ] && [ "$PREFIX" = "${HOME}/.local" ]; then
+    rm -f "${PREFIX}/bin/vedit"
+    log_info "Rimosso vecchio binario utente: ${PREFIX}/bin/vedit"
+fi
+
+# Migrazione automatica delle bozze dalla vecchia cartella vedit alla nuova velacut
+LEGACY_DRAFTS="${HOME}/.local/share/vedit/drafts"
+NEW_DRAFTS="${HOME}/.local/share/velacut/drafts"
+if [ -d "$LEGACY_DRAFTS" ]; then
+    mkdir -p "$NEW_DRAFTS"
+    COUNT=0
+    for d in "$LEGACY_DRAFTS"/*; do
+        if [ -d "$d" ] && [ -f "$d/project.vproj" ]; then
+            BASENAME="$(basename "$d")"
+            if [ ! -d "$NEW_DRAFTS/$BASENAME" ]; then
+                cp -r "$d" "$NEW_DRAFTS/"
+                COUNT=$((COUNT + 1))
+            fi
+        fi
+    done
+    if [ "$COUNT" -gt 0 ]; then
+        log_success "Migrate $COUNT bozze/progetti dalla precedente versione vedit a Velacut!"
+    fi
+fi
+
+# Migrazione eventuale brand kit
+LEGACY_BK="${HOME}/.local/share/vedit/brandkits"
+NEW_BK="${HOME}/.local/share/velacut/brandkits"
+if [ -d "$LEGACY_BK" ]; then
+    mkdir -p "$NEW_BK"
+    cp -rn "$LEGACY_BK"/* "$NEW_BK/" 2>/dev/null || true
+fi
+
 # Verifica dipendenze essenziali
 log_info "Controllo degli strumenti di compilazione..."
 for cmd in cmake ninja; do

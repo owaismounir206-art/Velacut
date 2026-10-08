@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLoggingCategory>
+#include <QStandardPaths>
 
 Q_LOGGING_CATEGORY(lcReverse, "velacut.engine.reverse")
 
@@ -25,9 +26,26 @@ bool reverseProxyReady(const Media &media)
     return media.fingerprint.isValid() && QFileInfo::exists(reverseProxyPath(media));
 }
 
+namespace {
+
+QString defaultRenderExecutable()
+{
+    const QString nextToApp = QCoreApplication::applicationDirPath() + u"/velacut-render"_s;
+    if (QFile::exists(nextToApp)) {
+        return nextToApp;
+    }
+    const QString inPath = QStandardPaths::findExecutable(u"velacut-render"_s);
+    if (!inPath.isEmpty()) {
+        return inPath;
+    }
+    return nextToApp;
+}
+
+} // namespace
+
 ReverseProxyQueue::ReverseProxyQueue(QObject *parent)
     : QObject(parent)
-    , m_executable(QCoreApplication::applicationDirPath() + u"/velacut-render"_s)
+    , m_executable(defaultRenderExecutable())
 {
 }
 

@@ -62,7 +62,8 @@ void BrandKitModel::load()
             continue;
         }
         const QJsonObject json = QJsonDocument::fromJson(file.readAll()).object();
-        if (json.value(u"format"_s).toString() == u"vedit.brandkit"_s) {
+        const QString fmt = json.value(u"format"_s).toString();
+        if (fmt == u"vedit.brandkit"_s || fmt == u"velacut.brandkit"_s) {
             m_kits.push_back({entry, json});
         }
     }

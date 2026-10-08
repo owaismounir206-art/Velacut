@@ -171,9 +171,40 @@ Tutte le scorciatoie dettagliate sono consultabili nel file [docs/SHORTCUTS.md](
 
 ---
 
-## 5. Disinstallazione Completa
+## 5. Come Disinstallare la Vecchia Versione e Passare a Quella Nuova
 
-Rimuovere Velacut dal sistema è altrettanto semplice e pulito.
+Se avevi precedentemente installato la vecchia versione (chiamata `vedit` o una build precedente di `velacut`), segui questi passaggi per passare alla versione attuale in modo pulito e senza perdere il tuo lavoro.
+
+### Scenario A: Vuoi rimuovere solo i residui della vecchia versione mantenendo i progetti
+Per rimuovere solo i vecchi lanciatori, binari e file di configurazione obsoleti della versione precedente senza toccare i tuoi montaggi:
+
+```bash
+cd Velacut
+
+# Rimuove selettivamente tutti i residui della vecchia versione:
+./uninstall.sh --legacy
+```
+
+### Scenario B: Vuoi installare la nuova versione migrando automaticamente i tuoi progetti
+Lo script `./install.sh` è intelligente: rileva se sul sistema erano presenti progetti e bozze creati con la vecchia versione (in `~/.local/share/vedit/drafts`), **li migra automaticamente nella nuova cartella `~/.local/share/velacut/drafts`** e rimuove i vecchi lanciatori obsoleti:
+
+```bash
+cd Velacut
+
+# Compila, migra i progetti ed installa la nuova versione:
+./install.sh
+
+# Oppure per installazione a livello di sistema:
+sudo ./install.sh
+```
+
+All'avvio della nuova versione, troverai tutti i tuoi progetti e template precedenti già caricati e pronti all'uso!
+
+---
+
+## 6. Disinstallazione Completa
+
+Rimuovere Velacut dal sistema è semplice e pulito.
 
 ### Disinstallazione con lo Script
 
@@ -194,6 +225,7 @@ Lo script provvederà a:
 - Rimuovere il lanciatore desktop `velacut.desktop` dal menu di sistema.
 - Rimuovere l'icona ufficiale da `icons/hicolor`.
 - Rimuovere le associazioni MIME dei file `.vproj`.
+- Rimuovere eventuali residui della vecchia versione (`vedit`).
 - Aggiornare i database di sistema delle icone e delle applicazioni.
 
 ---
@@ -220,15 +252,15 @@ sudo ninja uninstall
 
 ---
 
-### Pulizia Completa di Dati e Cache (--purge)
+### Pulizia Totale di Dati e Cache (--purge)
 
 Velacut salva le impostazioni, le bozze e i file di cache temporanei nelle directory standard XDG dell'utente:
-- Bozze e progetti: `~/.local/share/velacut/`
+- Bozze e progetti: `~/.local/share/velacut/` (e le vecchie `~/.local/share/vedit/`)
 - Impostazioni e preferenze: `~/.config/velacut/`
 - Cache temporanee (anteprime proxy, forme d'onda): `~/.cache/velacut/`
 - Log applicativi: `~/.local/state/velacut/`
 
-Per rimuovere anche tutti questi file e lasciare il sistema totalmente pulito, esegui:
+Per rimuovere anche tutti questi file e lasciare il sistema totalmente pulito (sia per la nuova che per la vecchia versione), esegui:
 
 ```bash
 ./uninstall.sh --purge

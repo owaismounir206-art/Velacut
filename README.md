@@ -107,17 +107,24 @@ Vedi anche [SHORTCUTS.md](docs/SHORTCUTS.md) per l'elenco completo delle scorcia
 
 ---
 
-## Disinstallazione
+## Aggiornamento e Disinstallazione
 
-Per rimuovere completamente Velacut dal sistema:
+### Passare dalla vecchia versione (vedit) a Velacut
+- **Aggiornamento automatico con conservazione dei progetti**:
+  Eseguendo `./install.sh`, l'installer rileva automaticamente i progetti della precedente versione (`~/.local/share/vedit/drafts`), li migra nella nuova cartella e rimuove i vecchi lanciatori obsoleti.
+- **Rimuovere solo i file residui della vecchia versione**:
+  ```bash
+  ./uninstall.sh --legacy
+  ```
 
+### Disinstallazione completa di Velacut
 ```bash
 cd Velacut
 
-# Disinstallazione automatica dei binari, icona e lanciatore:
+# Rimuove binari, lanciatori desktop e icone:
 ./uninstall.sh
 
-# Oppure per rimuovere anche tutte le impostazioni, bozze e cache utente:
+# Oppure rimuove anche tutte le bozze, progetti, impostazioni e cache:
 ./uninstall.sh --purge
 ```
 

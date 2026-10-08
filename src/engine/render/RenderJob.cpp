@@ -16,6 +16,7 @@
 #include <QJsonObject>
 #include <QLoggingCategory>
 #include <QStorageInfo>
+#include <QStandardPaths>
 #include <QUuid>
 
 #include <cmath>
@@ -26,9 +27,26 @@ using namespace Qt::StringLiterals;
 
 namespace velacut::engine {
 
+namespace {
+
+QString defaultRenderExecutable()
+{
+    const QString nextToApp = QCoreApplication::applicationDirPath() + u"/velacut-render"_s;
+    if (QFile::exists(nextToApp)) {
+        return nextToApp;
+    }
+    const QString inPath = QStandardPaths::findExecutable(u"velacut-render"_s);
+    if (!inPath.isEmpty()) {
+        return inPath;
+    }
+    return nextToApp;
+}
+
+} // namespace
+
 RenderJob::RenderJob(QObject *parent)
     : QObject(parent)
-    , m_executable(QCoreApplication::applicationDirPath() + u"/velacut-render"_s)
+    , m_executable(defaultRenderExecutable())
 {
 }
 

@@ -22,6 +22,7 @@
 #include <QLoggingCategory>
 #include <QTranslator>
 #include <QProcess>
+#include <QStandardPaths>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
@@ -56,7 +57,20 @@ QSGRendererInterface::GraphicsApi toGraphicsApi(gpu::UiBackend backend)
 
 QString probeExecutable()
 {
-    return QCoreApplication::applicationDirPath() + u"/velacut-gpuprobe"_s;
+    const QString appDir = QCoreApplication::applicationDirPath();
+    const QString nextToApp = appDir + u"/velacut-gpuprobe"_s;
+    if (QFile::exists(nextToApp)) {
+        return nextToApp;
+    }
+    const QString inLibexec = appDir + u"/../libexec/velacut-gpuprobe"_s;
+    if (QFile::exists(inLibexec)) {
+        return inLibexec;
+    }
+    const QString inPath = QStandardPaths::findExecutable(u"velacut-gpuprobe"_s);
+    if (!inPath.isEmpty()) {
+        return inPath;
+    }
+    return nextToApp;
 }
 
 // Relaunches velacut with the same arguments (runtime fallback to the next backend).

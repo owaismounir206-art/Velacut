@@ -1797,7 +1797,8 @@ QByteArray toBytes(const ProjectData &project)
 ProjectLoadResult fromJson(const QJsonObject &json)
 {
     ProjectLoadResult result;
-    if (json.value(u"format"_s).toString() != kProjectFormatName) {
+    const QString formatName = json.value(u"format"_s).toString();
+    if (formatName != kProjectFormatName && formatName != u"vedit.project"_s) {
         result.error = QCoreApplication::translate("velacut::projectjson", "This file is not a velacut project.");
         return result;
     }

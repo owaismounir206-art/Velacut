@@ -38,13 +38,32 @@ AppController *s_instance = nullptr;
 
 } // namespace
 
+namespace {
+
+QString resolveHelper(QString helperExecutable)
+{
+    if (!helperExecutable.isEmpty()) {
+        return helperExecutable;
+    }
+    const QString nextToApp = QCoreApplication::applicationDirPath() + u"/velacut-render"_s;
+    if (QFile::exists(nextToApp)) {
+        return nextToApp;
+    }
+    const QString inPath = QStandardPaths::findExecutable(u"velacut-render"_s);
+    if (!inPath.isEmpty()) {
+        return inPath;
+    }
+    return nextToApp;
+}
+
+} // namespace
+
 AppController::AppController(gpu::GraphicsDecision decision, gpu::GpuCapabilities capabilities, QString helperExecutable,
                              QObject *parent)
     : QObject(parent)
     , m_decision(std::move(decision))
     , m_capabilities(std::move(capabilities))
-    , m_helper(helperExecutable.isEmpty() ? QCoreApplication::applicationDirPath() + u"/velacut-render"_s
-                                          : std::move(helperExecutable))
+    , m_helper(resolveHelper(std::move(helperExecutable)))
     , m_store(std::make_unique<document::DraftStore>(document::DraftStore::defaultRoot()))
     , m_analysis(std::make_unique<engine::MediaAnalysis>(engine::MediaAnalysis::defaultCacheRoot()))
     , m_drafts(std::make_unique<DraftsModel>(*m_store))

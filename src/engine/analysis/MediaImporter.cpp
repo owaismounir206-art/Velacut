@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLoggingCategory>
+#include <QStandardPaths>
 
 Q_LOGGING_CATEGORY(lcImport, "velacut.engine.import")
 
@@ -15,9 +16,26 @@ using namespace Qt::StringLiterals;
 
 namespace velacut::engine {
 
+namespace {
+
+QString defaultRenderExecutable()
+{
+    const QString nextToApp = QCoreApplication::applicationDirPath() + u"/velacut-render"_s;
+    if (QFile::exists(nextToApp)) {
+        return nextToApp;
+    }
+    const QString inPath = QStandardPaths::findExecutable(u"velacut-render"_s);
+    if (!inPath.isEmpty()) {
+        return inPath;
+    }
+    return nextToApp;
+}
+
+} // namespace
+
 MediaImporter::MediaImporter(QObject *parent)
     : QObject(parent)
-    , m_executable(QCoreApplication::applicationDirPath() + u"/velacut-render"_s)
+    , m_executable(defaultRenderExecutable())
 {
 }
 
