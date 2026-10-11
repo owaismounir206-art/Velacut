@@ -60,38 +60,64 @@ Rectangle {
     // edges of the view: the timeline then scrolls under it, CapCut-style, for as long as it stays out.
     property real scrubX: 0
 
-    Timer {
-        id: scrubDebounceTimer
-        interval: 80 // 80 ms debounce: mid-drag only a muted preview lands, never an audio seek
-        repeat: false
-        onTriggered: {
-            if (view.isScrubbing) {
-                // Preview only while the drag goes on: scrubSeek is muted at the MLT level and
-                // coalesced; the frame-accurate (audio on) commitSeek lands once, on release.
-                view.player.scrubSeek(view.visualPlayheadFrame)
-            }
-        }
+    // A clip or a trim handle being dragged (it has edgeScrolled()), and the pointer's x in the view: near an edge the
+    // timeline scrolls under it, and the gesture follows the content that moves.
+    property Item dragClient: null
+    property real dragX: 0
+    // While a clip is dragged or trimmed: where the other clips go if it is released now (EditorController.previewMove
+    // and previewTrim, the rules of the command itself): they move there, animated, and a bar marks the place where
+    // the clip lands on the magnetic main track. Still one command, on release.
+    property var reflowStarts: ({})
+    property int reflowLanding: -1
+    readonly property bool reflowing: dragClient !== null
+    // The end of a clip dragged or stretched past the end of the timeline: the content grows to let it go on.
+    property int dragExtent: 0
+
+    function trackDrag(client, canvasX) {
+        dragClient = client
+        dragX = canvasX - flick.contentX
+    }
+    function showReflow(preview) {
+        reflowStarts = preview.starts ?? {}
+        reflowLanding = preview.landing ?? -1
+    }
+    function endDrag() {
+        dragClient = null
+        reflowStarts = {}
+        reflowLanding = -1
+        dragExtent = 0
+    }
+    function canvasX(viewX) { return viewX + flick.contentX }
+
+    // How far to scroll for a pointer at `x` in the view (signed, 0: none), `zone` px inside the edges included.
+    function edgeStep(x, zone) {
+        const past = Math.max(x - (flick.width - zone), zone - x, 0)
+        if (past <= 0)
+            return 0
+        const step = Math.min(Theme.editor.edgeScrollMaxStep, Math.max(Theme.editor.edgeScrollMinStep, past * Theme.editor.edgeScrollGain))
+        return x > flick.width / 2 ? step : -step
     }
 
-    // While the pointer is held past an edge of the view during a scrub drag, the timeline keeps
-    // moving under it (like CapCut): the playhead stays pinned at the edge, the content scrolls,
-    // faster the further out the pointer is.
+    // While the pointer is held near or past an edge of the view during a drag, the timeline keeps moving under it
+    // (like CapCut), faster the further out the pointer is. Scrubbing, past the edges only: the playhead stays pinned
+    // at the edge and the content scrolls; dragging a clip or a handle, from `edgeScrollZone` inside them.
     Timer {
-        id: scrubAutoScrollTimer
-        interval: 16
+        id: edgeScrollTimer
+        interval: Theme.editor.edgeScrollInterval
         repeat: true
-        running: view.isScrubbing
+        running: view.isScrubbing || view.dragClient !== null
         onTriggered: {
-            const pastRight = view.scrubX - flick.width
-            const pastLeft = -view.scrubX
-            if (pastRight > 0) {
-                flick.contentX = Math.min(flick.contentWidth - flick.width,
-                                          flick.contentX + Math.min(60, Math.max(2, pastRight * 0.2)))
+            const step = view.isScrubbing ? view.edgeStep(view.scrubX, 0) : view.edgeStep(view.dragX, Theme.editor.edgeScrollZone)
+            if (step === 0)
+                return
+            const before = flick.contentX
+            flick.contentX = Math.max(0, Math.min(flick.contentWidth - flick.width, flick.contentX + step))
+            if (flick.contentX === before)
+                return
+            if (view.isScrubbing)
                 view.updateScrubbing(view.scrubX)
-            } else if (pastLeft > 0) {
-                flick.contentX = Math.max(0, flick.contentX - Math.min(60, Math.max(2, pastLeft * 0.2)))
-                view.updateScrubbing(view.scrubX)
-            }
+            else
+                view.dragClient.edgeScrolled()
         }
     }
 
@@ -117,7 +143,6 @@ Rectangle {
         view.player.setScrubMuted(true)
         view.player.pause()
         view.player.scrubSeek(target)
-        scrubDebounceTimer.restart()
     }
 
     function updateScrubbing(x) {
@@ -128,17 +153,16 @@ Rectangle {
             view.player.pause()
         }
         const target = scrubFrameAt(x)
-        // Same frame as before (a slow drag, or the edge auto-scroll): no MLT seek, no timer.
+        // Same frame as before (a slow drag, or the edge auto-scroll): no MLT seek. Every new frame is asked for at
+        // once: the player renders one at a time and the latest request wins, so a fast drag never queues renders.
         if (target === view.visualPlayheadFrame)
             return
         view.visualPlayheadFrame = target
         view.player.scrubSeek(target)
-        scrubDebounceTimer.restart()
     }
 
     function finishScrubbing() {
         if (view.isScrubbing) {
-            scrubDebounceTimer.stop()
             // The commit is where the audio comes back (and playback resumes if it was playing).
             view.player.commitSeek(view.visualPlayheadFrame)
             view.isScrubbing = false
@@ -206,7 +230,7 @@ Rectangle {
 
     // Keep the playhead in view: page-scrolling while playing, and the view moves to it on a seek
     // (keyboard, preview, markers), like CapCut. During a scrub drag this does nothing: the drag owns
-    // the playhead and the edge auto-scroll (scrubAutoScrollTimer).
+    // the playhead and the edge auto-scroll (edgeScrollTimer).
     Connections {
         target: view.player
         function onPositionChanged() {
@@ -692,7 +716,7 @@ Rectangle {
         y: Theme.editor.rulerHeight
         width: parent.width - x
         height: parent.height - y
-        contentWidth: Math.max(width, view.model.duration * view.zoom + width * Theme.editor.tailRatio)
+        contentWidth: Math.max(width, Math.max(view.model.duration, view.dragExtent) * view.zoom + width * Theme.editor.tailRatio)
         contentHeight: Math.max(height, view.rowTop(view.rows) + Theme.editor.newTrackZone)
         boundsBehavior: Flickable.StopAtBounds
         interactive: false // dragging is for clips; scrolling with the wheel and the scroll bars
@@ -936,11 +960,24 @@ Rectangle {
             // Snap guide: the edge a dragged clip snapped to.
             Rectangle {
                 visible: view.snapGuide >= 0
-                x: view.snapGuide * view.zoom - 1
-                width: 2
+                x: view.snapGuide * view.zoom - width / 2
+                width: Theme.editor.playheadWidth
                 height: canvas.height
                 color: Theme.color.tertiary
                 z: 8
+            }
+
+            // Where the dragged clip lands on the magnetic main track (the other clips have made room for it).
+            Rectangle {
+                objectName: "insertionBar"
+                visible: view.reflowLanding >= 0
+                x: view.reflowLanding * view.zoom - width / 2
+                y: view.rowTop(view.model.mainRow)
+                width: Theme.editor.insertionBar
+                height: view.rowHeight(view.model.mainRow)
+                radius: width / 2
+                color: Theme.color.primary
+                z: 11 // over the dragged clip (z 10)
             }
 
             // Skimming line (the frame shown in the preview while pointing).

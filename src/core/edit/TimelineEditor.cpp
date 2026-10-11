@@ -312,6 +312,7 @@ EditResult TimelineEditor::finish(Sequence &&modified, const QString &text, cons
     result.script = diffSequence(*m_sequence, modified);
     result.text = text;
     result.primaryClip = primary;
+    result.after = std::move(modified);
     return result;
 }
 

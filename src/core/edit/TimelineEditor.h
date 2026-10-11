@@ -22,6 +22,9 @@ struct EditResult
     QString text;
     QString error;
     ClipId primaryClip; // clip to select after the operation (new or moved clip), if any
+    // The sequence as the operation leaves it (the timeline shows it while a gesture is still going on); empty when
+    // the operation fails or changes nothing.
+    std::optional<Sequence> after;
 
     bool ok() const { return error.isEmpty(); }
 };

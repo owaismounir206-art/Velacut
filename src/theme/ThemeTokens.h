@@ -196,6 +196,17 @@ class ThemeEditor : public QObject
     Q_PROPERTY(qreal paintChunk MEMBER m_paintChunk CONSTANT FINAL)
     // Timeline padding after the last clip, as a share of the view
     Q_PROPERTY(qreal tailRatio MEMBER m_tailRatio CONSTANT FINAL)
+    // The timeline scrolls by itself while a drag holds the pointer near an edge (clips, trim handles: within
+    // `edgeScrollZone` of it) or past it (the playhead): every `edgeScrollInterval` ms (a display frame, not an
+    // animation), by `edgeScrollGain` × how far in the zone or past the edge the pointer is, between the minimum and
+    // the maximum step (px)
+    Q_PROPERTY(qreal edgeScrollZone MEMBER m_edgeScrollZone CONSTANT FINAL)
+    Q_PROPERTY(int edgeScrollInterval MEMBER m_edgeScrollInterval CONSTANT FINAL)
+    Q_PROPERTY(qreal edgeScrollGain MEMBER m_edgeScrollGain CONSTANT FINAL)
+    Q_PROPERTY(qreal edgeScrollMinStep MEMBER m_edgeScrollMinStep CONSTANT FINAL)
+    Q_PROPERTY(qreal edgeScrollMaxStep MEMBER m_edgeScrollMaxStep CONSTANT FINAL)
+    // Width of the bar that marks where a dragged clip lands on the magnetic main track
+    Q_PROPERTY(qreal insertionBar MEMBER m_insertionBar CONSTANT FINAL)
 
 public:
     using QObject::QObject;
@@ -268,6 +279,12 @@ private:
     qreal m_zoomStep = 1.25;
     qreal m_paintChunk = 512;
     qreal m_tailRatio = 0.5;
+    qreal m_edgeScrollZone = 32;
+    int m_edgeScrollInterval = 16;
+    qreal m_edgeScrollGain = 0.2;
+    qreal m_edgeScrollMinStep = 2;
+    qreal m_edgeScrollMaxStep = 60;
+    qreal m_insertionBar = 3;
 };
 
 // Elevation levels 0–5 (dp), rendered mainly with tonal surface colors (see Theme.surfaceAt()).

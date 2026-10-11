@@ -1969,33 +1969,38 @@ bool EditorController::freezeFrame()
 bool EditorController::moveClip(const QString &clipId, int frame, int trackRow)
 {
     const std::optional<ClipId> id = ClipId::fromString(clipId);
-    const Sequence *sequence = data().mainSequence();
-    if (!id || !sequence || !data().findClip(*id)) {
+    if (!id || !data().mainSequence() || !data().findClip(*id)) {
         return false;
     }
+    return apply(moveClipEdit(*id, frame, trackRow));
+}
+
+EditResult EditorController::moveClipEdit(const ClipId &id, int frame, int trackRow) const
+{
+    const Sequence *sequence = data().mainSequence();
     TimelineEditor editor(data(), data().mainSequenceId);
     const RationalTime start(std::max(0, frame), data().settings.frameRate);
     const std::optional<TimelineModel::TrackRow> row = m_timeline->trackRow(trackRow);
     bool audioClip = false;
     for (const Track &track : sequence->audioTracks) {
         for (const Clip &clip : track.clips) {
-            audioClip = audioClip || clip.id == *id;
+            audioClip = audioClip || clip.id == id;
         }
     }
     if (!row) {
         // Into the free space above the tracks (visual clips) or below them (audio clips): a new track.
         if (trackRow < 0 && !audioClip) {
-            return apply(editor.moveClipToNewTrack(*id, start, static_cast<int>(sequence->visualTracks.size())));
+            return editor.moveClipToNewTrack(id, start, static_cast<int>(sequence->visualTracks.size()));
         }
         if (trackRow >= m_timeline->trackRowCount() && audioClip) {
-            return apply(editor.moveClipToNewTrack(*id, start, static_cast<int>(sequence->audioTracks.size())));
+            return editor.moveClipToNewTrack(id, start, static_cast<int>(sequence->audioTracks.size()));
         }
-        return apply(editor.moveClip(*id, start));
+        return editor.moveClip(id, start);
     }
     if (row->audio != audioClip) {
-        return apply(editor.moveClip(*id, start)); // stays on its kind of track, moves in time
+        return editor.moveClip(id, start); // stays on its kind of track, moves in time
     }
-    return apply(editor.moveClip(*id, start, row->id));
+    return editor.moveClip(id, start, row->id);
 }
 
 bool EditorController::trimClip(const QString &clipId, bool startEdge, int frame)
@@ -2007,6 +2012,72 @@ bool EditorController::trimClip(const QString &clipId, bool startEdge, int frame
     TimelineEditor editor(data(), data().mainSequenceId);
     return apply(editor.trimClip(*id, startEdge ? ClipEdge::Start : ClipEdge::End,
                                  RationalTime(std::max(0, frame), data().settings.frameRate)));
+}
+
+QVariantMap EditorController::previewMove(const QString &clipId, int frame, int trackRow) const
+{
+    const std::optional<ClipId> id = ClipId::fromString(clipId);
+    if (!id || !data().mainSequence() || !data().findClip(*id)) {
+        return {};
+    }
+    return previewOf(moveClipEdit(*id, frame, trackRow), *id);
+}
+
+QVariantMap EditorController::previewTrim(const QString &clipId, bool startEdge, int frame) const
+{
+    const std::optional<ClipId> id = ClipId::fromString(clipId);
+    if (!id || !data().mainSequence()) {
+        return {};
+    }
+    TimelineEditor editor(data(), data().mainSequenceId);
+    return previewOf(editor.trimClip(*id, startEdge ? ClipEdge::Start : ClipEdge::End,
+                                     RationalTime(std::max(0, frame), data().settings.frameRate)),
+                     *id);
+}
+
+QVariantMap EditorController::previewOf(const EditResult &result, const ClipId &clipId) const
+{
+    const Sequence *sequence = data().mainSequence();
+    if (!result.ok() || !sequence) {
+        return {};
+    }
+    QVariantMap starts;
+    int landing = -1;
+    if (result.after) {
+        const Rational rate = data().settings.frameRate;
+        const auto frameOf = [&rate](const RationalTime &time) {
+            return static_cast<int>(time.rate() == rate ? time.value() : time.rescaled(rate, Rounding::NearestEven).value());
+        };
+        std::map<ClipId, std::pair<TrackId, RationalTime>> before;
+        const auto remember = [&before](const std::vector<Track> &tracks) {
+            for (const Track &track : tracks) {
+                for (const Clip &clip : track.clips) {
+                    before.emplace(clip.id, std::pair{track.id, clip.start});
+                }
+            }
+        };
+        remember(sequence->visualTracks);
+        remember(sequence->audioTracks);
+        const auto compare = [&](const std::vector<Track> &tracks) {
+            for (const Track &track : tracks) {
+                for (const Clip &clip : track.clips) {
+                    if (clip.id == clipId) {
+                        if (&tracks == &result.after->visualTracks && &track == &tracks.front() && result.after->magneticMain) {
+                            landing = frameOf(clip.start);
+                        }
+                        continue;
+                    }
+                    const auto it = before.find(clip.id);
+                    if (it != before.end() && it->second.first == track.id && it->second.second != clip.start) {
+                        starts.insert(clip.id.toString(), frameOf(clip.start));
+                    }
+                }
+            }
+        };
+        compare(result.after->visualTracks);
+        compare(result.after->audioTracks);
+    }
+    return {{u"starts"_s, starts}, {u"landing"_s, landing}};
 }
 
 std::optional<ClipId> EditorController::clipAtPlayhead() const

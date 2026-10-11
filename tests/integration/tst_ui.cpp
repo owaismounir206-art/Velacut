@@ -167,6 +167,32 @@ class TestUi : public QObject
         return static_cast<int>(canvas->mapToScene(QPointF(frame * zoom, 0)).x());
     }
 
+    QObject *timelineView()
+    {
+        QObject *view = byName(u"timelineCanvas"_s);
+        while (view && !view->property("smoothPlayhead").isValid()) {
+            view = view->parent();
+        }
+        return view;
+    }
+    QQuickItem *timelineFlick()
+    {
+        QQuickItem *flick = byName(u"timelineCanvas"_s)->parentItem();
+        while (flick && !flick->property("contentX").isValid()) {
+            flick = flick->parentItem();
+        }
+        return flick;
+    }
+    QQuickItem *clipItem(const ClipId &id) { return byName(u"clip-"_s + id.toString()); }
+    // The clips of the main track glide to their place after a drop: wait until they are there before pointing at them.
+    void waitForClipsInPlace()
+    {
+        const double zoom = timelineView()->property("zoom").toDouble();
+        for (const Clip &clip : mainTrack().clips) {
+            QTRY_VERIFY(clipItem(clip.id) && std::abs(clipItem(clip.id)->x() - static_cast<double>(clip.start.value()) * zoom) < 0.5);
+        }
+    }
+
 private slots:
     void initTestCase()
     {
@@ -255,6 +281,7 @@ private slots:
         QVERIFY(clip);
         drag(centre(clip), QPoint(frameX(2), centre(clip).y()));
         QTRY_COMPARE(mainTrack().clips.front().id, second);
+        waitForClipsInPlace();
 
         // Trim the end of the (now) second clip by dragging its edge left.
         const ClipId trimmed = mainTrack().clips[1].id;
@@ -1749,6 +1776,126 @@ JSON
         QMetaObject::invokeMethod(view, "zoomToFit");
         editor()->undo();
         QTRY_COMPARE(mainTrack().clips.size(), size_t(0));
+    }
+
+    // Dragging a clip of the magnetic main track, the others make room for it while the drag goes on (a bar marks where
+    // it lands); dragging the end of a clip, the clips after it follow. One command each, on release.
+    void liveReflowOnTheMainTrack()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        editor()->importAndInsert({QUrl::fromLocalFile(m_files.landscape)}, 0, editor()->timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack().clips.size(), size_t(1), 20000);
+        const QString media = editor()->data().media.front().id.toString();
+        QVERIFY(editor()->addMedia(media));
+        QVERIFY(editor()->addMedia(media));
+        QTRY_COMPARE(mainTrack().clips.size(), size_t(3));
+        QObject *view = timelineView();
+        QVERIFY(view);
+        QMetaObject::invokeMethod(view, "zoomToFit");
+        QTest::qWait(50);
+        const ClipId a = mainTrack().clips[0].id;
+        const ClipId b = mainTrack().clips[1].id;
+        const ClipId c = mainTrack().clips[2].id;
+        const int length = static_cast<int>(mainTrack().clips[0].duration.value());
+        const double zoom = view->property("zoom").toDouble();
+        QTRY_VERIFY(clipItem(a) && clipItem(b) && clipItem(c));
+        QVERIFY(!byName(u"insertionBar"_s));
+
+        // A to the end: B and C move back while the pointer is still down.
+        const QPoint from = centre(clipItem(a));
+        const QPoint to(from.x() + static_cast<int>(1.6 * length * zoom), from.y());
+        QTest::mouseMove(m_window, from);
+        QTest::mousePress(m_window, Qt::LeftButton, {}, from);
+        for (int i = 1; i <= 12; ++i) {
+            QTest::mouseMove(m_window, from + (to - from) * i / 12);
+            QTest::qWait(5);
+        }
+        QTRY_VERIFY(std::abs(clipItem(b)->x()) < 1.0);
+        QTRY_VERIFY(std::abs(clipItem(c)->x() - length * zoom) < 1.0);
+        QQuickItem *bar = byName(u"insertionBar"_s);
+        QVERIFY(bar);
+        QVERIFY(std::abs(bar->x() + bar->width() / 2 - 2 * length * zoom) < 1.0);
+        QCOMPARE(mainTrack().clips[0].id, a); // nothing changed yet
+        shot(u"30-reflow-while-dragging"_s);
+        QTest::mouseRelease(m_window, Qt::LeftButton, {}, to);
+        ++m_actions;
+        QTRY_COMPARE(mainTrack().clips[2].id, a);
+        QVERIFY(!byName(u"insertionBar"_s));
+        QTRY_VERIFY(std::abs(clipItem(a)->x() - 2 * length * zoom) < 1.0);
+        editor()->undo(); // one command
+        QTRY_COMPARE(mainTrack().clips[0].id, a);
+        QCOMPARE(mainTrack().clips[1].id, b);
+
+        // The end of A 20 frames back: B and C follow the edge during the gesture.
+        QTRY_VERIFY(std::abs(clipItem(b)->x() - length * zoom) < 1.0);
+        QQuickItem *edge = findItem(clipItem(a), [](QQuickItem *item) { return item->objectName() == u"trimEnd"_s; });
+        QVERIFY(edge);
+        const QPoint grip = centre(edge);
+        const QPoint back = grip - QPoint(static_cast<int>(std::lround(20 * zoom)), 0);
+        QTest::mouseMove(m_window, grip);
+        QTest::mousePress(m_window, Qt::LeftButton, {}, grip);
+        for (int i = 1; i <= 8; ++i) {
+            QTest::mouseMove(m_window, grip + (back - grip) * i / 8);
+            QTest::qWait(5);
+        }
+        const int trimmed = static_cast<int>(clipItem(a)->width() / zoom + 0.5);
+        QVERIFY2(std::abs(trimmed - (length - 20)) <= 1, qPrintable(QString::number(trimmed)));
+        QTRY_VERIFY(std::abs(clipItem(b)->x() - trimmed * zoom) < 1.0);
+        QTRY_VERIFY(std::abs(clipItem(c)->x() - (trimmed + length) * zoom) < 1.0);
+        QCOMPARE(mainTrack().clips[0].duration.value(), length);
+        QTest::mouseRelease(m_window, Qt::LeftButton, {}, back);
+        QTRY_COMPARE(mainTrack().clips[0].duration.value(), trimmed);
+        QCOMPARE(mainTrack().clips[1].start.value(), trimmed);
+        editor()->undo();
+        QTRY_COMPARE(mainTrack().clips[0].duration.value(), length);
+        editor()->undo();
+        editor()->undo();
+        editor()->undo();
+        QTRY_COMPARE(mainTrack().clips.size(), size_t(0));
+    }
+
+    // Holding a dragged clip near the edge of the timeline scrolls it, and the clip goes along with the content.
+    void dragScrollsAtTheEdges()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        editor()->importAndInsert({QUrl::fromLocalFile(m_files.landscape)}, 0, editor()->timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack().clips.size(), size_t(1), 20000);
+        const QString media = editor()->data().media.front().id.toString();
+        while (mainTrack().clips.size() < 6) {
+            QVERIFY(editor()->addMedia(media));
+        }
+        QObject *view = timelineView();
+        QQuickItem *flick = timelineFlick();
+        QVERIFY(view && flick);
+        QMetaObject::invokeMethod(view, "setZoom", Q_ARG(QVariant, QVariant(8.0)), Q_ARG(QVariant, QVariant(0.0)));
+        flick->setProperty("contentX", 0.0);
+        QTest::qWait(50);
+        QVERIFY(flick->property("contentWidth").toDouble() > 2 * flick->width());
+        const ClipId first = mainTrack().clips[0].id;
+        QTRY_VERIFY(clipItem(first));
+        const QPoint from = centre(clipItem(first));
+        const double grabbed = byName(u"timelineCanvas"_s)->mapFromScene(QPointF(from)).x() - clipItem(first)->x();
+        const QPoint edge(static_cast<int>(flick->mapToScene(QPointF(flick->width() - 4, 0)).x()), from.y());
+        QTest::mouseMove(m_window, from);
+        QTest::mousePress(m_window, Qt::LeftButton, {}, from);
+        for (int i = 1; i <= 12; ++i) {
+            QTest::mouseMove(m_window, from + (edge - from) * i / 12);
+            QTest::qWait(5);
+        }
+        const double startX = flick->property("contentX").toDouble();
+        QTRY_VERIFY(flick->property("contentX").toDouble() > startX + 300); // the pointer holds still
+        // The clip stays under the pointer: its left edge moved with the content.
+        const double pointerInCanvas = byName(u"timelineCanvas"_s)->mapFromScene(QPointF(edge)).x();
+        QVERIFY(std::abs(clipItem(first)->x() - (pointerInCanvas - grabbed)) < 3 * 8.0 + 1);
+        QTest::mouseRelease(m_window, Qt::LeftButton, {}, edge);
+        ++m_actions;
+        QTRY_VERIFY(mainTrack().clips[0].id != first);
+        editor()->undo();
+        QTRY_COMPARE(mainTrack().clips[0].id, first);
     }
 
     void noQmlWarnings()

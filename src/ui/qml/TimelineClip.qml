@@ -31,12 +31,22 @@ Item {
     property int moveRow: trackRow
     property int editStart: start
     property int editEnd: start + duration
-    readonly property int shownStart: mode === "move" ? moveFrame : mode === "" ? start : editStart
+    // Where the gesture started and the pointer's last height, in canvas coordinates.
+    property real pressX
+    property real pressY
+    property real pointerY
+    property string previewKey: ""
+    // Another clip being dragged or trimmed moves this one (on the magnetic main track): it shows where it will be.
+    readonly property int shownStart: mode === "move" ? moveFrame : mode === "" ? (view.reflowStarts[clipId] ?? start) : editStart
     readonly property int shownDuration: mode === "trimStart" || mode === "trimEnd" ? editEnd - editStart : duration
     readonly property int shownRow: mode === "move" ? moveRow : trackRow
 
     objectName: "clip-" + clipId
     x: shownStart * view.zoom
+    Behavior on x {
+        enabled: clip.view.reflowing && clip.mode === ""
+        NumberAnimation { duration: Theme.motion.short4; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.motion.standard }
+    }
     y: view.rowTop(shownRow) + (shownRow < 0 || shownRow >= view.rows
                                 ? (view.rowHeight(shownRow) - view.rowHeight(trackRow)) / 2 : 0)
     width: Math.max(Theme.editor.hairline, shownDuration * view.zoom)
@@ -265,6 +275,66 @@ Item {
             clip.view.openClipMenu()
         }
     }
+    // ---- gestures (canvas coordinates; also called while the timeline scrolls under a still pointer) -------------
+    function moveTo(px, py) {
+        const raw = Math.max(0, clip.start + Math.round((px - clip.pressX) / clip.view.zoom))
+        clip.moveFrame = clip.view.editor.snapRange(raw, clip.duration, [clip.clipId], clip.view.snapFrames)
+        // The guide goes on the edge that snapped: the start if snapping the start alone gives this position.
+        clip.view.snapGuide = clip.moveFrame === raw ? -1
+                            : clip.view.editor.snap(raw, [clip.clipId], clip.view.snapFrames) === clip.moveFrame
+                              ? clip.moveFrame : clip.moveFrame + clip.duration
+        clip.pointerY = py
+        clip.moveRow = clip.view.rowAt(py)
+        clip.view.trackDrag(clip, px)
+        clip.view.dragExtent = clip.moveFrame + clip.duration
+        const key = clip.moveFrame + "/" + clip.moveRow
+        if (key !== clip.previewKey) {
+            clip.previewKey = key
+            clip.view.showReflow(clip.view.editor.previewMove(clip.clipId, clip.moveFrame, clip.moveRow))
+        }
+    }
+    function trimTo(px) {
+        const delta = Math.round((px - clip.pressX) / clip.view.zoom)
+        if (clip.mode === "trimStart") {
+            // Not before the start of the material, and at least one frame long.
+            const lowest = clip.mediaLength >= 0 ? Math.max(0, clip.start - clip.sourceIn) : 0
+            const raw = Math.max(lowest, Math.min(clip.start + delta, clip.editEnd - 1))
+            const snapped = clip.view.editor.snap(raw, [clip.clipId], clip.view.snapFrames)
+            clip.editStart = Math.max(lowest, Math.min(snapped, clip.editEnd - 1))
+            clip.view.snapGuide = snapped !== raw ? snapped : -1
+            clip.view.player.skim(clip.editStart)
+        } else {
+            const highest = clip.mediaLength >= 0 ? clip.start + clip.mediaLength - clip.sourceIn : Number.MAX_SAFE_INTEGER
+            const raw = Math.min(highest, Math.max(clip.start + clip.duration + delta, clip.editStart + 1))
+            const snapped = clip.view.editor.snap(raw, [clip.clipId], clip.view.snapFrames)
+            clip.editEnd = Math.min(highest, Math.max(snapped, clip.editStart + 1))
+            clip.view.snapGuide = snapped !== raw ? snapped : -1
+            clip.view.player.skim(clip.editEnd - 1)
+            clip.view.dragExtent = clip.editEnd
+            // The end moves: on the magnetic main track the clips after it follow (the start edge leaves a gap that
+            // closes on release, as in CapCut).
+            const key = String(clip.editEnd)
+            if (key !== clip.previewKey) {
+                clip.previewKey = key
+                clip.view.showReflow(clip.view.editor.previewTrim(clip.clipId, false, clip.editEnd))
+            }
+        }
+        clip.view.trackDrag(clip, px)
+    }
+    function edgeScrolled() {
+        const px = clip.view.canvasX(clip.view.dragX)
+        if (clip.mode === "move")
+            moveTo(px, clip.pointerY)
+        else if (clip.mode !== "")
+            trimTo(px)
+    }
+    function endGesture() {
+        clip.mode = ""
+        clip.previewKey = ""
+        clip.view.snapGuide = -1
+        clip.view.endDrag()
+    }
+
     // Body: click selects (Ctrl/Shift adds), drag moves.
     MouseArea {
         id: mover
@@ -273,44 +343,35 @@ Item {
         anchors.rightMargin: Theme.editor.trimHandleWidth
         enabled: !clip.locked
         cursorShape: clip.mode === "move" ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-        property real pressX
-        property real pressY
         onPressed: (mouse) => {
             const point = mapToItem(clip.parent, mouse.x, mouse.y)
-            pressX = point.x
-            pressY = point.y
+            clip.pressX = point.x
+            clip.pressY = point.y
             clip.view.player.pause()
         }
         onPositionChanged: (mouse) => {
             const point = mapToItem(clip.parent, mouse.x, mouse.y)
-            if (clip.mode === "" && Math.abs(point.x - pressX) + Math.abs(point.y - pressY) > Theme.editor.dragStartDistance) {
+            if (clip.mode === "" && Math.abs(point.x - clip.pressX) + Math.abs(point.y - clip.pressY) > Theme.editor.dragStartDistance) {
                 clip.mode = "move"
                 if (!clip.selected)
                     clip.view.editor.select(clip.clipId, false)
             }
-            if (clip.mode !== "move")
-                return
-            const raw = Math.max(0, clip.start + Math.round((point.x - pressX) / clip.view.zoom))
-            clip.moveFrame = clip.view.editor.snapRange(raw, clip.duration, [clip.clipId], clip.view.snapFrames)
-            // The guide goes on the edge that snapped: the start if snapping the start alone gives this position.
-            clip.view.snapGuide = clip.moveFrame === raw ? -1
-                                : clip.view.editor.snap(raw, [clip.clipId], clip.view.snapFrames) === clip.moveFrame
-                                  ? clip.moveFrame : clip.moveFrame + clip.duration
-            clip.moveRow = clip.view.rowAt(point.y)
+            if (clip.mode === "move")
+                clip.moveTo(point.x, point.y)
         }
         onReleased: (mouse) => {
             if (clip.mode === "move") {
                 const frame = clip.moveFrame
                 const row = clip.moveRow
-                clip.mode = ""
-                clip.view.snapGuide = -1
+                // The command first, then the end of the preview: the other clips are already where it puts them.
                 if (frame !== clip.start || row !== clip.trackRow)
                     clip.view.editor.moveClip(clip.clipId, frame, row)
+                clip.endGesture()
             } else {
                 clip.view.editor.select(clip.clipId, (mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) !== 0)
             }
         }
-        onCanceled: { clip.mode = ""; clip.view.snapGuide = -1 }
+        onCanceled: clip.endGesture()
         onDoubleClicked: if (clip.placeholder !== "") clip.view.editor.replaceRequested(clip.clipId)
     }
 
@@ -323,9 +384,8 @@ Item {
         enabled: !clip.locked
         hoverEnabled: true
         cursorShape: Qt.SizeHorCursor
-        property real pressX
         onPressed: (mouse) => {
-            pressX = mapToItem(clip.parent, mouse.x, 0).x
+            clip.pressX = mapToItem(clip.parent, mouse.x, 0).x
             clip.editStart = clip.start
             clip.editEnd = clip.start + clip.duration
             clip.mode = startEdge ? "trimStart" : "trimEnd"
@@ -334,36 +394,18 @@ Item {
                 clip.view.editor.select(clip.clipId, false)
         }
         onPositionChanged: (mouse) => {
-            if (!pressed)
-                return
-            const delta = Math.round((mapToItem(clip.parent, mouse.x, 0).x - pressX) / clip.view.zoom)
-            if (startEdge) {
-                // Not before the start of the material, and at least one frame long.
-                const lowest = clip.mediaLength >= 0 ? Math.max(0, clip.start - clip.sourceIn) : 0
-                const raw = Math.max(lowest, Math.min(clip.start + delta, clip.editEnd - 1))
-                const snapped = clip.view.editor.snap(raw, [clip.clipId], clip.view.snapFrames)
-                clip.editStart = Math.max(lowest, Math.min(snapped, clip.editEnd - 1))
-                clip.view.snapGuide = snapped !== raw ? snapped : -1
-                clip.view.player.skim(clip.editStart)
-            } else {
-                const highest = clip.mediaLength >= 0 ? clip.start + clip.mediaLength - clip.sourceIn : Number.MAX_SAFE_INTEGER
-                const raw = Math.min(highest, Math.max(clip.start + clip.duration + delta, clip.editStart + 1))
-                const snapped = clip.view.editor.snap(raw, [clip.clipId], clip.view.snapFrames)
-                clip.editEnd = Math.min(highest, Math.max(snapped, clip.editStart + 1))
-                clip.view.snapGuide = snapped !== raw ? snapped : -1
-                clip.view.player.skim(clip.editEnd - 1)
-            }
+            if (pressed)
+                clip.trimTo(mapToItem(clip.parent, mouse.x, 0).x)
         }
         onReleased: {
             const frame = startEdge ? clip.editStart : clip.editEnd
             const changed = startEdge ? frame !== clip.start : frame !== clip.start + clip.duration
-            clip.mode = ""
-            clip.view.snapGuide = -1
             clip.view.player.endSkim()
             if (changed)
                 clip.view.editor.trimClip(clip.clipId, startEdge, frame)
+            clip.endGesture()
         }
-        onCanceled: { clip.mode = ""; clip.view.snapGuide = -1; clip.view.player.endSkim() }
+        onCanceled: { clip.view.player.endSkim(); clip.endGesture() }
 
         Rectangle {
             id: trimTooltip

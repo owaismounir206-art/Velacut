@@ -250,6 +250,11 @@ public:
     // Timeline
     Q_INVOKABLE bool moveClip(const QString &clipId, int frame, int trackRow);
     Q_INVOKABLE bool trimClip(const QString &clipId, bool startEdge, int frame);
+    // What moveClip()/trimClip() would do (nothing changes), for the timeline to show it while the gesture goes on:
+    // {"starts": {clipId: frame} of the other clips that move along their track, "landing": frame where the clip
+    // ends up on the magnetic main track (-1 elsewhere)}. Empty when the edit is refused.
+    Q_INVOKABLE QVariantMap previewMove(const QString &clipId, int frame, int trackRow) const;
+    Q_INVOKABLE QVariantMap previewTrim(const QString &clipId, bool startEdge, int frame) const;
     bool canSplit() const;
     // The selected clips at the playhead, or else the clip under the playhead (main track first).
     Q_INVOKABLE bool split();
@@ -425,6 +430,8 @@ private:
     std::vector<ClipId> splitTargets() const;
     std::optional<ClipId> rippleTrimTarget() const;
     std::optional<ClipId> insertAtRow(const MediaId &mediaId, int frame, int trackRow);
+    EditResult moveClipEdit(const ClipId &clipId, int frame, int trackRow) const;
+    QVariantMap previewOf(const EditResult &result, const ClipId &clipId) const;
 
     std::unique_ptr<document::Document> m_document;
     engine::MediaAnalysis &m_analysis;
