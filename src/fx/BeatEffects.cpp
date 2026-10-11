@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "BeatEffects.h"
 
+#include "fx/Parallel.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -65,12 +67,14 @@ void applyBeatFlash(uint8_t *rgba, int width, int height, double pulse, double i
     const double invStrength = 1.0 - strength;
     const double flashVal = 255.0 * strength;
 
-    for (int i = 0; i < totalPixels; ++i) {
-        uint8_t *px = rgba + i * 4;
-        px[0] = static_cast<uint8_t>(std::clamp(px[0] * invStrength + flashVal, 0.0, 255.0));
-        px[1] = static_cast<uint8_t>(std::clamp(px[1] * invStrength + flashVal, 0.0, 255.0));
-        px[2] = static_cast<uint8_t>(std::clamp(px[2] * invStrength + flashVal, 0.0, 255.0));
-    }
+    parallelFor(totalPixels, [&](int begin, int end) {
+        for (int i = begin; i < end; ++i) {
+            uint8_t *px = rgba + i * 4;
+            px[0] = static_cast<uint8_t>(std::clamp(px[0] * invStrength + flashVal, 0.0, 255.0));
+            px[1] = static_cast<uint8_t>(std::clamp(px[1] * invStrength + flashVal, 0.0, 255.0));
+            px[2] = static_cast<uint8_t>(std::clamp(px[2] * invStrength + flashVal, 0.0, 255.0));
+        }
+    }, 8192);
 }
 
 void applyBeatZoom(uint8_t *dst, const uint8_t *src, int width, int height, double pulse,
@@ -88,17 +92,19 @@ void applyBeatZoom(uint8_t *dst, const uint8_t *src, int width, int height, doub
     const double cy = height * 0.5;
     const double invZoom = 1.0 / zoom;
 
-    for (int y = 0; y < height; ++y) {
-        const double srcY = (static_cast<double>(y) - cy) * invZoom + cy;
-        for (int x = 0; x < width; ++x) {
-            const double srcX = (static_cast<double>(x) - cx) * invZoom + cx;
-            uint8_t *d = dst + (y * width + x) * 4;
-            d[0] = sampleBilinear(src, width, height, srcX, srcY, 0);
-            d[1] = sampleBilinear(src, width, height, srcX, srcY, 1);
-            d[2] = sampleBilinear(src, width, height, srcX, srcY, 2);
-            d[3] = sampleBilinear(src, width, height, srcX, srcY, 3);
+    parallelFor(height, [&](int begin, int end) {
+        for (int y = begin; y < end; ++y) {
+            const double srcY = (static_cast<double>(y) - cy) * invZoom + cy;
+            for (int x = 0; x < width; ++x) {
+                const double srcX = (static_cast<double>(x) - cx) * invZoom + cx;
+                uint8_t *d = dst + (y * width + x) * 4;
+                d[0] = sampleBilinear(src, width, height, srcX, srcY, 0);
+                d[1] = sampleBilinear(src, width, height, srcX, srcY, 1);
+                d[2] = sampleBilinear(src, width, height, srcX, srcY, 2);
+                d[3] = sampleBilinear(src, width, height, srcX, srcY, 3);
+            }
         }
-    }
+    });
 }
 
 void applyBeatShake(uint8_t *dst, const uint8_t *src, int width, int height, double pulse,
@@ -116,17 +122,19 @@ void applyBeatShake(uint8_t *dst, const uint8_t *src, int width, int height, dou
     const double dx = amount * std::sin(2.0 * kPi * 28.0 * timeSeconds);
     const double dy = amount * std::cos(2.0 * kPi * 22.0 * timeSeconds);
 
-    for (int y = 0; y < height; ++y) {
-        const double srcY = static_cast<double>(y) - dy;
-        for (int x = 0; x < width; ++x) {
-            const double srcX = static_cast<double>(x) - dx;
-            uint8_t *d = dst + (y * width + x) * 4;
-            d[0] = sampleBilinear(src, width, height, srcX, srcY, 0);
-            d[1] = sampleBilinear(src, width, height, srcX, srcY, 1);
-            d[2] = sampleBilinear(src, width, height, srcX, srcY, 2);
-            d[3] = sampleBilinear(src, width, height, srcX, srcY, 3);
+    parallelFor(height, [&](int begin, int end) {
+        for (int y = begin; y < end; ++y) {
+            const double srcY = static_cast<double>(y) - dy;
+            for (int x = 0; x < width; ++x) {
+                const double srcX = static_cast<double>(x) - dx;
+                uint8_t *d = dst + (y * width + x) * 4;
+                d[0] = sampleBilinear(src, width, height, srcX, srcY, 0);
+                d[1] = sampleBilinear(src, width, height, srcX, srcY, 1);
+                d[2] = sampleBilinear(src, width, height, srcX, srcY, 2);
+                d[3] = sampleBilinear(src, width, height, srcX, srcY, 3);
+            }
         }
-    }
+    });
 }
 
 } // namespace velacut::fx

@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 namespace velacut::fx {
 
@@ -136,15 +137,32 @@ void drawAffine(ImageView destination, ConstImageView source, const Affine &dest
         const int ox = static_cast<int>(destinationToSource.dx);
         const int oy = static_cast<int>(destinationToSource.dy);
         for (int y = y0; y < y1; ++y) {
+            const int sy = y + oy;
+            if (sy < 0 || sy >= source.height || sy + 0.5 < clipped.top || sy + 0.5 > clipped.bottom) {
+                continue; // fetch() would give nothing for the whole row
+            }
+            const std::uint8_t *sourceRow = source.row(sy);
+            std::uint8_t *destinationRow = destination.row(y);
             for (int x = x0; x < x1; ++x) {
-                Premultiplied p = fetch(source, clipped, x + ox, y + oy);
-                if (p.a > 0.0f) {
-                    p.r *= op;
-                    p.g *= op;
-                    p.b *= op;
-                    p.a *= op;
-                    blendOver(destination.row(y) + x * 4, p);
+                const int sx = x + ox;
+                if (sx < 0 || sx >= source.width || sx + 0.5 < clipped.left || sx + 0.5 > clipped.right) {
+                    continue;
                 }
+                const std::uint8_t *s = sourceRow + sx * 4;
+                if (s[3] == 0) {
+                    continue;
+                }
+                if (s[3] == 255 && op == 1.0f) {
+                    // Opaque over anything: blendOver() gives the source pixel exactly (alpha 1, nothing of d).
+                    std::memcpy(destinationRow + x * 4, s, 4);
+                    continue;
+                }
+                Premultiplied p = fetch(source, clipped, sx, sy);
+                p.r *= op;
+                p.g *= op;
+                p.b *= op;
+                p.a *= op;
+                blendOver(destinationRow + x * 4, p);
             }
         }
         return;

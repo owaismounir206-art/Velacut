@@ -7,6 +7,8 @@ add_library(velacut_fx STATIC
     AudioVisualizer.h AudioVisualizer.cpp
     BeatEffects.h BeatEffects.cpp
     VideoEffect.h VideoEffect.cpp
+    Parallel.h Parallel.cpp
+    Blur.h Blur.cpp
     Graphic.h Graphic.cpp
     ChromaKey.h ChromaKey.cpp
     Color.h Color.cpp

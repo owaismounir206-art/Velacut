@@ -15,6 +15,7 @@
 #include "fx/ChromaKey.h"
 #include "fx/Composite.h"
 #include "fx/Mask.h"
+#include "fx/Parallel.h"
 #include "fx/Transform.h"
 
 #include <QCryptographicHash>
@@ -38,6 +39,7 @@
 #include <mlt++/Mlt.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 
@@ -77,21 +79,27 @@ private:
     QElapsedTimer m_timer;
 };
 
-// Runs `rows(begin, end)` over the image in horizontal bands on MLT's slice threads.
+// Runs `rows(begin, end)` over the image in horizontal bands on MLT's slice threads (fx::parallelFor, installed by
+// registerServices: also the kernels of fx use them, and never from inside a band).
 template<typename Rows>
 void runSliced(int height, Rows rows)
 {
-    struct Job
+    fx::parallelFor(height, rows, 32);
+}
+
+// The thread pool of fx's kernels: MLT's "normal" slice threads.
+void runOnMltSlices(int jobs, fx::ParallelJob job, void *cookie)
+{
+    struct Call
     {
-        Rows *rows;
-        int height;
-    } job{&rows, height};
-    const int jobs = std::min(mlt_slices_count_normal(), std::max(1, height / 32));
-    mlt_slices_run_normal(jobs, [](int, int index, int count, void *cookie) {
-        auto *j = static_cast<Job *>(cookie);
-        (*j->rows)(j->height * index / count, j->height * (index + 1) / count);
+        fx::ParallelJob job;
+        void *cookie;
+    } call{job, cookie};
+    mlt_slices_run_normal(jobs, [](int, int index, int count, void *data) {
+        const auto *c = static_cast<const Call *>(data);
+        c->job(index, count, c->cookie);
         return 0;
-    }, &job);
+    }, &call);
 }
 
 template<typename T>
@@ -193,12 +201,12 @@ void fillBackground(const TransformSettings &s, uint8_t *canvas, int w, int h, c
     }
     // Colour (and, until they are rendered, images and patterns: the colour of the background).
     const Color c = background.type == BackgroundType::Color ? background.color : Color{0, 0, 0, 255};
-    for (int i = 0; i < w * h; ++i) {
-        canvas[i * 4] = c.r;
-        canvas[i * 4 + 1] = c.g;
-        canvas[i * 4 + 2] = c.b;
-        canvas[i * 4 + 3] = c.a;
-    }
+    const std::array<uint8_t, 4> pixel{c.r, c.g, c.b, c.a};
+    runSliced(h, [&](int begin, int end) {
+        for (int i = begin * w; i < end * w; ++i) {
+            std::memcpy(canvas + static_cast<size_t>(i) * 4, pixel.data(), 4);
+        }
+    });
 }
 
 int transformGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
@@ -1168,13 +1176,20 @@ int videoEffectGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *form
         fx::renderVideoEffect(s->kernel, view, params);
         return 0;
     }
-    const std::vector<uint8_t> original(*image, *image + static_cast<std::ptrdiff_t>(w) * h * 4);
+    const size_t bytes = static_cast<size_t>(w) * static_cast<size_t>(h) * 4;
+    const fx::Scratch original(bytes);
+    std::memcpy(original.data(), *image, bytes);
     fx::renderVideoEffect(s->kernel, view, params);
-    for (size_t i = 0; i < original.size(); ++i) {
-        if (i % 4 != 3) {
-            (*image)[i] = static_cast<uint8_t>(std::lround(original[i] + ((*image)[i] - original[i]) * s->mix));
+    uint8_t *pixels = *image;
+    const uint8_t *before = original.data();
+    const double mix = s->mix;
+    runSliced(h, [&](int begin, int end) {
+        for (size_t i = static_cast<size_t>(begin) * w * 4; i < static_cast<size_t>(end) * w * 4; i += 4) {
+            for (size_t c = 0; c < 3; ++c) {
+                pixels[i + c] = static_cast<uint8_t>(std::lround(before[i + c] + (pixels[i + c] - before[i + c]) * mix));
+            }
         }
-    }
+    });
     return 0;
 }
 
@@ -1337,6 +1352,7 @@ void registerServices(Mlt::Repository *repository)
     if (!repository) {
         return;
     }
+    fx::setParallelRunner(runOnMltSlices, mlt_slices_count_normal());
     repository->register_service(mlt_service_transition_type, "vedit.composite", createComposite);
     repository->register_service(mlt_service_filter_type, "vedit.transform", createFilter<transformProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.adjust", createFilter<adjustProcess>);

@@ -2,6 +2,7 @@
 #include "MltRuntime.h"
 
 #include "engine/mlt/Services.h"
+#include "fx/Parallel.h"
 
 #include <QLoggingCategory>
 
@@ -80,6 +81,7 @@ Mlt::Repository *MltRuntime::repository()
 void MltRuntime::shutdown()
 {
     if (s_ready.exchange(false)) {
+        fx::setParallelRunner(nullptr, 1); // MLT's slice threads go with the factory
         Mlt::Factory::close();
     }
 }

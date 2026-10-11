@@ -226,6 +226,18 @@ std::optional<Scenario> makeScenario(const QString &name, const Media &a, const 
         s.from = 135;
         s.to = 165;
         s.description = u"split clip (same file) + 1 s dissolve"_s;
+    } else if (name == u"S4b") {
+        // Same file, parts far apart (a split, the middle deleted): A reads source 105–134, B source 165–194.
+        if (!builder.apply(builder.editor().splitClip(first, frames(120))) ||
+            !builder.apply(builder.editor().splitClip(builder.mainTrack().clips.back().id, frames(180))) ||
+            !builder.apply(builder.editor().rippleDeleteClips({builder.mainTrack().clips.at(1).id})) ||
+            !builder.apply(builder.editor().addTransition(builder.mainTrack().clips.front().id,
+                                                          AssetRef{u"vedit.core"_s, u"transitions/dissolve"_s, 1}, frames(30)))) {
+            return std::nullopt;
+        }
+        s.from = 105;
+        s.to = 135;
+        s.description = u"same file, distant parts + 1 s dissolve"_s;
     } else if (name == u"S5") {
         if (!builder.apply(builder.editor().insertMedia(b.id, frames(300))) ||
             !builder.apply(builder.editor().addTransition(first, AssetRef{u"vedit.core"_s, u"transitions/blur-dissolve"_s, 1},
@@ -492,7 +504,7 @@ int main(int argc, char **argv)
     } else {
         heights = {sizeOption.toInt()};
     }
-    QStringList names{u"S1"_s, u"S2"_s, u"S3"_s, u"S4"_s, u"S5"_s, u"S6"_s};
+    QStringList names{u"S1"_s, u"S2"_s, u"S3"_s, u"S4"_s, u"S4b"_s, u"S5"_s, u"S6"_s};
     if (scenarioOption != u"all") {
         names = scenarioOption.split(u',');
     }

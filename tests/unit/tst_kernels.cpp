@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // CPU reference kernels of Phase 2 (SPEC 1bis rule 1): transform, colour, spatial filters, transitions, audio gain.
 #include "fx/Animation.h"
+#include "fx/Blur.h"
+#include "fx/Parallel.h"
 #include "fx/Audio.h"
 #include "fx/ChromaKey.h"
 #include "fx/Color.h"
@@ -26,6 +28,8 @@
 
 #include <array>
 #include <cmath>
+#include <thread>
+#include <tuple>
 #include <vector>
 
 using velacut::Rational;
@@ -76,6 +80,125 @@ Buffer pattern(int w, int h)
         }
     }
     return b;
+}
+
+// The box blur as it was written before the fast one (per channel, one strided column at a time): the fast one must
+// give exactly the same bytes.
+void referenceBoxBlur(Buffer &image, int radius, bool nearest)
+{
+    const int w = image.width;
+    const int h = image.height;
+    std::vector<long> line(static_cast<size_t>(std::max(w, h)) * 4);
+    const auto pass = [&](int count, auto pixel) {
+        for (int i = 0; i < count * 4; ++i) {
+            line[static_cast<size_t>(i)] = pixel(i / 4)[i % 4];
+        }
+        const int window = 2 * radius + 1;
+        for (int c = 0; c < 4; ++c) {
+            long sum = 0;
+            for (int k = -radius; k <= radius; ++k) {
+                sum += line[static_cast<size_t>(std::clamp(k, 0, count - 1)) * 4 + c];
+            }
+            for (int i = 0; i < count; ++i) {
+                pixel(i)[c] = static_cast<std::uint8_t>((sum + (nearest ? window / 2 : 0)) / window);
+                sum += line[static_cast<size_t>(std::min(i + radius + 1, count - 1)) * 4 + c] -
+                       line[static_cast<size_t>(std::max(i - radius, 0)) * 4 + c];
+            }
+        }
+    };
+    for (int iteration = 0; iteration < 3; ++iteration) {
+        for (int y = 0; y < h; ++y) {
+            std::uint8_t *row = image.pixels.data() + static_cast<size_t>(y) * w * 4;
+            pass(w, [row](int i) { return row + i * 4; });
+        }
+        for (int x = 0; x < w; ++x) {
+            pass(h, [&image, w, x](int i) { return image.pixels.data() + (static_cast<size_t>(i) * w + x) * 4; });
+        }
+    }
+}
+
+// A photo-like test picture: smooth gradients, hard edges (a disc, stripes) and fine noise.
+Buffer photoLike(int w, int h)
+{
+    Buffer b(w, h);
+    std::uint32_t seed = 12345;
+    for (int y = 0; y < h; ++y) {
+        for (int x = 0; x < w; ++x) {
+            seed = seed * 1664525U + 1013904223U;
+            const int noise = static_cast<int>(seed >> 28) - 8;
+            const bool disc = (x - w / 3) * (x - w / 3) + (y - h / 2) * (y - h / 2) < h * h / 9;
+            const bool stripe = (x / 9) % 2 == 0 && y > h * 2 / 3;
+            const auto clampByte = [](double v) { return std::uint8_t(std::clamp(v, 0.0, 255.0)); };
+            const double r = 128 + 90 * std::sin(x * 0.013) + (disc ? 60 : 0) + noise;
+            const double g = 100 + 70 * std::cos(y * 0.021 + x * 0.004) - (stripe ? 80 : 0) + noise;
+            const double bl = 60 + 0.25 * x - (disc ? 40 : 0) + noise;
+            b.set(x, y, {clampByte(r), clampByte(g), clampByte(bl), 255});
+        }
+    }
+    return b;
+}
+
+double psnr(const Buffer &a, const Buffer &b)
+{
+    double squares = 0;
+    size_t count = 0;
+    for (size_t i = 0; i < a.pixels.size(); ++i) {
+        if (i % 4 != 3) {
+            const double d = double(a.pixels[i]) - double(b.pixels[i]);
+            squares += d * d;
+            ++count;
+        }
+    }
+    return squares == 0 ? 99.0 : 10 * std::log10(255.0 * 255.0 / (squares / double(count)));
+}
+
+// Zoom/spin blur as it was written before the float version (double, trigonometry per pixel and tap).
+void referenceRadialBlur(Buffer &image, double zoom, double spin)
+{
+    const Buffer source = image;
+    const int w = image.width;
+    const int h = image.height;
+    const auto sample = [&](double x, double y, int c) {
+        x = std::clamp(x, 0.0, w - 1.0);
+        y = std::clamp(y, 0.0, h - 1.0);
+        const int x0 = int(x);
+        const int y0 = int(y);
+        const double fx = x - x0;
+        const double fy = y - y0;
+        const auto at = [&](int xx, int yy) { return double(source.at(std::clamp(xx, 0, w - 1), std::clamp(yy, 0, h - 1))[size_t(c)]); };
+        return (at(x0, y0) * (1 - fx) + at(x0 + 1, y0) * fx) * (1 - fy) + (at(x0, y0 + 1) * (1 - fx) + at(x0 + 1, y0 + 1) * fx) * fy;
+    };
+    const double cx = w / 2.0;
+    const double cy = h / 2.0;
+    for (int y = 0; y < h; ++y) {
+        for (int x = 0; x < w; ++x) {
+            std::array<double, 4> sum{};
+            for (int k = 0; k < 12; ++k) {
+                const double t = k / 11.0 - 0.5;
+                const double scale = 1.0 - zoom * t;
+                const double angle = spin * t;
+                const double dx = (x - cx) * scale;
+                const double dy = (y - cy) * scale;
+                for (int c = 0; c < 4; ++c) {
+                    sum[size_t(c)] += sample(cx + dx * std::cos(angle) - dy * std::sin(angle), cy + dx * std::sin(angle) + dy * std::cos(angle), c) / 12;
+                }
+            }
+            image.set(x, y, {std::uint8_t(std::lround(sum[0])), std::uint8_t(std::lround(sum[1])), std::uint8_t(std::lround(sum[2])),
+                             std::uint8_t(std::lround(sum[3]))});
+        }
+    }
+}
+
+// A parallel runner on plain threads, as MLT's slices would run the jobs.
+void threadRunner(int jobs, ParallelJob job, void *cookie)
+{
+    std::vector<std::thread> threads;
+    for (int i = 0; i < jobs; ++i) {
+        threads.emplace_back(job, i, jobs, cookie);
+    }
+    for (std::thread &thread : threads) {
+        thread.join();
+    }
 }
 
 bool near(std::array<int, 4> a, std::array<int, 4> b, int tolerance = 1)
@@ -570,6 +693,89 @@ private slots:
             QVERIFY2(changed, qPrintable(name + u" changes nothing"_s));
         }
         QVERIFY(!effectKernel(u"noSuchEffect"_s));
+    }
+
+    // The fast box blur (rows in bands, columns in blocks, a multiplication instead of a division) gives the same bytes
+    // as the plain one, with and without threads, at any size (blocks of 16 columns cut short) and radius.
+    void fastBoxBlurIsExact()
+    {
+        for (const bool threads : {false, true}) {
+            setParallelRunner(threads ? threadRunner : nullptr, 5);
+            for (const auto &[w, h] : {std::pair{7, 5}, std::pair{33, 19}, std::pair{160, 90}}) {
+                for (const int radius : {1, 2, 6, 40}) {
+                    for (const bool nearest : {false, true}) {
+                        Buffer reference = pattern(w, h);
+                        for (size_t i = 3; i < reference.pixels.size(); i += 4) {
+                            reference.pixels[i] = std::uint8_t(i * 13 % 256); // alpha is blurred too
+                        }
+                        Buffer fast = reference;
+                        referenceBoxBlur(reference, radius, nearest);
+                        boxBlurPasses(fast.view(), radius, 3, nearest ? BoxRounding::Nearest : BoxRounding::Truncate);
+                        QVERIFY2(fast.pixels == reference.pixels,
+                                 qPrintable(u"%1×%2 r%3 %4 %5"_s.arg(w).arg(h).arg(radius).arg(nearest).arg(threads)));
+                    }
+                }
+            }
+        }
+        setParallelRunner(nullptr, 1);
+    }
+
+    // Large blurs are computed on a smaller copy (D-59): within PSNR 40 dB of the exact three box passes.
+    void largeBlurOnASmallerCopyStaysClose()
+    {
+        const Buffer photo = photoLike(640, 360);
+        for (const int radius : {7, 8, 11, 19, 23, 24, 33, 60}) {
+            Buffer exact = photo;
+            boxBlurPasses(exact.view(), radius, 3, BoxRounding::Truncate);
+            Buffer fast = photo;
+            blur3(fast.view(), radius);
+            const double quality = psnr(exact, fast);
+            QVERIFY2(quality >= 40.0, qPrintable(u"radius %1: %2 dB"_s.arg(radius).arg(quality, 0, 'f', 1)));
+            if (radius < 8) {
+                QCOMPARE(fast.pixels, exact.pixels); // small radii: the exact blur
+            }
+            setParallelRunner(threadRunner, 6);
+            Buffer parallel = photo;
+            blur3(parallel.view(), radius);
+            setParallelRunner(nullptr, 1);
+            QCOMPARE(parallel.pixels, fast.pixels); // the same bytes with threads
+        }
+    }
+
+    // Zoom and spin blur in float with per-tap transforms: within PSNR 45 dB of the double reference.
+    void radialBlursMatchTheReference()
+    {
+        const Buffer photo = photoLike(320, 180);
+        for (const auto &[kernel, zoom, spin] : {std::tuple{EffectKernel::ZoomBlur, 0.25, 0.0}, std::tuple{EffectKernel::SpinBlur, 0.0, 0.35}}) {
+            Buffer reference = photo;
+            referenceRadialBlur(reference, zoom, spin);
+            Buffer fast = photo;
+            VideoEffectParams params;
+            params.amount = 1.0;
+            renderVideoEffect(kernel, fast.view(), params);
+            const double quality = psnr(reference, fast);
+            QVERIFY2(quality >= 45.0, qPrintable(u"%1: %2 dB"_s.arg(effectKernelName(kernel)).arg(quality, 0, 'f', 1)));
+        }
+    }
+
+    // Every video effect gives the same picture whether its rows run on one thread or in parallel bands.
+    void videoEffectsSameInParallel()
+    {
+        Buffer photo = pattern(203, 117);
+        for (int k = int(EffectKernel::Blur); k <= int(EffectKernel::ColorShift); ++k) {
+            const auto kernel = static_cast<EffectKernel>(k);
+            VideoEffectParams params;
+            params.amount = 0.8;
+            params.time = 0.61;
+            setParallelRunner(nullptr, 1);
+            Buffer serial = photo;
+            renderVideoEffect(kernel, serial.view(), params);
+            setParallelRunner(threadRunner, 6);
+            Buffer parallel = photo;
+            renderVideoEffect(kernel, parallel.view(), params);
+            QVERIFY2(serial.pixels == parallel.pixels, qPrintable(effectKernelName(kernel)));
+        }
+        setParallelRunner(nullptr, 1);
     }
 
     // Graphic elements: numbers that count to their target and hold it, clocks, a bar filling with the clip, marks that

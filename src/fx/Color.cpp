@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "Color.h"
 
+#include "fx/Blur.h"
+
 #include <algorithm>
 #include <cmath>
 
@@ -340,36 +342,7 @@ void boxBlur(ImageView image, int radius)
     if (radius <= 0 || image.width <= 0 || image.height <= 0) {
         return;
     }
-    std::vector<std::uint32_t> line(static_cast<size_t>(std::max(image.width, image.height)) * 4);
-    const auto pass = [&](int count, int length, auto pixel) {
-        for (int i = 0; i < count; ++i) {
-            for (int j = 0; j < length; ++j) {
-                const std::uint8_t *p = pixel(i, j);
-                for (int c = 0; c < 4; ++c) {
-                    line[static_cast<size_t>(j * 4 + c)] = p[c];
-                }
-            }
-            // Sliding window with clamped edges.
-            for (int c = 0; c < 4; ++c) {
-                std::uint32_t sum = 0;
-                for (int k = -radius; k <= radius; ++k) {
-                    sum += line[static_cast<size_t>(std::clamp(k, 0, length - 1) * 4 + c)];
-                }
-                const std::uint32_t window = 2 * radius + 1;
-                for (int j = 0; j < length; ++j) {
-                    pixel(i, j)[c] = static_cast<std::uint8_t>((sum + window / 2) / window);
-                    const int out = std::clamp(j - radius, 0, length - 1);
-                    const int in = std::clamp(j + radius + 1, 0, length - 1);
-                    sum += line[static_cast<size_t>(in * 4 + c)];
-                    sum -= line[static_cast<size_t>(out * 4 + c)];
-                }
-            }
-        }
-    };
-    for (int iteration = 0; iteration < 3; ++iteration) {
-        pass(image.height, image.width, [&](int y, int x) { return image.row(y) + x * 4; });
-        pass(image.width, image.height, [&](int x, int y) { return image.row(y) + x * 4; });
-    }
+    boxBlurPasses(image, radius, 3, BoxRounding::Nearest);
 }
 
 } // namespace velacut::fx

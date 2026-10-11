@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "MotionBlur.h"
 
+#include "fx/Parallel.h"
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -128,11 +130,11 @@ void applyMotionBlur(const ImageView &view, const MotionBlurSettings &settings)
     if (view.width <= 0 || view.height <= 0 || settings.intensity < 1e-4) {
         return;
     }
-    const size_t totalBytes = static_cast<size_t>(view.height * view.stride);
-    std::vector<std::uint8_t> copy(totalBytes);
+    const size_t totalBytes = static_cast<size_t>(view.height) * static_cast<size_t>(view.stride);
+    const Scratch copy(totalBytes);
     std::memcpy(copy.data(), view.data, totalBytes);
     const ConstImageView src{copy.data(), view.width, view.height, view.stride};
-    applyMotionBlur(view, src, settings, 0, view.height);
+    parallelFor(view.height, [&](int begin, int end) { applyMotionBlur(view, src, settings, begin, end); });
 }
 
 } // namespace velacut::fx

@@ -443,7 +443,11 @@ private slots:
             settings.format = format;
             settings.videoCodec = codec;
             settings.hardwareEncoder = HardwareEncoder::Off;
-            return Renderer::render(data, data.mainSequenceId, settings, {}, cancel).status == Renderer::Status::Done;
+            const Renderer::Result result = Renderer::render(data, data.mainSequenceId, settings, {}, cancel);
+            if (result.status != Renderer::Status::Done) {
+                qWarning("%s: %s", qPrintable(name), qPrintable(result.detail)); // seen once under load (docs/PROGRESS.md)
+            }
+            return result.status == Renderer::Status::Done;
         };
         const auto frameCount = [](const QJsonObject &stream) { return stream.value(u"nb_read_frames"_s).toString().toInt(); };
 

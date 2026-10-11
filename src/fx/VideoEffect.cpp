@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "VideoEffect.h"
 
+#include "fx/Blur.h"
 #include "fx/MotionBlur.h"
+#include "fx/Parallel.h"
 
 #include <algorithm>
 #include <array>
@@ -100,27 +102,32 @@ double luma(const std::uint8_t *p)
     return (0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2]) / 255.0;
 }
 
-// A packed copy of an image (stride = width × 4), the source of the kernels that move pixels.
+// A packed copy of an image (stride = width × 4), the source of the kernels that move pixels. The memory is a buffer of
+// the thread reused from frame to frame (Scratch): copies live in one scope of one kernel call.
 struct Copy
 {
     int width = 0;
     int height = 0;
-    std::vector<std::uint8_t> pixels;
+    Scratch buffer;
+    std::uint8_t *pixels;
 
     explicit Copy(const ImageView &image)
         : width(image.width)
         , height(image.height)
-        , pixels(static_cast<size_t>(image.width) * image.height * 4)
+        , buffer(static_cast<size_t>(image.width) * image.height * 4)
+        , pixels(buffer.data())
     {
-        for (int y = 0; y < height; ++y) {
-            std::memcpy(pixels.data() + static_cast<size_t>(y) * width * 4, image.row(y), static_cast<size_t>(width) * 4);
-        }
+        parallelFor(height, [&](int begin, int end) {
+            for (int y = begin; y < end; ++y) {
+                std::memcpy(pixels + static_cast<size_t>(y) * width * 4, image.row(y), static_cast<size_t>(width) * 4);
+            }
+        }, 64);
     }
     const std::uint8_t *at(int x, int y) const
     {
         x = std::clamp(x, 0, width - 1);
         y = std::clamp(y, 0, height - 1);
-        return pixels.data() + (static_cast<size_t>(y) * width + x) * 4;
+        return pixels + (static_cast<size_t>(y) * width + x) * 4;
     }
     // Bilinear, clamped at the borders.
     std::array<double, 4> sample(double x, double y) const
@@ -141,7 +148,7 @@ struct Copy
         }
         return out;
     }
-    ImageView view() { return {pixels.data(), width, height, width * 4}; }
+    ImageView view() { return {pixels, width, height, width * 4}; }
 };
 
 void put(std::uint8_t *p, const std::array<double, 4> &value)
@@ -156,79 +163,57 @@ template<typename Map>
 void remap(const ImageView &image, Map map)
 {
     const Copy source(image);
-    for (int y = 0; y < image.height; ++y) {
-        std::uint8_t *row = image.row(y);
-        for (int x = 0; x < image.width; ++x) {
-            double sx = x;
-            double sy = y;
-            map(static_cast<double>(x), static_cast<double>(y), sx, sy);
-            put(row + x * 4, source.sample(sx, sy));
+    parallelFor(image.height, [&](int begin, int end) {
+        for (int y = begin; y < end; ++y) {
+            std::uint8_t *row = image.row(y);
+            for (int x = 0; x < image.width; ++x) {
+                double sx = x;
+                double sy = y;
+                map(static_cast<double>(x), static_cast<double>(y), sx, sy);
+                put(row + x * 4, source.sample(sx, sy));
+            }
         }
-    }
+    });
 }
 
-// Box blur of radius `radius` (pixels), three passes each way: close to a Gaussian.
+// Box blur of radius `radius` (pixels), three passes each way: close to a Gaussian (large radii on a smaller copy, D-59).
 void blur(const ImageView &image, int radius)
 {
     if (radius < 1 || image.width < 2 || image.height < 2) {
         return;
     }
-    const int w = image.width;
-    const int h = image.height;
-    std::vector<int> line(static_cast<size_t>(std::max(w, h)) * 4);
-    const auto pass = [&](int count, int step, auto pixel) {
-        for (int i = 0; i < count * 4; ++i) {
-            line[static_cast<size_t>(i)] = pixel(i / 4)[i % 4];
-        }
-        const int window = 2 * radius + 1;
-        for (int c = 0; c < 4; ++c) {
-            long sum = 0;
-            for (int k = -radius; k <= radius; ++k) {
-                sum += line[static_cast<size_t>(std::clamp(k, 0, count - 1)) * 4 + c];
-            }
-            for (int i = 0; i < count; ++i) {
-                pixel(i)[c] = static_cast<std::uint8_t>(sum / window);
-                sum += line[static_cast<size_t>(std::min(i + radius + 1, count - 1)) * 4 + c] -
-                       line[static_cast<size_t>(std::max(i - radius, 0)) * 4 + c];
-            }
-        }
-        (void)step;
-    };
-    for (int iteration = 0; iteration < 3; ++iteration) {
-        for (int y = 0; y < h; ++y) {
-            std::uint8_t *row = image.row(y);
-            pass(w, 4, [row](int i) { return row + i * 4; });
-        }
-        for (int x = 0; x < w; ++x) {
-            pass(h, image.stride, [&image, x](int i) { return image.row(i) + x * 4; });
-        }
-    }
+    blur3(image, radius);
 }
 
 // Mixes `effect` over `original` (same size): 0 = original, 1 = effect.
 void mixInto(const ImageView &effect, const Copy &original, double amount)
 {
     amount = std::clamp(amount, 0.0, 1.0);
-    for (int y = 0; y < effect.height; ++y) {
-        std::uint8_t *row = effect.row(y);
-        for (int x = 0; x < effect.width; ++x) {
-            const std::uint8_t *o = original.at(x, y);
-            for (int c = 0; c < 3; ++c) {
-                row[x * 4 + c] = toByte(o[c] + (row[x * 4 + c] - o[c]) * amount);
+    parallelFor(effect.height, [&](int begin, int end) {
+        for (int y = begin; y < end; ++y) {
+            std::uint8_t *row = effect.row(y);
+            for (int x = 0; x < effect.width; ++x) {
+                const std::uint8_t *o = original.at(x, y);
+                for (int c = 0; c < 3; ++c) {
+                    row[x * 4 + c] = toByte(o[c] + (row[x * 4 + c] - o[c]) * amount);
+                }
             }
         }
-    }
+    });
 }
 
+// `pixel(x, y, p)` for every pixel, rows in parallel: it must only change its own pixel.
 template<typename Pixel>
 void forEachPixel(const ImageView &image, Pixel pixel)
 {
-    for (int y = 0; y < image.height; ++y) {
-        std::uint8_t *row = image.row(y);
-        for (int x = 0; x < image.width; ++x) {
-            pixel(x, y, row + x * 4);
+    parallelFor(image.height, [&](int begin, int end) {
+        for (int y = begin; y < end; ++y) {
+            std::uint8_t *row = image.row(y);
+            for (int x = 0; x < image.width; ++x) {
+                pixel(x, y, row + x * 4);
+            }
         }
-    }
+    });
 }
 
 // Adds a soft round spot of `color` (additive, `strength` 0–1).
@@ -258,15 +243,17 @@ void addSpot(const ImageView &image, double cx, double cy, double radius, const 
 void edgeMagnitude(const ImageView &image, std::vector<double> &out)
 {
     const Copy source(image);
-    out.assign(static_cast<size_t>(image.width) * image.height, 0.0);
-    for (int y = 0; y < image.height; ++y) {
-        for (int x = 0; x < image.width; ++x) {
-            const auto l = [&](int dx, int dy) { return luma(source.at(x + dx, y + dy)); };
-            const double gx = -l(-1, -1) - 2 * l(-1, 0) - l(-1, 1) + l(1, -1) + 2 * l(1, 0) + l(1, 1);
-            const double gy = -l(-1, -1) - 2 * l(0, -1) - l(1, -1) + l(-1, 1) + 2 * l(0, 1) + l(1, 1);
-            out[static_cast<size_t>(y) * image.width + x] = std::min(1.0, std::hypot(gx, gy));
+    out.resize(static_cast<size_t>(image.width) * image.height);
+    parallelFor(image.height, [&](int begin, int end) {
+        for (int y = begin; y < end; ++y) {
+            for (int x = 0; x < image.width; ++x) {
+                const auto l = [&](int dx, int dy) { return luma(source.at(x + dx, y + dy)); };
+                const double gx = -l(-1, -1) - 2 * l(-1, 0) - l(-1, 1) + l(1, -1) + 2 * l(1, 0) + l(1, 1);
+                const double gy = -l(-1, -1) - 2 * l(0, -1) - l(1, -1) + l(-1, 1) + 2 * l(0, 1) + l(1, 1);
+                out[static_cast<size_t>(y) * image.width + x] = std::min(1.0, std::hypot(gx, gy));
+            }
         }
-    }
+    });
 }
 
 void vignette(const ImageView &image, double strength, const EffectRgb &color = {0, 0, 0})
@@ -296,31 +283,57 @@ double smoothNoise(double t, std::uint32_t seed)
 
 // ---- kernels -------------------------------------------------------------------------------------------------------
 
+// 12 bilinear samples along the circle/ray through each pixel, in float: per tap the source position is an affine
+// function of x along a row (start and step computed once per row and tap), no trigonometry per pixel.
 void radialBlur(const ImageView &image, double zoom, double spin)
 {
     const Copy source(image);
-    const double cx = image.width / 2.0;
-    const double cy = image.height / 2.0;
+    const float cx = image.width / 2.0f;
+    const float cy = image.height / 2.0f;
+    const float maxX = static_cast<float>(source.width - 1);
+    const float maxY = static_cast<float>(source.height - 1);
     constexpr int kTaps = 12;
-    for (int y = 0; y < image.height; ++y) {
-        std::uint8_t *row = image.row(y);
-        for (int x = 0; x < image.width; ++x) {
-            std::array<double, 4> sum{};
-            for (int k = 0; k < kTaps; ++k) {
-                const double t = static_cast<double>(k) / (kTaps - 1) - 0.5;
-                const double scale = 1.0 - zoom * t;
-                const double angle = spin * t;
-                const double dx = (x - cx) * scale;
-                const double dy = (y - cy) * scale;
-                const auto s = source.sample(cx + dx * std::cos(angle) - dy * std::sin(angle),
-                                             cy + dx * std::sin(angle) + dy * std::cos(angle));
-                for (size_t c = 0; c < 4; ++c) {
-                    sum[c] += s[c] / kTaps;
+    // Per tap: scale × rotation (the same for every pixel).
+    std::array<float, kTaps> a{}; // scale × cos
+    std::array<float, kTaps> b{}; // scale × sin
+    for (int k = 0; k < kTaps; ++k) {
+        const double t = static_cast<double>(k) / (kTaps - 1) - 0.5;
+        const double scale = 1.0 - zoom * t;
+        a[static_cast<size_t>(k)] = static_cast<float>(scale * std::cos(spin * t));
+        b[static_cast<size_t>(k)] = static_cast<float>(scale * std::sin(spin * t));
+    }
+    const std::uint8_t *pixels = source.pixels;
+    const int stride = source.width * 4;
+    parallelFor(image.height, [&](int begin, int end) {
+        for (int y = begin; y < end; ++y) {
+            std::uint8_t *row = image.row(y);
+            const float dy = static_cast<float>(y) - cy;
+            for (int x = 0; x < image.width; ++x) {
+                const float dx = static_cast<float>(x) - cx;
+                float sum[4] = {0, 0, 0, 0};
+                for (size_t k = 0; k < kTaps; ++k) {
+                    const float sx = std::clamp(cx + dx * a[k] - dy * b[k], 0.0f, maxX);
+                    const float sy = std::clamp(cy + dx * b[k] + dy * a[k], 0.0f, maxY);
+                    const int x0 = static_cast<int>(sx);
+                    const int y0 = static_cast<int>(sy);
+                    const float fx = sx - static_cast<float>(x0);
+                    const float fy = sy - static_cast<float>(y0);
+                    const int x1 = std::min(x0 + 1, source.width - 1) - x0;
+                    const int y1 = std::min(y0 + 1, source.height - 1) - y0;
+                    const std::uint8_t *p = pixels + y0 * stride + x0 * 4;
+                    const std::uint8_t *q = p + y1 * stride;
+                    for (int c = 0; c < 4; ++c) {
+                        const float top = p[c] + (p[x1 * 4 + c] - p[c]) * fx;
+                        const float bottom = q[c] + (q[x1 * 4 + c] - q[c]) * fx;
+                        sum[c] += top + (bottom - top) * fy;
+                    }
+                }
+                for (int c = 0; c < 4; ++c) {
+                    row[x * 4 + c] = static_cast<std::uint8_t>(std::clamp(sum[c] / kTaps + 0.5f, 0.0f, 255.0f));
                 }
             }
-            put(row + x * 4, sum);
         }
-    }
+    });
 }
 
 void glow(const ImageView &image, double amount, double threshold)
@@ -363,7 +376,9 @@ void glitch(const ImageView &image, const VideoEffectParams &p, bool blocks)
     const int w = image.width;
     const int h = image.height;
     if (!blocks) {
-        // Horizontal slices shifted sideways, some with their colours split.
+        // Horizontal slices shifted sideways, some with their colours split: the shift of every row first, then the
+        // rows in parallel.
+        std::vector<std::pair<double, double>> rows(static_cast<size_t>(h)); // shift, split
         int y = 0;
         std::uint32_t slice = 0;
         while (y < h) {
@@ -372,6 +387,14 @@ void glitch(const ImageView &image, const VideoEffectParams &p, bool blocks)
             const double shift = active ? (random01(tick, slice, 3) - 0.5) * w * 0.2 * p.amount : 0.0;
             const double split = active && random01(tick, slice, 4) < 0.5 ? h * 0.01 * p.amount : 0.0;
             for (int yy = y; yy < std::min(h, y + height); ++yy) {
+                rows[static_cast<size_t>(yy)] = {shift, split};
+            }
+            y += height;
+            ++slice;
+        }
+        parallelFor(h, [&](int begin, int end) {
+            for (int yy = begin; yy < end; ++yy) {
+                const auto [shift, split] = rows[static_cast<size_t>(yy)];
                 std::uint8_t *row = image.row(yy);
                 for (int x = 0; x < w; ++x) {
                     const auto c = source.sample(x - shift, yy);
@@ -380,9 +403,7 @@ void glitch(const ImageView &image, const VideoEffectParams &p, bool blocks)
                     row[x * 4 + 2] = toByte(source.sample(x - shift + split, yy)[2]);
                 }
             }
-            y += height;
-            ++slice;
-        }
+        });
         return;
     }
     // Blocks copied from elsewhere, with channels swapped.
@@ -438,20 +459,22 @@ void vhs(const ImageView &image, const VideoEffectParams &p)
     const int h = image.height;
     const double bleed = w * 0.006 * p.amount;
     const double band = std::fmod(p.time * 0.15 * std::max(0.1, p.speed), 1.2) - 0.1; // tracking band position
-    for (int y = 0; y < h; ++y) {
-        const double v = static_cast<double>(y) / h;
-        const double wobble = std::sin(v * 40 + p.time * 6) * w * 0.002 * p.amount +
-                              (std::abs(v - band) < 0.03 ? (random01(static_cast<std::uint32_t>(y), 7,
-                                                                     static_cast<std::uint32_t>(p.time * 30)) - 0.5) * w * 0.05 * p.amount
-                                                         : 0.0);
-        std::uint8_t *row = image.row(y);
-        for (int x = 0; x < w; ++x) {
-            const double sx = x + wobble;
-            row[x * 4] = toByte(source.sample(sx + bleed, y)[0]);
-            row[x * 4 + 1] = toByte(source.sample(sx, y)[1]);
-            row[x * 4 + 2] = toByte(source.sample(sx - bleed, y)[2]);
+    parallelFor(h, [&](int begin, int end) {
+        for (int y = begin; y < end; ++y) {
+            const double v = static_cast<double>(y) / h;
+            const double wobble = std::sin(v * 40 + p.time * 6) * w * 0.002 * p.amount +
+                                  (std::abs(v - band) < 0.03 ? (random01(static_cast<std::uint32_t>(y), 7,
+                                                                         static_cast<std::uint32_t>(p.time * 30)) - 0.5) * w * 0.05 * p.amount
+                                                             : 0.0);
+            std::uint8_t *row = image.row(y);
+            for (int x = 0; x < w; ++x) {
+                const double sx = x + wobble;
+                row[x * 4] = toByte(source.sample(sx + bleed, y)[0]);
+                row[x * 4 + 1] = toByte(source.sample(sx, y)[1]);
+                row[x * 4 + 2] = toByte(source.sample(sx - bleed, y)[2]);
+            }
         }
-    }
+    });
     scanlines(image, p.amount * 0.4, 0.1);
     noise(image, p.amount * 0.35, 1.0, p.time);
     // Washed-out colours of the tape.
@@ -466,29 +489,32 @@ void vhs(const ImageView &image, const VideoEffectParams &p)
 void pixelate(const ImageView &image, double size)
 {
     const int block = std::max(2, static_cast<int>(std::lround(image.height * (0.005 + size * 0.06))));
-    for (int by = 0; by < image.height; by += block) {
-        for (int bx = 0; bx < image.width; bx += block) {
-            std::array<long, 4> sum{};
-            int n = 0;
-            for (int y = by; y < std::min(image.height, by + block); ++y) {
-                for (int x = bx; x < std::min(image.width, bx + block); ++x) {
-                    const std::uint8_t *p = image.row(y) + x * 4;
-                    for (size_t c = 0; c < 4; ++c) {
-                        sum[c] += p[c];
+    const int blockRows = (image.height + block - 1) / block;
+    parallelFor(blockRows, [&](int firstRow, int lastRow) {
+        for (int by = firstRow * block; by < std::min(image.height, lastRow * block); by += block) {
+            for (int bx = 0; bx < image.width; bx += block) {
+                std::array<long, 4> sum{};
+                int n = 0;
+                for (int y = by; y < std::min(image.height, by + block); ++y) {
+                    for (int x = bx; x < std::min(image.width, bx + block); ++x) {
+                        const std::uint8_t *p = image.row(y) + x * 4;
+                        for (size_t c = 0; c < 4; ++c) {
+                            sum[c] += p[c];
+                        }
+                        ++n;
                     }
-                    ++n;
                 }
-            }
-            for (int y = by; y < std::min(image.height, by + block); ++y) {
-                for (int x = bx; x < std::min(image.width, bx + block); ++x) {
-                    std::uint8_t *p = image.row(y) + x * 4;
-                    for (size_t c = 0; c < 4; ++c) {
-                        p[c] = static_cast<std::uint8_t>(sum[c] / n);
+                for (int y = by; y < std::min(image.height, by + block); ++y) {
+                    for (int x = bx; x < std::min(image.width, bx + block); ++x) {
+                        std::uint8_t *p = image.row(y) + x * 4;
+                        for (size_t c = 0; c < 4; ++c) {
+                            p[c] = static_cast<std::uint8_t>(sum[c] / n);
+                        }
                     }
                 }
             }
         }
-    }
+    }, 1);
 }
 
 void thermalColor(double t, std::uint8_t *p)
@@ -811,7 +837,9 @@ void renderVideoEffect(EffectKernel kernel, const ImageView &image, const VideoE
     case EffectKernel::Sketch:
     case EffectKernel::NeonEdges: {
         const Copy original(image);
-        std::vector<double> edges;
+        // Reused from frame to frame. A reference: the rows run on other threads, which have their own thread_local.
+        thread_local std::vector<double> reusedEdges;
+        std::vector<double> &edges = reusedEdges;
         edgeMagnitude(image, edges);
         forEachPixel(image, [&](int x, int y, std::uint8_t *px) {
             const double e = std::clamp(edges[static_cast<size_t>(y) * w + x] * 2.0, 0.0, 1.0);
