@@ -258,8 +258,9 @@ nel repository MLT all'avvio con `Mlt::Repository::register_service` (**verifica
     shader compilati con `qt6-shadertools` (compatibili GLSL 100 ES / 120). In Fase 0 i frame arrivano già in RGBA;
     la conversione YUV→RGB su GPU è un'ottimizzazione successiva, con test di parità.
   - **Software:** `QSGImageNode` con `QImage` (nessuno shader richiesto).
-- Qualità dell'anteprima (piena, 1/2, 1/4): il consumer lavora alla risoluzione ridotta, quindi tutta la pipeline MLT
-  calcola meno pixel. Possibile grazie ai parametri indipendenti dalla risoluzione.
+- Qualità dell'anteprima (Auto, piena, 1/2, 1/4): il consumer lavora alla risoluzione del riquadro d'anteprima, mai
+  oltre il canvas, divisa per il gradino scelto; Auto scende di un gradino solo mentre i fotogrammi non stanno al passo
+  (D-62). Tutta la pipeline MLT calcola meno pixel: i parametri sono indipendenti dalla risoluzione.
 - Skimming: l'engine separa la **posizione mostrata** dal **playhead**. Al passaggio del mouse mostra il fotogramma sotto
   il cursore e, quando il mouse esce, torna al playhead. Nel pannello media usa un `FrameGrabber` separato
   (producer dedicato + cache LRU) su un worker, senza toccare la timeline.
@@ -294,10 +295,12 @@ nel repository MLT all'avvio con `Mlt::Repository::register_service` (**verifica
 ### 5.5 Proxy, miniature, waveform, probe
 - Probe dei media con libavformat (metadati completi: rotazione, HDR, VFR, spazio colore). Fingerprint campionato
   (vedi FILE_FORMAT §7).
-- Proxy automatici per 4K, HEVC, 10 bit e VFR: H.264, altezza massima 720p (540p in modalità software), GOP corto senza
-  B-frame per seek rapidi, frame rate costante. Encoder hardware se disponibile, altrimenti libx264 `veryfast`.
-  Salvati in `~/.cache/velacut/proxy/<fingerprint>-<profilo>.mp4`. Interruttore globale "anteprima a qualità ridotta".
-  L'export usa sempre i file originali.
+- Proxy automatici per video > 1080p, HEVC/AV1/VP9, > 8 bit e VFR (D-63, implementati nella missione anteprima):
+  H.264, altezza massima 720p (540p in modalità software), keyframe ogni 10 fotogrammi senza B-frame per seek rapidi,
+  frame rate costante, `velacut-render --proxy`. Encoder hardware verificato dal probe se disponibile, altrimenti libx264
+  `veryfast`. Salvati in `~/.cache/velacut/proxy/<fingerprint>-proxy<altezza>.mp4`. Interruttore globale nelle
+  preferenze ("Copie leggere per l'anteprima"); progresso sulla miniatura del media. L'export usa sempre i file
+  originali.
 - Miniature e waveform: job del `TaskManager` (pool di thread, priorità "visibile ora" > "prefetch"), ognuno con il
   proprio producer MLT (mai condiviso con la riproduzione). Cache su disco per fingerprint: strisce JPEG per livello
   di zoom; waveform come picchi min/max multi-risoluzione in un file binario.
@@ -580,6 +583,9 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | D-59 | Kernel CPU degli effetti a fasce su `fx::parallelFor` (i thread "slices" di MLT installati dall'engine, `fx::setParallelRunner`; senza, sul thread chiamante; mai annidati), copie del fotogramma in buffer del thread riusati (`fx::Scratch`). Blur a tre box: esatto fino a raggio 7, da 8 calcolato su una copia 2× più piccola (da 24: 4×) e ingrandito | Stessi byte di prima per tutti i kernel tranne blur grandi e zoom/spin blur (verificato con hash e `tst_kernels`); blur grande entro PSNR 42 dB dall'esatto su foto vere (minimo misurato 42,2 dB, soglia della missione 38), zoom/spin in float entro 45 dB. S2 108 → 14 ms a 1080p |
 | D-60 | Livelli coperti non renderizzati: `vedit.composite` legge prima il livello superiore; se copre tutto il canvas con pixel opachi (segno `vedit.opaque` di `vedit.transform`/`vedit.transition`, altrimenti controllo dell'alfa, che si ferma al primo pixel trasparente) ed è in modalità normale a piena opacità, è il risultato e i livelli sotto non vengono né decodificati né elaborati. Lati A e B di una transizione tra due parti dello stesso file su due producer distinti (`MediaProducerCache`, corsia 1) | Sotto una transizione la playlist delle clip veniva renderizzata e coperta; con due parti lontane dello stesso file un solo decoder saltava tra due posizioni a ogni fotogramma (S4b 489 → 20 ms). Verificato con un test che confronta le immagini con e senza (`tst_projection`); i fotogrammi delle tracce appartengono al fotogramma del tractor (chiusi con lui), l'audio è mixato a parte |
 | D-61 | Percorso GPU o CPU delle transizioni scelto per tipo e dimensione misurando i primi fotogrammi in ogni processo (anteprima ed export separatamente) | La GPU paga upload, lettura sincrona e il giro sul suo thread: a 1080p la dissolvenza è più veloce sulla CPU a fasce (23 contro 26 ms a fotogramma intero), il blur dissolve sulla GPU (21 contro 76) |
+| D-62 | L'anteprima renderizza alla dimensione in pixel del riquadro (× devicePixelRatio, mai oltre il canvas; schermo intero alza il limite) chiedendola al consumer (`width`/`height`), senza cambiare il profilo; qualità Auto/Piena/½/¼ nelle preferenze. Auto scende di un gradino durante riproduzione, scrub e trascinamenti quando un fotogramma supera l'80 % del suo tempo e torna a piena dopo 250 ms di quiete. Salva fotogramma e copertina da un grafo a piena risoluzione (`TimelinePlayer::renderStill`) | Verificato col banco che tutta la catena lavora alla dimensione chiesta (960×540 da un grafo 1080p); cambio a caldo senza ricostruire il grafo. In pausa il fotogramma è renderizzato da `deliverFrame`, che quindi chiede anche lui quella dimensione |
+| D-63 | Proxy automatici: video > 1080p, HEVC/AV1/VP9, > 8 bit o VFR → H.264 ≤ 720p (540p con rendering software), keyframe ogni 10 fotogrammi, niente B-frame, CFR, `velacut-render --proxy` (non `--job proxy`: `--job` prende già il file JSON di un export), encoder GPU verificato prima, libx264 veryfast dopo. In cache per impronta e altezza; i producer del file si riaprono sul proxy in background e si scambiano (nessun buco); l'export legge sempre l'originale; `proxy: "off"` rispettato | Progetto 4K HEVC 10 bit: seek 543 → 25 ms, scrub 574 → 48 ms di buco massimo (`docs/PERFORMANCE.md`) |
+| D-64 | Playhead fluido in riproduzione: stima in QML (`FrameAnimation`, posizione + tempo × velocità × fps) riallineata alla posizione reale quando se ne discosta di più di un fotogramma; il timecode resta quello reale | La posizione arriva con i fotogrammi mostrati: un fotogramma perso faceva saltare il playhead |
 
 ---
 

@@ -202,3 +202,41 @@ Cosa è stato fatto e verificato:
 - Livelli coperti non renderizzati (D-60): il flag `vedit.opaque` non attraversa il tractor annidato delle transizioni
   (MLT copia il fotogramma interno in uno nuovo), quindi il composite controlla anche l'alfa del livello superiore
   (si ferma al primo pixel trasparente).
+
+## Dopo la Fase 3 — pixel giusti, proxy (anteprima di 1280×720, qualità Auto)
+
+Il player è misurato con un riquadro d'anteprima di 1280×720 pixel (`--view 1280x720`, una finestra a tutto schermo su
+un monitor 1440p) e qualità Auto; le colonne della pipeline sono a 720 righe (`--preview-height 720`) a 1080p, a piena
+risoluzione a 2160p.
+
+### 1080p
+
+| Scenario | Canvas | Frame | Seq. mean ms | Seq. p95 ms | Seek ms | Param ms (mean/p95) | Play fps | Dropped | Scrub max gap ms | Scrub settle ms | Slider frames/s | Slider settle ms |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Scenario | Canvas | Frame | Seq. mean ms | Seq. p95 ms | Seek ms | Param ms (mean/p95) | Play fps | Dropped | Scrub max gap ms | Scrub settle ms | Slider frames/s | Slider settle ms |
+| S1 1 clip H.264, no effect | 1920×1080 | 1280×720 | 9.5 | 10 | 248 | – | 30 | 3 % | 409 | 330 | – | – |
+| S2 1 clip + blur 1.0 | 1920×1080 | 1280×720 | 13 | 14 | 251 | 9.5 / 12 | 30 | 3 % | 415 | 361 | 50 | 21 |
+| S3 1 clip + zoom blur 1.0 | 1920×1080 | 1280×720 | 43 | 48 | 275 | 36 / 41 | 27 | 5 % | 419 | 413 | 40 | 335 |
+| S4 split clip (same file) + 1 s dissolve | 1920×1080 | 1280×720 | 23 | 25 | 248 | – | 29 | 3 % | 652 | 127 | – | – |
+| S4b same file, distant parts + 1 s dissolve | 1920×1080 | 1280×720 | 23 | 24 | 207 | – | 28 | 7 % | 819 | 55 | – | – |
+| S5 2 files + 1 s blur dissolve | 1920×1080 | 1280×720 | 19 | 41 | 288 | – | 29 | 7 % | 429 | 540 | – | – |
+| S6 blur 1.0 + text overlay + colour filter | 1920×1080 | 1280×720 | 18 | 20 | 257 | 14 / 16 | 29 | 3 % | 414 | 368 | 35 | 29 |
+
+### 2160p (S7: progetto 4K con un file 4K HEVC 10 bit; S7p: lo stesso con il proxy pronto)
+
+| Scenario | Canvas | Frame | Seq. mean ms | Seq. p95 ms | Seek ms | Param ms (mean/p95) | Play fps | Dropped | Scrub max gap ms | Scrub settle ms | Slider frames/s | Slider settle ms |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Scenario | Canvas | Frame | Seq. mean ms | Seq. p95 ms | Seek ms | Param ms (mean/p95) | Play fps | Dropped | Scrub max gap ms | Scrub settle ms | Slider frames/s | Slider settle ms |
+| S1 1 clip H.264, no effect | 3840×2160 | 3840×2160 | 28 | 35 | 896 | – | 28 | 3 % | 1370 | 1001 | – | – |
+| S2 1 clip + blur 1.0 | 3840×2160 | 3840×2160 | 44 | 47 | 908 | 29 / 41 | 29 | 3 % | 954 | 1468 | 50 | 264 |
+| S7 4K HEVC 10 bit, no proxy | 3840×2160 | 3840×2160 | 25 | 28 | 543 | – | 29 | 3 % | 574 | 723 | – | – |
+| S7p 4K HEVC 10 bit, 720p proxy | 3840×2160 | 3840×2160 | 18 | 19 | 25 | – | 29 | 3 % | 48 | 58 | – | – |
+
+- **Riproduzione**: 27–30 fps in tutti gli scenari a 1080p (S3 zoom blur compreso, 27 fps) e a 2160p con il riquadro
+  reale (prima della Fase 3 S1 a 2160p: 15 fps, 47 % persi).
+- **Proxy** (S7 → S7p): seek 543 → 25 ms, buco massimo durante lo scrub 574 → 48 ms, fotogramma esatto 58 ms dopo il
+  rilascio. Il proxy di 10 s di 4K HEVC 10 bit si fa in 5,7 s su questa macchina.
+- **Scrub su file H.264 a GOP lungo senza proxy** (S1–S6, keyframe ogni 2 s): il buco massimo resta 400–800 ms. Non è
+  lo scheduling (Fase 1) né il costo del fotogramma (Fase 2): è il seek all'indietro che decodifica il GOP dal keyframe
+  (250–300 ms a 1080p, misurato). Il criterio 4 è rispettato solo con un proxy: vedi "Problemi aperti" in
+  `docs/PROGRESS.md` per la proposta (proxy anche per i file a GOP lungo).

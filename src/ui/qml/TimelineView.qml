@@ -30,7 +30,26 @@ Rectangle {
     // Frame where a drag snapped (a guide line is drawn there), -1 when none.
     property int snapGuide: -1
 
-    // Decoupled 60/120 FPS playhead tracking & reactive scrubbing
+    // Playing, the playhead glides with the screen's refresh between the positions the player reports (they come with
+    // the frames shown: a frame dropped by the preview would make it jump): the position estimated from the time
+    // elapsed, put back on the real one when they drift apart by more than a frame. The timecode shows the real one.
+    property real smoothPlayhead: player.position
+    property real smoothFrom: 0
+    property real smoothElapsed: 0
+    function realignSmoothPlayhead() {
+        smoothFrom = player.position
+        smoothElapsed = 0
+        smoothPlayhead = player.position
+    }
+    FrameAnimation {
+        running: view.player.playing && !view.isScrubbing
+        onRunningChanged: view.realignSmoothPlayhead()
+        onTriggered: {
+            view.smoothElapsed += frameTime
+            view.smoothPlayhead = view.clampFrame(view.smoothFrom + view.smoothElapsed * view.player.rate * view.player.frameRate)
+        }
+    }
+
     property bool isScrubbing: false
     property int visualPlayheadFrame: player.position
     // The scrub position in viewport pixels (flick coordinates) while scrubbing. It can be beyond the
@@ -179,6 +198,8 @@ Rectangle {
     Connections {
         target: view.player
         function onPositionChanged() {
+            if (!view.player.playing || Math.abs(view.smoothPlayhead - view.player.position) > 1)
+                view.realignSmoothPlayhead()
             if (!view.isScrubbing)
                 view.visualPlayheadFrame = view.player.position
             if (view.isScrubbing)
@@ -936,7 +957,9 @@ Rectangle {
     // ---- playhead (over the ruler and the tracks) ---------------------------------------------------------------------
     Item {
         id: playheadItem
-        x: Theme.editor.trackHeaderWidth + (view.isScrubbing ? view.visualPlayheadFrame : view.player.position) * view.zoom - flick.contentX
+        objectName: "playhead"
+        x: Theme.editor.trackHeaderWidth + (view.isScrubbing ? view.visualPlayheadFrame
+                                            : view.player.playing ? view.smoothPlayhead : view.player.position) * view.zoom - flick.contentX
         visible: x >= Theme.editor.trackHeaderWidth && x <= view.width
         height: view.height
         z: 15

@@ -1472,6 +1472,42 @@ JSON
         QTRY_COMPARE(audioClips(), size_t(0));
     }
 
+    // Playing, the playhead glides between the positions the player reports (docs/PERFORMANCE.md, phase 3): it takes
+    // values between frames and stays within about two frames of the last reported position (it is put back on it when
+    // they differ by more than a frame, then runs on for at most one frame until the next report).
+    void playheadGlidesWhilePlaying()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        editor()->importAndInsert({QUrl::fromLocalFile(m_files.landscape)}, 0, editor()->timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack().clips.size(), size_t(1), 20000);
+        QQuickItem *timeline = byName(u"timelineCanvas"_s);
+        QObject *view = timeline;
+        while (view && !view->property("smoothPlayhead").isValid()) {
+            view = view->parent();
+        }
+        QVERIFY(view);
+        editor()->player()->seek(0);
+        editor()->player()->play();
+        QTRY_VERIFY_WITH_TIMEOUT(editor()->player()->position() > 3, 3000);
+        bool between = false;
+        double worst = 0;
+        for (int i = 0; i < 40 && editor()->player()->playing(); ++i) {
+            QTest::qWait(10);
+            const double smooth = view->property("smoothPlayhead").toDouble();
+            between = between || std::abs(smooth - std::round(smooth)) > 0.05;
+            if (editor()->player()->playing()) {
+                worst = std::max(worst, std::abs(smooth - editor()->player()->position()));
+            }
+        }
+        editor()->player()->pause();
+        QVERIFY(between);
+        QVERIFY2(worst <= 2.5, qPrintable(QString::number(worst)));
+        editor()->undo();
+        QTRY_COMPARE(mainTrack().clips.size(), size_t(0));
+    }
+
     void noQmlWarnings()
     {
         QVERIFY2(m_warnings.isEmpty(), qPrintable(m_warnings.join(u'\n')));
