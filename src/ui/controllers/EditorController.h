@@ -255,6 +255,12 @@ public:
     // ends up on the magnetic main track (-1 elsewhere)}. Empty when the edit is refused.
     Q_INVOKABLE QVariantMap previewMove(const QString &clipId, int frame, int trackRow) const;
     Q_INVOKABLE QVariantMap previewTrim(const QString &clipId, bool startEdge, int frame) const;
+    // The selected clips moved together by `deltaFrames` (a multiple selection dragged): one command; and its preview.
+    Q_INVOKABLE bool moveSelection(int deltaFrames);
+    Q_INVOKABLE QVariantMap previewMoveSelection(int deltaFrames) const;
+    // Rubber band: the clips of rows firstRow…lastRow that overlap frames [firstFrame, lastFrame) become the selection,
+    // with `keep` (the selection before the band, when it adds to it).
+    Q_INVOKABLE void selectArea(int firstFrame, int lastFrame, int firstRow, int lastRow, const QStringList &keep = {});
     bool canSplit() const;
     // The selected clips at the playhead, or else the clip under the playhead (main track first).
     Q_INVOKABLE bool split();
@@ -431,7 +437,7 @@ private:
     std::optional<ClipId> rippleTrimTarget() const;
     std::optional<ClipId> insertAtRow(const MediaId &mediaId, int frame, int trackRow);
     EditResult moveClipEdit(const ClipId &clipId, int frame, int trackRow) const;
-    QVariantMap previewOf(const EditResult &result, const ClipId &clipId) const;
+    QVariantMap previewOf(const EditResult &result, const QSet<ClipId> &moving) const;
 
     std::unique_ptr<document::Document> m_document;
     engine::MediaAnalysis &m_analysis;

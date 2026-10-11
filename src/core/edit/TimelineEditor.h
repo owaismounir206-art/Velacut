@@ -59,6 +59,11 @@ public:
     // Moves a clip to `newStart`, optionally onto another track.
     EditResult moveClip(const ClipId &clipId, const RationalTime &newStart,
                         std::optional<TrackId> targetTrack = std::nullopt);
+    // Moves several clips by the same `delta` in time, each on its own track (a multiple selection dragged together),
+    // in one step. Never before 0: the earliest stops there and the others keep their distance from it. On the magnetic
+    // main track the moved clips stay together, in their order, where the first of them is dropped; on another track,
+    // if they no longer fit, they go together onto a new track right above (visual) or below (audio) it.
+    EditResult moveClips(const std::vector<ClipId> &clipIds, const RationalTime &delta);
     // Moves one edge of a clip to `time` (clamped to the available material and to the neighbours).
     EditResult trimClip(const ClipId &clipId, ClipEdge edge, const RationalTime &time);
     // Ripple trim from clip start to time (Q) or from time to clip end (W).

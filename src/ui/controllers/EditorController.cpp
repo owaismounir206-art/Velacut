@@ -2020,7 +2020,7 @@ QVariantMap EditorController::previewMove(const QString &clipId, int frame, int 
     if (!id || !data().mainSequence() || !data().findClip(*id)) {
         return {};
     }
-    return previewOf(moveClipEdit(*id, frame, trackRow), *id);
+    return previewOf(moveClipEdit(*id, frame, trackRow), {*id});
 }
 
 QVariantMap EditorController::previewTrim(const QString &clipId, bool startEdge, int frame) const
@@ -2032,10 +2032,59 @@ QVariantMap EditorController::previewTrim(const QString &clipId, bool startEdge,
     TimelineEditor editor(data(), data().mainSequenceId);
     return previewOf(editor.trimClip(*id, startEdge ? ClipEdge::Start : ClipEdge::End,
                                      RationalTime(std::max(0, frame), data().settings.frameRate)),
-                     *id);
+                     {*id});
 }
 
-QVariantMap EditorController::previewOf(const EditResult &result, const ClipId &clipId) const
+bool EditorController::moveSelection(int deltaFrames)
+{
+    if (m_selection.isEmpty() || !data().mainSequence()) {
+        return false;
+    }
+    TimelineEditor editor(data(), data().mainSequenceId);
+    return apply(editor.moveClips(selectedClips(), RationalTime(deltaFrames, data().settings.frameRate)));
+}
+
+QVariantMap EditorController::previewMoveSelection(int deltaFrames) const
+{
+    if (m_selection.isEmpty() || !data().mainSequence()) {
+        return {};
+    }
+    TimelineEditor editor(data(), data().mainSequenceId);
+    return previewOf(editor.moveClips(selectedClips(), RationalTime(deltaFrames, data().settings.frameRate)), m_selection);
+}
+
+void EditorController::selectArea(int firstFrame, int lastFrame, int firstRow, int lastRow, const QStringList &keep)
+{
+    QSet<ClipId> selection;
+    for (const QString &kept : keep) {
+        if (const std::optional<ClipId> id = ClipId::fromString(kept)) {
+            selection.insert(*id);
+        }
+    }
+    const Sequence *sequence = data().mainSequence();
+    if (sequence && lastFrame > firstFrame) {
+        const RationalTime from(firstFrame, data().settings.frameRate);
+        const RationalTime to(lastFrame, data().settings.frameRate);
+        for (int row = std::max(0, firstRow); row <= std::min(lastRow, m_timeline->trackRowCount() - 1); ++row) {
+            const std::optional<TimelineModel::TrackRow> track = m_timeline->trackRow(row);
+            if (!track) {
+                continue;
+            }
+            const std::vector<Track> &tracks = track->audio ? sequence->audioTracks : sequence->visualTracks;
+            if (track->index < 0 || track->index >= static_cast<int>(tracks.size()) || tracks[track->index].locked) {
+                continue;
+            }
+            for (const Clip &clip : tracks[track->index].clips) {
+                if (clip.start < to && from < clip.end()) {
+                    selection.insert(clip.id);
+                }
+            }
+        }
+    }
+    setSelection(std::move(selection));
+}
+
+QVariantMap EditorController::previewOf(const EditResult &result, const QSet<ClipId> &moving) const
 {
     const Sequence *sequence = data().mainSequence();
     if (!result.ok() || !sequence) {
@@ -2061,8 +2110,10 @@ QVariantMap EditorController::previewOf(const EditResult &result, const ClipId &
         const auto compare = [&](const std::vector<Track> &tracks) {
             for (const Track &track : tracks) {
                 for (const Clip &clip : track.clips) {
-                    if (clip.id == clipId) {
-                        if (&tracks == &result.after->visualTracks && &track == &tracks.front() && result.after->magneticMain) {
+                    if (moving.contains(clip.id)) {
+                        const bool onMain = &tracks == &result.after->visualTracks && &track == &tracks.front()
+                                            && result.after->magneticMain;
+                        if (onMain && (landing < 0 || frameOf(clip.start) < landing)) {
                             landing = frameOf(clip.start);
                         }
                         continue;

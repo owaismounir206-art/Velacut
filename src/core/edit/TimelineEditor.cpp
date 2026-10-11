@@ -458,6 +458,82 @@ EditResult TimelineEditor::moveClip(const ClipId &clipId, const RationalTime &re
     return finish(std::move(modified), tr("Move clip"), clipId);
 }
 
+EditResult TimelineEditor::moveClips(const std::vector<ClipId> &clipIds, const RationalTime &requestedDelta)
+{
+    if (!m_sequence) {
+        return fail(tr("The sequence does not exist."));
+    }
+    if (clipIds.size() == 1) {
+        Sequence copy = *m_sequence;
+        const auto ref = findClip(copy, clipIds.front());
+        if (!ref) {
+            return fail(tr("The clip does not exist."));
+        }
+        return moveClip(clipIds.front(), ref->clip().start + requestedDelta.rescaled(m_rate, Rounding::NearestEven));
+    }
+    Sequence modified = *m_sequence;
+    RationalTime delta = requestedDelta.rescaled(m_rate, Rounding::NearestEven);
+    // Taken out of their tracks, in the order of the timeline; the earliest decides how far back they can go.
+    std::map<TrackId, std::vector<Clip>> taken;
+    std::vector<TrackId> order;
+    for (const ClipId &id : clipIds) {
+        const auto ref = findClip(modified, id);
+        if (!ref) {
+            continue;
+        }
+        if (ref->track->locked) {
+            return fail(tr("The track is locked."));
+        }
+        if (ref->clip().start + delta < RationalTime(0, m_rate)) {
+            delta = RationalTime(0, m_rate) - ref->clip().start;
+        }
+        if (!taken.contains(ref->track->id)) {
+            order.push_back(ref->track->id);
+        }
+        taken[ref->track->id].push_back(takeClip(*ref->track, ref->index));
+    }
+    if (taken.empty()) {
+        return fail(tr("The clip does not exist."));
+    }
+    if (delta.isZero()) {
+        return EditResult{};
+    }
+    for (const TrackId &trackId : order) {
+        std::vector<Clip> &clips = taken[trackId];
+        std::sort(clips.begin(), clips.end(), [](const Clip &a, const Clip &b) { return a.start < b.start; });
+        for (Clip &clip : clips) {
+            clip.start += delta;
+        }
+        auto target = findTrack(modified, trackId);
+        if (isMagneticMain(modified, *target->track)) {
+            pack(*target->track, m_rate);
+            const size_t index = boundaryIndex(*target->track, clips.front().start);
+            target->track->clips.insert(target->track->clips.begin() + static_cast<std::ptrdiff_t>(index),
+                                        std::make_move_iterator(clips.begin()), std::make_move_iterator(clips.end()));
+            pack(*target->track, m_rate);
+            continue;
+        }
+        const bool fits = std::all_of(clips.begin(), clips.end(),
+                                      [&](const Clip &clip) { return hasRoom(*target->track, clip.range()); });
+        if (fits) {
+            for (Clip &clip : clips) {
+                insertSorted(*target->track, std::move(clip));
+            }
+            continue;
+        }
+        // Never overwrite: together onto a new track right above (visual) or below (audio) theirs.
+        auto &tracks = target->audio ? modified.audioTracks : modified.visualTracks;
+        Track fresh = makeTrackLike(*target->track);
+        for (Clip &clip : clips) {
+            insertSorted(fresh, std::move(clip));
+        }
+        tracks.insert(tracks.begin() + target->index + 1, std::move(fresh));
+    }
+    removeEmptyTracks(modified);
+    cleanGroups(modified);
+    return finish(std::move(modified), tr("Move clips"), clipIds.front());
+}
+
 EditResult TimelineEditor::trimClip(const ClipId &clipId, ClipEdge edge, const RationalTime &requestedTime)
 {
     if (!m_sequence) {

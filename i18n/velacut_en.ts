@@ -225,7 +225,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+361"/>
+        <location line="+483"/>
         <source>%n clips deleted</source>
         <translation>
             <numerusform>%n clip deleted</numerusform>

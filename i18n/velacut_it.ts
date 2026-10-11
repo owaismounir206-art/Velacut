@@ -5292,7 +5292,7 @@
 <context>
     <name>TimelineClip</name>
     <message>
-        <location filename="../src/ui/qml/TimelineClip.qml" line="+48"/>
+        <location filename="../src/ui/qml/TimelineClip.qml" line="+58"/>
         <source>Clip %1</source>
         <translation>Clip %1</translation>
     </message>
@@ -5302,7 +5302,7 @@
         <translation>Sostituisci</translation>
     </message>
     <message>
-        <location line="+249"/>
+        <location line="+281"/>
         <source>%1 · %2f</source>
         <translation>%1 · %2 fot.</translation>
     </message>
@@ -5310,7 +5310,7 @@
 <context>
     <name>TimelineView</name>
     <message>
-        <location filename="../src/ui/qml/TimelineView.qml" line="+621"/>
+        <location filename="../src/ui/qml/TimelineView.qml" line="+645"/>
         <source>Audio track</source>
         <translation>Traccia audio</translation>
     </message>
@@ -5666,9 +5666,10 @@
 <context>
     <name>velacut::TimelineEditor</name>
     <message>
-        <location filename="../src/core/edit/TimelineEditor.cpp" line="+331"/>
+        <location filename="../src/core/edit/TimelineEditor.cpp" line="+332"/>
         <location line="+74"/>
         <location line="+58"/>
+        <location line="+76"/>
         <location line="+80"/>
         <location line="+144"/>
         <location line="+13"/>
@@ -5716,7 +5717,7 @@
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-2098"/>
+        <location line="-2174"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -5732,23 +5733,23 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1644"/>
+        <location line="+1720"/>
         <source>The media is too short to be used.</source>
         <translation>Il file è troppo corto per essere usato.</translation>
     </message>
     <message>
-        <location line="-1621"/>
+        <location line="-1697"/>
         <source>Add audio</source>
         <translation>Aggiungi audio</translation>
     </message>
     <message>
         <location line="+5"/>
-        <location line="+1569"/>
+        <location line="+1645"/>
         <source>The main track is locked.</source>
         <translation>La traccia principale è bloccata.</translation>
     </message>
     <message>
-        <location line="-1564"/>
+        <location line="-1640"/>
         <location line="+4"/>
         <location line="+4"/>
         <source>Add clip</source>
@@ -5756,7 +5757,9 @@
     </message>
     <message>
         <location line="+12"/>
-        <location line="+58"/>
+        <location line="+59"/>
+        <location line="+26"/>
+        <location line="+49"/>
         <location line="+80"/>
         <location line="+73"/>
         <location line="+84"/>
@@ -5780,9 +5783,10 @@
         <translation>La clip non esiste.</translation>
     </message>
     <message>
-        <location line="-1569"/>
+        <location line="-1645"/>
         <location line="+10"/>
-        <location line="+49"/>
+        <location line="+61"/>
+        <location line="+64"/>
         <location line="+80"/>
         <location line="+73"/>
         <location line="+135"/>
@@ -5810,8 +5814,8 @@
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-2022"/>
-        <location line="+1022"/>
+        <location line="-2098"/>
+        <location line="+1098"/>
         <location line="+47"/>
         <location line="+14"/>
         <location line="+935"/>
@@ -5819,18 +5823,23 @@
         <translation>La traccia non esiste.</translation>
     </message>
     <message>
-        <location line="-2012"/>
+        <location line="-2088"/>
         <source>This clip cannot be placed on that track.</source>
         <translation>Questa clip non può andare su quella traccia.</translation>
     </message>
     <message>
         <location line="+31"/>
-        <location line="+612"/>
+        <location line="+688"/>
         <source>Move clip</source>
         <translation>Sposta clip</translation>
     </message>
     <message>
-        <location line="-532"/>
+        <location line="-612"/>
+        <source>Move clips</source>
+        <translation>Sposta clip</translation>
+    </message>
+    <message>
+        <location line="+80"/>
         <source>Trim clip</source>
         <translation>Accorcia clip</translation>
     </message>
@@ -8594,7 +8603,7 @@
         <translation>Fermo immagine</translation>
     </message>
     <message>
-        <location line="+116"/>
+        <location line="+238"/>
         <source>Move the playhead over a clip to split it.</source>
         <translation>Porta il playhead sopra una clip per dividerla.</translation>
     </message>

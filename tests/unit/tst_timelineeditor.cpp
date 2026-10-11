@@ -131,6 +131,47 @@ private slots:
         QCOMPARE(session.sequence().duration(kRate), frames(510));
     }
 
+    // A multiple selection moves together: on the main track as a block, on an overlay by the same time, never before 0,
+    // onto a new track when it no longer fits; one edit, with its "after" sequence for the timeline preview.
+    void moveSeveralClips()
+    {
+        ClipId a, b, c;
+        auto owner = threeClips(&a, &b, &c);
+        Session &session = *owner;
+        // A and B (0-300, 300-420) dropped where A's start is in the second half of C (420-510 → packed C 0-90).
+        EditResult block = session.editor().moveClips({b, a}, frames(60));
+        QVERIFY(block.ok());
+        QVERIFY(block.after.has_value());
+        QVERIFY(session.apply(std::move(block)));
+        QCOMPARE(order(session.mainTrack()), (std::vector<ClipId>{c, a, b}));
+        QCOMPARE(session.mainTrack().clips[1].start, frames(90));
+        QCOMPARE(session.mainTrack().clips[2].start, frames(390));
+
+        // Two overlays 100 frames apart move by the same time; asked to go 1000 back, the first stops at 0.
+        const MediaId mute = session.data().media[1].id;
+        EditResult first = session.editor().insertMedia(mute, frames(200), std::nullopt, Placement::Overlay);
+        const ClipId o1 = first.primaryClip;
+        QVERIFY(session.apply(std::move(first)));
+        EditResult second = session.editor().insertMedia(mute, frames(420), std::nullopt, Placement::Overlay);
+        const ClipId o2 = second.primaryClip;
+        QVERIFY(session.apply(std::move(second)));
+        QCOMPARE(session.sequence().visualTracks.size(), size_t(2));
+        QVERIFY(session.apply(session.editor().moveClips({o1, o2}, frames(-1000))));
+        QCOMPARE(session.data().findClip(o1)->start, frames(0));
+        QCOMPARE(session.data().findClip(o2)->start, frames(220));
+        QCOMPARE(session.sequence().visualTracks.size(), size_t(2));
+
+        // A third overlay in the way: the two go together onto a new track above.
+        QVERIFY(session.apply(session.editor().insertMedia(mute, frames(1000), std::nullopt, Placement::Overlay)));
+        QCOMPARE(session.sequence().visualTracks.size(), size_t(2));
+        QVERIFY(session.apply(session.editor().moveClips({o1, o2}, frames(700))));
+        QCOMPARE(session.sequence().visualTracks.size(), size_t(3));
+        QCOMPARE(session.sequence().visualTracks[2].clips.size(), size_t(2));
+        QCOMPARE(session.data().findClip(o2)->start, frames(920));
+        // Nothing to do: no edit.
+        QVERIFY(session.editor().moveClips({o1, o2}, frames(0)).script.empty());
+    }
+
     void moveToOverlayAndBack()
     {
         ClipId a, b, c;
