@@ -21,6 +21,10 @@ namespace velacut::engine {
 // `height` pixels high, displayed as the file says (rotation, pixel aspect), side by side in one RGB32 image.
 // Decoded directly with FFmpeg (seek, then decode up to the wanted time), in the calling thread.
 QImage extractThumbnailStrip(const QString &path, int count, int height, const std::atomic<bool> *cancel = nullptr);
+// The same over part of the video only: `count` frames evenly spaced over [fromSeconds, toSeconds) from its start (the
+// denser thumbnails of a zoomed-in timeline, made a few seconds at a time).
+QImage extractThumbnailStrip(const QString &path, int count, int height, double fromSeconds, double toSeconds,
+                             const std::atomic<bool> *cancel = nullptr);
 
 // One frame of a video (or the picture of an image) as displayed (rotation and pixel aspect applied), the one shown at
 // `seconds` from the start; at most `maxHeight` high (0 = the decoded size). Null if it cannot be decoded.

@@ -262,57 +262,9 @@ Item {
         onTapped: {
             if (!clip.selected)
                 clip.view.editor.select(clip.clipId, false)
-            contextMenu.popup()
+            clip.view.openClipMenu()
         }
     }
-    Menu {
-        id: contextMenu
-        objectName: "clipMenu"
-        Repeater {
-            model: clip.view.editor.actions.toolbar
-            delegate: MenuItem {
-                required property var modelData
-                iconName: modelData.icon
-                text: modelData.text
-                shortcutText: modelData.shortcut
-                enabled: modelData.enabled
-                onTriggered: clip.view.editor.actions.trigger(modelData.id)
-            }
-        }
-        MenuSeparator {}
-        // Grouping (Phase 3): shown when it applies.
-        Repeater {
-            model: [{ id: "createCompound", icon: "stacks", text: qsTr("Group into a compound clip") },
-                    { id: "expandCompound", icon: "stacks", text: qsTr("Ungroup the compound clip") },
-                    { id: "createMulticam", icon: "video_settings", text: qsTr("Create multicam clip") },
-                    { id: "syncAudio", icon: "sync", text: qsTr("Synchronize audio") }]
-            delegate: MenuItem {
-                required property var modelData
-                objectName: modelData.id + "Item"
-                // Re-evaluated with the toolbar (same signals); `clip` is null while a removed clip is destroyed.
-                readonly property bool applies: !!clip && !!clip.view.editor.actions.toolbar
-                                                && clip.view.editor.actions.isEnabled(modelData.id)
-                visible: applies
-                height: applies ? implicitHeight : 0
-                iconName: modelData.icon
-                text: modelData.text
-                onTriggered: clip.view.editor.actions.trigger(modelData.id)
-            }
-        }
-        Repeater {
-            model: ["copyAttributes", "pasteAttributes"]
-            delegate: MenuItem {
-                required property string modelData
-                objectName: modelData + "Item"
-                iconName: modelData === "copyAttributes" ? "format_paint" : "content_paste"
-                text: modelData === "copyAttributes" ? qsTr("Copy attributes") : qsTr("Paste attributes")
-                shortcutText: modelData === "copyAttributes" ? qsTr("Ctrl+Alt+C") : qsTr("Ctrl+Alt+V")
-                enabled: modelData === "copyAttributes" || clip.view.editor.inspector.canPaste
-                onTriggered: clip.view.editor.actions.trigger(modelData)
-            }
-        }
-    }
-
     // Body: click selects (Ctrl/Shift adds), drag moves.
     MouseArea {
         id: mover

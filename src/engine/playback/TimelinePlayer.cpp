@@ -885,6 +885,16 @@ QString TimelinePlayer::timecode(int frame) const
     return formatTimecode(frame, Rational(m_profile->frame_rate_num(), m_profile->frame_rate_den()));
 }
 
+int TimelinePlayer::frameRateNum() const
+{
+    return m_profile ? m_profile->frame_rate_num() : 30;
+}
+
+int TimelinePlayer::frameRateDen() const
+{
+    return m_profile ? m_profile->frame_rate_den() : 1;
+}
+
 QString TimelinePlayer::secondsLabel(int frame) const
 {
     if (!m_profile) {

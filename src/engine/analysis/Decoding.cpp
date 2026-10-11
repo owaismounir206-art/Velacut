@@ -153,6 +153,12 @@ bool decodeUntil(AVFormatContext *input, AVCodecContext *codec, int streamIndex,
 
 QImage extractThumbnailStrip(const QString &path, int count, int height, const std::atomic<bool> *cancel)
 {
+    return extractThumbnailStrip(path, count, height, 0.0, -1.0, cancel);
+}
+
+QImage extractThumbnailStrip(const QString &path, int count, int height, double fromSeconds, double toSeconds,
+                             const std::atomic<bool> *cancel)
+{
     Input input = openInput(path);
     if (!input || count < 1 || height < 2) {
         return {};
@@ -195,13 +201,22 @@ QImage extractThumbnailStrip(const QString &path, int count, int height, const s
     if (duration <= 0) {
         count = 1; // a still picture
     }
+    // Part of the video only (toSeconds < 0: all of it).
+    int64_t from = start;
+    if (duration > 0 && toSeconds >= 0) {
+        const auto toStream = [&](double seconds) {
+            return av_rescale_q(static_cast<int64_t>(std::llround(seconds * AV_TIME_BASE)), AV_TIME_BASE_Q, stream->time_base);
+        };
+        from = start + std::clamp<int64_t>(toStream(fromSeconds), 0, duration);
+        duration = std::clamp<int64_t>(toStream(toSeconds) - (from - start), 1, duration - (from - start));
+    }
 
     QImage strip(thumbWidth * count, height, QImage::Format_RGB32);
     strip.fill(Qt::black);
     Frame frame(av_frame_alloc());
     std::unique_ptr<SwsContext, SwsDeleter> scaler;
     for (int i = 0; i < count && !cancelled(cancel); ++i) {
-        const int64_t target = start + (duration > 0 ? duration * (2 * i + 1) / (2 * count) : 0);
+        const int64_t target = from + (duration > 0 ? duration * (2 * i + 1) / (2 * count) : 0);
         if (i > 0 || target > start) {
             av_seek_frame(input.get(), streamIndex, target, AVSEEK_FLAG_BACKWARD);
             avcodec_flush_buffers(codec.get());

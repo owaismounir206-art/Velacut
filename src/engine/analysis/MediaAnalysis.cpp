@@ -132,6 +132,59 @@ QImage MediaAnalysis::thumbnails(const Media &media)
     return {};
 }
 
+QImage MediaAnalysis::denseThumbnails(const Media &media, int chunk)
+{
+    if (media.kind != MediaKind::Video || !media.fingerprint.isValid() || !media.info.duration || chunk < 0) {
+        return {};
+    }
+    const double seconds = media.info.duration->toSecondsDouble();
+    const double from = static_cast<double>(chunk) * kDenseChunkSeconds;
+    if (from >= seconds) {
+        return {};
+    }
+    const QString key = media.fingerprint.value + u'#' + QString::number(chunk);
+    if (const QImage *cached = m_thumbnails.object(key)) {
+        return *cached;
+    }
+    const QString file = directoryOf(media) + u"/thumbnails-h%1-dense%2-c%3.jpg"_s.arg(kThumbnailHeight).arg(kDensePerSecond).arg(chunk);
+    if (QFile::exists(file)) {
+        QImage strip(file);
+        if (!strip.isNull()) {
+            m_thumbnails.insert(key, new QImage(strip), static_cast<int>(strip.sizeInBytes() / 1024));
+            return strip;
+        }
+    }
+    if (m_pending.contains(u"t:"_s + key)) {
+        return {};
+    }
+    m_pending.insert(u"t:"_s + key);
+    QPointer<MediaAnalysis> self(this);
+    const int count = kDensePerSecond * kDenseChunkSeconds;
+    // The last chunk, cut short by the end of the media, spreads its frames over what there is (MediaThumbnail knows).
+    const double to = std::min(seconds, from + kDenseChunkSeconds);
+    m_pool.start([self, media, count, file, key, from, to, cancel = m_cancel] {
+        const QImage strip = extractThumbnailStrip(media.path, count, kThumbnailHeight, from, to, cancel.get());
+        if (!strip.isNull()) {
+            QByteArray jpeg;
+            QBuffer buffer(&jpeg);
+            buffer.open(QIODevice::WriteOnly);
+            strip.save(&buffer, "JPG", 85);
+            projectfile::writeAtomically(file, jpeg);
+        }
+        QMetaObject::invokeMethod(self.get(), [self, media, strip, key] {
+            if (!self) {
+                return;
+            }
+            self->m_pending.remove(u"t:"_s + key);
+            if (!strip.isNull()) {
+                self->m_thumbnails.insert(key, new QImage(strip), static_cast<int>(strip.sizeInBytes() / 1024));
+                emit self->thumbnailsReady(media.id);
+            }
+        });
+    });
+    return {};
+}
+
 void MediaAnalysis::finishThumbnails(const Media &media, const QImage &strip)
 {
     m_pending.remove(u"t:"_s + media.fingerprint.value);

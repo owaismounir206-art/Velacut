@@ -73,6 +73,9 @@ private:
     Q_PROPERTY(int shownPosition READ shownPosition NOTIFY shownPositionChanged FINAL)
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged FINAL)
     Q_PROPERTY(double frameRate READ frameRate NOTIFY formatChanged FINAL)
+    // The exact frame rate (30000/1001 for 29.97), for the ruler's ticks on real seconds.
+    Q_PROPERTY(int frameRateNum READ frameRateNum NOTIFY formatChanged FINAL)
+    Q_PROPERTY(int frameRateDen READ frameRateDen NOTIFY formatChanged FINAL)
     Q_PROPERTY(QSize canvasSize READ canvasSize NOTIFY formatChanged FINAL)
     Q_PROPERTY(double volume READ volume WRITE setVolume NOTIFY volumeChanged FINAL)
     Q_PROPERTY(QString error READ error NOTIFY stateChanged FINAL)
@@ -122,6 +125,8 @@ public:
     int shownPosition() const { return m_shownPosition; }
     int duration() const { return m_duration; }
     double frameRate() const { return m_frameRate; }
+    int frameRateNum() const;
+    int frameRateDen() const;
     QSize canvasSize() const { return m_canvasSize; }
     double volume() const { return m_volume; }
     void setVolume(double volume);

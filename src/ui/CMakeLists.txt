@@ -12,6 +12,8 @@ qt_add_qml_module(velacut_ui
         items/VideoSurfaceRhi.h items/VideoSurfaceRhi.cpp
         items/VideoSurfaceSoftware.h items/VideoSurfaceSoftware.cpp
         items/MediaThumbnail.h items/MediaThumbnail.cpp
+        items/ImageTiles.h items/ImageTiles.cpp
+        items/TimelineRuler.h items/TimelineRuler.cpp
         items/AssetThumbnail.h items/AssetThumbnail.cpp
         items/WaveformView.h items/WaveformView.cpp
         items/ScopeView.h items/ScopeView.cpp

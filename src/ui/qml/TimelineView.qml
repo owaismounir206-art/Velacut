@@ -233,6 +233,60 @@ Rectangle {
         }
     }
 
+    // Right click on a clip: one menu for the whole timeline (it acts on the selection, which the click has set), not
+    // one menu with its repeaters in every clip.
+    function openClipMenu() {
+        clipMenu.popup()
+    }
+    Menu {
+        id: clipMenu
+        objectName: "clipMenu"
+        Repeater {
+            model: view.editor.actions.toolbar
+            delegate: MenuItem {
+                required property var modelData
+                iconName: modelData.icon
+                text: modelData.text
+                shortcutText: modelData.shortcut
+                enabled: modelData.enabled
+                onTriggered: view.editor.actions.trigger(modelData.id)
+            }
+        }
+        MenuSeparator {}
+        // Grouping (Phase 3): shown when it applies.
+        Repeater {
+            model: [{ id: "createCompound", icon: "stacks", text: qsTr("Group into a compound clip") },
+                    { id: "expandCompound", icon: "stacks", text: qsTr("Ungroup the compound clip") },
+                    { id: "createMulticam", icon: "video_settings", text: qsTr("Create multicam clip") },
+                    { id: "syncAudio", icon: "sync", text: qsTr("Synchronize audio") }]
+            delegate: MenuItem {
+                required property var modelData
+                objectName: modelData.id + "Item"
+                // Re-evaluated with the toolbar (same signals).
+                readonly property bool applies: !!view.editor.actions.toolbar
+                                                && view.editor.actions.isEnabled(modelData.id)
+                visible: applies
+                height: applies ? implicitHeight : 0
+                iconName: modelData.icon
+                text: modelData.text
+                onTriggered: view.editor.actions.trigger(modelData.id)
+            }
+        }
+        Repeater {
+            model: ["copyAttributes", "pasteAttributes"]
+            delegate: MenuItem {
+                required property string modelData
+                objectName: modelData + "Item"
+                iconName: modelData === "copyAttributes" ? "format_paint" : "content_paste"
+                text: modelData === "copyAttributes" ? qsTr("Copy attributes") : qsTr("Paste attributes")
+                shortcutText: modelData === "copyAttributes" ? qsTr("Ctrl+Alt+C") : qsTr("Ctrl+Alt+V")
+                enabled: modelData === "copyAttributes" || view.editor.inspector.canPaste
+                onTriggered: view.editor.actions.trigger(modelData)
+            }
+        }
+    }
+
+
     // ---- ruler ----------------------------------------------------------------------------------------------------
     Item {
         id: ruler
@@ -241,69 +295,23 @@ Rectangle {
         height: Theme.editor.rulerHeight
         clip: true
 
-        readonly property int fps: Math.max(1, Math.round(view.editor.frameRate))
-        // The smallest step (in frames) whose labels do not overlap.
-        readonly property int step: {
-            const steps = [1, 2, 5, 10, 15, fps, 2 * fps, 5 * fps, 10 * fps, 15 * fps, 30 * fps, 60 * fps,
-                           120 * fps, 300 * fps, 600 * fps, 1800 * fps, 3600 * fps]
-            for (const candidate of steps) {
-                if (candidate * view.zoom >= Theme.editor.rulerLabelSpacing)
-                    return candidate
-            }
-            return steps[steps.length - 1]
-        }
-        // Real time at any rate (core/time/Timecode.h): "M:SS" on whole-second steps, "MM:SS.FF" below.
-        function label(frame) {
-            return step % fps !== 0 ? view.player.timecode(frame) : view.player.secondsLabel(frame)
-        }
-
-        // Labelled ticks at every step, small ones in between (a quarter or a fifth of the step).
-        readonly property int minorDivisions: {
-            if (step < fps)
-                return step === 15 ? 3 : step >= 10 ? 5 : step
-            const seconds = step / fps
-            return seconds <= 2 ? 4 : seconds % 5 === 0 ? 5 : seconds % 3 === 0 ? 3 : 2
-        }
-        Repeater {
-            model: Math.ceil(ruler.width / (ruler.step * view.zoom)) + 2
-            delegate: Item {
-                id: tick
-                required property int index
-                readonly property int frame: (Math.floor(flick.contentX / (ruler.step * view.zoom)) + index) * ruler.step
-                x: frame * view.zoom - flick.contentX
-                height: ruler.height
-                Rectangle {
-                    width: Theme.editor.hairline
-                    height: Theme.editor.rulerMajorTick
-                    anchors.bottom: parent.bottom
-                    color: Theme.color.outline
-                }
-                Repeater {
-                    model: ruler.minorDivisions - 1
-                    delegate: Rectangle {
-                        required property int index
-                        x: (index + 1) * ruler.step * view.zoom / ruler.minorDivisions
-                        width: Theme.editor.hairline
-                        y: ruler.height - height
-                        height: Theme.editor.rulerMinorTick
-                        color: Theme.color.outlineVariant
-                    }
-                }
-                Label {
-                    x: Theme.space.xs
-                    y: Theme.space.xs
-                    role: "labelSmall"
-                    font.features: { "tnum": 1 }
-                    color: Theme.color.onSurfaceVariant
-                    text: ruler.label(tick.frame)
-                }
-            }
-        }
-        Rectangle {
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: Theme.editor.hairline
-            color: Theme.color.outlineVariant
+        // Ticks and real-time labels: one item, painted in chunks reused while scrolling (TimelineRuler).
+        TimelineRuler {
+            objectName: "timelineRuler"
+            anchors.fill: parent
+            zoom: view.zoom
+            contentX: flick.contentX
+            frameRateNum: view.player.frameRateNum
+            frameRateDen: view.player.frameRateDen
+            labelSpacing: Theme.editor.rulerLabelSpacing
+            majorTick: Theme.editor.rulerMajorTick
+            minorTick: Theme.editor.rulerMinorTick
+            hairline: Theme.editor.hairline
+            labelInset: Theme.space.xs
+            majorColor: Theme.color.outline
+            minorColor: Theme.color.outlineVariant
+            labelColor: Theme.color.onSurfaceVariant
+            font: Theme.type.labelSmall
         }
         // In/Out range highlight on ruler
         Rectangle {

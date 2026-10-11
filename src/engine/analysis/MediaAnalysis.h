@@ -34,6 +34,12 @@ public:
     // thumbnailWidth(media) × kThumbnailHeight, side by side. Null until ready: then thumbnailsReady() is emitted.
     QImage thumbnails(const Media &media);
     static int thumbnailCount(const Media &media);
+    // Denser thumbnails for a zoomed-in timeline: kDensePerSecond frames a second, made kDenseChunkSeconds at a time
+    // (chunk n covers [n × kDenseChunkSeconds, (n + 1) × kDenseChunkSeconds) of the media), same size as thumbnails().
+    // Null until ready: then thumbnailsReady() is emitted. Cached on disk like the others.
+    static constexpr int kDensePerSecond = 4;
+    static constexpr int kDenseChunkSeconds = 8;
+    QImage denseThumbnails(const Media &media, int chunk);
     // Min/max peaks per 1/100 s. Null until ready: then waveformReady() is emitted. Never ready without audio.
     std::shared_ptr<const Waveform> waveform(const Media &media);
 
@@ -51,7 +57,7 @@ private:
     QString m_root;
     QThreadPool m_pool;
     std::shared_ptr<std::atomic<bool>> m_cancel;
-    QCache<QString, QImage> m_thumbnails;      // by fingerprint, cost in KiB
+    QCache<QString, QImage> m_thumbnails;      // by fingerprint (dense chunks: fingerprint#chunk), cost in KiB
     QHash<QString, std::shared_ptr<const Waveform>> m_waveforms;
     QSet<QString> m_pending;                   // "t:" / "w:" + fingerprint
 };

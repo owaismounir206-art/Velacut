@@ -17,6 +17,7 @@
 #include "ui/controllers/CaptionsController.h"
 #include "ui/controllers/ClipInspector.h"
 #include "ui/controllers/EditorController.h"
+#include "ui/items/TimelineRuler.h"
 #include "ui/controllers/AiController.h"
 #include "ui/models/DraftsModel.h"
 #include "ui/controllers/TranscriptController.h"
@@ -1563,6 +1564,129 @@ JSON
         QVERIFY2(worst <= 2.5, qPrintable(QString::number(worst)));
         editor()->undo();
         QTRY_COMPARE(mainTrack().clips.size(), size_t(0));
+    }
+
+    // The ruler is one item; on whole-second steps its ticks fall on real seconds at any rate: at 29.97 fps the tick of
+    // 10:00 is frame 17983 (the first that starts after 600 s), not 18000.
+    void rulerTicksOnRealSeconds()
+    {
+        auto *ruler = qobject_cast<ui::TimelineRuler *>(byName(u"timelineRuler"_s));
+        QVERIFY(ruler);
+        const int num = ruler->frameRateNum();
+        const int den = ruler->frameRateDen();
+        const double zoom = ruler->zoom();
+        ruler->setFrameRateNum(30000);
+        ruler->setFrameRateDen(1001);
+        ruler->setZoom(4); // a label a second
+        QCOMPARE(ruler->step(), 30);
+        bool found = false;
+        for (const ui::TimelineRuler::Tick &tick : ruler->ticks(17900, 18100)) {
+            if (tick.label == u"10:00"_s) {
+                QCOMPARE(tick.frame, std::int64_t(17983));
+                found = true;
+            }
+        }
+        QVERIFY(found);
+        ruler->setZoom(40); // below a second: frames in the labels
+        QVERIFY(ruler->step() < 30);
+        QCOMPARE(ruler->ticks(30, 30).front().label, u"00:01.00"_s);
+        ruler->setFrameRateNum(num);
+        ruler->setFrameRateDen(den);
+        ruler->setZoom(zoom);
+    }
+
+    // Zoomed in far, the clips' frames come from the denser thumbnail strips (4 a second) instead of repeating the frame
+    // of each second.
+    void thumbnailsGetDenserWhenZoomedIn()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->importAndInsert({QUrl::fromLocalFile(m_files.landscape)}, 0, editor()->timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack().clips.size(), size_t(1), 20000);
+        QObject *view = byName(u"timelineCanvas"_s);
+        while (view && !view->property("smoothPlayhead").isValid()) {
+            view = view->parent();
+        }
+        QVERIFY(view);
+        QQuickItem *thumbnail = nullptr;
+        QTRY_VERIFY((thumbnail = findItem(byName(u"clip-"_s + mainTrack().clips.front().id.toString()), [](QQuickItem *item) {
+                         return QByteArray(item->metaObject()->className()).startsWith("velacut::ui::MediaThumbnail");
+                     })));
+        QTRY_VERIFY_WITH_TIMEOUT(thumbnail->property("ready").toBool(), 20000);
+        QCOMPARE(thumbnail->property("denseTiles").toInt(), 0); // the default zoom: a frame a second is enough
+        QMetaObject::invokeMethod(view, "setZoom", Q_ARG(QVariant, QVariant(24.0)), Q_ARG(QVariant, QVariant(0.0)));
+        QTRY_VERIFY_WITH_TIMEOUT(thumbnail->property("denseTiles").toInt() > 0, 20000);
+        QMetaObject::invokeMethod(view, "zoomToFit");
+        editor()->undo();
+        QTRY_COMPARE(mainTrack().clips.size(), size_t(0));
+    }
+
+    // 300 clips: scrolling and zooming keep the delegates already in view (none is made again), and the window keeps
+    // drawing. The frames drawn per second are reported (offscreen software rendering here: a floor, not the GPU figure).
+    void manyClipsScroll()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        editor()->importAndInsert({QUrl::fromLocalFile(m_files.landscape)}, 0, editor()->timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack().clips.size(), size_t(1), 20000);
+        const QString media = editor()->data().media.front().id.toString();
+        QElapsedTimer adding;
+        adding.start();
+        while (mainTrack().clips.size() < 300) {
+            QVERIFY(editor()->addMedia(media));
+        }
+        qInfo("300 clips added in %lld ms", adding.elapsed());
+        QObject *view = byName(u"timelineCanvas"_s);
+        while (view && !view->property("smoothPlayhead").isValid()) {
+            view = view->parent();
+        }
+        QVERIFY(view);
+        QQuickItem *flick = byName(u"timelineCanvas"_s)->parentItem();
+        while (flick && !flick->property("contentX").isValid()) {
+            flick = flick->parentItem();
+        }
+        QVERIFY(flick);
+        QMetaObject::invokeMethod(view, "setZoom", Q_ARG(QVariant, QVariant(1.0)), Q_ARG(QVariant, QVariant(0.0)));
+        flick->setProperty("contentX", 0);
+        QTest::qWait(200);
+        const auto clipItems = [&] {
+            QHash<QString, QQuickItem *> items;
+            for (QQuickItem *item : byName(u"timelineCanvas"_s)->childItems()) {
+                if (item->objectName().startsWith(u"clip-"_s)) {
+                    items.insert(item->objectName(), item);
+                }
+            }
+            return items;
+        };
+        int swaps = 0;
+        const QMetaObject::Connection counting = connect(m_window, &QQuickWindow::frameSwapped, this, [&swaps] { ++swaps; });
+        QElapsedTimer scrolling;
+        scrolling.start();
+        int recreated = 0;
+        for (int i = 1; i <= 120; ++i) { // 2 s at 60 steps a second, 8 px a step
+            const QHash<QString, QQuickItem *> before = clipItems();
+            flick->setProperty("contentX", i * 8.0);
+            QTest::qWait(16);
+            const QHash<QString, QQuickItem *> after = clipItems();
+            for (auto it = after.constBegin(); it != after.constEnd(); ++it) {
+                recreated += before.contains(it.key()) && before.value(it.key()) != it.value() ? 1 : 0;
+            }
+        }
+        const double scrollFps = swaps * 1000.0 / scrolling.elapsed();
+        swaps = 0;
+        QElapsedTimer zooming;
+        zooming.start();
+        for (int i = 0; i < 60; ++i) {
+            QMetaObject::invokeMethod(view, "setZoom", Q_ARG(QVariant, QVariant(1.0 + (i % 30) * 0.1)), Q_ARG(QVariant, QVariant(200.0)));
+            QTest::qWait(16);
+        }
+        const double zoomFps = swaps * 1000.0 / zooming.elapsed();
+        disconnect(counting);
+        qInfo("300 clips: scrolling drew %.0f frames/s, zooming %.0f frames/s, %d delegates made again", scrollFps, zoomFps, recreated);
+        QCOMPARE(recreated, 0);
+        QVERIFY(scrollFps > 10 && zoomFps > 10);
+        QMetaObject::invokeMethod(view, "zoomToFit");
     }
 
     void noQmlWarnings()

@@ -2177,12 +2177,12 @@
     <message>
         <location line="+10"/>
         <source>Preparing a light copy for a smooth preview</source>
-        <translation>Preparazione di una copia leggera per un'anteprima fluida</translation>
+        <translation>Preparazione di una copia leggera per un&apos;anteprima fluida</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Preparing a light copy for a smooth preview: %1%</source>
-        <translation>Preparazione di una copia leggera per un'anteprima fluida: %1%</translation>
+        <translation>Preparazione di una copia leggera per un&apos;anteprima fluida: %1%</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -2677,12 +2677,12 @@
     <message>
         <location line="+1"/>
         <source>Heavy videos (4K, HEVC, 10 bit, variable frame rate) get a light copy, made in the background, so that the preview plays smoothly. The export always uses the original files.</source>
-        <translation>I video pesanti (4K, HEVC, 10 bit, frame rate variabile) ricevono una copia leggera, fatta in background, perché l'anteprima sia fluida. L'esportazione usa sempre i file originali.</translation>
+        <translation>I video pesanti (4K, HEVC, 10 bit, frame rate variabile) ricevono una copia leggera, fatta in background, perché l&apos;anteprima sia fluida. L&apos;esportazione usa sempre i file originali.</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Light copies for the preview (proxies)</source>
-        <translation>Copie leggere per l'anteprima (proxy)</translation>
+        <translation>Copie leggere per l&apos;anteprima (proxy)</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -5302,7 +5302,40 @@
         <translation>Sostituisci</translation>
     </message>
     <message>
-        <location line="+148"/>
+        <location line="+249"/>
+        <source>%1 · %2f</source>
+        <translation>%1 · %2 fot.</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineView</name>
+    <message>
+        <location filename="../src/ui/qml/TimelineView.qml" line="+621"/>
+        <source>Audio track</source>
+        <translation>Traccia audio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Main track</source>
+        <translation>Traccia principale</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Overlay track</source>
+        <translation>Traccia sovrapposta</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Track volume</source>
+        <translation>Volume della traccia</translation>
+    </message>
+    <message>
+        <location line="-12"/>
+        <source>%1 dB</source>
+        <translation>%1 dB</translation>
+    </message>
+    <message>
+        <location line="-370"/>
         <source>Group into a compound clip</source>
         <translation>Raggruppa in una clip composta</translation>
     </message>
@@ -5342,40 +5375,7 @@
         <translation>Ctrl+Alt+V</translation>
     </message>
     <message>
-        <location line="+125"/>
-        <source>%1 · %2f</source>
-        <translation>%1 · %2 fot.</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineView</name>
-    <message>
-        <location filename="../src/ui/qml/TimelineView.qml" line="+582"/>
-        <source>Audio track</source>
-        <translation>Traccia audio</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Main track</source>
-        <translation>Traccia principale</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Overlay track</source>
-        <translation>Traccia sovrapposta</translation>
-    </message>
-    <message>
-        <location line="+18"/>
-        <source>Track volume</source>
-        <translation>Volume della traccia</translation>
-    </message>
-    <message>
-        <location line="-12"/>
-        <source>%1 dB</source>
-        <translation>%1 dB</translation>
-    </message>
-    <message>
-        <location line="-199"/>
+        <location line="+147"/>
         <source>Audio track: volume and settings</source>
         <translation>Traccia audio: volume e impostazioni</translation>
     </message>
@@ -5506,7 +5506,7 @@
         <translation>Trascina qui video e foto, oppure fai clic per importarli</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+35"/>
         <source>Transition %1</source>
         <translation>Transizione %1</translation>
     </message>
@@ -6628,7 +6628,7 @@
 <context>
     <name>velacut::engine::TimelinePlayer</name>
     <message>
-        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+159"/>
+        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+160"/>
         <source>No audio output is available (SDL2).</source>
         <translation>Nessuna uscita audio disponibile (SDL2).</translation>
     </message>
