@@ -284,6 +284,9 @@ double renderOnce(Mlt::Tractor &tractor, int position, int width, int height, QS
     return static_cast<double>(timer.nsecsElapsed()) / 1e6;
 }
 
+// --preview-height: frames requested at this height (the width follows), as the preview asks for them (Phase 3).
+int g_previewHeight = 0;
+
 PipelineResult measurePipeline(const Scenario &scenario)
 {
     PipelineResult result;
@@ -294,8 +297,12 @@ PipelineResult measurePipeline(const Scenario &scenario)
     TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
     projection.build(project.data(), project.data().mainSequenceId);
     Mlt::Tractor &tractor = *projection.tractor();
-    const int w = profile->width();
-    const int h = profile->height();
+    int w = profile->width();
+    int h = profile->height();
+    if (g_previewHeight > 0 && g_previewHeight < h) {
+        w = std::max(2, static_cast<int>(std::lround(w * double(g_previewHeight) / h / 2.0)) * 2);
+        h = g_previewHeight;
+    }
 
     // Warm-up (opens decoders, fills caches), then sequential playback over the range.
     renderOnce(tractor, scenario.from, w, h);
@@ -488,6 +495,7 @@ int main(int argc, char **argv)
     const QString mediaDir = QDir(option(u"--media-dir"_s, u"bench-media"_s)).absolutePath();
     const bool cpuTransitions = arguments.contains(u"--cpu-transitions"_s);
     const bool withPlayer = !arguments.contains(u"--no-player"_s);
+    g_previewHeight = option(u"--preview-height"_s, u"0"_s).toInt();
 
     if (!MltRuntime::waitUntilReady()) {
         out << "MLT could not be initialized\n";

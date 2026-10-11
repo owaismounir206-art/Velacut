@@ -156,3 +156,49 @@ Verifiche con programmi di prova (`tools/probes/preview_probe.cpp`, `-DVELACUT_B
 - Il producer `avformat` di MLT tiene già in cache le immagini decodificate: la stessa posizione di nuovo costa
   0,8 ms invece di 370 ms, anche dopo un seek lontano (E8). La cache "sorgente" prevista dalla Fase 1.4 **non serve**
   e non è stata fatta: cambiare un parametro su un fotogramma fermo costa già solo gli effetti.
+
+## Dopo la Fase 2 — costo per fotogramma (1080p, transizioni con scelta automatica GPU/CPU)
+
+S4b è uno scenario aggiunto in Fase 2 (la diagnosi 1.1-C non si vedeva con S4, vedi sotto): due parti **lontane**
+dello stesso file (diviso due volte, tolto il pezzo in mezzo) + dissolvenza 1 s, finestra 105–134. Il suo "prima" è
+misurato con il codice della Fase 1 (le colonne della pipeline non dipendono dalla Fase 1): 498 ms/fotogramma, 1,6 fps.
+
+| Scenario | Canvas | Frame | Seq. mean ms | Seq. p95 ms | Seek ms | Param ms (mean/p95) | Play fps | Dropped | Scrub max gap ms | Scrub settle ms | Slider frames/s | Slider settle ms |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Scenario | Canvas | Frame | Seq. mean ms | Seq. p95 ms | Seek ms | Param ms (mean/p95) | Play fps | Dropped | Scrub max gap ms | Scrub settle ms | Slider frames/s | Slider settle ms |
+| S1 1 clip H.264, no effect | 1920×1080 | 1920×1080 | 6.3 | 7.8 | 245 | – | 30 | 3 % | 401 | 327 | – | – |
+| S2 1 clip + blur 1.0 | 1920×1080 | 1920×1080 | 11 | 11 | 250 | 7.4 / 10 | 29 | 3 % | 414 | 379 | 50 | 7.0 |
+| S3 1 clip + zoom blur 1.0 | 1920×1080 | 1920×1080 | 74 | 79 | 313 | 69 / 70 | 11 | 60 % | 458 | 575 | 8.3 | 79 |
+| S4 split clip (same file) + 1 s dissolve | 1920×1080 | 1920×1080 | 21 | 24 | 243 | – | 29 | 3 % | 631 | 191 | – | – |
+| S4b same file, distant parts + 1 s dissolve | 1920×1080 | 1920×1080 | 20 | 23 | 209 | – | 29 | 7 % | 803 | 84 | – | – |
+| S5 2 files + 1 s blur dissolve | 1920×1080 | 1920×1080 | 20 | 72 | 286 | – | 28 | 7 % | 439 | 575 | – | – |
+| S6 blur 1.0 + text overlay + colour filter | 1920×1080 | 1920×1080 | 23 | 25 | 263 | 20 / 21 | 29 | 3 % | 436 | 433 | 24 | 21 |
+
+Prima (baseline) → dopo, ms per fotogramma in sequenza a 1080p:
+
+| | Baseline | Dopo Fase 2 | |
+|---|---|---|---|
+| S1 | 14 | 6,3 | trasformazione 1:1 senza miscelazione in float |
+| S2 blur 1.0 | 108 | 11 | **9,8×** (criterio 1: ≥ 5×) |
+| S3 zoom blur 1.0 | 544 | 74 | 7,4× |
+| S4 dissolvenza, stesso file contiguo | 41 | 21 | |
+| S4b dissolvenza, stesso file lontano | 498 | 20 | 25× |
+| S5 blur dissolve | 41 | 20 (p95 72: i 2 fotogrammi di misura della CPU) | |
+| S6 realistico | 121 | 23 | 5,3× |
+
+Riproduzione: 28–30 fps con 3–7 % di persi in tutti gli scenari tranne S3 (11 fps a piena risoluzione: tocca alla
+qualità automatica della Fase 3). Lo slider con blur dà 50 aggiornamenti al secondo (prima 0), quello con S6 24.
+
+Cosa è stato fatto e verificato:
+- Kernel a fasce su tutti gli effetti video (D-59): stessi byte di prima per tutti i kernel (hash di tutti i 48 kernel
+  identici prima/dopo, `videoEffectsSameInParallel`), tranne blur grandi (copia ridotta, PSNR ≥ 42 dB su foto vere,
+  ≥ 40 nel test) e zoom/spin blur in float (≥ 45 dB dal riferimento in double).
+- **Ipotesi della diagnosi verificate**: "le transizioni sulla stessa sorgente fanno seek thrashing" → vero solo per
+  parti lontane del file (S4b: 498 ms), falso per una clip divisa e basta (S4: A e B leggono gli stessi fotogrammi
+  sorgente, serviti dalla cache di `avformat`). "Il percorso GPU può essere più lento del CPU" → vero per la
+  dissolvenza (CPU 23 contro GPU 26 ms a fotogramma), falso per il blur dissolve (GPU 21 contro CPU 76): da qui la
+  scelta per tipo e dimensione (D-61). "Saltare il get_image del livello coperto non rompe nulla" → verificato con il
+  confronto delle immagini con e senza in `tst_projection` e con la suite sotto ASan.
+- Livelli coperti non renderizzati (D-60): il flag `vedit.opaque` non attraversa il tractor annidato delle transizioni
+  (MLT copia il fotogramma interno in uno nuovo), quindi il composite controlla anche l'alfa del livello superiore
+  (si ferma al primo pixel trasparente).

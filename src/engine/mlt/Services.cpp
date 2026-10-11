@@ -39,9 +39,12 @@
 #include <mlt++/Mlt.h>
 
 #include <algorithm>
+#include <atomic>
 #include <array>
 #include <cmath>
 #include <cstring>
+#include <tuple>
+#include <map>
 
 // Time of every get_image of our services (own work, without what they ask upstream) and of the sources they read,
 // as debug messages: QT_LOGGING_RULES="velacut.engine.perf.debug=true". Off by default; then a scope costs one check.
@@ -124,34 +127,84 @@ void profileSize(mlt_service service, int &width, int &height)
     height = profile ? profile->height : 1080;
 }
 
+// True if every pixel of the RGBA image is opaque (rows in parallel bands, each stops at its first transparent pixel).
+bool fullyOpaque(const uint8_t *image, int width, int height)
+{
+    std::atomic<bool> opaque{true};
+    runSliced(height, [&](int begin, int end) {
+        for (int y = begin; y < end && opaque.load(std::memory_order_relaxed); ++y) {
+            const uint8_t *alpha = image + static_cast<size_t>(y) * width * 4 + 3;
+            for (int x = 0; x < width; ++x, alpha += 4) {
+                if (*alpha != 255) {
+                    opaque.store(false, std::memory_order_relaxed);
+                    return;
+                }
+            }
+        }
+    });
+    return opaque.load();
+}
+
+// Marks a frame whose picture covers the whole canvas with opaque pixels (read by vedit.composite).
+constexpr const char *kOpaque = "vedit.opaque";
+
+std::atomic<bool> g_skipCoveredLayers{true};
+std::atomic<quint64> g_coveredLayersSkipped{0};
+
 // ---- vedit.composite ------------------------------------------------------------------------------------------
 
+// The upper layer (B) is read first. When it covers the whole canvas with opaque pixels and is drawn
+// normally at full opacity, it is the result: the lower tracks (A, every composite under this one) are not rendered at
+// all, neither decoded nor processed, e.g. the clips under a transition or the canvas background under a full-screen
+// clip (D-60). The frames of the tracks belong to the tractor's frame and are closed with it; audio is mixed apart.
 int compositeGetImage(mlt_frame aFrame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
 {
     mlt_frame bFrame = mlt_frame_pop_frame(aFrame);
     auto transition = static_cast<mlt_transition>(mlt_frame_pop_service(aFrame));
     *format = mlt_image_rgba;
-    int error = mlt_frame_get_image(aFrame, image, format, width, height, 1);
-    if (error || *format != mlt_image_rgba || !bFrame || mlt_frame_is_test_card(bFrame)) {
-        return error;
-    }
+    int w = *width;
+    int h = *height;
+    profileSize(MLT_TRANSITION_SERVICE(transition), w, h);
     mlt_image_format bFormat = mlt_image_rgba;
-    int bWidth = *width;
-    int bHeight = *height;
+    int bWidth = w;
+    int bHeight = h;
     uint8_t *bImage = nullptr;
-    if (mlt_frame_get_image(bFrame, &bImage, &bFormat, &bWidth, &bHeight, 0) != 0 || !bImage ||
-        bFormat != mlt_image_rgba || bWidth != *width || bHeight != *height) {
-        return 0; // nothing usable to composite: keep the lower tracks
-    }
+    const bool hasB = bFrame && !mlt_frame_is_test_card(bFrame) &&
+                      mlt_frame_get_image(bFrame, &bImage, &bFormat, &bWidth, &bHeight, 0) == 0 && bImage &&
+                      bFormat == mlt_image_rgba;
     const mlt_properties properties = MLT_TRANSITION_PROPERTIES(transition);
     const int opacity = mlt_properties_exists(properties, "opacity_255") ? mlt_properties_get_int(properties, "opacity_255") : 255;
-    const mlt_properties bProperties = mlt_frame_properties(bFrame);
-    const int modeInt = mlt_properties_exists(bProperties, "vedit.blend_mode")
+    const mlt_properties bProperties = hasB ? mlt_frame_properties(bFrame) : nullptr;
+    const int modeInt = bProperties && mlt_properties_exists(bProperties, "vedit.blend_mode")
                             ? mlt_properties_get_int(bProperties, "vedit.blend_mode")
                             : (mlt_properties_exists(properties, "blend_mode") ? mlt_properties_get_int(properties, "blend_mode") : 0);
+    const auto mode = static_cast<fx::BlendMode>(modeInt);
+    // The mark of vedit.transform/vedit.transition, else the pixels themselves (a frame that comes out of a nested
+    // tractor, e.g. a transition, is a copy without the marks of the frames inside; a transparent layer stops the
+    // check at its first transparent pixel, usually in the first row).
+    if (hasB && opacity >= 255 && mode == fx::BlendMode::Normal && bWidth == w && bHeight == h &&
+        g_skipCoveredLayers.load(std::memory_order_relaxed) &&
+        (mlt_properties_get_int(bProperties, kOpaque) == 1 || fullyOpaque(bImage, w, h))) {
+        const PerfScope perf("composite.covered");
+        g_coveredLayersSkipped.fetch_add(1, std::memory_order_relaxed);
+        const size_t size = static_cast<size_t>(w) * static_cast<size_t>(h) * 4;
+        auto *out = static_cast<uint8_t *>(mlt_pool_alloc(static_cast<int>(size)));
+        runSliced(h, [&](int begin, int end) {
+            std::memcpy(out + static_cast<size_t>(begin) * w * 4, bImage + static_cast<size_t>(begin) * w * 4,
+                        static_cast<size_t>(end - begin) * w * 4);
+        });
+        mlt_frame_set_image(aFrame, out, static_cast<int>(size), mlt_pool_release);
+        *image = out;
+        *width = w;
+        *height = h;
+        return 0;
+    }
+    const int error = mlt_frame_get_image(aFrame, image, format, width, height, 1);
+    if (error || *format != mlt_image_rgba || !hasB || bWidth != *width || bHeight != *height) {
+        return error; // nothing usable to composite: keep the lower tracks
+    }
     const fx::ImageView destination{*image, *width, *height, *width * 4};
     const fx::ConstImageView source{bImage, bWidth, bHeight, bWidth * 4};
-    const auto mode = static_cast<fx::BlendMode>(modeInt);
     const PerfScope perf("composite");
     runSliced(*height, [&](int begin, int end) { fx::compositeBlend(destination, source, mode, opacity, begin, end); });
     return 0;
@@ -357,6 +410,10 @@ int transformGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format
     const fx::ImageView target{canvas, w, h, w * 4};
     const fx::ConstImageView src{source, sw, sh, sw * 4};
     runSliced(h, [&](int begin, int end) { fx::drawAffine(target, src, toSource, window, op, begin, end); });
+    // Covers the canvas with opaque pixels: an opaque background, or (drawn at full opacity) every pixel checked.
+    const bool opaqueBackground = s->background && (s->background->type == BackgroundType::Blur ||
+                                                    (s->background->type == BackgroundType::Color && s->background->color.a == 255));
+    mlt_properties_set_int(frameProps, kOpaque, opaqueBackground || (op >= 1.0 && fullyOpaque(canvas, w, h)) ? 1 : 0);
     mlt_frame_set_image(frame, canvas, size, mlt_pool_release);
     *image = canvas;
     *width = w;
@@ -616,6 +673,50 @@ mlt_frame gainProcess(mlt_filter filter, mlt_frame frame)
 
 // ---- vedit.transition -----------------------------------------------------------------------------------------
 
+// Which path renders a transition faster, by kind and size, measured in this process (preview and export each find out
+// for themselves, D-61): the GPU path pays an upload, a read-back and a round trip to its thread, which a sliced CPU
+// kernel can beat for cheap mixes (a dissolve) and loses for heavy ones (a blur dissolve). The first frames alternate
+// (the first GPU frame at a size, with its shader compile and textures, is not counted), then the faster one is used.
+struct PathTimes
+{
+    int gpuSeen = 0; // GPU frames rendered (the first is not timed)
+    int gpuTimed = 0;
+    int cpuTimed = 0;
+    qint64 gpuNs = 0;
+    qint64 cpuNs = 0;
+};
+constexpr int kPathSamples = 2;
+QMutex g_pathMutex;
+std::map<std::tuple<int, int, int>, PathTimes> g_pathTimes;
+
+bool preferGpu(fx::TransitionKind kind, int width, int height)
+{
+    const QMutexLocker lock(&g_pathMutex);
+    const PathTimes &t = g_pathTimes[{static_cast<int>(kind), width, height}];
+    if (t.gpuTimed < kPathSamples) {
+        return true;
+    }
+    if (t.cpuTimed < kPathSamples) {
+        return false;
+    }
+    return t.gpuNs * t.cpuTimed <= t.cpuNs * t.gpuTimed; // average GPU time ≤ average CPU time
+}
+
+void recordTransitionPath(fx::TransitionKind kind, int width, int height, bool onGpu, qint64 nanoseconds)
+{
+    const QMutexLocker lock(&g_pathMutex);
+    PathTimes &t = g_pathTimes[{static_cast<int>(kind), width, height}];
+    if (onGpu) {
+        if (t.gpuSeen++ > 0 && t.gpuTimed < kPathSamples) {
+            ++t.gpuTimed;
+            t.gpuNs += nanoseconds;
+        }
+    } else if (t.cpuTimed < kPathSamples) {
+        ++t.cpuTimed;
+        t.cpuNs += nanoseconds;
+    }
+}
+
 int transitionGetImage(mlt_frame aFrame, uint8_t **image, mlt_image_format *format, int *width, int *height, int)
 {
     mlt_frame bFrame = mlt_frame_pop_frame(aFrame);
@@ -651,12 +752,22 @@ int transitionGetImage(mlt_frame aFrame, uint8_t **image, mlt_image_format *form
     const fx::ConstImageView av{a, aw, ah, aw * 4};
     const fx::ConstImageView bv{b, bw, bh, bw * 4};
     const fx::TransitionParams params{s->softness};
-    // The GPU path when it is on and willing (SPEC §5.11bis), else the CPU reference kernel.
+    // The GPU path when it is on, willing (SPEC §5.11bis) and faster here, else the CPU reference kernel.
     engine::GpuTransitions *gpu = engine::GpuTransitions::instance();
-    if (!gpu || !gpu->render(s->kind, target, av, bv, progress, params)) {
+    const bool tryGpu = gpu && preferGpu(s->kind, aw, ah);
+    QElapsedTimer timer;
+    timer.start();
+    if (tryGpu && gpu->render(s->kind, target, av, bv, progress, params)) {
+        recordTransitionPath(s->kind, aw, ah, true, timer.nsecsElapsed());
+    } else {
+        timer.restart();
         runSliced(ah, [&](int begin, int end) { fx::renderTransition(s->kind, target, av, bv, progress, params, begin, end); });
+        if (gpu) {
+            recordTransitionPath(s->kind, aw, ah, false, timer.nsecsElapsed());
+        }
     }
     mlt_frame_set_image(aFrame, out, size, mlt_pool_release);
+    mlt_properties_set_int(mlt_frame_properties(aFrame), kOpaque, fullyOpaque(out, aw, ah) ? 1 : 0);
     *image = out;
     *width = aw;
     *height = ah;
@@ -1961,6 +2072,16 @@ std::unique_ptr<Mlt::Filter> makeBeatFilter(Mlt::Profile &profile, const BeatEff
     auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.beat");
     attachSettings(*filter, settings);
     return filter;
+}
+
+void setSkipCoveredLayers(bool skip)
+{
+    g_skipCoveredLayers = skip;
+}
+
+quint64 coveredLayersSkipped()
+{
+    return g_coveredLayersSkipped.load();
 }
 
 std::unique_ptr<Mlt::Filter> makeTimingFilter(Mlt::Profile &profile, std::shared_ptr<FrameTiming> timing)

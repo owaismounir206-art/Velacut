@@ -328,4 +328,10 @@ struct FrameTiming
 };
 std::unique_ptr<Mlt::Filter> makeTimingFilter(Mlt::Profile &profile, std::shared_ptr<FrameTiming> timing);
 
+// vedit.composite does not render the tracks under a layer that covers the whole canvas with opaque pixels (D-60). On by
+// default; tests turn it off to compare the pictures with and without.
+void setSkipCoveredLayers(bool skip);
+// How many times the tracks under a covering layer were not rendered (tests).
+quint64 coveredLayersSkipped();
+
 } // namespace velacut::engine

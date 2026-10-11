@@ -221,10 +221,10 @@ std::int64_t TimelineProjection::toFrames(const RationalTime &time) const
     return time.rate() == m_rate ? time.value() : time.rescaled(m_rate, Rounding::NearestEven).value();
 }
 
-std::shared_ptr<Mlt::Producer> TimelineProjection::producerFor(const Media &media, double speed, bool preservePitch)
+std::shared_ptr<Mlt::Producer> TimelineProjection::producerFor(const Media &media, double speed, bool preservePitch, int lane)
 {
-    return m_loading == MediaLoading::Wait ? m_cache.open(media, speed, preservePitch)
-                                           : m_cache.producerOrRequest(media, speed, preservePitch);
+    return m_loading == MediaLoading::Wait ? m_cache.open(media, speed, preservePitch, lane)
+                                           : m_cache.producerOrRequest(media, speed, preservePitch, lane);
 }
 
 const Clip &TimelineProjection::previewed(const Clip &clip) const
@@ -1125,6 +1125,11 @@ std::optional<TimelineProjection::Placed> TimelineProjection::place(const Clip &
         const double speed = image ? 1.0 : data->speed;
         const double signedSpeed = data->reversed && !image ? -speed : speed;
         placed.producer = producerFor(*media, signedSpeed, data->preservePitch);
+        if (placed.producer && !image) {
+            placed.media = *media;
+            placed.speed = signedSpeed;
+            placed.preservePitch = data->preservePitch;
+        }
         if (!placed.producer) {
             if (!m_cache.error(media->id).isEmpty()) {
                 m_warnings << m_cache.error(media->id);
@@ -1292,12 +1297,21 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::transitionProducer(TrackSlot 
         std::int64_t first;  // producer frame for windowStart (may be outside the material)
     };
     const Side sides[2] = {{&from, from.in + (windowStart - from.start)}, {&to, to.in + (windowStart - to.start)}};
+    // Two parts of the same file: the second side reads from a producer of its own (lane 1, opened in background like
+    // every file; until then the shared one). One decoder for both made it seek between the two positions at every
+    // frame: 489 ms a frame at 1080p instead of 25 (docs/PERFORMANCE.md, S4b).
+    std::shared_ptr<Mlt::Producer> producers[2] = {from.producer, to.producer};
+    if (to.producer && to.producer == from.producer && to.media) {
+        if (auto lane = producerFor(*to.media, to.speed, to.preservePitch, 1)) {
+            producers[1] = std::move(lane);
+        }
+    }
     QByteArray key;
     QDataStream stream(&key, QIODevice::WriteOnly);
     stream << int(settings.kind) << int(settings.easing) << settings.softness << qint64(length);
-    for (const Side &side : sides) {
-        stream << reinterpret_cast<quintptr>(side.placed->producer.get()) << qint64(side.first)
-               << (side.placed->render ? side.placed->render->key : QByteArray());
+    for (int i = 0; i < 2; ++i) {
+        stream << reinterpret_cast<quintptr>(producers[i].get()) << qint64(sides[i].first)
+               << (sides[i].placed->render ? sides[i].placed->render->key : QByteArray());
     }
     if (auto existing = slot.transitions.value(key)) {
         return existing;
@@ -1318,15 +1332,16 @@ std::shared_ptr<Mlt::Producer> TimelineProjection::transitionProducer(TrackSlot 
     for (int i = 0; i < 2; ++i) {
         const Placed &placed = *sides[i].placed;
         Mlt::Playlist &playlist = *playlists[i];
-        if (!placed.producer) {
+        Mlt::Producer *source = producers[i].get();
+        if (!source) {
             playlist.blank(static_cast<int>(length - 1));
             continue;
         }
-        const std::int64_t available = placed.producer->get_length();
+        const std::int64_t available = source->get_length();
         std::int64_t first = sides[i].first;
         std::int64_t last = first + length - 1;
         const auto appendCut = [&](int in, int out, int repeat) {
-            playlist.append(*placed.producer, in, out);
+            playlist.append(*source, in, out);
             if (repeat > 1) {
                 playlist.repeat(playlist.count() - 1, repeat);
             }

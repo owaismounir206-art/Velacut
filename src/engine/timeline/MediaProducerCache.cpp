@@ -44,21 +44,22 @@ MediaProducerCache::~MediaProducerCache()
     clear();
 }
 
-QString MediaProducerCache::keyOf(const MediaId &mediaId, double speed, bool preservePitch)
+QString MediaProducerCache::keyOf(const MediaId &mediaId, double speed, bool preservePitch, int lane)
 {
+    const QString laneSuffix = lane > 0 ? u'#' + QString::number(lane) : QString();
     if (speed == 1.0) {
-        return mediaId.toString();
+        return mediaId.toString() + laneSuffix;
     }
-    return mediaId.toString() + u'@' + QString::number(speed, 'g', 12) + (preservePitch ? u"p"_s : u""_s);
+    return mediaId.toString() + u'@' + QString::number(speed, 'g', 12) + (preservePitch ? u"p"_s : u""_s) + laneSuffix;
 }
 
-std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media, double speed, bool preservePitch)
+std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media, double speed, bool preservePitch, int lane)
 {
     if (media.kind == MediaKind::Image) {
         speed = 1.0; // a still has no speed
     }
-    const QString key = keyOf(media.id, speed, preservePitch);
-    if (auto existing = cached(media.id, speed, preservePitch)) {
+    const QString key = keyOf(media.id, speed, preservePitch, lane);
+    if (auto existing = cached(media.id, speed, preservePitch, lane)) {
         return existing;
     }
     std::shared_ptr<Mlt::Producer> producer;
@@ -105,9 +106,9 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media, doub
     return producer;
 }
 
-std::shared_ptr<Mlt::Producer> MediaProducerCache::producerOrRequest(const Media &media, double speed, bool preservePitch)
+std::shared_ptr<Mlt::Producer> MediaProducerCache::producerOrRequest(const Media &media, double speed, bool preservePitch, int lane)
 {
-    const QString key = keyOf(media.id, media.kind == MediaKind::Image ? 1.0 : speed, preservePitch);
+    const QString key = keyOf(media.id, media.kind == MediaKind::Image ? 1.0 : speed, preservePitch, lane);
     {
         QMutexLocker lock(&m_mutex);
         if (auto it = m_producers.constFind(key); it != m_producers.constEnd()) {
@@ -118,8 +119,8 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::producerOrRequest(const Media
         }
         m_pending.insert(key);
     }
-    m_pool.start([this, media, speed, preservePitch, key] {
-        open(media, speed, preservePitch);
+    m_pool.start([this, media, speed, preservePitch, lane, key] {
+        open(media, speed, preservePitch, lane);
         // Delivered in the owner's thread; dropped by Qt if the cache is destroyed first.
         QMetaObject::invokeMethod(this, [this, key, id = media.id] {
             {
@@ -132,10 +133,10 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::producerOrRequest(const Media
     return nullptr;
 }
 
-std::shared_ptr<Mlt::Producer> MediaProducerCache::cached(const MediaId &mediaId, double speed, bool preservePitch) const
+std::shared_ptr<Mlt::Producer> MediaProducerCache::cached(const MediaId &mediaId, double speed, bool preservePitch, int lane) const
 {
     QMutexLocker lock(&m_mutex);
-    return m_producers.value(keyOf(mediaId, speed, preservePitch));
+    return m_producers.value(keyOf(mediaId, speed, preservePitch, lane));
 }
 
 QString MediaProducerCache::error(const MediaId &mediaId) const

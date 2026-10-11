@@ -35,10 +35,12 @@ public:
     // Opens now (any thread). Returns null if the file cannot be opened (see error()).
     // `speed` ≠ 1 (negative: backwards) gives a "timewarp" producer: frame n shows source frame n × speed, or the
     // source played backwards (verified by phase2_probe); `preservePitch` keeps the voice at its pitch.
-    std::shared_ptr<Mlt::Producer> open(const Media &media, double speed = 1.0, bool preservePitch = true);
+    // `lane` > 0 gives another producer of the same file (its own decoder): the second side of a transition between
+    // two parts of one file reads from it, instead of making one decoder jump between two positions at every frame.
+    std::shared_ptr<Mlt::Producer> open(const Media &media, double speed = 1.0, bool preservePitch = true, int lane = 0);
     // The producer if already open; otherwise starts opening it in background and returns null.
-    std::shared_ptr<Mlt::Producer> producerOrRequest(const Media &media, double speed = 1.0, bool preservePitch = true);
-    std::shared_ptr<Mlt::Producer> cached(const MediaId &mediaId, double speed = 1.0, bool preservePitch = true) const;
+    std::shared_ptr<Mlt::Producer> producerOrRequest(const Media &media, double speed = 1.0, bool preservePitch = true, int lane = 0);
+    std::shared_ptr<Mlt::Producer> cached(const MediaId &mediaId, double speed = 1.0, bool preservePitch = true, int lane = 0) const;
     QString error(const MediaId &mediaId) const;
     // Releases every producer (call before destroying the profile or shutting MLT down).
     void clear();
@@ -63,7 +65,7 @@ private:
     // Own pool: the destructor waits for pending opens, which use the profile.
     QThreadPool m_pool;
     mutable QMutex m_mutex;
-    static QString keyOf(const MediaId &mediaId, double speed, bool preservePitch);
+    static QString keyOf(const MediaId &mediaId, double speed, bool preservePitch, int lane);
 
     QHash<QString, std::shared_ptr<Mlt::Producer>> m_producers; // by keyOf()
     QHash<MediaId, QString> m_errors;

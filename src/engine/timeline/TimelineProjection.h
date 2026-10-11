@@ -176,6 +176,10 @@ private:
         std::shared_ptr<Mlt::Producer> producer; // null: nothing to show (gap)
         int in = 0;                              // producer frame of the clip's first frame
         std::shared_ptr<const ClipRender> render;
+        // How `producer` was opened (a plain file producer, not a speed ramp): to open another one of the same file.
+        std::optional<Media> media;
+        double speed = 1.0;
+        bool preservePitch = true;
     };
 
     struct StructureSlot
@@ -206,7 +210,7 @@ private:
     std::shared_ptr<Mlt::Producer> compoundProducer(const ProjectData &project, const SequenceId &sequenceId, int activeAngle = 0);
     void retireEntries(Mlt::Playlist &playlist);
     void updateBackground();
-    std::shared_ptr<Mlt::Producer> producerFor(const Media &media, double speed, bool preservePitch);
+    std::shared_ptr<Mlt::Producer> producerFor(const Media &media, double speed, bool preservePitch, int lane = 0);
     const Clip &previewed(const Clip &clip) const;
     // A model time in frames of the profile.
     std::int64_t toFrames(const RationalTime &time) const;

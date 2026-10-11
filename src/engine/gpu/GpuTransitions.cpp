@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "GpuTransitions.h"
 
+#include "fx/Parallel.h"
+
 #include <QFile>
 #include <QLoggingCategory>
 #include <QMutex>
@@ -39,21 +41,27 @@ void main()
 }
 )";
 
-// Straight RGBA8 (any stride) to premultiplied, packed rows: what the CPU kernels mix in.
+// Straight RGBA8 (any stride) to premultiplied, packed rows: what the CPU kernels mix in. Rows in parallel bands.
 void premultiply(fx::ConstImageView image, std::vector<std::uint8_t> &out)
 {
     out.resize(static_cast<size_t>(image.width) * image.height * 4);
-    std::uint8_t *d = out.data();
-    for (int y = 0; y < image.height; ++y) {
-        const std::uint8_t *s = image.row(y);
-        for (int x = 0; x < image.width; ++x, s += 4, d += 4) {
-            const int a = s[3];
-            d[0] = static_cast<std::uint8_t>((s[0] * a + 127) / 255);
-            d[1] = static_cast<std::uint8_t>((s[1] * a + 127) / 255);
-            d[2] = static_cast<std::uint8_t>((s[2] * a + 127) / 255);
-            d[3] = static_cast<std::uint8_t>(a);
+    fx::parallelFor(image.height, [&](int begin, int end) {
+        std::uint8_t *d = out.data() + static_cast<size_t>(begin) * image.width * 4;
+        for (int y = begin; y < end; ++y) {
+            const std::uint8_t *s = image.row(y);
+            for (int x = 0; x < image.width; ++x, s += 4, d += 4) {
+                const int a = s[3];
+                if (a == 255) {
+                    std::memcpy(d, s, 4); // (c × 255 + 127) / 255 = c
+                    continue;
+                }
+                d[0] = static_cast<std::uint8_t>((s[0] * a + 127) / 255);
+                d[1] = static_cast<std::uint8_t>((s[1] * a + 127) / 255);
+                d[2] = static_cast<std::uint8_t>((s[2] * a + 127) / 255);
+                d[3] = static_cast<std::uint8_t>(a);
+            }
         }
-    }
+    }, 32);
 }
 
 double psnr(fx::ConstImageView a, fx::ConstImageView b)
@@ -277,9 +285,11 @@ bool GpuTransitions::Private::draw(fx::TransitionKind kind, fx::ImageView out, f
         return false;
     }
     // OpenGL's rows go upwards; the image's go downwards.
-    for (int y = 0; y < h; ++y) {
-        std::memcpy(out.row(y), &readback[static_cast<size_t>(h - 1 - y) * w * 4], static_cast<size_t>(w) * 4);
-    }
+    fx::parallelFor(h, [&](int begin, int end) {
+        for (int y = begin; y < end; ++y) {
+            std::memcpy(out.row(y), &readback[static_cast<size_t>(h - 1 - y) * w * 4], static_cast<size_t>(w) * 4);
+        }
+    }, 64);
     return true;
 }
 

@@ -224,6 +224,50 @@ private slots:
         QVERIFY(pixel(composite, 160, 90) != pixel(below, 160, 90)); // overlay content
     }
 
+    // A layer that covers the canvas with opaque pixels hides what is under it, which is then not rendered (D-60): the
+    // pictures are exactly those of compositing everything, for opaque full-screen clips, transitions (also between two
+    // parts of one file), a half-transparent overlay, an overlay with a blend mode and one at half opacity.
+    void coveredLayersAreSkippedWithTheSamePicture()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const ClipId first = session.mainTrack().clips.front().id;
+        QVERIFY(session.apply(session.editor().splitClip(first, frames(40))));
+        QVERIFY(session.apply(session.editor().splitClip(session.mainTrack().clips.back().id, frames(70))));
+        QVERIFY(session.apply(session.editor().rippleDeleteClips({session.mainTrack().clips.at(1).id}))); // same file, far apart
+        QVERIFY(session.apply(session.editor().addTransition(session.mainTrack().clips.front().id, dissolveRef(), frames(10))));
+        QVERIFY(session.apply(session.editor().insertMedia(m_vertical.id, frames(50), std::nullopt, Placement::Overlay)));
+        const auto overlays = [&](const std::function<void(Clip &)> &change) {
+            for (const Track &track : session.sequence().visualTracks) {
+                if (&track != &session.mainTrack() && !track.clips.empty()) {
+                    return session.apply(session.editor().updateClips({track.clips.front().id}, change, u"x"_s));
+                }
+            }
+            return false;
+        };
+        const QList<int> positions{5, 36, 40, 44, 55, 60};
+        const auto compare = [&] {
+            setSkipCoveredLayers(false);
+            const QList<QByteArray> all = renderFresh(session.data(), positions);
+            setSkipCoveredLayers(true);
+            const QList<QByteArray> skipping = renderFresh(session.data(), positions);
+            return all == skipping;
+        };
+        const quint64 skippedBefore = coveredLayersSkipped();
+        QVERIFY(compare());
+        QVERIFY(coveredLayersSkipped() > skippedBefore + 4); // the full-screen clips and the transition hid the layers under
+        QVERIFY(overlays([](Clip &c) { c.transform.scale = Param(Vec2{1.2, 1.2}); })); // opaque, wider than the canvas
+        QVERIFY(compare());
+        QVERIFY(overlays([](Clip &c) { c.blendMode = BlendMode::Multiply; }));
+        QVERIFY(compare());
+        QVERIFY(overlays([](Clip &c) {
+            c.blendMode = BlendMode::Normal;
+            c.opacity = Param(0.5);
+        }));
+        QVERIFY(compare());
+        setSkipCoveredLayers(true);
+    }
+
     void hiddenTrackIsNotRendered()
     {
         Session session(baseProject());
