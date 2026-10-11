@@ -51,6 +51,8 @@ class AppController : public QObject
     Q_PROPERTY(bool hardwareDecoding READ hardwareDecoding WRITE setHardwareDecoding NOTIFY preferencesChanged FINAL)
     Q_PROPERTY(bool hardwareEncoding READ hardwareEncoding WRITE setHardwareEncoding NOTIFY preferencesChanged FINAL)
     Q_PROPERTY(bool restartNeeded READ restartNeeded NOTIFY preferencesChanged FINAL)
+    // Proxies of heavy files for a smooth preview (docs/ARCHITECTURE.md §5.5); on by default.
+    Q_PROPERTY(bool automaticProxies READ automaticProxies WRITE setAutomaticProxies NOTIFY preferencesChanged FINAL)
 
 public:
     // `helperExecutable`: velacut-render (default: next to the running executable).
@@ -118,6 +120,8 @@ public:
     void setHardwareDecoding(bool enabled);
     bool hardwareEncoding() const;
     void setHardwareEncoding(bool enabled);
+    bool automaticProxies() const;
+    void setAutomaticProxies(bool enabled);
     bool restartNeeded() const { return m_restartNeeded; }
     // Starts velacut again (after saving everything) so that language and graphics choices apply.
     Q_INVOKABLE void restart();
@@ -148,6 +152,7 @@ private:
     QStringList hardwareEncoders() const;
     QString gpuDisplayName() const;
     int previewLimit() const;
+    int proxyHeight() const;
 };
 
 } // namespace velacut::ui

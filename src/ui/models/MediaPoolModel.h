@@ -5,10 +5,13 @@
 #include "core/project/Id.h"
 
 #include <QAbstractListModel>
+
+#include <functional>
 #include <QtQml/qqmlregistration.h>
 
 namespace velacut {
 class Project;
+struct Media;
 }
 
 namespace velacut::ui {
@@ -30,6 +33,7 @@ public:
         DurationTextRole, // "0:12" (empty for images)
         AspectRatioRole, // width / height as displayed (1 for audio)
         UsedRole,        // on the timeline
+        ProxyRole,       // the light copy for the preview: -1 none, 0…1 being made, 1 ready
     };
 
     explicit MediaPoolModel(Project &project, QObject *parent = nullptr);
@@ -38,6 +42,10 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
     int count() const { return rowCount(); }
+
+    // Where the state of the proxies comes from (the player), and a change of it.
+    void setProxyState(std::function<double(const Media &)> state) { m_proxyState = std::move(state); }
+    void refreshProxies();
 
     // "1:05", "12:30", "1:02:03".
     static QString durationText(double seconds);
@@ -52,6 +60,7 @@ private:
     Project &m_project;
     std::vector<MediaId> m_ids;
     QSet<MediaId> m_used;
+    std::function<double(const Media &)> m_proxyState;
 };
 
 } // namespace velacut::ui

@@ -5,6 +5,8 @@
 #include "TestMedia.h"
 
 #include "engine/mlt/MltRuntime.h"
+#include "engine/analysis/MediaProbe.h"
+#include "engine/analysis/Proxy.h"
 #include "engine/analysis/ReverseProxy.h"
 #include "engine/playback/TimelinePlayer.h"
 #include "engine/timeline/MediaProducerCache.h"
@@ -506,6 +508,55 @@ private slots:
             return !isBlack(first) && meanDifference(first, lastForward) < 8.0;
         }(), 5000);
         QVERIFY2(meanDifference(first, lastForward) < 8.0, qPrintable(QString::number(meanDifference(first, lastForward))));
+    }
+
+    // A heavy file (here HEVC with 10 bits) gets a light copy in background; once ready the preview reads it (the clip
+    // never turns into a gap meanwhile), and an export reads the original (docs/ARCHITECTURE.md §5.5).
+    void heavyFileGetsAProxyThatThePreviewReads()
+    {
+        const QString file = m_dir.filePath(u"heavy.mp4"_s);
+        if (!runFfmpeg({u"-f"_s, u"lavfi"_s, u"-i"_s, u"testsrc2=size=480x270:rate=30"_s, u"-t"_s, u"2"_s, u"-c:v"_s,
+                        u"libx265"_s, u"-x265-params"_s, u"log-level=error"_s, u"-pix_fmt"_s, u"yuv420p10le"_s, file})) {
+            QSKIP("ffmpeg cannot encode HEVC here");
+        }
+        const ProbeResult probe = probeMedia(file);
+        QVERIFY(probe.media);
+        Media heavy = *probe.media;
+        QVERIFY(needsProxy(heavy));
+        QVERIFY(!needsProxy(m_landscape)); // 320×180 H.264 8 bit
+        heavy.proxy = ProxyPolicy::Off;
+        QVERIFY(!needsProxy(heavy));
+        heavy.proxy = ProxyPolicy::Auto;
+        QFile::remove(proxyPath(heavy, 144)); // left by an earlier run
+
+        ProjectData data = baseProject();
+        data.media.push_back(heavy);
+        Session session(data);
+        QVERIFY(session.apply(session.editor().insertMedia(heavy.id, frames(0))));
+        TimelinePlayer player;
+        player.setVolume(0.0);
+        player.setHelperExecutable(QStringLiteral(VELACUT_RENDER_EXECUTABLE));
+        player.setProxyHeight(144);
+        player.setSequence(&session.project, session.data().mainSequenceId);
+        QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
+        QVERIFY(player.proxyState(heavy) >= 0.0);
+        QTRY_COMPARE_WITH_TIMEOUT(player.proxyState(heavy), 1.0, 60000);
+        const QJsonObject proxy = streamOfType(ffprobe(proxyPath(heavy, 144)), u"video"_s);
+        QCOMPARE(proxy.value(u"codec_name"_s).toString(), u"h264"_s);
+        QCOMPARE(proxy.value(u"height"_s).toInt(), 144);
+        QCOMPARE(proxy.value(u"has_b_frames"_s).toInt(), 0);
+        // Still showing the clip, from the proxy now.
+        player.seek(20);
+        QVERIFY(waitForShown(player, 20));
+        QVERIFY(!isBlack(player.sink()->latest()));
+
+        // The cache of the preview opens the proxy; a cache without a proxy height (the export's) the original.
+        auto profile = makeProfile(session.data(), session.data().mainSequenceId);
+        MediaProducerCache preview(*profile);
+        preview.setProxyHeight(144);
+        QVERIFY(QString::fromUtf8(preview.open(heavy)->get("resource")).endsWith(u"-proxy144.mp4"_s));
+        MediaProducerCache exporting(*profile);
+        QCOMPARE(QString::fromUtf8(exporting.open(heavy)->get("resource")), file);
     }
 
     void closeReleasesEverything()

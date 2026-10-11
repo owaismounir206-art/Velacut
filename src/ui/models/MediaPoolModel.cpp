@@ -63,8 +63,17 @@ QVariant MediaPoolModel::data(const QModelIndex &index, int role) const
     }
     case UsedRole:
         return m_used.contains(media->id);
+    case ProxyRole:
+        return m_proxyState ? m_proxyState(*media) : -1.0;
     default:
         return {};
+    }
+}
+
+void MediaPoolModel::refreshProxies()
+{
+    if (!m_ids.empty()) {
+        emit dataChanged(index(0), index(static_cast<int>(m_ids.size()) - 1), {ProxyRole});
     }
 }
 
@@ -72,7 +81,8 @@ QHash<int, QByteArray> MediaPoolModel::roleNames() const
 {
     return {{MediaIdRole, "mediaId"},           {NameRole, "name"},
             {KindRole, "kind"},                 {DurationTextRole, "durationText"},
-            {AspectRatioRole, "aspectRatio"},   {UsedRole, "used"}};
+            {AspectRatioRole, "aspectRatio"},   {UsedRole, "used"},
+            {ProxyRole, "proxy"}};
 }
 
 void MediaPoolModel::onProjectChanged(const ChangeSet &changes)

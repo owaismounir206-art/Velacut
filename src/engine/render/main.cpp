@@ -12,6 +12,9 @@
 //   velacut-render --backwards file --output copy.mp4
 // The file played backwards for the preview of reversed clips; progress lines as for an export.
 //
+//   velacut-render --proxy file --output copy.mp4 [--height 720] [--encoder h264_vaapi]
+// A light copy for the preview of heavy files (4K, HEVC, 10 bit, VFR; docs/ARCHITECTURE.md §5.5); progress as above.
+//
 //   velacut-render --probe file…
 // Reads the metadata of media files for the import (D-07: a file that crashes the demuxer is rejected instead of
 // crashing the editor). For each file: {"event":"probing","path":"…"} then {"event":"media","path":"…","media":{…}}
@@ -23,6 +26,8 @@
 #include "engine/render/Renderer.h"
 
 #include <QCommandLineParser>
+
+#include <functional>
 #include <QGuiApplication>
 
 #include "engine/gpu/GpuTransitions.h"
@@ -119,18 +124,16 @@ int run(const QString &jobPath)
     return fail(result.error, result.detail);
 }
 
-int reverse(const QString &input, const QString &output)
+// Runs a copy of a media file (backwards copy, proxy) with progress lines and the usual exit codes.
+int mediaCopy(const QString &output, const std::function<Renderer::Result(const Renderer::Progress &)> &render)
 {
     int lastReported = -1;
-    const Renderer::Result result = Renderer::renderReversed(
-        input, output,
-        [&lastReported](int frame, int total) {
-            if (frame != lastReported) {
-                lastReported = frame;
-                emitEvent({{u"event"_s, u"progress"_s}, {u"frame"_s, frame}, {u"total"_s, total}});
-            }
-        },
-        s_cancel);
+    const Renderer::Result result = render([&lastReported](int frame, int total) {
+        if (frame != lastReported) {
+            lastReported = frame;
+            emitEvent({{u"event"_s, u"progress"_s}, {u"frame"_s, frame}, {u"total"_s, total}});
+        }
+    });
     switch (result.status) {
     case Renderer::Status::Done:
         emitEvent({{u"event"_s, u"done"_s}, {u"output"_s, output}});
@@ -181,10 +184,17 @@ int main(int argc, char *argv[])
     // Not "--reverse": QGuiApplication takes "-reverse" (right-to-left layout) out of the arguments.
     const QCommandLineOption reverseOption(u"backwards"_s, u"Write the given media file played backwards (preview proxy)."_s,
                                            u"file"_s);
-    const QCommandLineOption outputOption(u"output"_s, u"Output file (with --reverse)."_s, u"file"_s);
+    const QCommandLineOption proxyOption(u"proxy"_s, u"Write a light copy of the given media file (preview proxy)."_s,
+                                         u"file"_s);
+    const QCommandLineOption heightOption(u"height"_s, u"Maximum height of the proxy (default 720)."_s, u"pixels"_s);
+    const QCommandLineOption encoderOption(u"encoder"_s, u"GPU encoder to try first for the proxy."_s, u"name"_s);
+    const QCommandLineOption outputOption(u"output"_s, u"Output file (with --backwards or --proxy)."_s, u"file"_s);
     parser.addOption(jobOption);
     parser.addOption(probeOption);
     parser.addOption(reverseOption);
+    parser.addOption(proxyOption);
+    parser.addOption(heightOption);
+    parser.addOption(encoderOption);
     parser.addOption(outputOption);
     parser.addPositionalArgument(u"files"_s, u"Media files (with --probe)."_s);
     parser.process(app);
@@ -193,7 +203,19 @@ int main(int argc, char *argv[])
     }
     if (parser.isSet(reverseOption)) {
         MltRuntime::initializeAsync();
-        return reverse(parser.value(reverseOption), parser.value(outputOption));
+        const QString output = parser.value(outputOption);
+        return mediaCopy(output, [&](const Renderer::Progress &progress) {
+            return Renderer::renderReversed(parser.value(reverseOption), output, progress, s_cancel);
+        });
+    }
+    if (parser.isSet(proxyOption)) {
+        MltRuntime::initializeAsync();
+        const QString output = parser.value(outputOption);
+        const int height = parser.isSet(heightOption) ? parser.value(heightOption).toInt() : 720;
+        return mediaCopy(output, [&](const Renderer::Progress &progress) {
+            return Renderer::renderProxy(parser.value(proxyOption), output, height, parser.value(encoderOption), progress,
+                                         s_cancel);
+        });
     }
     if (!parser.isSet(jobOption)) {
         parser.showHelp(1);

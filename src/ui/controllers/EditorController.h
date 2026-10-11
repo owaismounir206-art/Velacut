@@ -49,6 +49,14 @@ class AiController;
 class CaptionsController;
 class ClipInspector;
 
+// How the preview works on this machine (AppController); see TimelinePlayer.
+struct EditorPreviewOptions
+{
+    int limit = 0;         // short side the preview frames are capped to (0 = canvas size)
+    int proxyHeight = 720; // proxies of heavy files at this height (0 = none)
+    QString proxyEncoder;  // GPU H.264 encoder for the proxies, if any
+};
+
 // The open project in the editor: every user action becomes one command on the undo stack (docs/ARCHITECTURE.md §9).
 // Times are frames at the project frame rate; timeline rows are those of TimelineModel (-1 = a new track above the
 // top one, rowCountTotal = a new audio track below the last one).
@@ -116,9 +124,9 @@ public:
     };
     Q_ENUM(SaveState)
 
-    // `previewLimit`: short side the preview frames are capped to (0 = canvas size); see TimelinePlayer.
+    // `preview`: how the preview works on this machine (AppController); see TimelinePlayer.
     EditorController(std::unique_ptr<document::Document> document, engine::MediaAnalysis &analysis,
-                     QString helperExecutable, int previewLimit = 0, QObject *parent = nullptr);
+                     QString helperExecutable, EditorPreviewOptions preview = {}, QObject *parent = nullptr);
     ~EditorController() override;
 
     document::Document &document() { return *m_document; }

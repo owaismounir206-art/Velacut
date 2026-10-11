@@ -6,6 +6,7 @@
 #include <QFileInfo>
 #include <QLoggingCategory>
 
+#include "engine/analysis/Proxy.h"
 #include "engine/analysis/ReverseProxy.h"
 
 #include <mlt++/Mlt.h>
@@ -53,6 +54,47 @@ QString MediaProducerCache::keyOf(const MediaId &mediaId, double speed, bool pre
     return mediaId.toString() + u'@' + QString::number(speed, 'g', 12) + (preservePitch ? u"p"_s : u""_s) + laneSuffix;
 }
 
+std::shared_ptr<Mlt::Producer> MediaProducerCache::build(const Media &media, double speed, bool preservePitch, QString &error)
+{
+    std::shared_ptr<Mlt::Producer> producer;
+    if (!QFileInfo::exists(media.path) && media.kind != MediaKind::ImageSequence) {
+        error = QCoreApplication::translate("velacut::engine::MediaProducerCache", "The file is missing: %1").arg(media.path);
+        return nullptr;
+    }
+    // The "loader" producer adds MLT's normalizers: the image keeps its aspect ratio inside the profile with
+    // transparent borders, and the rotation stored in the file is applied (verified by projection_probe).
+    QByteArray resource = QFile::encodeName(media.path);
+    double warp = speed;
+    if (speed < 0 && m_useReverseProxies && reverseProxyReady(media)) {
+        // Already backwards, every frame a keyframe: read forwards (same frame numbering as timewarp:-1).
+        resource = QFile::encodeName(reverseProxyPath(media));
+        warp = -speed;
+    } else if (m_proxyHeight > 0 && media.kind == MediaKind::Video && QFileInfo::exists(proxyPath(media, m_proxyHeight))) {
+        // The light copy of a heavy file (the export reads the original): same timing, fewer and easier pixels.
+        resource = QFile::encodeName(proxyPath(media, m_proxyHeight));
+    }
+    if (warp != 1.0) {
+        resource = "timewarp:" + QByteArray::number(warp, 'g', 12) + ':' + resource;
+    }
+    {
+        QMutexLocker loader(&loaderMutex());
+        producer = std::make_shared<Mlt::Producer>(m_profile, resource.constData());
+    }
+    if (!producer->is_valid()) {
+        error = QCoreApplication::translate("velacut::engine::MediaProducerCache",
+                                            "This file cannot be opened: the format is not supported or the file is damaged.");
+        return nullptr;
+    }
+    if (media.kind == MediaKind::Image) {
+        // Stills: any duration (the default length of MLT's image producer is only 10 minutes at 25 fps).
+        producer->set("length", 0x7fffffff);
+        producer->set("out", 0x7ffffffe);
+    } else if (speed != 1.0) {
+        producer->set("warp_pitch", preservePitch ? 1 : 0);
+    }
+    return producer;
+}
+
 std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media, double speed, bool preservePitch, int lane)
 {
     if (media.kind == MediaKind::Image) {
@@ -62,48 +104,45 @@ std::shared_ptr<Mlt::Producer> MediaProducerCache::open(const Media &media, doub
     if (auto existing = cached(media.id, speed, preservePitch, lane)) {
         return existing;
     }
-    std::shared_ptr<Mlt::Producer> producer;
     QString error;
-    if (!QFileInfo::exists(media.path) && media.kind != MediaKind::ImageSequence) {
-        error = QCoreApplication::translate("velacut::engine::MediaProducerCache", "The file is missing: %1").arg(media.path);
-    } else {
-        // The "loader" producer adds MLT's normalizers: the image keeps its aspect ratio inside the profile with
-        // transparent borders, and the rotation stored in the file is applied (verified by projection_probe).
-        QByteArray resource = QFile::encodeName(media.path);
-        double warp = speed;
-        if (speed < 0 && m_useReverseProxies && reverseProxyReady(media)) {
-            // Already backwards, every frame a keyframe: read forwards (same frame numbering as timewarp:-1).
-            resource = QFile::encodeName(reverseProxyPath(media));
-            warp = -speed;
-        }
-        if (warp != 1.0) {
-            resource = "timewarp:" + QByteArray::number(warp, 'g', 12) + ':' + resource;
-        }
-        {
-            QMutexLocker loader(&loaderMutex());
-            producer = std::make_shared<Mlt::Producer>(m_profile, resource.constData());
-        }
-        if (!producer->is_valid()) {
-            producer.reset();
-            error = QCoreApplication::translate("velacut::engine::MediaProducerCache",
-                                                "This file cannot be opened: the format is not supported or the file is damaged.");
-        } else if (media.kind == MediaKind::Image) {
-            // Stills: any duration (the default length of MLT's image producer is only 10 minutes at 25 fps).
-            producer->set("length", 0x7fffffff);
-            producer->set("out", 0x7ffffffe);
-        } else if (speed != 1.0) {
-            producer->set("warp_pitch", preservePitch ? 1 : 0);
-        }
-    }
+    std::shared_ptr<Mlt::Producer> producer = build(media, speed, preservePitch, error);
     QMutexLocker lock(&m_mutex);
     if (producer) {
         m_producers.insert(key, producer);
+        m_opened.insert(key, Opened{speed, preservePitch});
         m_errors.remove(media.id);
     } else {
         qCWarning(lcMedia) << "cannot open" << media.path << error;
         m_errors.insert(media.id, error);
     }
     return producer;
+}
+
+void MediaProducerCache::reopen(const Media &media)
+{
+    QList<std::pair<QString, Opened>> keys;
+    {
+        QMutexLocker lock(&m_mutex);
+        const QString prefix = media.id.toString();
+        for (auto it = m_opened.constBegin(); it != m_opened.constEnd(); ++it) {
+            if (it.key().startsWith(prefix)) {
+                keys.push_back({it.key(), it.value()});
+            }
+        }
+    }
+    for (const auto &[key, opened] : keys) {
+        m_pool.start([this, media, key, opened] {
+            QString error;
+            std::shared_ptr<Mlt::Producer> producer = build(media, opened.speed, opened.preservePitch, error);
+            QMetaObject::invokeMethod(this, [this, key, id = media.id, producer] {
+                if (producer) {
+                    QMutexLocker lock(&m_mutex);
+                    m_producers.insert(key, producer);
+                }
+                emit ready(id);
+            });
+        });
+    }
 }
 
 std::shared_ptr<Mlt::Producer> MediaProducerCache::producerOrRequest(const Media &media, double speed, bool preservePitch, int lane)
@@ -152,6 +191,9 @@ void MediaProducerCache::forget(const MediaId &mediaId)
     for (auto it = m_producers.begin(); it != m_producers.end();) {
         it = it.key().startsWith(prefix) ? m_producers.erase(it) : std::next(it);
     }
+    for (auto it = m_opened.begin(); it != m_opened.end();) {
+        it = it.key().startsWith(prefix) ? m_opened.erase(it) : std::next(it);
+    }
 }
 
 void MediaProducerCache::clear()
@@ -159,6 +201,7 @@ void MediaProducerCache::clear()
     QMutexLocker lock(&m_mutex);
     m_producers.clear();
     m_errors.clear();
+    m_opened.clear();
 }
 
 std::shared_ptr<const Spectrum> MediaProducerCache::spectrum(const Media &media)

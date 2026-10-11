@@ -34,6 +34,7 @@ namespace velacut::engine {
 class MediaProducerCache;
 class ReverseProxyQueue;
 class SmoothCopyQueue;
+class ProxyQueue;
 class TimelineProjection;
 
 // Plays a sequence of the live project in the preview (docs/ARCHITECTURE.md §5.3). The MLT graph is a projection
@@ -79,6 +80,8 @@ private:
     // A backwards copy of a reversed clip is being prepared (the clip plays, slowly, meanwhile).
     Q_PROPERTY(bool preparingReverse READ preparingReverse NOTIFY reverseChanged FINAL)
     Q_PROPERTY(double reverseProgress READ reverseProgress NOTIFY reverseChanged FINAL)
+    // Proxies of heavy files being made for the preview (docs/ARCHITECTURE.md §5.5).
+    Q_PROPERTY(bool preparingProxies READ preparingProxies NOTIFY proxiesChanged FINAL)
     // Smooth slow motion being computed for the preview (SmoothCopyQueue).
     Q_PROPERTY(bool preparingSmooth READ preparingSmooth NOTIFY smoothChanged FINAL)
     Q_PROPERTY(double smoothProgress READ smoothProgress NOTIFY smoothChanged FINAL)
@@ -128,8 +131,16 @@ public:
     double reverseProgress() const;
     bool preparingSmooth() const;
     double smoothProgress() const;
-    // velacut-render, for the backwards copies (default: next to the running executable).
+    // velacut-render, for the backwards copies and the proxies (default: next to the running executable).
     void setHelperExecutable(const QString &path);
+    // Proxies of heavy files (4K, HEVC, 10 bit, VFR) for the preview, at this height (0: none; default 720). The GPU
+    // H.264 encoder to make them with, if any. Set before setSequence(); a change later rebuilds the graph.
+    void setProxyHeight(int height);
+    int proxyHeight() const { return m_proxyHeight; }
+    void setProxyEncoder(const QString &encoder);
+    bool preparingProxies() const;
+    // The proxy of a media item: -1 none (not needed, off, failed), 0…1 being made (0 also when waiting), 1 ready.
+    double proxyState(const Media &media) const;
     // Preview rendered with at most this short side (0 = the canvas size). The frames get smaller, not the
     // timeline (frame rate and positions are untouched); the export always renders at full size. For
     // shared-memory iGPUs and software rendering, where every preview pixel costs real bandwidth (SPEC 1bis
@@ -200,6 +211,8 @@ signals:
     void warningsChanged();
     void reverseChanged();
     void smoothChanged();
+    // The state of a proxy changed (proxyState()).
+    void proxiesChanged();
     void statsChanged();
     void renderSizeChanged();
     // A smooth slow motion could not be computed (for the snackbar).
@@ -243,6 +256,7 @@ private:
     void setPosition(int position);
     void updateWarnings();
     void requestReverseProxies();
+    void requestProxies();
 
     FrameSink m_sink;
     QPointer<Project> m_project;
@@ -265,6 +279,8 @@ private:
     QTimer m_retiredTimer;
     std::unique_ptr<ReverseProxyQueue> m_reverse;
     std::unique_ptr<SmoothCopyQueue> m_smooth;
+    std::unique_ptr<ProxyQueue> m_proxies;
+    int m_proxyHeight = 720;
     // Frames queued from the consumer thread before a graph change are ignored.
     std::atomic<quint64> m_generation{0};
     double m_rate = 0.0;

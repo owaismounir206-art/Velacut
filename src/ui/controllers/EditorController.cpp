@@ -89,7 +89,7 @@ QString formatName(const Canvas &canvas)
 } // namespace
 
 EditorController::EditorController(std::unique_ptr<document::Document> document, engine::MediaAnalysis &analysis,
-                                   QString helperExecutable, int previewLimit, QObject *parent)
+                                   QString helperExecutable, EditorPreviewOptions preview, QObject *parent)
     : QObject(parent)
     , m_document(std::move(document))
     , m_analysis(analysis)
@@ -102,7 +102,9 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     m_media = std::make_unique<MediaPoolModel>(project);
     m_timeline = std::make_unique<TimelineModel>(project, sequence);
     engine::MltRuntime::waitUntilReady(); // started at launch: normally ready long before a project opens
-    m_player->setPreviewLimit(previewLimit);
+    m_player->setPreviewLimit(preview.limit);
+    m_player->setProxyHeight(preview.proxyHeight);
+    m_player->setProxyEncoder(preview.proxyEncoder);
     // Debug HUD on the preview (docs/PERFORMANCE.md): fps, frames lost, render time and size.
     m_player->setStatsEnabled(qEnvironmentVariableIntValue("VELACUT_PREVIEW_HUD") == 1);
     m_player->setHelperExecutable(helperExecutable);
@@ -116,6 +118,8 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
         }
     });
     m_player->setSequence(&project, sequence);
+    m_media->setProxyState([this](const Media &media) { return m_player->proxyState(media); });
+    connect(m_player.get(), &engine::TimelinePlayer::proxiesChanged, m_media.get(), &MediaPoolModel::refreshProxies);
     // Back where the user left the project.
     m_player->seek(m_document->uiState().value(u"playhead"_s).toInt());
 

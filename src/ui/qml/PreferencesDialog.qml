@@ -375,6 +375,16 @@ Dialog {
                                 onToggled: (on) => App.hardwareEncoding = on
                             }
                         }
+                        Group {
+                            title: qsTr("Preview")
+                            detail: qsTr("Heavy videos (4K, HEVC, 10 bit, variable frame rate) get a light copy, made in the background, so that the preview plays smoothly. The export always uses the original files.")
+                            SwitchRow {
+                                objectName: "automaticProxiesSwitch"
+                                text: qsTr("Light copies for the preview (proxies)")
+                                checked: App.automaticProxies
+                                onToggled: (on) => App.automaticProxies = on
+                            }
+                        }
                     }
 
                     // ---- Asset packs ------------------------------------------------------------------------------

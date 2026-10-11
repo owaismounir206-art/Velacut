@@ -2,6 +2,7 @@
 #include "TimelinePlayer.h"
 
 #include "core/project/Project.h"
+#include "engine/analysis/Proxy.h"
 #include "engine/analysis/ReverseProxy.h"
 #include "engine/analysis/SmoothMotion.h"
 #include "engine/playback/AudioMeters.h"
@@ -28,7 +29,20 @@ TimelinePlayer::TimelinePlayer(QObject *parent)
     : QObject(parent)
     , m_reverse(std::make_unique<ReverseProxyQueue>())
     , m_smooth(std::make_unique<SmoothCopyQueue>())
+    , m_proxies(std::make_unique<ProxyQueue>())
 {
+    connect(m_proxies.get(), &ProxyQueue::busyChanged, this, &TimelinePlayer::proxiesChanged);
+    connect(m_proxies.get(), &ProxyQueue::progressChanged, this, &TimelinePlayer::proxiesChanged);
+    connect(m_proxies.get(), &ProxyQueue::failed, this, &TimelinePlayer::proxiesChanged);
+    connect(m_proxies.get(), &ProxyQueue::ready, this, [this](const MediaId &mediaId) {
+        // The producers of the file are opened again on the proxy, each replacing the old one once open (no gap).
+        if (m_cache && m_project) {
+            if (const Media *media = m_project->data().findMedia(mediaId)) {
+                m_cache->reopen(*media);
+            }
+        }
+        emit proxiesChanged();
+    });
     m_quietTimer.setSingleShot(true);
     m_quietTimer.setInterval(250);
     connect(&m_quietTimer, &QTimer::timeout, this, &TimelinePlayer::onQuiet);
@@ -135,6 +149,7 @@ void TimelinePlayer::createGraph()
     }
     m_cache = std::make_unique<MediaProducerCache>(*m_profile);
     m_cache->setUseReverseProxies(true);
+    m_cache->setProxyHeight(m_proxyHeight);
     connect(m_cache.get(), &MediaProducerCache::ready, this, &TimelinePlayer::onMediaReady);
     m_projection = std::make_unique<TimelineProjection>(*m_profile, *m_cache, TimelineProjection::MediaLoading::Background);
     m_projection->build(data, m_sequenceId);
@@ -163,6 +178,66 @@ void TimelinePlayer::createGraph()
     emit stateChanged();
     updateWarnings();
     requestReverseProxies();
+    requestProxies();
+}
+
+void TimelinePlayer::requestProxies()
+{
+    if (!m_project || m_proxyHeight <= 0) {
+        return;
+    }
+    // Every heavy file of the project, used or not yet: imported 4K material is ready by the time it is used.
+    for (const Media &media : m_project->data().media) {
+        if (needsProxy(media)) {
+            m_proxies->request(media);
+        }
+    }
+}
+
+void TimelinePlayer::setProxyHeight(int height)
+{
+    height = std::max(0, height);
+    if (height == m_proxyHeight) {
+        return;
+    }
+    m_proxyHeight = height;
+    m_proxies->setHeight(height > 0 ? height : 720);
+    if (m_project && m_projection) {
+        // Every producer reads another file now: the graph again, where it was.
+        const int position = m_position;
+        const double rate = m_rate;
+        destroyGraph();
+        m_position = position;
+        createGraph();
+        if (rate != 0.0) {
+            setRate(rate);
+        }
+    }
+    emit proxiesChanged();
+}
+
+void TimelinePlayer::setProxyEncoder(const QString &encoder)
+{
+    m_proxies->setEncoder(encoder);
+}
+
+bool TimelinePlayer::preparingProxies() const
+{
+    return m_proxies->busy();
+}
+
+double TimelinePlayer::proxyState(const Media &media) const
+{
+    if (m_proxyHeight <= 0 || !needsProxy(media)) {
+        return -1.0;
+    }
+    if (m_proxies->isReady(media)) {
+        return 1.0;
+    }
+    if (m_proxies->current() == media.id) {
+        return std::min(0.999, m_proxies->progress());
+    }
+    return m_proxies->queued(media.id) ? 0.0 : -1.0;
 }
 
 void TimelinePlayer::attachTiming()
@@ -385,6 +460,7 @@ double TimelinePlayer::reverseProgress() const
 void TimelinePlayer::setHelperExecutable(const QString &path)
 {
     m_reverse->setExecutable(path);
+    m_proxies->setExecutable(path);
 }
 
 void TimelinePlayer::destroyGraph()
@@ -450,6 +526,7 @@ void TimelinePlayer::onProjectChanged(const ChangeSet &changes)
         m_projection->update(data, changes);
         updateWarnings();
         requestReverseProxies();
+        requestProxies();
         return;
     }
     if (m_projection->needsRebuild(data, changes)) {
@@ -459,6 +536,7 @@ void TimelinePlayer::onProjectChanged(const ChangeSet &changes)
         afterProjectionChange();
     }
     requestReverseProxies();
+    requestProxies();
 }
 
 void TimelinePlayer::onMediaReady(const MediaId &mediaId)

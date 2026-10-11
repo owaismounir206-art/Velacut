@@ -16,6 +16,7 @@ Item {
     required property string kind
     required property string durationText
     required property bool used
+    required property real proxy // -1 none, 0…1 the light copy for the preview being made, 1 ready
 
     height: Theme.editor.mediaTileHeight + Theme.space.xl
     Accessible.role: Accessible.ListItem
@@ -78,6 +79,19 @@ Item {
             size: Theme.space.lg + Theme.space.xs
             color: Theme.color.primary
             Accessible.name: qsTr("On the timeline")
+        }
+        // The light copy of a heavy file (4K, HEVC…) being made for a smooth preview: a thin bar along the bottom.
+        ProgressBar {
+            objectName: "proxyProgress"
+            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+            visible: tile.proxy >= 0 && tile.proxy < 1
+            from: 0
+            to: 1
+            value: Math.max(0, tile.proxy)
+            Accessible.name: qsTr("Preparing a light copy for a smooth preview")
+            HoverHandler { id: proxyHover }
+            ToolTip.visible: proxyHover.hovered
+            ToolTip.text: qsTr("Preparing a light copy for a smooth preview: %1%").arg(Math.round(Math.max(0, tile.proxy) * 100))
         }
         // "+": the fastest way to use a media item (SPEC 0bis rule 4).
         IconButton {

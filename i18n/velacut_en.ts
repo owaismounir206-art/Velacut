@@ -37,7 +37,7 @@
 <context>
     <name>PreferencesDialog</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/PreferencesDialog.qml" line="+440"/>
+        <location filename="../src/ui/qml/PreferencesDialog.qml" line="+450"/>
         <source>%n item(s)</source>
         <translation>
             <numerusform>%n item</numerusform>
@@ -185,7 +185,7 @@
 <context>
     <name>velacut::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+1024"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+1028"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>

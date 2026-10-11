@@ -14,6 +14,8 @@ add_library(velacut_engine STATIC
     analysis/MediaImporter.h analysis/MediaImporter.cpp
     analysis/MediaProbe.h analysis/MediaProbe.cpp
     analysis/ReverseProxy.h analysis/ReverseProxy.cpp
+    analysis/MediaCopyQueue.h analysis/MediaCopyQueue.cpp
+    analysis/Proxy.h analysis/Proxy.cpp
     analysis/Cutout.h analysis/Cutout.cpp
     analysis/SmoothMotion.h analysis/SmoothMotion.cpp
     mlt/MltRuntime.h mlt/MltRuntime.cpp

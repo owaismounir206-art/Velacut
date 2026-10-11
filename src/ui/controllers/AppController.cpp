@@ -154,7 +154,16 @@ QString AppController::videosFolder() const
 
 void AppController::makeEditor(std::unique_ptr<document::Document> document)
 {
-    m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper, previewLimit());
+    EditorPreviewOptions preview;
+    preview.limit = previewLimit();
+    preview.proxyHeight = proxyHeight();
+    for (const QString &encoder : hardwareEncoders()) {
+        if (encoder.startsWith(u"h264_"_s)) {
+            preview.proxyEncoder = encoder; // verified by the GPU probe; libx264 if it fails
+            break;
+        }
+    }
+    m_editor = std::make_unique<EditorController>(std::move(document), *m_analysis, m_helper, preview);
     m_editor->actions()->setMusicLibrary(m_audioLibrary.get());
     m_editor->setHardwareEncoding(hardwareEncoders(), gpuDisplayName());
     // Projects made from this one ("Long video to short clips") go to the drafts, ready on the home screen.
@@ -187,6 +196,32 @@ int AppController::previewLimit() const
         return 1080;
     }
     return 0; // a discrete GPU renders the canvas as it is
+}
+
+// Proxies of heavy files: 720p, 540p with software rendering (docs/ARCHITECTURE.md §5.5); 0 when turned off.
+int AppController::proxyHeight() const
+{
+    if (!automaticProxies()) {
+        return 0;
+    }
+    return m_decision.ui == gpu::UiBackend::Software || m_decision.lowVideoMemory ? 540 : 720;
+}
+
+bool AppController::automaticProxies() const
+{
+    return QSettings().value(u"preview/proxies"_s, true).toBool();
+}
+
+void AppController::setAutomaticProxies(bool enabled)
+{
+    if (enabled == automaticProxies()) {
+        return;
+    }
+    QSettings().setValue(u"preview/proxies"_s, enabled);
+    if (m_editor) {
+        m_editor->player()->setProxyHeight(proxyHeight());
+    }
+    emit preferencesChanged();
 }
 
 bool AppController::newProject()

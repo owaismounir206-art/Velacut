@@ -354,8 +354,20 @@ Renderer::Result Renderer::render(const ProjectData &project, const SequenceId &
     return result;
 }
 
-Renderer::Result Renderer::renderReversed(const QString &inputPath, const QString &outputPath, const Progress &progress,
-                                          const std::atomic<bool> &cancel)
+namespace {
+
+// A copy of one media file for the preview (backwards copy, proxy): the file's own profile with its size capped, the
+// audio kept, written next to the output and renamed when complete.
+struct MediaCopy
+{
+    QByteArray resourcePrefix; // "timewarp:-1.0:" for a backwards copy
+    int maxHeight = 720;
+    int gop = 1;               // frames between keyframes
+    QStringList encoders;      // tried in order; the last one is libx264
+};
+
+Renderer::Result renderMediaCopy(const QString &inputPath, const QString &outputPath, const MediaCopy &copy,
+                                 const Renderer::Progress &progress, const std::atomic<bool> &cancel)
 {
     if (!MltRuntime::waitUntilReady()) {
         return failure(RenderError::MltUnavailable);
@@ -364,86 +376,120 @@ Renderer::Result Renderer::renderReversed(const QString &inputPath, const QStrin
     QDir().mkpath(output.absolutePath());
     const QString partial = output.absolutePath() + u"/."_s + output.completeBaseName() + u".part-"_s +
                             QUuid::createUuid().toString(QUuid::Id128).left(8) + u"."_s + output.suffix();
-    int total = 0;
-    int reached = -1;
-    bool cancelled = false;
-    {
-        // The profile of the file itself (size capped at 720 p, frame rate kept).
-        Mlt::Profile profile;
+    QString lastError;
+    for (const QString &encoder : copy.encoders) {
+        const bool hardware = encoder != u"libx264"_s;
+        int total = 0;
+        int reached = -1;
+        bool cancelled = false;
         {
-            Mlt::Producer probe(profile, "avformat", QFile::encodeName(inputPath).constData());
-            if (!probe.is_valid()) {
+            // The profile of the file itself (size capped, frame rate kept: a constant one, the profile's).
+            Mlt::Profile profile;
+            {
+                Mlt::Producer probe(profile, "avformat", QFile::encodeName(inputPath).constData());
+                if (!probe.is_valid()) {
+                    return failure(RenderError::ProjectUnreadable, inputPath);
+                }
+                profile.from_producer(probe);
+            }
+            if (profile.height() > copy.maxHeight) {
+                const int height = copy.maxHeight;
+                const int width =
+                    std::max(2, static_cast<int>(std::lround(profile.width() * double(height) / profile.height() / 2.0)) * 2);
+                profile.set_width(width);
+                profile.set_height(height);
+            }
+            profile.set_sample_aspect(1, 1);
+            profile.set_explicit(1);
+            const QByteArray resource = copy.resourcePrefix + QFile::encodeName(inputPath);
+            Mlt::Producer source(profile, resource.constData());
+            if (!source.is_valid()) {
                 return failure(RenderError::ProjectUnreadable, inputPath);
             }
-            profile.from_producer(probe);
-        }
-        if (profile.height() > 720) {
-            const int height = 720;
-            const int width = std::max(2, static_cast<int>(std::lround(profile.width() * 720.0 / profile.height() / 2.0)) * 2);
-            profile.set_width(width);
-            profile.set_height(height);
-        }
-        profile.set_sample_aspect(1, 1);
-        profile.set_explicit(1);
-        const QByteArray resource = QByteArray("timewarp:-1.0:") + QFile::encodeName(inputPath);
-        Mlt::Producer reversed(profile, resource.constData());
-        if (!reversed.is_valid()) {
-            return failure(RenderError::ProjectUnreadable, inputPath);
-        }
-        total = reversed.get_length();
-        MltRuntime::clearLastError();
-        Mlt::Consumer consumer(profile, "avformat", QFile::encodeName(partial).constData());
-        consumer.set("f", "mp4");
-        consumer.set("vcodec", "libx264");
-        consumer.set("pix_fmt", "yuv420p");
-        consumer.set("g", 1); // every frame a keyframe: instant seeks in any direction
-        consumer.set("crf", 16);
-        consumer.set("preset", "veryfast");
-        consumer.set("acodec", "aac");
-        consumer.set("ab", "192k");
-        consumer.set("ar", 48000);
-        consumer.set("ac", 2);
-        consumer.set("threads", 0);
-        consumer.set("real_time", -1);
-        consumer.set("terminate_on_pause", 1);
-        consumer.connect(reversed);
-        reversed.set_speed(1.0);
-        reversed.seek(0);
-        consumer.start();
-        while (!consumer.is_stopped()) {
-            if (cancel.load()) {
-                cancelled = true;
-                consumer.stop();
-                break;
+            total = source.get_length();
+            MltRuntime::clearLastError();
+            Mlt::Consumer consumer(profile, "avformat", QFile::encodeName(partial).constData());
+            consumer.set("f", "mp4");
+            consumer.set("vcodec", encoder.toLatin1().constData());
+            if (hardware) {
+                consumer.set("quality", 20);
+            } else {
+                consumer.set("pix_fmt", "yuv420p");
+                consumer.set("crf", copy.gop == 1 ? 16 : 20);
+                consumer.set("preset", "veryfast");
+            }
+            consumer.set("g", copy.gop);
+            consumer.set("bf", 0); // no B-frames: every frame decodes from the ones before it, seeks are short
+            consumer.set("acodec", "aac");
+            consumer.set("ab", "192k");
+            consumer.set("ar", 48000);
+            consumer.set("ac", 2);
+            consumer.set("threads", 0);
+            consumer.set("real_time", -1);
+            consumer.set("terminate_on_pause", 1);
+            consumer.connect(source);
+            source.set_speed(1.0);
+            source.seek(0);
+            consumer.start();
+            while (!consumer.is_stopped()) {
+                if (cancel.load()) {
+                    cancelled = true;
+                    consumer.stop();
+                    break;
+                }
+                reached = std::max(reached, consumer.position());
+                if (progress) {
+                    progress(std::clamp(reached + 1, 0, total), total);
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             reached = std::max(reached, consumer.position());
-            if (progress) {
-                progress(std::clamp(reached + 1, 0, total), total);
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            consumer.stop();
         }
-        reached = std::max(reached, consumer.position());
-        consumer.stop();
-    }
-    Result result;
-    if (cancelled) {
-        QFile::remove(partial);
-        result.status = Status::Cancelled;
+        Renderer::Result result;
+        if (cancelled) {
+            QFile::remove(partial);
+            result.status = Renderer::Status::Cancelled;
+            return result;
+        }
+        if (QFileInfo(partial).size() <= 0 || reached < total - 1) {
+            QFile::remove(partial);
+            lastError = encoder + u": "_s + MltRuntime::lastError();
+            qCWarning(lcRender) << "media copy with" << encoder << "failed:" << lastError;
+            continue; // the next encoder (a GPU encoder that fails never fails the copy)
+        }
+        std::error_code error;
+        std::filesystem::rename(QFile::encodeName(partial).toStdString(),
+                                QFile::encodeName(output.absoluteFilePath()).toStdString(), error);
+        if (error) {
+            QFile::remove(partial);
+            return failure(RenderError::OutputNotWritable, QString::fromStdString(error.message()));
+        }
+        result.status = Renderer::Status::Done;
         return result;
     }
-    if (QFileInfo(partial).size() <= 0 || reached < total - 1) {
-        QFile::remove(partial);
-        return failure(RenderError::EncoderFailed, MltRuntime::lastError());
+    return failure(RenderError::EncoderFailed, lastError);
+}
+
+} // namespace
+
+Renderer::Result Renderer::renderReversed(const QString &inputPath, const QString &outputPath, const Progress &progress,
+                                          const std::atomic<bool> &cancel)
+{
+    // Every frame a keyframe: instant seeks in any direction.
+    return renderMediaCopy(inputPath, outputPath, MediaCopy{"timewarp:-1.0:", 720, 1, {u"libx264"_s}}, progress, cancel);
+}
+
+Renderer::Result Renderer::renderProxy(const QString &inputPath, const QString &outputPath, int maxHeight,
+                                       const QString &hardwareEncoder, const Progress &progress, const std::atomic<bool> &cancel)
+{
+    // A keyframe every 10 frames: a seek decodes at most 9 frames of 720p, wherever it lands.
+    MediaCopy copy{{}, std::clamp(maxHeight, 144, 1080), 10, {}};
+    if (!hardwareEncoder.isEmpty()) {
+        copy.encoders << hardwareEncoder;
     }
-    std::error_code error;
-    std::filesystem::rename(QFile::encodeName(partial).toStdString(), QFile::encodeName(output.absoluteFilePath()).toStdString(),
-                            error);
-    if (error) {
-        QFile::remove(partial);
-        return failure(RenderError::OutputNotWritable, QString::fromStdString(error.message()));
-    }
-    result.status = Status::Done;
-    return result;
+    copy.encoders << u"libx264"_s;
+    return renderMediaCopy(inputPath, outputPath, copy, progress, cancel);
 }
 
 } // namespace velacut::engine

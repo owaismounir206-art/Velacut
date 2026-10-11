@@ -48,6 +48,11 @@ public:
     void setUseReverseProxies(bool use) { m_useReverseProxies = use; }
     // Forgets the producers of a media item (e.g. its backwards copy became ready).
     void forget(const MediaId &mediaId);
+    // Preview: files with a proxy ready are read from it, at this height (0: never; the export never does).
+    void setProxyHeight(int height) { m_proxyHeight = height; }
+    // Opens again, in background, every producer of `media` in use (its proxy became ready): each one replaces the old
+    // one once open, then ready() follows. The clips never show a gap meanwhile.
+    void reopen(const Media &media);
 
     // Spectrum of a media item's audio (audio visualizers, beats), cached on disk by fingerprint next to the
     // waveform (<cache>/media/<fingerprint>/). spectrum() reads or computes it now (export, tests);
@@ -66,6 +71,15 @@ private:
     QThreadPool m_pool;
     mutable QMutex m_mutex;
     static QString keyOf(const MediaId &mediaId, double speed, bool preservePitch, int lane);
+    // A new producer of `media` (not cached); null with `error` set if it cannot be opened.
+    std::shared_ptr<Mlt::Producer> build(const Media &media, double speed, bool preservePitch, QString &error);
+
+    struct Opened
+    {
+        double speed = 1.0;
+        bool preservePitch = true;
+    };
+    QHash<QString, Opened> m_opened; // how each cached producer was opened, by keyOf()
 
     QHash<QString, std::shared_ptr<Mlt::Producer>> m_producers; // by keyOf()
     QHash<MediaId, QString> m_errors;
@@ -73,6 +87,7 @@ private:
     QSet<QString> m_noSpectrum;                                // fingerprints without audio (or unreadable)
     QSet<QString> m_pending;
     bool m_useReverseProxies = false;
+    int m_proxyHeight = 0;
 };
 
 } // namespace velacut::engine

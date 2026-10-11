@@ -2170,9 +2170,19 @@
 <context>
     <name>MediaTile</name>
     <message>
-        <location filename="../src/ui/qml/MediaTile.qml" line="+80"/>
+        <location filename="../src/ui/qml/MediaTile.qml" line="+81"/>
         <source>On the timeline</source>
         <translation>Nella timeline</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Preparing a light copy for a smooth preview</source>
+        <translation>Preparazione di una copia leggera per un'anteprima fluida</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Preparing a light copy for a smooth preview: %1%</source>
+        <translation>Preparazione di una copia leggera per un'anteprima fluida: %1%</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -2392,12 +2402,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+352"/>
+        <location line="+362"/>
         <source>Asset packs</source>
         <translation>Pacchetti di asset</translation>
     </message>
     <message>
-        <location line="-351"/>
+        <location line="-361"/>
         <source>AI models</source>
         <translation>Modelli AI</translation>
     </message>
@@ -2658,6 +2668,21 @@
         <location line="+5"/>
         <source>Hardware video encoding (export)</source>
         <translation>Codifica video hardware (esportazione)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Preview</source>
+        <translation>Anteprima</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Heavy videos (4K, HEVC, 10 bit, variable frame rate) get a light copy, made in the background, so that the preview plays smoothly. The export always uses the original files.</source>
+        <translation>I video pesanti (4K, HEVC, 10 bit, frame rate variabile) ricevono una copia leggera, fatta in background, perché l'anteprima sia fluida. L'esportazione usa sempre i file originali.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Light copies for the preview (proxies)</source>
+        <translation>Copie leggere per l'anteprima (proxy)</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -6523,12 +6548,12 @@
 <context>
     <name>velacut::engine::MediaProducerCache</name>
     <message>
-        <location filename="../src/engine/timeline/MediaProducerCache.cpp" line="+68"/>
+        <location filename="../src/engine/timeline/MediaProducerCache.cpp" line="+61"/>
         <source>The file is missing: %1</source>
         <translation>Il file non c&apos;è più: %1</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+23"/>
         <source>This file cannot be opened: the format is not supported or the file is damaged.</source>
         <translation>Impossibile aprire questo file: il formato non è supportato o il file è danneggiato.</translation>
     </message>
@@ -6603,7 +6628,7 @@
 <context>
     <name>velacut::engine::TimelinePlayer</name>
     <message>
-        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+144"/>
+        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+159"/>
         <source>No audio output is available (SDL2).</source>
         <translation>Nessuna uscita audio disponibile (SDL2).</translation>
     </message>
@@ -7529,7 +7554,7 @@
         <translation>GPU</translation>
     </message>
     <message>
-        <location line="+71"/>
+        <location line="+106"/>
         <source>Template not found.</source>
         <translation>Modello non trovato.</translation>
     </message>
@@ -8309,7 +8334,7 @@
 <context>
     <name>velacut::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+136"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+140"/>
         <source>The captions cannot be saved in %1.</source>
         <translation>Non è possibile salvare i sottotitoli in %1.</translation>
     </message>

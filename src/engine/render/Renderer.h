@@ -44,6 +44,13 @@ public:
     // audio reversed too. Written next to `outputPath` and renamed when complete.
     static Result renderReversed(const QString &inputPath, const QString &outputPath, const Progress &progress,
                                  const std::atomic<bool> &cancel);
+
+    // (velacut-render --proxy) A light copy of a media file for the preview only (docs/ARCHITECTURE.md §5.5): H.264 at
+    // most `maxHeight` high, a keyframe every 10 frames and no B-frames (short seeks both ways), the constant frame rate
+    // of its profile, the audio kept. `hardwareEncoder` ("h264_vaapi"…, verified by the GPU probe) is tried first,
+    // libx264 veryfast after it. The export always reads the original.
+    static Result renderProxy(const QString &inputPath, const QString &outputPath, int maxHeight,
+                              const QString &hardwareEncoder, const Progress &progress, const std::atomic<bool> &cancel);
 };
 
 } // namespace velacut::engine

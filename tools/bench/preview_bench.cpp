@@ -16,6 +16,8 @@
 #include "core/edit/TimelineEditor.h"
 #include "core/project/Project.h"
 #include "engine/analysis/MediaProbe.h"
+#include "engine/analysis/Proxy.h"
+#include "engine/render/Renderer.h"
 #include "engine/gpu/GpuTransitions.h"
 #include "engine/mlt/MltRuntime.h"
 #include "engine/playback/TimelinePlayer.h"
@@ -126,6 +128,7 @@ struct Scenario
     int to = 0;
     ClipId effectClip; // the clip whose first effect's "amount" is changed (null: no parameter test)
     EffectId effectId;
+    int proxyHeight = 0; // the preview reads proxies of this height (S7p)
 };
 
 Effect libraryEffect(const QString &type, const QString &preset, double amount)
@@ -238,6 +241,10 @@ std::optional<Scenario> makeScenario(const QString &name, const Media &a, const 
         s.from = 105;
         s.to = 135;
         s.description = u"same file, distant parts + 1 s dissolve"_s;
+    } else if (name == u"S7" || name == u"S7p") {
+        // `a` is the 4K HEVC 10-bit file here (see main).
+        s.description = name == u"S7" ? u"4K HEVC 10 bit, no proxy"_s : u"4K HEVC 10 bit, 720p proxy"_s;
+        s.proxyHeight = name == u"S7p" ? 720 : 0;
     } else if (name == u"S5") {
         if (!builder.apply(builder.editor().insertMedia(b.id, frames(300))) ||
             !builder.apply(builder.editor().addTransition(first, AssetRef{u"vedit.core"_s, u"transitions/blur-dissolve"_s, 1},
@@ -286,6 +293,8 @@ double renderOnce(Mlt::Tractor &tractor, int position, int width, int height, QS
 
 // --preview-height: frames requested at this height (the width follows), as the preview asks for them (Phase 3).
 int g_previewHeight = 0;
+// --view WxH: the player's preview area (device pixels); quality Auto.
+QSize g_viewSize;
 
 PipelineResult measurePipeline(const Scenario &scenario)
 {
@@ -294,6 +303,7 @@ PipelineResult measurePipeline(const Scenario &scenario)
     QUndoStack stack;
     auto profile = makeProfile(project.data(), project.data().mainSequenceId);
     MediaProducerCache cache(*profile);
+    cache.setProxyHeight(scenario.proxyHeight);
     TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
     projection.build(project.data(), project.data().mainSequenceId);
     Mlt::Tractor &tractor = *projection.tractor();
@@ -372,6 +382,10 @@ PlayerResult measurePlayer(const Scenario &scenario)
     Project project(scenario.data);
     QUndoStack stack;
     TimelinePlayer player;
+    player.setProxyHeight(scenario.proxyHeight); // no proxy made in background during the other scenarios
+    if (g_viewSize.isValid()) {
+        player.setViewSize(g_viewSize);
+    }
     player.setSequence(&project, project.data().mainSequenceId);
     FrameSink *sink = player.sink();
     QElapsedTimer clock;
@@ -496,6 +510,9 @@ int main(int argc, char **argv)
     const bool cpuTransitions = arguments.contains(u"--cpu-transitions"_s);
     const bool withPlayer = !arguments.contains(u"--no-player"_s);
     g_previewHeight = option(u"--preview-height"_s, u"0"_s).toInt();
+    if (const QStringList view = option(u"--view"_s, QString()).split(u'x'); view.size() == 2) {
+        g_viewSize = QSize(view[0].toInt(), view[1].toInt());
+    }
 
     if (!MltRuntime::waitUntilReady()) {
         out << "MLT could not be initialized\n";
@@ -512,7 +529,7 @@ int main(int argc, char **argv)
     } else {
         heights = {sizeOption.toInt()};
     }
-    QStringList names{u"S1"_s, u"S2"_s, u"S3"_s, u"S4"_s, u"S4b"_s, u"S5"_s, u"S6"_s};
+    QStringList names{u"S1"_s, u"S2"_s, u"S3"_s, u"S4"_s, u"S4b"_s, u"S5"_s, u"S6"_s, u"S7"_s, u"S7p"_s};
     if (scenarioOption != u"all") {
         names = scenarioOption.split(u',');
     }
@@ -536,7 +553,37 @@ int main(int argc, char **argv)
             return 1;
         }
         for (const QString &name : names) {
-            const std::optional<Scenario> scenario = makeScenario(name, *probeA.media, *probeB.media, height);
+            const bool hevc = name.startsWith(u"S7"_s);
+            if (hevc && height != 2160) {
+                continue; // a 4K project only
+            }
+            Media first = *probeA.media;
+            if (hevc) {
+                const QString file = mediaDir + u"/hevc10_2160p.mp4"_s;
+                if (!QFileInfo::exists(file)) {
+                    out << "generating " << file << "…\n";
+                    out.flush();
+                    QProcess::execute(QStandardPaths::findExecutable(u"ffmpeg"_s),
+                                      {u"-hide_banner"_s, u"-loglevel"_s, u"error"_s, u"-y"_s, u"-f"_s, u"lavfi"_s, u"-i"_s,
+                                       u"testsrc2=size=3840x2160:rate=30"_s, u"-f"_s, u"lavfi"_s, u"-i"_s,
+                                       u"sine=frequency=440:sample_rate=48000"_s, u"-t"_s, u"10"_s, u"-vf"_s, u"noise=alls=10:allf=t"_s,
+                                       u"-c:v"_s, u"libx265"_s, u"-preset"_s, u"ultrafast"_s, u"-x265-params"_s, u"log-level=error"_s,
+                                       u"-pix_fmt"_s, u"yuv420p10le"_s, u"-c:a"_s, u"aac"_s, u"-shortest"_s, file});
+                }
+                const ProbeResult probe = probeMedia(file);
+                if (!probe.media) {
+                    out << "HEVC media missing\n";
+                    continue;
+                }
+                first = *probe.media;
+                if (name == u"S7p" && !QFileInfo::exists(proxyPath(first, 720))) {
+                    out << "making the proxy…\n";
+                    out.flush();
+                    const std::atomic<bool> cancel{false};
+                    Renderer::renderProxy(file, proxyPath(first, 720), 720, {}, {}, cancel);
+                }
+            }
+            const std::optional<Scenario> scenario = makeScenario(name, first, *probeB.media, height);
             if (!scenario) {
                 out << "scenario " << name << " could not be built\n";
                 continue;
