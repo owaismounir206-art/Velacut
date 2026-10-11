@@ -3,6 +3,7 @@
 
 #include "core/project/ChangeSet.h"
 #include "core/project/ProjectData.h"
+#include "ui/models/KeyedListModel.h"
 
 #include <QAbstractListModel>
 #include <QtQml/qqmlregistration.h>
@@ -36,6 +37,11 @@ class TimelineModel : public QAbstractListModel
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged FINAL)
     Q_PROPERTY(QVariantList cuts READ cuts NOTIFY cutsChanged FINAL)
     Q_PROPERTY(QVariantList markers READ markers NOTIFY markersChanged FINAL)
+    // The same three lists as models for the Repeaters: updated with a diff, so their delegates survive the changes
+    // (scrolling changes the cuts in view, dragging a transition's edge changes its cut).
+    Q_PROPERTY(velacut::ui::KeyedListModel *trackModel READ trackModel CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::KeyedListModel *cutModel READ cutModel CONSTANT FINAL)
+    Q_PROPERTY(velacut::ui::KeyedListModel *markerModel READ markerModel CONSTANT FINAL)
 
 public:
     enum Role
@@ -79,6 +85,9 @@ public:
     // [{id, frame, name, color, note, kind}]
     QVariantList markers() const { return m_markers; }
     std::optional<TrackRow> trackRow(int row) const;
+    KeyedListModel *trackModel() { return &m_trackModel; }
+    KeyedListModel *cutModel() { return &m_cutModel; }
+    KeyedListModel *markerModel() { return &m_markerModel; }
 
     // Frames shown by the view; clips outside (with a margin of the same width) get no row.
     Q_INVOKABLE void setVisibleRange(int firstFrame, int lastFrame);
@@ -138,6 +147,9 @@ private:
     QSet<ClipId> m_selection;
     int m_mainRow = 0;
     int m_duration = 0;
+    KeyedListModel m_trackModel{QStringLiteral("trackId")};
+    KeyedListModel m_cutModel{QStringLiteral("fromClip")};
+    KeyedListModel m_markerModel{QStringLiteral("id")};
     int m_firstFrame = 0;
     int m_lastFrame = std::numeric_limits<int>::max() / 4;
 };

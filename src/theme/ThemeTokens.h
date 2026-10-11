@@ -151,6 +151,8 @@ class ThemeEditor : public QObject
     Q_PROPERTY(qreal handleSize MEMBER m_handleSize CONSTANT FINAL)
     Q_PROPERTY(qreal rotateHandleDistance MEMBER m_rotateHandleDistance CONSTANT FINAL)
     Q_PROPERTY(qreal transitionMark MEMBER m_transitionMark CONSTANT FINAL)
+    // The "+" on a cut without a transition: small, at the bottom of the track, under the trim handles' grip
+    Q_PROPERTY(qreal transitionAddMark MEMBER m_transitionAddMark CONSTANT FINAL)
     Q_PROPERTY(qreal meterWidth MEMBER m_meterWidth CONSTANT FINAL)
     // Refresh of the audio meters (ms): not an animation, so not affected by "reduce motion".
     Q_PROPERTY(qreal meterInterval MEMBER m_meterInterval CONSTANT FINAL)
@@ -231,6 +233,7 @@ private:
     qreal m_handleSize = 12;
     qreal m_rotateHandleDistance = 28;
     qreal m_transitionMark = 22;
+    qreal m_transitionAddMark = 16;
     qreal m_meterWidth = 6;
     qreal m_meterInterval = 33;
     qreal m_autoHideDelay = 2500;

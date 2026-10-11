@@ -26,6 +26,7 @@
 #include <QElapsedTimer>
 #include <QPainter>
 #include <QQmlApplicationEngine>
+#include <QPointer>
 #include <QQuickItem>
 #include <QQuickStyle>
 #include <QQuickWindow>
@@ -263,6 +264,22 @@ private slots:
         QTRY_VERIFY(editor()->data().findClip(trimmed)->duration < before);
         QVERIFY(std::abs(before.value() - editor()->data().findClip(trimmed)->duration.value() - 20) <= 1);
 
+        // The end of the first clip, at the cut with the second: its handle takes the press in the middle of the track
+        // (the "+" of the cut sits at the bottom of the track, it used to cover the handles there).
+        {
+            const ClipId firstClip = mainTrack().clips[0].id;
+            QVERIFY(mainTrack().clips[0].end() == mainTrack().clips[1].start);
+            const RationalTime length = editor()->data().findClip(firstClip)->duration;
+            QQuickItem *handle = findItem(byName(u"clip-"_s + firstClip.toString()),
+                                          [](QQuickItem *item) { return item->objectName() == u"trimEnd"_s; });
+            QVERIFY(handle);
+            drag(centre(handle), centre(handle) - QPoint(frameX(10) - frameX(0), 0));
+            QTRY_VERIFY(editor()->data().findClip(firstClip)->duration < length);
+            QVERIFY(mainTrack().transitions.empty()); // not a transition added by the "+"
+            editor()->undo();
+            QTRY_COMPARE(editor()->data().findClip(firstClip)->duration, length);
+        }
+
         // Select, delete with the keyboard, undo from the snackbar.
         click(byName(u"clip-"_s + trimmed.toString()));
         QCOMPARE(editor()->selection(), QStringList{trimmed.toString()});
@@ -430,6 +447,30 @@ private slots:
         drag(centre(edge), centre(edge) + QPoint(frameX(10) - frameX(0), 0));
         QTRY_VERIFY(mainTrack().transitions.front().duration > before);
         QCOMPARE(mainTrack().transitions.front().id, first);
+        // 20 moves in one gesture: every one changes the duration, and the mark with its edge survives each change (the
+        // cuts are a model updated with a diff; they used to be a list that rebuilt every mark, ending the drag).
+        {
+            QPointer<QQuickItem> surviving = byName(u"cut-"_s + mainTrack().transitions.front().from.toString());
+            QPointer<QQuickItem> grip = findItem(surviving, [](QQuickItem *item) { return item->objectName() == u"transitionEnd"_s; });
+            QVERIFY(surviving && grip);
+            const RationalTime atStart = mainTrack().transitions.front().duration;
+            const QPoint start = centre(grip);
+            QTest::mousePress(m_window, Qt::LeftButton, {}, start);
+            RationalTime last = atStart;
+            int changes = 0;
+            for (int i = 1; i <= 20; ++i) {
+                QTest::mouseMove(m_window, start + QPoint((frameX(i) - frameX(0)) / 2 + 1, 0));
+                QTest::qWait(5);
+                QVERIFY2(surviving && grip, qPrintable(u"the mark was rebuilt at move %1"_s.arg(i)));
+                changes += mainTrack().transitions.front().duration != last ? 1 : 0;
+                last = mainTrack().transitions.front().duration;
+            }
+            QTest::mouseRelease(m_window, Qt::LeftButton, {}, start + QPoint((frameX(20) - frameX(0)) / 2 + 1, 0));
+            ++m_actions;
+            QVERIFY2(changes >= 10, qPrintable(QString::number(changes)));
+            QVERIFY(mainTrack().transitions.front().duration > atStart);
+            editor()->undo(); // that duration
+        }
         editor()->undo(); // the duration
         editor()->undo(); // apply to all
         editor()->undo(); // the first transition
@@ -1493,6 +1534,11 @@ JSON
         QTRY_VERIFY_WITH_TIMEOUT(editor()->player()->position() > 3, 3000);
         bool between = false;
         double worst = 0;
+        int swaps = 0;
+        const QMetaObject::Connection counting = connect(m_window, &QQuickWindow::frameSwapped, this, [&swaps] { ++swaps; });
+        QElapsedTimer sampling;
+        sampling.start();
+        const int fromPosition = editor()->player()->position();
         for (int i = 0; i < 40 && editor()->player()->playing(); ++i) {
             QTest::qWait(10);
             const double smooth = view->property("smoothPlayhead").toDouble();
@@ -1501,8 +1547,19 @@ JSON
                 worst = std::max(worst, std::abs(smooth - editor()->player()->position()));
             }
         }
+        disconnect(counting);
+        const double seconds = std::max<qint64>(1, sampling.elapsed()) / 1000.0;
+        const double drawnPerSecond = swaps / seconds;
+        const double playedPerSecond = (editor()->player()->position() - fromPosition) / seconds;
         editor()->player()->pause();
-        QVERIFY(between);
+        // Positions between frames only when the window draws more often than the video's frames come and playback
+        // keeps real time (on a saturated machine, e.g. the tests run in parallel, neither is true).
+        const double fps = editor()->player()->frameRate();
+        if (drawnPerSecond > 1.5 * fps && playedPerSecond > 0.8 * fps) {
+            QVERIFY(between);
+        } else {
+            qInfo("drawn %.0f/s, played %.0f/s: no room between frames", drawnPerSecond, playedPerSecond);
+        }
         QVERIFY2(worst <= 2.5, qPrintable(QString::number(worst)));
         editor()->undo();
         QTRY_COMPARE(mainTrack().clips.size(), size_t(0));

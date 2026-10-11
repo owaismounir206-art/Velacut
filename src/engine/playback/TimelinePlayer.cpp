@@ -2,6 +2,7 @@
 #include "TimelinePlayer.h"
 
 #include "core/project/Project.h"
+#include "core/time/Timecode.h"
 #include "engine/analysis/Proxy.h"
 #include "engine/analysis/ReverseProxy.h"
 #include "engine/analysis/SmoothMotion.h"
@@ -878,16 +879,18 @@ void TimelinePlayer::setVolume(double volume)
 
 QString TimelinePlayer::timecode(int frame) const
 {
-    if (m_frameRate <= 0.0) {
+    if (!m_profile) {
         return QStringLiteral("00:00.00");
     }
-    const int fps = static_cast<int>(std::lround(m_frameRate));
-    const int totalSeconds = static_cast<int>(frame / m_frameRate);
-    const int frames = fps > 0 ? frame % fps : 0;
-    return QStringLiteral("%1:%2.%3")
-        .arg(totalSeconds / 60, 2, 10, QLatin1Char('0'))
-        .arg(totalSeconds % 60, 2, 10, QLatin1Char('0'))
-        .arg(frames, 2, 10, QLatin1Char('0'));
+    return formatTimecode(frame, Rational(m_profile->frame_rate_num(), m_profile->frame_rate_den()));
+}
+
+QString TimelinePlayer::secondsLabel(int frame) const
+{
+    if (!m_profile) {
+        return QStringLiteral("0:00");
+    }
+    return formatSeconds(frame, Rational(m_profile->frame_rate_num(), m_profile->frame_rate_den()));
 }
 
 double TimelinePlayer::audioLevel(const QString &key) const

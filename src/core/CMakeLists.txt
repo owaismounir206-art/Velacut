@@ -3,6 +3,7 @@
 add_library(velacut_core STATIC
     time/Rational.h time/Rational.cpp
     time/RationalTime.h time/RationalTime.cpp
+    time/Timecode.h time/Timecode.cpp
     effects/Easing.h effects/Easing.cpp
     effects/Param.h effects/Param.cpp
     effects/Effect.h

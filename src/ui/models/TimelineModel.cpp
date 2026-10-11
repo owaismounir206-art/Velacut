@@ -267,10 +267,12 @@ void TimelineModel::rebuild()
         }
         if (m_markers != markerList) {
             m_markers = std::move(markerList);
+            m_markerModel.setItems(m_markers);
             emit markersChanged();
         }
     } else if (!m_markers.isEmpty()) {
         m_markers.clear();
+        m_markerModel.setItems(m_markers);
         emit markersChanged();
     }
     m_all = std::move(all);
@@ -279,6 +281,7 @@ void TimelineModel::rebuild()
         m_trackRows = std::move(trackRows);
         m_trackList = std::move(trackList);
         m_mainRow = mainRow;
+        m_trackModel.setItems(m_trackList);
         emit tracksChanged();
     } else {
         m_trackRows = std::move(trackRows);
@@ -307,6 +310,7 @@ void TimelineModel::applyVisible()
     }
     if (cuts != m_cuts) {
         m_cuts = std::move(cuts);
+        m_cutModel.setItems(m_cuts);
         emit cutsChanged();
     }
     QHash<ClipId, const Entry *> wanted;

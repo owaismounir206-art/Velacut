@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "core/time/Rational.h"
 #include "core/time/RationalTime.h"
+#include "core/time/Timecode.h"
 
 #include <QTest>
 
@@ -166,6 +167,34 @@ private slots:
         QVERIFY_THROWS_EXCEPTION(std::invalid_argument, TimeRange(RationalTime(0, rate), RationalTime(-1, rate)));
         QVERIFY_THROWS_EXCEPTION(std::invalid_argument,
                                  TimeRange(RationalTime(0, rate), RationalTime(1, Rational(30))));
+    }
+
+    // The editor's timecode is real time at every rate: at 29.97 the old one (frame / 29.97 for the seconds, frame % 30
+    // for the frames) showed frame 17982 as 10:00.12.
+    void timecodeIsRealTimeAtEveryRate()
+    {
+        using velacut::formatSeconds;
+        using velacut::formatTimecode;
+        const Rational fps30(30);
+        QCOMPARE(formatTimecode(0, fps30), QStringLiteral("00:00.00"));
+        QCOMPARE(formatTimecode(29, fps30), QStringLiteral("00:00.29"));
+        QCOMPARE(formatTimecode(30, fps30), QStringLiteral("00:01.00"));
+        QCOMPARE(formatTimecode(1800, fps30), QStringLiteral("01:00.00"));
+        QCOMPARE(formatTimecode(108000, fps30), QStringLiteral("1:00:00.00"));
+        const Rational ntsc(30000, 1001);
+        QCOMPARE(formatTimecode(17982, ntsc), QStringLiteral("09:59.29")); // starts at 599.9994 s
+        QCOMPARE(formatTimecode(17983, ntsc), QStringLiteral("10:00.00"));
+        const Rational film(24000, 1001);
+        QCOMPARE(formatTimecode(23, film), QStringLiteral("00:00.23"));
+        QCOMPARE(formatTimecode(24, film), QStringLiteral("00:01.00")); // 1.001 s
+        QCOMPARE(formatTimecode(86314, film), QStringLiteral("1:00:00.00")); // 3600.0 s: ⌈3600 × 23.976⌉ = 86314
+        const Rational ntsc60(60000, 1001);
+        QCOMPARE(formatTimecode(35964, ntsc60), QStringLiteral("09:59.59"));
+        QCOMPARE(formatTimecode(35965, ntsc60), QStringLiteral("10:00.00"));
+        QCOMPARE(velacut::firstFrameOfSecond(600, ntsc), std::int64_t(17983));
+        QCOMPARE(formatSeconds(1800, fps30), QStringLiteral("1:00"));
+        QCOMPARE(formatSeconds(17983, ntsc), QStringLiteral("10:00"));
+        QCOMPARE(formatSeconds(108000, fps30), QStringLiteral("1:00:00"));
     }
 };
 

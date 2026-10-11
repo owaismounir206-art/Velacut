@@ -188,7 +188,10 @@ public:
     // Shows `frame` without moving the playhead (pointer over the timeline); ignored while playing.
     Q_INVOKABLE void skim(int frame);
     Q_INVOKABLE void endSkim();
+    // "MM:SS.FF" in real time, right at 23.976/29.97/59.94 too (core/time/Timecode.h).
     Q_INVOKABLE QString timecode(int frame) const;
+    // "M:SS": whole seconds of real time (ruler labels).
+    Q_INVOKABLE QString secondsLabel(int frame) const;
     // Level 0…1 of a track's audio (key: its id) or of the mix ("master"), for the meters; ~30 reads per second.
     Q_INVOKABLE double audioLevel(const QString &key) const;
 

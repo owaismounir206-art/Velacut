@@ -36,6 +36,7 @@ Rectangle {
     property real smoothPlayhead: player.position
     property real smoothFrom: 0
     property real smoothElapsed: 0
+    readonly property real smoothEstimate: smoothFrom + smoothElapsed * player.rate * player.frameRate
     function realignSmoothPlayhead() {
         smoothFrom = player.position
         smoothElapsed = 0
@@ -46,7 +47,10 @@ Rectangle {
         onRunningChanged: view.realignSmoothPlayhead()
         onTriggered: {
             view.smoothElapsed += frameTime
-            view.smoothPlayhead = view.clampFrame(view.smoothFrom + view.smoothElapsed * view.player.rate * view.player.frameRate)
+            // Never more than a frame past the real position: a stalled interface must not send it running ahead.
+            const estimate = view.smoothEstimate
+            const real = view.player.position
+            view.smoothPlayhead = view.clampFrame(view.player.rate > 0 ? Math.min(estimate, real + 1) : Math.max(estimate, real - 1))
         }
     }
 
@@ -152,11 +156,19 @@ Rectangle {
         return kind === "main" ? Theme.editor.mainTrackHeight
              : kind === "audio" ? Theme.editor.audioTrackHeight : Theme.editor.overlayTrackHeight
     }
-    function rowTop(row) {
+    // The top of every row, computed once when the tracks change (rowTop() is read by every delegate's binding).
+    readonly property var rowTops: {
+        const tops = []
         let y = Theme.editor.newTrackZone
-        for (let i = 0; i < Math.min(row, rows); ++i)
+        for (let i = 0; i < rows; ++i) {
+            tops.push(y)
             y += rowHeight(i) + Theme.editor.trackGap
-        return row < 0 ? 0 : y
+        }
+        tops.push(y) // below the last track
+        return tops
+    }
+    function rowTop(row) {
+        return row < 0 ? 0 : rowTops[Math.min(row, rows)]
     }
     // -1: the free space above the tracks (a new track), rows: the space below them.
     function rowAt(y) {
@@ -198,7 +210,7 @@ Rectangle {
     Connections {
         target: view.player
         function onPositionChanged() {
-            if (!view.player.playing || Math.abs(view.smoothPlayhead - view.player.position) > 1)
+            if (!view.player.playing || Math.abs(view.smoothEstimate - view.player.position) > 1)
                 view.realignSmoothPlayhead()
             if (!view.isScrubbing)
                 view.visualPlayheadFrame = view.player.position
@@ -240,11 +252,9 @@ Rectangle {
             }
             return steps[steps.length - 1]
         }
+        // Real time at any rate (core/time/Timecode.h): "M:SS" on whole-second steps, "MM:SS.FF" below.
         function label(frame) {
-            if (step % fps !== 0)
-                return view.player.timecode(frame)
-            const seconds = Math.round(frame / fps)
-            return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0")
+            return step % fps !== 0 ? view.player.timecode(frame) : view.player.secondsLabel(frame)
         }
 
         // Labelled ticks at every step, small ones in between (a quarter or a fifth of the step).
@@ -345,7 +355,7 @@ Rectangle {
         }
         // Markers of the video (M adds one at the playhead): click = go there, right click = remove.
         Repeater {
-            model: view.model.markers
+            model: view.model.markerModel
             delegate: Rectangle {
                 id: flag
                 required property var modelData
@@ -390,7 +400,7 @@ Rectangle {
         height: parent.height - y
         clip: true
         Repeater {
-            model: view.tracks
+            model: view.model.trackModel
             delegate: Item {
                 id: header
                 required property var modelData
@@ -743,7 +753,7 @@ Rectangle {
             }
 
             Repeater {
-                model: view.tracks
+                model: view.model.trackModel
                 delegate: Rectangle {
                     required property var modelData
                     required property int index
@@ -802,7 +812,7 @@ Rectangle {
             // Cuts between touching clips (SPEC §5.11bis): a "+" to add a transition, or the transition, as wide as the
             // time it covers; selected, its edges change the duration.
             Repeater {
-                model: view.model.cuts
+                model: view.model.cutModel
                 delegate: Item {
                     id: cut
                     required property var modelData
@@ -814,10 +824,13 @@ Rectangle {
 
                     objectName: "cut-" + modelData.fromClip
                     z: 5 // above the clips (even a selected one), below a clip being dragged
-                    width: hasTransition ? Math.max(Theme.editor.transitionMark, duration * view.zoom) : Theme.editor.transitionMark
-                    height: Theme.editor.transitionMark
+                    // At the bottom of the track: the trim handles of the two clips stay free above it (a "+" in the
+                    // middle used to take their presses). The "+" is small; a transition is as wide as its time.
+                    readonly property real mark: hasTransition ? Theme.editor.transitionMark : Theme.editor.transitionAddMark
+                    width: hasTransition ? Math.max(mark, duration * view.zoom) : mark
+                    height: mark
                     x: modelData.frame * view.zoom - width / 2
-                    y: view.rowTop(modelData.trackRow) + (view.rowHeight(modelData.trackRow) - height) / 2
+                    y: view.rowTop(modelData.trackRow) + view.rowHeight(modelData.trackRow) - height - Theme.space.xxs
                     Accessible.role: Accessible.Button
                     Accessible.name: hasTransition ? qsTr("Transition %1").arg(modelData.name) : qsTr("Add a transition")
 
@@ -833,7 +846,7 @@ Rectangle {
                     Icon {
                         anchors.centerIn: parent
                         name: cut.hasTransition ? "transition_fade" : "add"
-                        size: Theme.editor.transitionMark - Theme.space.sm
+                        size: cut.mark - Theme.space.xs
                         color: cut.selected ? Theme.color.onPrimary
                              : cut.hasTransition ? Theme.color.onSecondaryContainer : Theme.color.onSurfaceVariant
                     }

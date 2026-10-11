@@ -23,6 +23,7 @@ qt_add_qml_module(velacut_ui
         models/BrandKitModel.h models/BrandKitModel.cpp
         models/MediaPoolModel.h models/MediaPoolModel.cpp
         models/TimelineModel.h models/TimelineModel.cpp
+        models/KeyedListModel.h models/KeyedListModel.cpp
         controllers/EngineTypes.h
         controllers/AppController.h controllers/AppController.cpp
         controllers/EditorController.h controllers/EditorController.cpp
