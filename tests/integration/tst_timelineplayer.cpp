@@ -98,6 +98,25 @@ private slots:
         QVERIFY(player.warnings().isEmpty());
     }
 
+    // The render time of the frames is measured on the graph (vedit.timing) and the HUD statistics follow playback.
+    void measuresTheFramesItRenders()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        TimelinePlayer player;
+        player.setVolume(0.0);
+        player.setStatsEnabled(true);
+        player.setSequence(&session.project, session.data().mainSequenceId);
+        QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
+        QVERIFY(player.frameTiming().frames.load() > 0);
+        QVERIFY(player.statsRenderMs() > 0.0);
+        QCOMPARE(player.statsRenderSize(), QSize(320, 180));
+        QSignalSpy stats(&player, &TimelinePlayer::statsChanged);
+        player.play();
+        QTRY_VERIFY_WITH_TIMEOUT(stats.count() >= 2 && player.statsFps() > 5.0, 3000);
+        player.pause();
+    }
+
     void seekSkimAndShuttle()
     {
         Session session(baseProject());

@@ -48,7 +48,7 @@
 <context>
     <name>PreviewPanel</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/PreviewPanel.qml" line="+124"/>
+        <location filename="../src/ui/qml/PreviewPanel.qml" line="+147"/>
         <source>%n shot(s) of the template to fill with your videos and photos</source>
         <translation>
             <numerusform>%n shot of the template to fill with your videos and photos</numerusform>
@@ -185,7 +185,7 @@
 <context>
     <name>velacut::ui::EditorController</name>
     <message numerus="yes">
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+1011"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+1014"/>
         <source>Slideshow ready: %n photo(s). Change anything you like.</source>
         <translation>
             <numerusform>Slideshow ready: %n photo. Change anything you like.</numerusform>
@@ -225,7 +225,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+357"/>
+        <location line="+361"/>
         <source>%n clips deleted</source>
         <translation>
             <numerusform>%n clip deleted</numerusform>

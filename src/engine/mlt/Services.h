@@ -18,6 +18,7 @@
 #include <QJsonObject>
 #include <QImage>
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <vector>
@@ -303,5 +304,20 @@ std::unique_ptr<Mlt::Filter> makeVideoEffectFilter(Mlt::Profile &profile, const 
 // The parameters of a video effect: the preset's (manifest "params"), overridden by the clip's own
 // (docs/EFFECT_FORMAT.md §9).
 fx::VideoEffectParams videoEffectParams(const QJsonObject &preset, const std::map<QString, Param> &own);
+
+// Time spent rendering whole frames of a graph (the outermost get_image, filter "vedit.timing" attached to the
+// tractor): written by MLT's render thread, read anywhere. For the preview statistics (HUD), the watchdog of the
+// preview seeks and the automatic preview quality.
+struct FrameTiming
+{
+    std::atomic<double> lastMs{0.0};
+    std::atomic<double> averageMs{0.0}; // exponential moving average, weight 1/4 to the newest frame
+    std::atomic<int> width{0};          // size of the last frame rendered
+    std::atomic<int> height{0};
+    std::atomic<quint64> frames{0};
+    std::atomic<qint64> busySinceMs{0}; // while a frame is rendering: when it started (ms since the epoch), else 0
+    std::atomic<int> minimumMs{0};      // tests: every frame takes at least this long (a slow effect)
+};
+std::unique_ptr<Mlt::Filter> makeTimingFilter(Mlt::Profile &profile, std::shared_ptr<FrameTiming> timing);
 
 } // namespace velacut::engine

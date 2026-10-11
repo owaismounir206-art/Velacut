@@ -18,6 +18,10 @@
 #include "fx/Transform.h"
 
 #include <QCryptographicHash>
+#include <QDateTime>
+#include <QThread>
+#include <QElapsedTimer>
+#include <QLoggingCategory>
 #include <QDataStream>
 #include <QFont>
 #include <QFontMetricsF>
@@ -37,11 +41,41 @@
 #include <cmath>
 #include <cstring>
 
+// Time of every get_image of our services (own work, without what they ask upstream) and of the sources they read,
+// as debug messages: QT_LOGGING_RULES="velacut.engine.perf.debug=true". Off by default; then a scope costs one check.
+Q_LOGGING_CATEGORY(lcPerf, "velacut.engine.perf", QtInfoMsg)
+
 namespace velacut::engine {
 
 namespace {
 
 constexpr const char *kSettings = "vedit.settings";
+
+class PerfScope
+{
+public:
+    explicit PerfScope(const char *name)
+        : m_name(name)
+        , m_on(lcPerf().isDebugEnabled())
+    {
+        if (m_on) {
+            m_timer.start();
+        }
+    }
+    ~PerfScope()
+    {
+        if (m_on) {
+            qCDebug(lcPerf, "%s %.2f ms", m_name, static_cast<double>(m_timer.nsecsElapsed()) / 1e6);
+        }
+    }
+    PerfScope(const PerfScope &) = delete;
+    PerfScope &operator=(const PerfScope &) = delete;
+
+private:
+    const char *m_name;
+    bool m_on;
+    QElapsedTimer m_timer;
+};
 
 // Runs `rows(begin, end)` over the image in horizontal bands on MLT's slice threads.
 template<typename Rows>
@@ -110,6 +144,7 @@ int compositeGetImage(mlt_frame aFrame, uint8_t **image, mlt_image_format *forma
     const fx::ImageView destination{*image, *width, *height, *width * 4};
     const fx::ConstImageView source{bImage, bWidth, bHeight, bWidth * 4};
     const auto mode = static_cast<fx::BlendMode>(modeInt);
+    const PerfScope perf("composite");
     runSliced(*height, [&](int begin, int end) { fx::compositeBlend(destination, source, mode, opacity, begin, end); });
     return 0;
 }
@@ -288,10 +323,15 @@ int transformGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format
     int sh = std::clamp(static_cast<int>(std::lround(shownH)), 1, static_cast<int>(limit));
     mlt_image_format sourceFormat = mlt_image_rgba;
     uint8_t *source = nullptr;
-    const int error = mlt_frame_get_image(frame, &source, &sourceFormat, &sw, &sh, 0);
+    int error = 0;
+    {
+        const PerfScope perf("transform.source");
+        error = mlt_frame_get_image(frame, &source, &sourceFormat, &sw, &sh, 0);
+    }
     if (error || !source || sourceFormat != mlt_image_rgba) {
         return error ? error : 1;
     }
+    const PerfScope perf("transform");
     const int size = w * h * 4;
     auto *canvas = static_cast<uint8_t *>(mlt_pool_alloc(size));
     if (s->background) {
@@ -344,6 +384,7 @@ int adjustGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, i
         return error;
     }
     const AdjustSettings &s = state->settings;
+    const PerfScope perf("adjust");
     const double k = std::clamp(s.intensity, 0.0, 1.0);
     const fx::ImageView view{*image, *width, *height, *width * 4};
     if (s.denoise > 0) {
@@ -394,6 +435,7 @@ int chromaKeyGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format
         return error;
     }
     fx::ChromaKeySettings fxSettings;
+    const PerfScope perf("chroma_key");
     fxSettings.keyR = s->keyColor.r;
     fxSettings.keyG = s->keyColor.g;
     fxSettings.keyB = s->keyColor.b;
@@ -427,6 +469,7 @@ int motionBlurGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *forma
         return error;
     }
 
+    const PerfScope perf("motion_blur");
     const int w = *width;
     const int h = *height;
     const fx::ImageView view{*image, w, h, w * 4};
@@ -459,6 +502,7 @@ int maskGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int
     const RationalTime contentTime = keyframeTime(s->sourceIn, s->speed, s->reversed, RationalTime(s->clipLength, rate),
                                                   RationalTime(localFrame, rate));
 
+    const PerfScope perf("mask");
     std::vector<fx::MaskParams> params;
     params.reserve(s->masks.size());
 
@@ -590,6 +634,7 @@ int transitionGetImage(mlt_frame aFrame, uint8_t **image, mlt_image_format *form
         *height = ah;
         return 0;
     }
+    const PerfScope perf("transition");
     const int size = aw * ah * 4;
     auto *out = static_cast<uint8_t *>(mlt_pool_alloc(size));
     // Strictly between the two clips on every frame of the transition: (k + 1) / (n + 1).
@@ -1078,6 +1123,7 @@ int beatGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int
     if (pulse <= 0.001) {
         return 0;
     }
+    const PerfScope perf("beat");
     const int w = *width;
     const int h = *height;
     switch (s->kind) {
@@ -1111,6 +1157,7 @@ int videoEffectGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *form
     if (error || !s || *format != mlt_image_rgba || !*image || s->mix <= 0.001) {
         return error;
     }
+    const PerfScope perf("effect");
     const int w = *width;
     const int h = *height;
     const fx::ImageView view{*image, w, h, w * 4};
@@ -1155,6 +1202,7 @@ int stabilizeGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format
     if (corrections.empty() || index < 0 || index >= static_cast<long>(corrections.size())) {
         return 0; // outside the analysed part (the clip was lengthened after "Stabilize")
     }
+    const PerfScope perf("stabilize");
     const int w = *width;
     const int h = *height;
     const std::vector<uint8_t> original(*image, *image + static_cast<std::ptrdiff_t>(w) * h * 4);
@@ -1176,6 +1224,48 @@ mlt_frame beatProcess(mlt_filter filter, mlt_frame frame)
     mlt_frame_push_service_int(frame, static_cast<int>(mlt_frame_get_position(frame)));
     mlt_frame_push_service(frame, filter);
     mlt_frame_push_get_image(frame, beatGetImage);
+    return frame;
+}
+
+// ---- vedit.timing -------------------------------------------------------------------------------------------------
+
+int timingGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int writable)
+{
+    auto filter = static_cast<mlt_filter>(mlt_frame_pop_service(frame));
+    const auto *timing = settingsOf<std::shared_ptr<FrameTiming>>(MLT_FILTER_PROPERTIES(filter));
+    FrameTiming *t = timing ? timing->get() : nullptr;
+    QElapsedTimer timer;
+    timer.start();
+    if (t) {
+        t->busySinceMs.store(std::max<qint64>(1, QDateTime::currentMSecsSinceEpoch()), std::memory_order_relaxed);
+    }
+    const int error = mlt_frame_get_image(frame, image, format, width, height, writable);
+    if (t && t->minimumMs.load(std::memory_order_relaxed) > 0) {
+        const qint64 rest = t->minimumMs.load(std::memory_order_relaxed) - timer.elapsed();
+        if (rest > 0) {
+            QThread::msleep(static_cast<unsigned long>(rest));
+        }
+    }
+    const double elapsed = static_cast<double>(timer.nsecsElapsed()) / 1e6;
+    if (t) {
+        t->busySinceMs.store(0, std::memory_order_relaxed);
+    }
+    if (t && !error) {
+        const double average = t->averageMs.load(std::memory_order_relaxed);
+        t->averageMs.store(average > 0.0 ? average * 0.75 + elapsed * 0.25 : elapsed, std::memory_order_relaxed);
+        t->lastMs.store(elapsed, std::memory_order_relaxed);
+        t->width.store(*width, std::memory_order_relaxed);
+        t->height.store(*height, std::memory_order_relaxed);
+        t->frames.fetch_add(1, std::memory_order_relaxed);
+    }
+    qCDebug(lcPerf, "frame %.2f ms", elapsed);
+    return error;
+}
+
+mlt_frame timingProcess(mlt_filter filter, mlt_frame frame)
+{
+    mlt_frame_push_service(frame, filter);
+    mlt_frame_push_get_image(frame, timingGetImage);
     return frame;
 }
 
@@ -1208,6 +1298,7 @@ void registerServices(Mlt::Repository *repository)
     repository->register_service(mlt_service_filter_type, "vedit.beat", createFilter<beatProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.effect", createFilter<videoEffectProcess>);
     repository->register_service(mlt_service_filter_type, "vedit.stabilize", createFilter<stabilizeProcess>);
+    repository->register_service(mlt_service_filter_type, "vedit.timing", createFilter<timingProcess>);
 }
 
 // ---- settings -----------------------------------------------------------------------------------------------------
@@ -1797,6 +1888,13 @@ std::unique_ptr<Mlt::Filter> makeBeatFilter(Mlt::Profile &profile, const BeatEff
 {
     auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.beat");
     attachSettings(*filter, settings);
+    return filter;
+}
+
+std::unique_ptr<Mlt::Filter> makeTimingFilter(Mlt::Profile &profile, std::shared_ptr<FrameTiming> timing)
+{
+    auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.timing");
+    attachSettings(*filter, std::move(timing));
     return filter;
 }
 

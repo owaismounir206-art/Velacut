@@ -62,6 +62,8 @@ TimelinePlayer::TimelinePlayer(QObject *parent)
             onMediaReady(mediaId);
         }
     });
+    m_statsTimer.setInterval(500);
+    connect(&m_statsTimer, &QTimer::timeout, this, &TimelinePlayer::updateStats);
     // Cuts replaced during playback are released once no frame read ahead can reference them any more.
     m_retiredTimer.setInterval(1000);
     connect(&m_retiredTimer, &QTimer::timeout, this, [this] {
@@ -132,6 +134,7 @@ void TimelinePlayer::createGraph()
     connect(m_cache.get(), &MediaProducerCache::ready, this, &TimelinePlayer::onMediaReady);
     m_projection = std::make_unique<TimelineProjection>(*m_profile, *m_cache, TimelineProjection::MediaLoading::Background);
     m_projection->build(data, m_sequenceId);
+    attachTiming();
     m_consumer = createPreviewConsumer(*m_profile, m_volume);
     if (!m_consumer) {
         m_error = tr("No audio output is available (SDL2).");
@@ -154,6 +157,43 @@ void TimelinePlayer::createGraph()
     emit stateChanged();
     updateWarnings();
     requestReverseProxies();
+}
+
+void TimelinePlayer::attachTiming()
+{
+    m_timingFilter = makeTimingFilter(*m_profile, m_timing);
+    if (m_projection->tractor()) {
+        m_projection->tractor()->attach(*m_timingFilter);
+    }
+}
+
+void TimelinePlayer::setStatsEnabled(bool enabled)
+{
+    if (enabled == statsEnabled()) {
+        return;
+    }
+    if (enabled) {
+        m_statsClock.start();
+        m_statsFramesBefore = m_sink.framesReceived();
+        m_statsTimer.start();
+    } else {
+        m_statsTimer.stop();
+    }
+    emit statsChanged();
+}
+
+QSize TimelinePlayer::statsRenderSize() const
+{
+    return QSize(m_timing->width.load(std::memory_order_relaxed), m_timing->height.load(std::memory_order_relaxed));
+}
+
+void TimelinePlayer::updateStats()
+{
+    const quint64 received = m_sink.framesReceived();
+    const qint64 elapsed = m_statsClock.restart();
+    m_statsFps = elapsed > 0 ? static_cast<double>(received - m_statsFramesBefore) * 1000.0 / static_cast<double>(elapsed) : 0.0;
+    m_statsFramesBefore = received;
+    emit statsChanged();
 }
 
 void TimelinePlayer::requestReverseProxies()
@@ -225,6 +265,7 @@ void TimelinePlayer::destroyGraph()
     m_retiredTimer.stop();
     m_frameShowEvent.reset();
     m_consumer.reset();
+    m_timingFilter.reset();
     m_projection.reset();
     m_cache.reset();
     m_profile.reset();
@@ -237,6 +278,7 @@ void TimelinePlayer::rebuildGraph()
     m_consumer->stop();
     m_consumer->purge();
     m_projection->build(m_project->data(), m_sequenceId);
+    attachTiming();
     m_consumer->connect(*m_projection->tractor());
     m_projection->tractor()->set_speed(m_rate);
     m_consumer->start();
@@ -647,8 +689,18 @@ void TimelinePlayer::onFrameShown(int position, quint64 generation)
         return;
     }
     if (!playing()) {
+        m_lastPlayedPosition = -1;
         return;
     }
+    // Frames the consumer skipped because it was late (real_time = 1): gaps between two frames shown.
+    if (m_lastPlayedPosition >= 0) {
+        const int step = std::abs(position - m_lastPlayedPosition);
+        const int expected = std::max(1, static_cast<int>(std::lround(std::abs(m_rate))));
+        if (step > expected && step < 4 * m_frameRate) {
+            m_skippedFrames += static_cast<quint64>((step - expected) / expected);
+        }
+    }
+    m_lastPlayedPosition = position;
     setPosition(position);
     // Stop at the ends instead of looping or freezing on a black frame.
     if ((m_rate > 0.0 && position >= m_duration - 1) || (m_rate < 0.0 && position <= 0)) {

@@ -1222,7 +1222,7 @@
     <message>
         <location line="+4"/>
         <source>Video</source>
-        <translation type="unfinished">Video</translation>
+        <translation>Video</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -2170,7 +2170,7 @@
 <context>
     <name>MediaTile</name>
     <message>
-        <location filename="../src/ui/qml/MediaTile.qml" line="+70"/>
+        <location filename="../src/ui/qml/MediaTile.qml" line="+80"/>
         <source>On the timeline</source>
         <translation>Nella timeline</translation>
     </message>
@@ -2873,7 +2873,12 @@
         <translation>%1 × %2 · %3 fps</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+38"/>
+        <source>%1 fps · %2 lost · %3 ms/frame · %4 × %5</source>
+        <translation>%1 fps · %2 persi · %3 ms/fotogramma · %4 × %5</translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>Add a video or a photo to the timeline: the preview appears here.</source>
         <translation>Aggiungi un video o una foto alla timeline: l&apos;anteprima compare qui.</translation>
     </message>
@@ -5285,7 +5290,7 @@
 <context>
     <name>TimelineView</name>
     <message>
-        <location filename="../src/ui/qml/TimelineView.qml" line="+567"/>
+        <location filename="../src/ui/qml/TimelineView.qml" line="+582"/>
         <source>Audio track</source>
         <translation>Traccia audio</translation>
     </message>
@@ -5543,7 +5548,7 @@
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/app/main.cpp" line="+100"/>
+        <location filename="../src/app/main.cpp" line="+114"/>
         <source>Offline video editor</source>
         <translation>Editor video offline</translation>
     </message>
@@ -5605,9 +5610,10 @@
         <location line="+74"/>
         <location line="+58"/>
         <location line="+80"/>
-        <location line="+140"/>
+        <location line="+144"/>
         <location line="+13"/>
-        <location line="+148"/>
+        <location line="+31"/>
+        <location line="+141"/>
         <location line="+17"/>
         <location line="+33"/>
         <location line="+74"/>
@@ -5650,7 +5656,7 @@
         <translation>La sequenza non esiste.</translation>
     </message>
     <message>
-        <location line="-2070"/>
+        <location line="-2098"/>
         <source>The media is not in the project.</source>
         <translation>Il file non è nel progetto.</translation>
     </message>
@@ -5666,23 +5672,23 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1616"/>
+        <location line="+1644"/>
         <source>The media is too short to be used.</source>
         <translation>Il file è troppo corto per essere usato.</translation>
     </message>
     <message>
-        <location line="-1593"/>
+        <location line="-1621"/>
         <source>Add audio</source>
         <translation>Aggiungi audio</translation>
     </message>
     <message>
         <location line="+5"/>
-        <location line="+1541"/>
+        <location line="+1569"/>
         <source>The main track is locked.</source>
         <translation>La traccia principale è bloccata.</translation>
     </message>
     <message>
-        <location line="-1536"/>
+        <location line="-1564"/>
         <location line="+4"/>
         <location line="+4"/>
         <source>Add clip</source>
@@ -5693,8 +5699,8 @@
         <location line="+58"/>
         <location line="+80"/>
         <location line="+73"/>
-        <location line="+80"/>
-        <location line="+28"/>
+        <location line="+84"/>
+        <location line="+52"/>
         <location line="+141"/>
         <location line="+34"/>
         <location line="+74"/>
@@ -5714,12 +5720,12 @@
         <translation>La clip non esiste.</translation>
     </message>
     <message>
-        <location line="-1541"/>
+        <location line="-1569"/>
         <location line="+10"/>
         <location line="+49"/>
         <location line="+80"/>
         <location line="+73"/>
-        <location line="+107"/>
+        <location line="+135"/>
         <location line="+141"/>
         <location line="+34"/>
         <location line="+74"/>
@@ -5744,8 +5750,8 @@
         <translation>La traccia è bloccata.</translation>
     </message>
     <message>
-        <location line="-1994"/>
-        <location line="+994"/>
+        <location line="-2022"/>
+        <location line="+1022"/>
         <location line="+47"/>
         <location line="+14"/>
         <location line="+935"/>
@@ -5753,18 +5759,18 @@
         <translation>La traccia non esiste.</translation>
     </message>
     <message>
-        <location line="-1984"/>
+        <location line="-2012"/>
         <source>This clip cannot be placed on that track.</source>
         <translation>Questa clip non può andare su quella traccia.</translation>
     </message>
     <message>
         <location line="+31"/>
-        <location line="+584"/>
+        <location line="+612"/>
         <source>Move clip</source>
         <translation>Sposta clip</translation>
     </message>
     <message>
-        <location line="-504"/>
+        <location line="-532"/>
         <source>Trim clip</source>
         <translation>Accorcia clip</translation>
     </message>
@@ -5784,18 +5790,29 @@
         <translation>Porta la testina dentro la clip per dividerla.</translation>
     </message>
     <message>
-        <location line="+60"/>
+        <location line="+64"/>
         <location line="+31"/>
+        <location line="+23"/>
         <source>Split clip</source>
         <translation>Dividi clip</translation>
     </message>
     <message>
-        <location line="-10"/>
+        <location line="-33"/>
         <source>There is nothing to split in this clip.</source>
         <translation>Non c&apos;è niente da dividere in questa clip.</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+31"/>
+        <source>Move the playhead inside the clips to split them.</source>
+        <translation>Sposta la testina dentro le clip per dividerle.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Split clips</source>
+        <translation>Dividi clip</translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>This works on video and audio clips played forwards at a steady speed.</source>
         <translation>Funziona sulle clip video e audio riprodotte in avanti a velocità costante.</translation>
     </message>
@@ -6443,7 +6460,7 @@
 <context>
     <name>velacut::engine::MediaImporter</name>
     <message>
-        <location filename="../src/engine/analysis/MediaImporter.cpp" line="+40"/>
+        <location filename="../src/engine/analysis/MediaImporter.cpp" line="+58"/>
         <source>“%1” no longer exists.</source>
         <translation>«%1» non esiste più.</translation>
     </message>
@@ -6508,7 +6525,7 @@
 <context>
     <name>velacut::engine::RenderJob</name>
     <message>
-        <location filename="../src/engine/render/RenderJob.cpp" line="+74"/>
+        <location filename="../src/engine/render/RenderJob.cpp" line="+92"/>
         <source>The video engine could not be started.</source>
         <translation>Impossibile avviare il motore video.</translation>
     </message>
@@ -6551,7 +6568,7 @@
 <context>
     <name>velacut::engine::TimelinePlayer</name>
     <message>
-        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+137"/>
+        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+140"/>
         <source>No audio output is available (SDL2).</source>
         <translation>Nessuna uscita audio disponibile (SDL2).</translation>
     </message>
@@ -6680,7 +6697,7 @@
         <translation>Il file del progetto è danneggiato (%1).</translation>
     </message>
     <message>
-        <location line="+147"/>
+        <location line="+148"/>
         <source>This file is not a velacut project.</source>
         <translation>Questo file non è un progetto velacut.</translation>
     </message>
@@ -7472,7 +7489,7 @@
 <context>
     <name>velacut::ui::AppController</name>
     <message>
-        <location filename="../src/ui/controllers/AppController.cpp" line="+128"/>
+        <location filename="../src/ui/controllers/AppController.cpp" line="+147"/>
         <source>GPU</source>
         <translation>GPU</translation>
     </message>
@@ -7513,7 +7530,7 @@
 <context>
     <name>velacut::ui::BrandKitModel</name>
     <message>
-        <location filename="../src/ui/models/BrandKitModel.cpp" line="+221"/>
+        <location filename="../src/ui/models/BrandKitModel.cpp" line="+222"/>
         <source>My brand</source>
         <translation>Il mio marchio</translation>
     </message>
@@ -8257,9 +8274,9 @@
 <context>
     <name>velacut::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+123"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+126"/>
         <source>The captions cannot be saved in %1.</source>
-        <translation type="unfinished">Impossibile salvare i sottotitoli in %1.</translation>
+        <translation>Non è possibile salvare i sottotitoli in %1.</translation>
     </message>
     <message>
         <location line="+108"/>
@@ -8522,12 +8539,7 @@
         <translation>Porta il playhead sopra una clip per dividerla.</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>Split clips</source>
-        <translation>Dividi clip</translation>
-    </message>
-    <message>
-        <location line="+56"/>
+        <location line="+66"/>
         <location line="+9"/>
         <location line="+17"/>
         <location line="+9"/>

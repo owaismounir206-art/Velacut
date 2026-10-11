@@ -13,3 +13,11 @@ if(VELACUT_BUILD_PROBES)
     target_link_libraries(appearance_probe PRIVATE velacut_theme)
     velacut_target_options(appearance_probe)
 endif()
+
+# Preview benchmark (docs/PERFORMANCE.md): the real graph of typical timelines, timed. Not part of the tests.
+option(VELACUT_BUILD_BENCH "Build the preview benchmark in tools/bench" OFF)
+if(VELACUT_BUILD_BENCH)
+    add_executable(preview_bench bench/preview_bench.cpp)
+    target_link_libraries(preview_bench PRIVATE velacut_engine)
+    velacut_target_options(preview_bench)
+endif()

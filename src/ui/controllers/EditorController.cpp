@@ -102,6 +102,8 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     m_timeline = std::make_unique<TimelineModel>(project, sequence);
     engine::MltRuntime::waitUntilReady(); // started at launch: normally ready long before a project opens
     m_player->setPreviewLimit(previewLimit);
+    // Debug HUD on the preview (docs/PERFORMANCE.md): fps, frames lost, render time and size.
+    m_player->setStatsEnabled(qEnvironmentVariableIntValue("VELACUT_PREVIEW_HUD") == 1);
     m_player->setHelperExecutable(helperExecutable);
     m_player->setSequence(&project, sequence);
     // Back where the user left the project.

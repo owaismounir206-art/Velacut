@@ -72,6 +72,29 @@ Item {
                 anchors.fill: parent
                 editor: panel.editor
             }
+            // Debug statistics of the preview (VELACUT_PREVIEW_HUD=1, docs/PERFORMANCE.md).
+            Rectangle {
+                objectName: "previewHud"
+                visible: panel.player.statsEnabled
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.margins: Theme.space.sm
+                width: hudText.implicitWidth + 2 * Theme.space.sm
+                height: hudText.implicitHeight + 2 * Theme.space.xs
+                radius: Theme.shape.small
+                color: Theme.color.inverseSurface
+                Label {
+                    id: hudText
+                    anchors.centerIn: parent
+                    role: "labelSmall"
+                    font.features: { "tnum": 1 }
+                    color: Theme.color.inverseOnSurface
+                    text: qsTr("%1 fps · %2 lost · %3 ms/frame · %4 × %5")
+                              .arg(panel.player.statsFps.toFixed(1)).arg(panel.player.statsDropped)
+                              .arg(panel.player.statsRenderMs.toFixed(1))
+                              .arg(panel.player.statsRenderSize.width).arg(panel.player.statsRenderSize.height)
+                }
+            }
             // Before the first clip: say what to do, in the place where the result will appear.
             ColumnLayout {
                 anchors.centerIn: parent

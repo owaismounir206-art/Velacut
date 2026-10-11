@@ -20,6 +20,7 @@
 namespace Mlt {
 class Consumer;
 class Event;
+class Filter;
 class Frame;
 class Profile;
 } // namespace Mlt
@@ -66,6 +67,14 @@ class TimelinePlayer : public QObject
     // Smooth slow motion being computed for the preview (SmoothCopyQueue).
     Q_PROPERTY(bool preparingSmooth READ preparingSmooth NOTIFY smoothChanged FINAL)
     Q_PROPERTY(double smoothProgress READ smoothProgress NOTIFY smoothChanged FINAL)
+    // Preview statistics for the debug HUD (VELACUT_PREVIEW_HUD=1), refreshed twice a second while statsEnabled:
+    // frames shown per second, frames lost (skipped by the consumer while playing, or replaced before the
+    // preview took them), average time to render a frame and the size it is rendered at.
+    Q_PROPERTY(bool statsEnabled READ statsEnabled WRITE setStatsEnabled NOTIFY statsChanged FINAL)
+    Q_PROPERTY(double statsFps READ statsFps NOTIFY statsChanged FINAL)
+    Q_PROPERTY(int statsDropped READ statsDropped NOTIFY statsChanged FINAL)
+    Q_PROPERTY(double statsRenderMs READ statsRenderMs NOTIFY statsChanged FINAL)
+    Q_PROPERTY(QSize statsRenderSize READ statsRenderSize NOTIFY statsChanged FINAL)
 
 public:
     explicit TimelinePlayer(QObject *parent = nullptr);
@@ -104,6 +113,15 @@ public:
     // shared-memory iGPUs and software rendering, where every preview pixel costs real bandwidth (SPEC 1bis
     // rules 8 and 9). Must be set before setSequence().
     void setPreviewLimit(int shortSide) { m_previewLimit = shortSide; }
+
+    bool statsEnabled() const { return m_statsTimer.isActive(); }
+    void setStatsEnabled(bool enabled);
+    double statsFps() const { return m_statsFps; }
+    int statsDropped() const { return static_cast<int>(m_skippedFrames + m_sink.framesDropped()); }
+    double statsRenderMs() const { return m_timing->averageMs.load(std::memory_order_relaxed); }
+    QSize statsRenderSize() const;
+    // Render time of the frames of the current graph (any thread writes, read here).
+    const FrameTiming &frameTiming() const { return *m_timing; }
 
     Q_INVOKABLE void play();
     Q_INVOKABLE void pause();
@@ -147,11 +165,15 @@ signals:
     void warningsChanged();
     void reverseChanged();
     void smoothChanged();
+    void statsChanged();
     // A smooth slow motion could not be computed (for the snackbar).
     void smoothFailed(const QString &error);
 
 private:
     void createGraph();
+    // The render time of every frame, measured on the tractor (after each build: a rebuild makes a new tractor).
+    void attachTiming();
+    void updateStats();
     void destroyGraph();
     void rebuildGraph();
     void onProjectChanged(const ChangeSet &changes);
@@ -181,6 +203,14 @@ private:
     std::unique_ptr<TimelineProjection> m_projection;
     std::unique_ptr<Mlt::Consumer> m_consumer;
     std::unique_ptr<Mlt::Event> m_frameShowEvent;
+    std::shared_ptr<FrameTiming> m_timing = std::make_shared<FrameTiming>();
+    std::unique_ptr<Mlt::Filter> m_timingFilter;
+    QTimer m_statsTimer;
+    QElapsedTimer m_statsClock;
+    quint64 m_statsFramesBefore = 0;
+    double m_statsFps = 0.0;
+    quint64 m_skippedFrames = 0;
+    int m_lastPlayedPosition = -1;
     QTimer m_retiredTimer;
     std::unique_ptr<ReverseProxyQueue> m_reverse;
     std::unique_ptr<SmoothCopyQueue> m_smooth;
