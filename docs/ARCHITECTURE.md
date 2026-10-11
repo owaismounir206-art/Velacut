@@ -272,6 +272,10 @@ nel repository MLT all'avvio con `Mlt::Repository::register_service` (**verifica
   il `FrameSink` riceve una copia dei pixel (D-19).
 - Modifiche durante la riproduzione: la proiezione aggiorna le playlist con il tractor bloccato (`lock`/`unlock`),
   poi `purge` del consumer e ri-seek alla posizione corrente.
+- In pausa (scrub, skimming, maniglie, modifiche dal vivo come uno slider) ogni fotogramma passa da
+  `TimelinePlayer::requestFrame`: un rendering alla volta, l'ultima richiesta vince e aspetta che arrivi il fotogramma
+  in corso, che non viene mai buttato (D-56); il filtro `vedit.timing` misura ogni fotogramma e non rifà quello della
+  stessa richiesta (D-57). Numeri prima/dopo in `docs/PERFORMANCE.md`.
 - Avvio veloce: `Mlt::Factory::init` (carica tutti i moduli) gira su un thread in background mentre si mostra la schermata
   iniziale, che non ha bisogno di MLT.
 
@@ -570,6 +574,9 @@ Dettagli in `docs/FILE_FORMAT.md`. In sintesi:
 | D-54 | Sottotitoli: clip `subtitle` su una traccia testo con `captions: true` e stile della traccia (`captionStyle`); disegnati da `CaptionRenderer` come contorni preparati con i font sul thread della proiezione e disegnati senza font nei thread di MLT, riusando l'ultima immagine finché non cambiano gruppo, parola detta o passo di animazione | Lo stile è uno per tutte le righe (come CapCut: si cambia una volta), con eccezione per riga nel formato. Contorni invece di testo: niente font nei thread di MLT (D-39) e scala perfetta a ogni risoluzione. Riusare l'immagine evita di ridisegnare 30 volte al secondo un testo che cambia 2-3 volte al secondo |
 | D-55 | Funzioni AI come `ai::AiTask` (thread proprio, progresso, annullamento, distruzione sicura); il risultato è sempre un'operazione normale del `TimelineEditor` (tagli, divisioni) in un solo passo di annullamento; analisi ricordate per file nella sessione | SPEC §2 principio 4 e §5.12 ("mai un video cotto"). "Rimuovi pause" usa i livelli RMS con soglia tra rumore di fondo e parlato (funziona in una stanza rumorosa come in studio); "Dividi le scene" usa differenze di pixel e istogramma su immagini 64×36 e accetta solo salti isolati (una panoramica veloce non è un taglio) |
 | D-53 | Elementi grafici animati (contatori, conto alla rovescia, cronometro, barra di avanzamento, frecce/cerchi/sottolineature/evidenziatore/spunte disegnati a mano) come sticker con `graphic`, disegnati per fotogramma da `fx/Graphic` con QPainter senza font; cifre, prefisso e suffisso pre-renderizzati (font Inter, cifre tabulari) sul thread della proiezione | Stessa scheda, traccia e pannello degli sticker (meno concetti per l'utente). I font restano fuori dai thread di MLT (D-39); le cifre tabulari evitano che il numero "balli" mentre conta. La barra di avanzamento dura fino alla fine del video, come i visualizzatori |
+| D-56 | Anteprima in pausa: un solo rendering richiesto alla volta, l'ultima richiesta vince e un rendering in corso non viene mai buttato (`TimelinePlayer::requestFrame`); `purge` solo quando nulla è in volo; watchdog solo di recupero (max(1 s, 4 × media), rimandato se il rendering è ancora in corso) | Misurato (`docs/PERFORMANCE.md`): `purge` non interrompe il rendering, lo butta; con fotogrammi oltre 120 ms lo scrub non mostrava nulla e lo slider restava fermo |
+| D-57 | Il filtro `vedit.timing` sul tractor misura ogni fotogramma (HUD, watchdog, qualità automatica) e ridà il fotogramma già fatto per la stessa richiesta in pausa (`FrameTiming::stillRequest`) | `sdl2_audio` in pausa ri-renderizza da solo la posizione mostrata (verificato con `preview_probe`): ogni richiesta successiva aspettava un rendering inutile. Quei fotogrammi non vengono mai mostrati (ogni richiesta svuota la coda), quindi riusare il rendering della richiesta è sicuro |
+| D-58 | Nessuna cache dei fotogrammi sorgente prima degli effetti | `avformat` di MLT tiene già in cache le immagini decodificate (stessa posizione: 0,8 ms invece di 370; verificato con `preview_probe`, E8) |
 
 ---
 

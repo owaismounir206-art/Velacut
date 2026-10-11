@@ -308,8 +308,16 @@ fx::VideoEffectParams videoEffectParams(const QJsonObject &preset, const std::ma
 // Time spent rendering whole frames of a graph (the outermost get_image, filter "vedit.timing" attached to the
 // tractor): written by MLT's render thread, read anywhere. For the preview statistics (HUD), the watchdog of the
 // preview seeks and the automatic preview quality.
+//
+// The same filter keeps the frame rendered for a still request and gives it again for the same request: after showing
+// a frame, the paused sdl2_audio consumer renders the same position again by itself, once or twice (its read-ahead
+// refills its queue, verified by tools/probes/preview_probe), and that work would delay the next frame asked for by a
+// scrub or an edit by a whole render. Those frames are never shown (every request purges the queue before its
+// refresh), so they reuse the render of their request. `stillRequest` must change with every request (seek + purge +
+// refresh) while paused.
 struct FrameTiming
 {
+    std::atomic<quint64> stillRequest{0};
     std::atomic<double> lastMs{0.0};
     std::atomic<double> averageMs{0.0}; // exponential moving average, weight 1/4 to the newest frame
     std::atomic<int> width{0};          // size of the last frame rendered

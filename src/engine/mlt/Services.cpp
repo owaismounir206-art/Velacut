@@ -1229,11 +1229,49 @@ mlt_frame beatProcess(mlt_filter filter, mlt_frame frame)
 
 // ---- vedit.timing -------------------------------------------------------------------------------------------------
 
+struct TimingState
+{
+    std::shared_ptr<FrameTiming> timing;
+    // The frame rendered for the last still request (see FrameTiming).
+    QMutex mutex;
+    bool valid = false;
+    int position = 0;
+    quint64 request = 0;
+    int requestedWidth = 0;
+    int requestedHeight = 0;
+    int width = 0;
+    int height = 0;
+    std::vector<uint8_t> pixels;
+};
+
 int timingGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, int *width, int *height, int writable)
 {
     auto filter = static_cast<mlt_filter>(mlt_frame_pop_service(frame));
-    const auto *timing = settingsOf<std::shared_ptr<FrameTiming>>(MLT_FILTER_PROPERTIES(filter));
-    FrameTiming *t = timing ? timing->get() : nullptr;
+    const int position = mlt_frame_pop_service_int(frame);
+    const auto request = static_cast<quint64>(mlt_frame_pop_service_int(frame));
+    const auto *statePointer = settingsOf<std::shared_ptr<TimingState>>(MLT_FILTER_PROPERTIES(filter));
+    TimingState *state = statePointer ? statePointer->get() : nullptr;
+    FrameTiming *t = state ? state->timing.get() : nullptr;
+    const int requestedWidth = *width;
+    const int requestedHeight = *height;
+    const bool still = mlt_properties_get_double(mlt_frame_properties(frame), "_speed") == 0.0;
+    if (state && *format == mlt_image_rgba) {
+        // The same still request again: a copy, nothing upstream is rendered (the frames of the tracks belong to this
+        // frame and are closed with it).
+        const QMutexLocker lock(&state->mutex);
+        if (still && state->valid && state->position == position && state->request == request &&
+            state->requestedWidth == requestedWidth && state->requestedHeight == requestedHeight) {
+            const int size = state->width * state->height * 4;
+            auto *copy = static_cast<uint8_t *>(mlt_pool_alloc(size));
+            std::memcpy(copy, state->pixels.data(), static_cast<size_t>(size));
+            mlt_frame_set_image(frame, copy, size, mlt_pool_release);
+            *image = copy;
+            *width = state->width;
+            *height = state->height;
+            qCDebug(lcPerf, "frame %d again (same still request)", position);
+            return 0;
+        }
+    }
     QElapsedTimer timer;
     timer.start();
     if (t) {
@@ -1258,12 +1296,30 @@ int timingGetImage(mlt_frame frame, uint8_t **image, mlt_image_format *format, i
         t->height.store(*height, std::memory_order_relaxed);
         t->frames.fetch_add(1, std::memory_order_relaxed);
     }
+    if (state && !error && still && *image && *format == mlt_image_rgba && *width > 0 && *height > 0) {
+        const QMutexLocker lock(&state->mutex);
+        const auto size = static_cast<size_t>(*width) * static_cast<size_t>(*height) * 4;
+        state->pixels.resize(size);
+        std::memcpy(state->pixels.data(), *image, size);
+        state->valid = true;
+        state->position = position;
+        state->request = request;
+        state->requestedWidth = requestedWidth;
+        state->requestedHeight = requestedHeight;
+        state->width = *width;
+        state->height = *height;
+    }
     qCDebug(lcPerf, "frame %.2f ms", elapsed);
     return error;
 }
 
 mlt_frame timingProcess(mlt_filter filter, mlt_frame frame)
 {
+    const auto *state = settingsOf<std::shared_ptr<TimingState>>(MLT_FILTER_PROPERTIES(filter));
+    const quint64 request = state && *state && (*state)->timing ? (*state)->timing->stillRequest.load() : 0;
+    // The request the frame is made for (its services were picked then, whenever it is rendered).
+    mlt_frame_push_service_int(frame, static_cast<int>(request));
+    mlt_frame_push_service_int(frame, static_cast<int>(mlt_frame_get_position(frame)));
     mlt_frame_push_service(frame, filter);
     mlt_frame_push_get_image(frame, timingGetImage);
     return frame;
@@ -1894,7 +1950,9 @@ std::unique_ptr<Mlt::Filter> makeBeatFilter(Mlt::Profile &profile, const BeatEff
 std::unique_ptr<Mlt::Filter> makeTimingFilter(Mlt::Profile &profile, std::shared_ptr<FrameTiming> timing)
 {
     auto filter = std::make_unique<Mlt::Filter>(profile, "vedit.timing");
-    attachSettings(*filter, std::move(timing));
+    auto state = std::make_shared<TimingState>();
+    state->timing = std::move(timing);
+    attachSettings(*filter, std::move(state));
     return filter;
 }
 

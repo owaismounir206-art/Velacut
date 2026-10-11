@@ -29,7 +29,8 @@ TimelinePlayer::TimelinePlayer(QObject *parent)
     , m_reverse(std::make_unique<ReverseProxyQueue>())
     , m_smooth(std::make_unique<SmoothCopyQueue>())
 {
-    m_seekClock.start();
+    m_renderWatchdog.setSingleShot(true);
+    connect(&m_renderWatchdog, &QTimer::timeout, this, &TimelinePlayer::onRenderWatchdog);
     connect(m_smooth.get(), &SmoothCopyQueue::busyChanged, this, &TimelinePlayer::smoothChanged);
     connect(m_smooth.get(), &SmoothCopyQueue::progressChanged, this, &TimelinePlayer::smoothChanged);
     connect(m_smooth.get(), &SmoothCopyQueue::ready, this, &TimelinePlayer::onMediaReady);
@@ -262,6 +263,9 @@ void TimelinePlayer::destroyGraph()
     m_isScrubMuted = false;
     m_skimMuted = false;
     m_wasPlayingBeforeScrub = false;
+    m_renderInFlight = false;
+    m_pendingFrame.reset();
+    m_renderWatchdog.stop();
     m_retiredTimer.stop();
     m_frameShowEvent.reset();
     m_consumer.reset();
@@ -277,6 +281,9 @@ void TimelinePlayer::rebuildGraph()
     ++m_generation;
     m_consumer->stop();
     m_consumer->purge();
+    // The frame being rendered went with the old consumer run: afterProjectionChange() asks again.
+    m_renderInFlight = false;
+    m_renderWatchdog.stop();
     m_projection->build(m_project->data(), m_sequenceId);
     attachTiming();
     m_consumer->connect(*m_projection->tractor());
@@ -329,6 +336,7 @@ void TimelinePlayer::onMediaReady(const MediaId &mediaId)
 
 void TimelinePlayer::afterProjectionChange()
 {
+    m_inFlightCurrent = false; // the frame being rendered (if any) shows the graph before this change
     if (m_projection->hasRetired() && !m_retiredTimer.isActive()) {
         m_retiredTimer.start();
     }
@@ -343,8 +351,14 @@ void TimelinePlayer::afterProjectionChange()
         updateWarnings();
         return;
     }
-    // Frames already read ahead show the old graph: drop them and render again from the frame on screen.
-    showFrame(playing() ? m_shownPosition : (m_skimming ? m_shownPosition : m_position));
+    if (playing()) {
+        // Frames already read ahead show the old graph: drop them and render again from the frame on screen.
+        showFrame(m_shownPosition);
+    } else {
+        // The frame on screen again with the new graph. A slider dragged faster than frames render (60 edits per
+        // second) gets one frame per render, each with the latest values, and the last one exact.
+        requestFrame(m_skimming ? m_skimTarget : m_position);
+    }
     updateWarnings();
 }
 
@@ -354,9 +368,56 @@ void TimelinePlayer::showFrame(int frame)
         return;
     }
     Mlt::Producer *tractor = m_projection->tractor();
+    // A new request: frames made from now on render again (see FrameTiming::stillRequest).
+    m_timing->stillRequest.fetch_add(1);
     tractor->seek(std::clamp(frame, 0, m_duration - 1));
     m_consumer->purge();
     m_consumer->set("refresh", 1);
+}
+
+void TimelinePlayer::requestFrame(int frame)
+{
+    if (!m_consumer) {
+        return;
+    }
+    const int target = std::clamp(frame, 0, std::max(0, m_duration - 1));
+    if (m_renderInFlight) {
+        if (target == m_inFlightFrame && m_inFlightCurrent) {
+            m_pendingFrame.reset(); // already coming (e.g. the commit of the position a drag last asked for)
+        } else {
+            m_pendingFrame = target;
+        }
+        return;
+    }
+    dispatchFrame(target);
+}
+
+void TimelinePlayer::dispatchFrame(int frame)
+{
+    m_pendingFrame.reset();
+    m_renderInFlight = true;
+    m_inFlightFrame = frame;
+    m_inFlightCurrent = true;
+    // Nothing useful is in the consumer's queue now (no render in flight): the purge of showFrame() only drops
+    // frames read ahead at the old position or with the old graph.
+    showFrame(frame);
+    m_renderWatchdog.start(std::max(1000, static_cast<int>(4.0 * m_timing->averageMs.load(std::memory_order_relaxed))));
+}
+
+void TimelinePlayer::onRenderWatchdog()
+{
+    if (!m_renderInFlight || !m_consumer || playing()) {
+        return;
+    }
+    if (m_timing->busySinceMs.load(std::memory_order_relaxed) > 0) {
+        // Still rendering (a very slow frame): wait, never throw it away.
+        m_renderWatchdog.start(std::max(1000, static_cast<int>(4.0 * m_timing->averageMs.load(std::memory_order_relaxed))));
+        return;
+    }
+    // The answer never came (the paused consumer can miss a wakeup on a saturated machine): ask again.
+    qCWarning(lcTimelinePlayer) << "no frame for the request of frame" << m_inFlightFrame << "- asking again";
+    m_renderInFlight = false;
+    requestFrame(m_pendingFrame.value_or(m_inFlightFrame));
 }
 
 void TimelinePlayer::setRate(double rate)
@@ -390,10 +451,10 @@ void TimelinePlayer::setRate(double rate)
     tractor->seek(m_position);
     m_consumer->purge();
     m_consumer->set("refresh", 1);
-    // The purge above discarded any seek response still in flight: don't wait for a frame that will
-    // never arrive, or the next scrub would silently swallow its first seek for up to 120 ms.
-    m_seekInFlight = false;
-    m_pendingScrubFrame.reset();
+    // The purge above discarded any requested frame still in flight: don't wait for one that will never arrive.
+    m_renderInFlight = false;
+    m_pendingFrame.reset();
+    m_renderWatchdog.stop();
     m_rate = rate;
     emit stateChanged();
 }
@@ -459,22 +520,7 @@ void TimelinePlayer::scrubSeek(int frame)
         m_skimming = false;
         emit stateChanged();
     }
-    const qint64 now = m_seekClock.elapsed();
-    // Safety watchdog: reset stuck in-flight flag after 120ms
-    if (m_seekInFlight && (now - m_lastSeekMs > 120)) {
-        m_seekInFlight = false;
-    }
-
-    // Backpressure & rate-limiting: coalesce intermediate seeks to prevent choking the MLT consumer/tractor
-    if (m_seekInFlight || (now - m_lastSeekMs < 33)) {
-        m_pendingScrubFrame = target;
-        return;
-    }
-
-    m_pendingScrubFrame.reset();
-    m_seekInFlight = true;
-    m_lastSeekMs = now;
-    showFrame(target);
+    requestFrame(target);
 }
 
 void TimelinePlayer::commitSeek(int frame)
@@ -482,22 +528,18 @@ void TimelinePlayer::commitSeek(int frame)
     const int target = std::clamp(frame, 0, std::max(0, m_duration - 1));
     const bool wasSkimming = m_skimming;
     m_skimming = false;
-    // Already on the requested frame and nothing still rendering: skip the purge/refresh storm that
-    // the 80 ms debounce timer would otherwise send during fast scrubbing (async backlog prevention).
-    if (!wasSkimming && target == m_position && target == m_shownPosition
-        && !m_seekInFlight && !m_pendingScrubFrame.has_value()) {
+    // Already on the requested frame and nothing still rendering: nothing to render again (the debounce of a drag
+    // commits the position the drag has already shown).
+    if (!wasSkimming && target == m_position && target == m_shownPosition && !m_renderInFlight && !m_pendingFrame) {
         restoreAudioAfterScrub();
         resumeAfterScrub();
         return;
     }
-    m_pendingScrubFrame.reset();
-    m_seekInFlight = true;
-    m_lastSeekMs = m_seekClock.elapsed();
     setPosition(target);
-    // The frame-accurate commit is where the audio detached for the drag comes back (before showing
-    // the target frame, so its chunk is heard only once, like a normal seek).
+    // The commit is where the audio detached for the drag comes back (before showing the target frame, so its
+    // chunk is heard only once, like a normal seek).
     restoreAudioAfterScrub();
-    showFrame(target);
+    requestFrame(target);
     if (wasSkimming) {
         emit stateChanged();
     }
@@ -562,17 +604,8 @@ void TimelinePlayer::skim(int frame)
     if (playing() || !m_consumer) {
         return;
     }
-    const qint64 now = m_seekClock.elapsed();
-    // Safety watchdog (same as scrubSeek): never stay stuck if a seek response never arrives.
-    if (m_seekInFlight && (now - m_lastSeekMs > 120)) {
-        m_seekInFlight = false;
-    }
-    // Backpressure: skimming (hover axis, trim handles) used to call showFrame() for every pointer move,
-    // bypassing the scrub rate limiting and flooding the MLT consumer with async seeks (frame backlog,
-    // stale preview, playhead/cursor desync). One seek in flight at a time: the next hover point wins.
-    if (m_seekInFlight || m_pendingScrubFrame.has_value()) {
-        return;
-    }
+    // Hover axis and trim handles: like a scrub, one render at a time and the latest position wins (it is kept, not
+    // dropped: the preview ends on the frame under the pointer).
     const int target = std::clamp(frame, 0, std::max(0, m_duration - 1));
     if (!m_skimming) {
         m_skimming = true;
@@ -581,9 +614,8 @@ void TimelinePlayer::skim(int frame)
         startSkimMute();
         emit stateChanged();
     }
-    m_seekInFlight = true;
-    m_lastSeekMs = now;
-    showFrame(target);
+    m_skimTarget = target;
+    requestFrame(target);
 }
 
 void TimelinePlayer::endSkim()
@@ -594,7 +626,7 @@ void TimelinePlayer::endSkim()
     m_skimming = false;
     emit stateChanged();
     if (!playing()) {
-        showFrame(m_position);
+        requestFrame(m_position);
     }
     // After the frame of the playhead: the skim is over, its silence is too (a scrub drag
     // that has taken over in the meantime keeps its own mute, see stopSkimMute).
@@ -674,18 +706,17 @@ void TimelinePlayer::onFrameShown(int position, quint64 generation)
     if (generation != m_generation || !m_consumer) {
         return;
     }
-    m_seekInFlight = false;
     if (position != m_shownPosition) {
         m_shownPosition = position;
         emit shownPositionChanged();
     }
-    // If a scrub seek request arrived while previous frame was rendering, dispatch the latest one now
-    if (m_pendingScrubFrame.has_value()) {
-        const int target = *m_pendingScrubFrame;
-        m_pendingScrubFrame.reset();
-        m_seekInFlight = true;
-        m_lastSeekMs = m_seekClock.elapsed();
-        showFrame(target);
+    if (!playing() && m_renderInFlight) {
+        // The requested frame (or the one rendering when it was requested): the latest request goes now.
+        m_renderInFlight = false;
+        m_renderWatchdog.stop();
+        if (m_pendingFrame) {
+            dispatchFrame(*m_pendingFrame);
+        }
         return;
     }
     if (!playing()) {

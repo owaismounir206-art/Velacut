@@ -131,14 +131,15 @@ public:
     Q_INVOKABLE void shuttleBackward();
     // Moves the playhead (and pauses skimming).
     Q_INVOKABLE void seek(int frame);
-    // Non-blocking scrub seeking with backpressure/coalescing for smooth UI dragging.
+    // Moves the playhead while dragging it: the frame follows as fast as frames render (one render at a time, the
+    // latest position wins, see requestFrame).
     Q_INVOKABLE void scrubSeek(int frame);
     // Detaches the audio for a whole scrub drag, at the MLT level (not a Qt volume dip): sdl2_audio
     // plays the audio of every frame it shows, refresh (speed 0) frames included, so each frame the
     // drag lands on would be heard. The commit (commitSeek) switches the audio back on. `muted` is
     // also where the playing state before the drag is remembered, to be restored on the commit.
     Q_INVOKABLE void setScrubMuted(bool muted);
-    // Frame-accurate seek commit on drag release or debounce.
+    // End of a drag (release or pause of the pointer): the playhead lands on `frame`, the audio comes back.
     Q_INVOKABLE void commitSeek(int frame);
     Q_INVOKABLE void step(int frames);
     // Shows `frame` without moving the playhead (pointer over the timeline); ignored while playing.
@@ -154,6 +155,8 @@ public:
 
     // Called from the MLT consumer thread for every frame shown.
     void deliverFrame(Mlt::Frame &frame);
+    // Tests: every frame takes at least `ms` to render (a slow effect, without depending on how fast effects are).
+    void setMinimumRenderTime(int ms) { m_timing->minimumMs.store(ms); }
 
 signals:
     void stateChanged();
@@ -181,6 +184,15 @@ private:
     void afterProjectionChange();
     void setRate(double rate);
     void showFrame(int frame);
+    // While paused, every frame shown on request (scrub, skim, seek, an edit) goes through here: one render at a time,
+    // and a render in progress is never thrown away for a newer request, which waits (the latest one wins) and is
+    // sent when the frame arrives. Purging the consumer for every request, as before, discarded the frame being
+    // rendered: with frames slower than the requests (a blur, a transition), nothing was shown until the pointer
+    // stopped (docs/PERFORMANCE.md).
+    void requestFrame(int frame);
+    void dispatchFrame(int frame);
+    // Recovery only, if the answer to a request never comes: the time allowed grows with the render time measured.
+    void onRenderWatchdog();
     // Audio back on after a scrub drag, wherever the commit lands (see setScrubMuted).
     void restoreAudioAfterScrub();
     // Playback resumed where the drag had paused it, on the commit (see setScrubMuted).
@@ -227,10 +239,12 @@ private:
     int m_previewLimit = 0;
     QString m_error;
     QStringList m_warnings;
-    std::atomic<bool> m_seekInFlight{false};
-    std::optional<int> m_pendingScrubFrame;
-    QElapsedTimer m_seekClock;
-    qint64 m_lastSeekMs = 0;
+    bool m_renderInFlight = false;
+    int m_inFlightFrame = 0;
+    bool m_inFlightCurrent = false; // no edit since the frame in flight was asked for
+    std::optional<int> m_pendingFrame;
+    int m_skimTarget = 0;
+    QTimer m_renderWatchdog;
     // Audio detached while scrubbing (see setScrubMuted): the drag is silent, the commit is not.
     bool m_isScrubMuted = false;
     bool m_wasPlayingBeforeScrub = false;

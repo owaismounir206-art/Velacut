@@ -113,3 +113,46 @@ Transizioni con il percorso CPU (`--cpu-transitions`):
 - **GPU contro CPU per le transizioni** (1080p): dissolvenza 41 contro 40 ms (pari), blur dissolve 41 contro 97 ms
   (la GPU vince): l'ipotesi "GPU più lenta della CPU" non è confermata per questi due casi.
 - **Riproduzione**: a 1080p solo S1 tiene 30 fps; S4/S5 scendono a ~20 fps (27 % persi); a 2160p nemmeno S1 (15 fps).
+
+## Dopo la Fase 1 — scheduling dell'anteprima (1080p, transizioni GPU)
+
+| Scenario | Canvas | Frame | Seq. mean ms | Seq. p95 ms | Seek ms | Param ms (mean/p95) | Play fps | Dropped | Scrub max gap ms | Scrub settle ms | Slider frames/s | Slider settle ms |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Scenario | Canvas | Frame | Seq. mean ms | Seq. p95 ms | Seek ms | Param ms (mean/p95) | Play fps | Dropped | Scrub max gap ms | Scrub settle ms | Slider frames/s | Slider settle ms |
+| S1 1 clip H.264, no effect | 1920×1080 | 1920×1080 | 15 | 16 | 252 | – | 29 | 3 % | 438 | 332 | – | – |
+| S2 1 clip + blur 1.0 | 1920×1080 | 1920×1080 | 107 | 110 | 338 | 103 / 105 | 7.7 | 70 % | 494 | 698 | 8.3 | 185 |
+| S3 1 clip + zoom blur 1.0 | 1920×1080 | 1920×1080 | 563 | 580 | 802 | 558 / 583 | 1.6 | 81 % | 890 | 681 | 1.3 | 1408 |
+| S4 split clip (same file) + 1 s dissolve | 1920×1080 | 1920×1080 | 45 | 50 | 251 | – | 17 | 33 % | 440 | 411 | – | – |
+| S5 2 files + 1 s blur dissolve | 1920×1080 | 1920×1080 | 46 | 50 | 306 | – | 17 | 33 % | 501 | 650 | – | – |
+| S6 blur 1.0 + text overlay + colour filter | 1920×1080 | 1920×1080 | 125 | 131 | 359 | 124 / 128 | 6.6 | 74 % | 512 | 511 | 5.0 | 323 |
+
+Prima → dopo, le colonne che la Fase 1 doveva cambiare (le altre misurano il costo per fotogramma, Fase 2):
+
+| | Scrub max gap ms | Slider fotogrammi/s | Slider settle ms |
+|---|---|---|---|
+| S1 | 702 → 438 | – | – |
+| S2 | 1440 → 494 | 0 → 8,3 | 363 → 185 |
+| S3 | 1440 → 890 | 0 → 1,3 | 755 → 1408 |
+| S4 | 616 → 440 | – | – |
+| S5 | 494 → 501 | – | – |
+| S6 | 1442 → 512 | 0 → 5,0 | 428 → 323 |
+
+- Durante lo scrub i fotogrammi ora arrivano (prima, con un effetto, nessuno per tutto il gesto). Il buco massimo che
+  resta (~450 ms) è il **seek** nel GOP di 2 s (250–350 ms a 1080p per ogni passo all'indietro), non lo scheduling:
+  tocca ai proxy a GOP corto (Fase 3).
+- Lo slider dà un fotogramma per ogni rendering (S2: 103 ms → 8,3/s, il massimo), sempre con i valori più recenti, e
+  l'ultimo è esatto (test `effectSliderUpdatesThePreviewAndEndsExact`). In S3 un fotogramma costa 560 ms: il "settle"
+  più lungo è il rendering in corso al rilascio più quello del valore finale (≤ 2 rendering), Fase 2.
+- `TimelineProjection::update` per un cambio di parametro costa ~1–3 ms (Param − Seq.): rimandarla non serve.
+
+Verifiche con programmi di prova (`tools/probes/preview_probe.cpp`, `-DVELACUT_BUILD_PROBES=ON`):
+- `purge()` non interrompe il rendering in corso: il consumer lo finisce e lo butta (E2: il seek a 100 costa 400 ms
+  anche se dopo 100 ms si chiede 200). Ecco il livelock: con fotogrammi più lenti delle richieste nulla arrivava mai.
+- In pausa, dopo ogni fotogramma mostrato, `sdl2_audio` ne renderizza **da solo** altri due della stessa posizione
+  (E1: 3 rendering, 1 mostrato) per riempire la coda; `buffer`/`prefill` non cambiano nulla. Senza rimedio ogni
+  richiesta aspettava un rendering inutile (E6: un fotogramma ogni 300 ms con rendering da 150).
+- Senza `purge` il consumer mostra prima i fotogrammi vecchi in coda (E3), quindi ogni richiesta continua a fare
+  seek + purge + refresh, ma solo quando nessun rendering è in volo.
+- Il producer `avformat` di MLT tiene già in cache le immagini decodificate: la stessa posizione di nuovo costa
+  0,8 ms invece di 370 ms, anche dopo un seek lontano (E8). La cache "sorgente" prevista dalla Fase 1.4 **non serve**
+  e non è stata fatta: cambiare un parametro su un fotogramma fermo costa già solo gli effetti.

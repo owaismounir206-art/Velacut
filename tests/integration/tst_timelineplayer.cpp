@@ -205,6 +205,106 @@ private slots:
         QCOMPARE(player.position(), 60);
     }
 
+    // Slow frames (a heavy effect), requests faster than renders: one render at a time, the latest request wins and is
+    // never lost, and the render in progress is never thrown away (docs/PERFORMANCE.md, phase 1).
+    void skimBurstEndsOnTheLastPosition()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        TimelinePlayer player;
+        player.setVolume(0.0);
+        player.setSequence(&session.project, session.data().mainSequenceId);
+        QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
+        player.setMinimumRenderTime(150);
+        // The pointer sweeps over the timeline at 60 events per second and stops on 77.
+        for (int frame = 10; frame <= 77; ++frame) {
+            player.skim(frame);
+            QTest::qWait(16);
+        }
+        QVERIFY(waitForShown(player, 77, 3000));
+        player.endSkim();
+        QVERIFY(waitForShown(player, 0, 3000));
+    }
+
+    void scrubShowsFramesWhileDraggingWithSlowFrames()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        TimelinePlayer player;
+        player.setVolume(0.0);
+        player.setSequence(&session.project, session.data().mainSequenceId);
+        QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
+        player.setMinimumRenderTime(150);
+        const quint64 before = player.sink()->framesReceived();
+        player.setScrubMuted(true);
+        for (int i = 0; i < 90; ++i) { // 1.5 s at 60 events per second
+            player.scrubSeek(10 + i);
+            QTest::qWait(16);
+        }
+        // Before: every new seek purged the render in progress, and nothing was shown until the pointer stopped.
+        const quint64 during = player.sink()->framesReceived() - before;
+        QVERIFY2(during >= 4, qPrintable(QString::number(during)));
+        player.commitSeek(99);
+        QVERIFY(waitForShown(player, 99, 3000));
+        QCOMPARE(player.position(), 99);
+    }
+
+    // Edits faster than renders (an effect slider dragged on a still frame): frames keep coming with the latest values,
+    // and the last frame shows the final value.
+    void effectSliderUpdatesThePreviewAndEndsExact()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        const ClipId clip = session.mainTrack().clips.front().id;
+        Effect invert;
+        invert.id = EffectId::create();
+        invert.type = u"vedit.effect"_s;
+        invert.preset = AssetRef{u"vedit.core"_s, u"effects/invert"_s, 1};
+        invert.intensity = Param(0.0);
+        QVERIFY(session.apply(session.editor().updateClips({clip}, [&](Clip &c) { c.effects.push_back(invert); }, u"invert"_s)));
+        TimelinePlayer player;
+        player.setVolume(0.0);
+        player.setSequence(&session.project, session.data().mainSequenceId);
+        QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
+        player.seek(30);
+        QVERIFY(waitForShown(player, 30));
+        player.setMinimumRenderTime(120);
+        const quint64 before = player.sink()->framesReceived();
+        for (int i = 1; i <= 60; ++i) { // 1 s at 60 commands per second, merged like the inspector's
+            const double mix = i / 60.0;
+            EditResult edit = session.editor().updateClips({clip}, [&](Clip &c) { c.effects.back().intensity = Param(mix); }, u"x"_s);
+            session.stack.push(new EditCommand(session.project, edit.text, std::move(edit.script), MergeKey{u"slider"_s, 1}));
+            QTest::qWait(16);
+        }
+        const quint64 during = player.sink()->framesReceived() - before;
+        QVERIFY2(during >= 4, qPrintable(QString::number(during)));
+        // Final value: fully inverted, exactly as a fresh render of the model.
+        auto profile = makeProfile(session.data(), session.data().mainSequenceId);
+        MediaProducerCache cache(*profile);
+        TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+        projection.build(session.data(), session.data().mainSequenceId);
+        const QImage expected = projection.renderFrame(30).convertToFormat(QImage::Format_RGBA8888);
+        QTRY_VERIFY_WITH_TIMEOUT(player.sink()->latest().convertToFormat(QImage::Format_RGBA8888) == expected, 3000);
+    }
+
+    // A frame slower than the watchdog's minimum (1 s) is still shown, not purged and asked again.
+    void verySlowFrameIsNeverThrownAway()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        TimelinePlayer player;
+        player.setVolume(0.0);
+        player.setSequence(&session.project, session.data().mainSequenceId);
+        QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
+        player.setMinimumRenderTime(1400);
+        const quint64 rendered = player.frameTiming().frames.load();
+        player.seek(50);
+        QVERIFY(waitForShown(player, 50, 6000));
+        QTest::qWait(1500);
+        // One render for the request; the consumer's own renders of the same still frame reuse it.
+        QCOMPARE(player.frameTiming().frames.load(), rendered + 1);
+    }
+
     void playsToTheEndAndStops()
     {
         Session session(baseProject());
