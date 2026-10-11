@@ -9,6 +9,7 @@ obj/
 target/
 .downloads/
 /.downloads/
+/Velacut/
 
 # VCS & Agent Metadata
 .git/
