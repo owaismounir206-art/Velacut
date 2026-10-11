@@ -20,7 +20,7 @@ Dialog {
             ["Space", qsTr("Play / pause")],
             ["J  K  L", qsTr("Play backwards, pause, play forwards (press again: faster)")],
             ["←  →", qsTr("Previous / next frame")],
-            ["Shift+←  Shift+→", qsTr("10 frames back / forward")],
+            ["Shift+←  Shift+→", qsTr("One second back / forward")],
             ["↑  ↓", qsTr("Previous / next cut")],
             ["Home  End", qsTr("Go to the start / end")]] },
         { title: qsTr("Editing"), items: [

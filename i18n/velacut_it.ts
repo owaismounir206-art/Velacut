@@ -831,7 +831,7 @@
         <translation>Non è stato possibile salvare il fotogramma.</translation>
     </message>
     <message>
-        <location line="+155"/>
+        <location line="+156"/>
         <source>Media</source>
         <translation>Media</translation>
     </message>
@@ -4919,8 +4919,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>10 frames back / forward</source>
-        <translation>10 fotogrammi indietro / avanti</translation>
+        <source>One second back / forward</source>
+        <translation>Un secondo indietro / avanti</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5501,7 +5501,7 @@
         <translation>Nascondi traccia</translation>
     </message>
     <message>
-        <location line="+137"/>
+        <location line="+151"/>
         <source>Drop videos and photos here, or click to import</source>
         <translation>Trascina qui video e foto, oppure fai clic per importarli</translation>
     </message>

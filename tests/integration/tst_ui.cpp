@@ -34,6 +34,7 @@
 #include <QScopeGuard>
 #include <QSignalSpy>
 #include <QTest>
+#include <QWheelEvent>
 #include <QTemporaryDir>
 
 #include <mlt++/MltProfile.h>
@@ -1687,6 +1688,67 @@ JSON
         QCOMPARE(recreated, 0);
         QVERIFY(scrollFps > 10 && zoomFps > 10);
         QMetaObject::invokeMethod(view, "zoomToFit");
+    }
+
+    // Arrows move the playhead a frame, Shift+arrows a second. The wheel scrolls the timeline (a touchpad by its exact
+    // pixels), Ctrl+wheel zooms keeping the frame under the pointer where it is, Shift+wheel scrolls between the tracks.
+    void arrowsAndWheel()
+    {
+        m_app->newProject();
+        QTRY_VERIFY(editor());
+        editor()->player()->setVolume(0.0);
+        editor()->importAndInsert({QUrl::fromLocalFile(m_files.landscape)}, 0, editor()->timeline()->mainRow());
+        QTRY_COMPARE_WITH_TIMEOUT(mainTrack().clips.size(), size_t(1), 20000);
+        const int second = static_cast<int>(std::lround(editor()->player()->frameRate()));
+        editor()->player()->seek(second);
+        QTRY_COMPARE(editor()->player()->position(), second);
+        key(Qt::Key_Right);
+        QTRY_COMPARE(editor()->player()->position(), second + 1);
+        key(Qt::Key_Left, Qt::ShiftModifier);
+        QTRY_COMPARE(editor()->player()->position(), 1);
+        key(Qt::Key_Right, Qt::ShiftModifier);
+        QTRY_COMPARE(editor()->player()->position(), second + 1);
+        key(Qt::Key_Left);
+        QTRY_COMPARE(editor()->player()->position(), second);
+
+        QObject *view = byName(u"timelineCanvas"_s);
+        while (view && !view->property("smoothPlayhead").isValid()) {
+            view = view->parent();
+        }
+        QVERIFY(view);
+        QQuickItem *flick = byName(u"timelineCanvas"_s)->parentItem();
+        while (flick && !flick->property("contentX").isValid()) {
+            flick = flick->parentItem();
+        }
+        QVERIFY(flick);
+        QMetaObject::invokeMethod(view, "setZoom", Q_ARG(QVariant, QVariant(12.0)), Q_ARG(QVariant, QVariant(0.0)));
+        flick->setProperty("contentX", 400.0);
+        QVERIFY(flick->property("contentWidth").toDouble() - flick->width() > 600);
+        QTest::qWait(50);
+        const QPointF inside = flick->mapToScene(QPointF(flick->width() / 2, flick->height() / 2));
+        const auto wheel = [&](QPoint pixels, QPoint angle, Qt::KeyboardModifiers modifiers) {
+            QWheelEvent event(inside, m_window->mapToGlobal(inside), pixels, angle, Qt::NoButton, modifiers, Qt::NoScrollPhase, false);
+            QGuiApplication::sendEvent(m_window, &event);
+            QTest::qWait(20);
+        };
+        wheel({0, -37}, {0, -120}, Qt::NoModifier); // a touchpad: its pixels win over the notch
+        QCOMPARE(flick->property("contentX").toDouble(), 437.0);
+        wheel({}, {0, 120}, Qt::NoModifier); // a mouse wheel notch
+        QCOMPARE(flick->property("contentX").toDouble(), 317.0);
+        const double zoom = view->property("zoom").toDouble();
+        const double frameUnder = (flick->property("contentX").toDouble() + flick->width() / 2) / zoom;
+        wheel({}, {0, 60}, Qt::ControlModifier); // half a notch: half a zoom step
+        const double zoomed = view->property("zoom").toDouble();
+        QVERIFY2(zoomed > zoom && zoomed < zoom * 2, qPrintable(QString::number(zoomed)));
+        const double frameUnderNow = (flick->property("contentX").toDouble() + flick->width() / 2) / zoomed;
+        QVERIFY2(std::abs(frameUnderNow - frameUnder) < 0.05, qPrintable(u"%1 → %2"_s.arg(frameUnder).arg(frameUnderNow)));
+        flick->setProperty("contentY", 0.0);
+        const double room = flick->property("contentHeight").toDouble() - flick->height();
+        wheel({}, {0, -120}, Qt::ShiftModifier);
+        QCOMPARE(flick->property("contentY").toDouble(), std::min(120.0, std::max(0.0, room)));
+        QMetaObject::invokeMethod(view, "zoomToFit");
+        editor()->undo();
+        QTRY_COMPARE(mainTrack().clips.size(), size_t(0));
     }
 
     void noQmlWarnings()

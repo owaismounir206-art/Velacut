@@ -710,24 +710,38 @@ Rectangle {
             function onZoomChanged() { Qt.callLater(flick.updateVisibleRange) }
         }
 
+        // Ctrl+wheel and pinch: zoom around the pointer, continuously (a wheel notch is one zoom step, a touchpad gives
+        // its finer steps); wheel: scroll in time (a touchpad by its exact pixels); Shift+wheel: between the tracks.
         WheelHandler {
-            // Ctrl+wheel: zoom around the pointer; wheel: scroll in time (and Shift: between tracks).
             acceptedModifiers: Qt.ControlModifier
-            onWheel: (event) => view.zoomBy(event.angleDelta.y > 0 ? Theme.editor.zoomStep : 1 / Theme.editor.zoomStep,
-                                           point.position.x - flick.contentX)
+            onWheel: (event) => {
+                const notches = (event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x) / 120
+                view.zoomBy(Math.pow(Theme.editor.zoomStep, notches), point.position.x - flick.contentX)
+            }
         }
         WheelHandler {
             acceptedModifiers: Qt.NoModifier
             onWheel: (event) => {
-                const delta = event.angleDelta.x !== 0 ? event.angleDelta.x : event.angleDelta.y
+                const pixels = event.pixelDelta.x !== 0 || event.pixelDelta.y !== 0
+                const dx = pixels ? event.pixelDelta.x : event.angleDelta.x
+                const dy = pixels ? event.pixelDelta.y : event.angleDelta.y
+                const delta = Math.abs(dx) > Math.abs(dy) ? dx : dy
                 flick.contentX = Math.max(0, Math.min(flick.contentWidth - flick.width, flick.contentX - delta))
             }
         }
         WheelHandler {
             acceptedModifiers: Qt.ShiftModifier
             onWheel: (event) => {
-                flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height, flick.contentY - event.angleDelta.y))
+                const delta = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.angleDelta.y
+                flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height, flick.contentY - delta))
             }
+        }
+        PinchHandler {
+            id: pinch
+            target: null
+            property real startZoom: view.zoom
+            onActiveChanged: if (active) startZoom = view.zoom
+            onActiveScaleChanged: if (active) view.setZoom(startZoom * activeScale, centroid.position.x - flick.contentX)
         }
 
         Item {

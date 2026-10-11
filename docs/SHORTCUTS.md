@@ -10,7 +10,7 @@ un campo di testo. Tutte le azioni si trovano anche con la ricerca universale (`
 | `Spazio` | Riproduci / pausa |
 | `J` `K` `L` | Indietro, pausa, avanti (premendo di nuovo: più veloce, fino a 8×) |
 | `←` `→` | Fotogramma precedente / successivo |
-| `Maiusc+←` `Maiusc+→` | 10 fotogrammi indietro / avanti |
+| `Maiusc+←` `Maiusc+→` | Un secondo indietro / avanti |
 | `↑` `↓` | Taglio precedente / successivo |
 | `Home` `Fine` | Vai all'inizio / alla fine |
 | `F11` | Anteprima a schermo intero (`Esc` per uscire) |

@@ -4,7 +4,7 @@
 <context>
     <name>EditorScreen</name>
     <message numerus="yes">
-        <location filename="../src/ui/qml/EditorScreen.qml" line="+380"/>
+        <location filename="../src/ui/qml/EditorScreen.qml" line="+381"/>
         <source>Choose %n video(s) or photo(s) for the template</source>
         <translation>
             <numerusform>Choose %n video or photo for the template</numerusform>

@@ -72,8 +72,9 @@ Item {
     Shortcut { sequence: "K"; enabled: !root.typing; onActivated: root.editor.player.pause() }
     Shortcut { sequence: "Left"; enabled: !root.typing; onActivated: root.editor.player.step(-1) }
     Shortcut { sequence: "Right"; enabled: !root.typing; onActivated: root.editor.player.step(1) }
-    Shortcut { sequence: "Shift+Left"; enabled: !root.typing; onActivated: root.editor.player.step(-10) }
-    Shortcut { sequence: "Shift+Right"; enabled: !root.typing; onActivated: root.editor.player.step(10) }
+    // Shift: a second (in frames of this frame rate).
+    Shortcut { sequence: "Shift+Left"; enabled: !root.typing; onActivated: root.editor.player.step(-Math.max(1, Math.round(root.editor.frameRate))) }
+    Shortcut { sequence: "Shift+Right"; enabled: !root.typing; onActivated: root.editor.player.step(Math.max(1, Math.round(root.editor.frameRate))) }
     Shortcut { sequence: "Up"; enabled: !root.typing; onActivated: root.editor.previousCut() }
     Shortcut { sequence: "Down"; enabled: !root.typing; onActivated: root.editor.nextCut() }
     Shortcut { sequence: "Home"; enabled: !root.typing; onActivated: root.editor.player.seek(0) }
