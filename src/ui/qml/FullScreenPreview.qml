@@ -36,9 +36,18 @@ Rectangle {
     }
 
     VideoPreview {
+        id: video
         anchors.fill: parent
         sink: root.player.sink
         backgroundColor: root.color
+    }
+    // Full screen: the preview renders up to the screen's pixels (never more than the canvas).
+    Binding {
+        target: root.player
+        property: "viewSize"
+        when: root.visible && video.width > 0
+        value: Qt.size(Math.round(video.width * video.Screen.devicePixelRatio),
+                       Math.round(video.height * video.Screen.devicePixelRatio))
     }
     MouseArea {
         anchors.fill: parent

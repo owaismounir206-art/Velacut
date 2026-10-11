@@ -305,6 +305,61 @@ private slots:
         QCOMPARE(player.frameTiming().frames.load(), rendered + 1);
     }
 
+    // The preview renders as many pixels as it shows (never more than the canvas), the quality divides that, and the
+    // export path (renderStill) is always at the canvas size.
+    void frameSizeFollowsTheViewAndTheQuality()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        TimelinePlayer player;
+        player.setVolume(0.0);
+        player.setPreviewQuality(TimelinePlayer::PreviewQuality::Full);
+        player.setSequence(&session.project, session.data().mainSequenceId);
+        QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
+        QCOMPARE(player.sink()->latest().size(), QSize(320, 180));
+        player.setViewSize(QSize(170, 200)); // narrow: the canvas fitted in it
+        QCOMPARE(player.renderSize(), QSize(170, 96));
+        QTRY_COMPARE_WITH_TIMEOUT(player.sink()->latest().size(), QSize(170, 96), 3000);
+        player.setPreviewQuality(TimelinePlayer::PreviewQuality::Half);
+        QCOMPARE(player.renderScale(), 2);
+        QTRY_COMPARE_WITH_TIMEOUT(player.sink()->latest().size(), player.renderSize(), 3000);
+        QCOMPARE(player.renderSize(), QSize(86, 48));
+        player.setViewSize(QSize(2000, 2000)); // bigger than the canvas: the canvas
+        player.setPreviewQuality(TimelinePlayer::PreviewQuality::Full);
+        QTRY_COMPARE_WITH_TIMEOUT(player.sink()->latest().size(), QSize(320, 180), 3000);
+        player.setViewSize(QSize(160, 90));
+        QTRY_COMPARE_WITH_TIMEOUT(player.sink()->latest().size(), QSize(160, 90), 3000);
+        // While playing too.
+        player.play();
+        QTRY_VERIFY_WITH_TIMEOUT(player.sink()->framesReceived() > 10, 3000);
+        QCOMPARE(player.sink()->latest().size(), QSize(160, 90));
+        player.pause();
+        // A saved frame or a cover: the canvas size.
+        QCOMPARE(player.renderStill(30).size(), QSize(320, 180));
+    }
+
+    // Auto: frames slower than 80 % of a frame's time make the preview one step smaller while playing; paused and quiet,
+    // the still frame comes back at the full size.
+    void autoQualityStepsDownWhilePlayingAndBackWhenStill()
+    {
+        Session session(baseProject());
+        QVERIFY(session.apply(session.editor().insertMedia(m_landscape.id, frames(0))));
+        TimelinePlayer player;
+        player.setVolume(0.0);
+        player.setSequence(&session.project, session.data().mainSequenceId);
+        QTRY_VERIFY_WITH_TIMEOUT(!isBlack(player.sink()->latest()), 5000);
+        QCOMPARE(player.previewQuality(), TimelinePlayer::PreviewQuality::Auto);
+        QCOMPARE(player.renderScale(), 1);
+        player.setMinimumRenderTime(40); // > 80 % of 33 ms
+        player.play();
+        QTRY_VERIFY_WITH_TIMEOUT(player.renderScale() >= 2, 4000);
+        QTRY_VERIFY_WITH_TIMEOUT(player.sink()->latest().width() < 320, 3000);
+        player.pause();
+        // 250 ms of quiet: the frame at the full size again.
+        QTRY_COMPARE_WITH_TIMEOUT(player.renderScale(), 1, 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(player.sink()->latest().size(), QSize(320, 180), 3000);
+    }
+
     void playsToTheEndAndStops()
     {
         Session session(baseProject());

@@ -16,7 +16,8 @@ std::unique_ptr<Mlt::Consumer> createPreviewConsumer(Mlt::Profile &profile, doub
 
 // A copy of the frame's pixels as RGBA8888 (null image if the frame has no usable image). Copying is required:
 // an MLT frame kept alive after its consumer is closed prevents the consumer from being freed (D-19).
-QImage copyFrameImage(Mlt::Frame &frame);
+// `width` × `height`: the size to render it at if it is not rendered yet (0: the profile's).
+QImage copyFrameImage(Mlt::Frame &frame, int width = 0, int height = 0);
 
 namespace detail {
 // Exact mlt_listener signature (mlt_event_data is a struct passed by value).

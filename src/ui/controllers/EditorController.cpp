@@ -44,6 +44,7 @@
 #include <QLoggingCategory>
 #include <QPointer>
 #include <QRegularExpression>
+#include <QSettings>
 #include <QSaveFile>
 #include <QThreadPool>
 #include <QUuid>
@@ -105,6 +106,15 @@ EditorController::EditorController(std::unique_ptr<document::Document> document,
     // Debug HUD on the preview (docs/PERFORMANCE.md): fps, frames lost, render time and size.
     m_player->setStatsEnabled(qEnvironmentVariableIntValue("VELACUT_PREVIEW_HUD") == 1);
     m_player->setHelperExecutable(helperExecutable);
+    // The preview quality is a preference of this machine, not of the project.
+    m_player->setPreviewQuality(static_cast<engine::TimelinePlayer::PreviewQuality>(
+        std::clamp(QSettings().value(u"preview/quality"_s, 0).toInt(), 0, 3)));
+    connect(m_player.get(), &engine::TimelinePlayer::renderSizeChanged, this, [this] {
+        const int quality = static_cast<int>(m_player->previewQuality());
+        if (QSettings settings; settings.value(u"preview/quality"_s, 0).toInt() != quality) {
+            settings.setValue(u"preview/quality"_s, quality);
+        }
+    });
     m_player->setSequence(&project, sequence);
     // Back where the user left the project.
     m_player->seek(m_document->uiState().value(u"playhead"_s).toInt());
@@ -2600,7 +2610,8 @@ void EditorController::setHardwareEncoding(QStringList encoders, QString gpuName
 
 QString EditorController::exportCurrentFrame(const QString &fileName, const QString &folder)
 {
-    const QImage frame = m_player->sink()->latest();
+    // At the size of the canvas: the preview may show smaller frames.
+    const QImage frame = m_player->renderStill(m_player->shownPosition());
     if (frame.isNull() || !QFileInfo(folder).isDir()) {
         return {};
     }
@@ -2680,7 +2691,7 @@ bool EditorController::setCover(const QImage &image)
 
 bool EditorController::setCoverFromCurrentFrame()
 {
-    const QImage frame = m_player->sink()->latest();
+    const QImage frame = m_player->renderStill(m_player->shownPosition());
     if (frame.isNull()) {
         emit message(tr("No video frame available to set as cover."), false);
         return false;

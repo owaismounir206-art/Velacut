@@ -29,6 +29,9 @@ TimelinePlayer::TimelinePlayer(QObject *parent)
     , m_reverse(std::make_unique<ReverseProxyQueue>())
     , m_smooth(std::make_unique<SmoothCopyQueue>())
 {
+    m_quietTimer.setSingleShot(true);
+    m_quietTimer.setInterval(250);
+    connect(&m_quietTimer, &QTimer::timeout, this, &TimelinePlayer::onQuiet);
     m_renderWatchdog.setSingleShot(true);
     connect(&m_renderWatchdog, &QTimer::timeout, this, &TimelinePlayer::onRenderWatchdog);
     connect(m_smooth.get(), &SmoothCopyQueue::busyChanged, this, &TimelinePlayer::smoothChanged);
@@ -143,6 +146,8 @@ void TimelinePlayer::createGraph()
     } else {
         m_consumer->connect(*m_projection->tractor());
         m_frameShowEvent = listenFrameShow(*m_consumer, this);
+        m_renderSize = QSize();
+        applyRenderSize();
         m_duration = m_projection->duration();
         m_position = std::clamp(m_position, 0, m_duration - 1);
         m_projection->tractor()->set_speed(0.0);
@@ -195,6 +200,137 @@ void TimelinePlayer::updateStats()
     m_statsFps = elapsed > 0 ? static_cast<double>(received - m_statsFramesBefore) * 1000.0 / static_cast<double>(elapsed) : 0.0;
     m_statsFramesBefore = received;
     emit statsChanged();
+}
+
+int TimelinePlayer::renderScale() const
+{
+    switch (m_quality) {
+    case PreviewQuality::Full:
+        return 1;
+    case PreviewQuality::Half:
+        return 2;
+    case PreviewQuality::Quarter:
+        return 4;
+    case PreviewQuality::Auto:
+        break;
+    }
+    return m_interacting ? m_autoScale : 1;
+}
+
+void TimelinePlayer::applyRenderSize()
+{
+    if (!m_consumer || !m_profile) {
+        return;
+    }
+    // The canvas fitted in the preview area (never larger than the canvas), then the quality step.
+    const QSize canvas(m_profile->width(), m_profile->height());
+    QSizeF size = canvas;
+    if (m_viewSize.width() > 0 && m_viewSize.height() > 0) {
+        size = QSizeF(canvas).scaled(QSizeF(m_viewSize), Qt::KeepAspectRatio);
+        if (size.width() > canvas.width() || size.height() > canvas.height()) {
+            size = canvas;
+        }
+    }
+    const int scale = renderScale();
+    const auto even = [](double value) { return std::max(2, static_cast<int>(std::lround(value / 2.0)) * 2); };
+    const QSize render(even(size.width() / scale), even(size.height() / scale));
+    if (render == m_renderSize) {
+        return;
+    }
+    m_renderSize = render;
+    // The consumer asks every frame at this size, and the services render at the size they are asked (verified by the
+    // benchmark: 960×540 frames from a 1080p graph). The profile, and so the timeline, stays the same.
+    m_consumer->set("width", render.width());
+    m_consumer->set("height", render.height());
+    m_renderWidth.store(render.width(), std::memory_order_relaxed);
+    m_renderHeight.store(render.height(), std::memory_order_relaxed);
+    m_framesAtScale = 0;
+    emit renderSizeChanged();
+}
+
+void TimelinePlayer::setViewSize(const QSize &size)
+{
+    if (size == m_viewSize) {
+        return;
+    }
+    m_viewSize = size;
+    const QSize before = m_renderSize;
+    applyRenderSize();
+    emit renderSizeChanged();
+    if (m_renderSize != before && m_consumer && !playing()) {
+        requestFrame(m_skimming ? m_skimTarget : m_position, false);
+    }
+}
+
+void TimelinePlayer::setPreviewQuality(PreviewQuality quality)
+{
+    if (quality == m_quality) {
+        return;
+    }
+    m_quality = quality;
+    m_autoScale = 1;
+    const QSize before = m_renderSize;
+    applyRenderSize();
+    emit renderSizeChanged();
+    if (m_renderSize != before && m_consumer && !playing()) {
+        requestFrame(m_skimming ? m_skimTarget : m_position, false);
+    }
+}
+
+void TimelinePlayer::markInteraction()
+{
+    m_quietTimer.start();
+    if (!m_interacting) {
+        m_interacting = true;
+        applyRenderSize();
+    }
+}
+
+void TimelinePlayer::onQuiet()
+{
+    if (playing() || !m_interacting) {
+        return;
+    }
+    // Quiet for 250 ms: the still frame at the full size (Auto), if the last one was smaller.
+    m_interacting = false;
+    const QSize before = m_renderSize;
+    applyRenderSize();
+    if (m_renderSize != before && m_consumer) {
+        requestFrame(m_skimming ? m_skimTarget : m_position, false);
+    }
+}
+
+void TimelinePlayer::adaptQuality()
+{
+    if (m_quality != PreviewQuality::Auto || !m_interacting || m_frameRate <= 0.0 || ++m_framesAtScale < 4) {
+        return;
+    }
+    const double average = m_timing->averageMs.load(std::memory_order_relaxed);
+    const double budget = 1000.0 / m_frameRate;
+    int scale = m_autoScale;
+    if (average > 0.8 * budget && scale < 4) {
+        scale *= 2;
+    } else if (average < 0.2 * budget && scale > 1) {
+        scale /= 2; // four times the pixels: still under 80 % of the budget
+    }
+    if (scale != m_autoScale) {
+        qCDebug(lcTimelinePlayer) << "preview step" << m_autoScale << "->" << scale << "at" << average << "ms a frame";
+        m_autoScale = scale;
+        applyRenderSize();
+    }
+}
+
+QImage TimelinePlayer::renderStill(int frame) const
+{
+    if (!m_project) {
+        return {};
+    }
+    const ProjectData &data = m_project->data();
+    auto profile = makeProfile(data, m_sequenceId);
+    MediaProducerCache cache(*profile);
+    TimelineProjection projection(*profile, cache, TimelineProjection::MediaLoading::Wait);
+    projection.build(data, m_sequenceId);
+    return projection.renderFrame(std::clamp(frame, 0, std::max(0, projection.duration() - 1)));
 }
 
 void TimelinePlayer::requestReverseProxies()
@@ -375,10 +511,13 @@ void TimelinePlayer::showFrame(int frame)
     m_consumer->set("refresh", 1);
 }
 
-void TimelinePlayer::requestFrame(int frame)
+void TimelinePlayer::requestFrame(int frame, bool interactive)
 {
     if (!m_consumer) {
         return;
+    }
+    if (interactive) {
+        markInteraction();
     }
     const int target = std::clamp(frame, 0, std::max(0, m_duration - 1));
     if (m_renderInFlight) {
@@ -445,6 +584,11 @@ void TimelinePlayer::setRate(double rate)
         setPosition(m_duration - 1);
     }
     qCDebug(lcTimelinePlayer) << "rate" << rate << "at" << m_position;
+    if (rate != 0.0) {
+        markInteraction(); // before the seek below: the frames read ahead get the size of playback
+    } else {
+        m_quietTimer.start(); // paused: the still frame at the full size soon (Auto)
+    }
     tractor->set_speed(rate);
     // Stay on the playhead, not on the frame the read-ahead reached. The purge is also required when starting:
     // speed-0 frames already read ahead would use up the refresh and stall sdl2_audio (see Player::play()).
@@ -689,8 +833,10 @@ void TimelinePlayer::clearPreview()
 
 void TimelinePlayer::deliverFrame(Mlt::Frame &frame)
 {
-    // MLT consumer thread. Cost of the copy: ~1 ms per frame at 1080p (D-19).
-    const QImage image = copyFrameImage(frame);
+    // MLT consumer thread. Cost of the copy: ~1 ms per frame at 1080p (D-19). Frames shown while paused are rendered
+    // here (not by the read-ahead): at the preview size.
+    const QImage image = copyFrameImage(frame, m_renderWidth.load(std::memory_order_relaxed),
+                                        m_renderHeight.load(std::memory_order_relaxed));
     const int position = frame.get_position();
     if (image.isNull()) {
         qCDebug(lcTimelinePlayer) << "frame without usable image" << position;
@@ -712,6 +858,7 @@ void TimelinePlayer::onFrameShown(int position, quint64 generation)
     }
     if (!playing() && m_renderInFlight) {
         // The requested frame (or the one rendering when it was requested): the latest request goes now.
+        adaptQuality();
         m_renderInFlight = false;
         m_renderWatchdog.stop();
         if (m_pendingFrame) {
@@ -732,6 +879,7 @@ void TimelinePlayer::onFrameShown(int position, quint64 generation)
         }
     }
     m_lastPlayedPosition = position;
+    adaptQuality();
     setPosition(position);
     // Stop at the ends instead of looping or freezing on a black frame.
     if ((m_rate > 0.0 && position >= m_duration - 1) || (m_rate < 0.0 && position <= 0)) {

@@ -54,6 +54,14 @@ Item {
                 text: qsTr("%1 × %2 · %3 fps").arg(panel.editor.canvasSize.width).arg(panel.editor.canvasSize.height)
                           .arg(Math.round(panel.editor.frameRate * 100) / 100)
             }
+            // The preview shows smaller frames now (quality ½ or ¼, chosen or automatic): the export is not affected.
+            Label {
+                objectName: "previewScaleIndicator"
+                visible: panel.player.renderScale > 1
+                role: "labelSmall"
+                color: Theme.color.tertiary
+                text: panel.player.renderScale === 2 ? qsTr("Preview ½") : qsTr("Preview ¼")
+            }
         }
 
         Item {
@@ -67,6 +75,15 @@ Item {
                 anchors.fill: parent
                 sink: panel.player.sink
                 backgroundColor: Theme.color.panel
+            }
+            // The preview renders as many pixels as it shows, no more (docs/PERFORMANCE.md, phase 3); the full-screen
+            // preview takes over while it is open (this panel is hidden then).
+            Binding {
+                target: panel.player
+                property: "viewSize"
+                when: video.visible && video.width > 0
+                value: Qt.size(Math.round(video.width * video.Screen.devicePixelRatio),
+                               Math.round(video.height * video.Screen.devicePixelRatio))
             }
             CanvasHandles {
                 anchors.fill: parent
@@ -318,6 +335,31 @@ Item {
                     shortcutText: qsTr("Ctrl+Shift+E")
                     enabled: panel.editor.timeline.duration > 0
                     onClicked: panel.frameRequested()
+                }
+                // Preview quality: Auto makes the frames smaller only while they cannot keep up (docs/PERFORMANCE.md).
+                Tool {
+                    id: qualityButton
+                    objectName: "previewQualityButton"
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconName: "hd"
+                    label: qsTr("Preview quality: %1").arg(qualityMenu.names[panel.player.previewQuality])
+                    onClicked: qualityMenu.popup(qualityButton, 0, qualityButton.height)
+                    Menu {
+                        id: qualityMenu
+                        readonly property var names: [qsTr("Auto"), qsTr("Full"), qsTr("Half"), qsTr("Quarter")]
+                        Repeater {
+                            model: qualityMenu.names
+                            delegate: MenuItem {
+                                required property int index
+                                required property string modelData
+                                objectName: "previewQuality_" + index
+                                text: modelData
+                                checkable: true
+                                checked: panel.player.previewQuality === index
+                                onTriggered: panel.player.previewQuality = index
+                            }
+                        }
+                    }
                 }
                 // Format of the canvas under the player (SPEC §4), one click away (SPEC 0bis rule 1).
                 FormatButton {

@@ -45,6 +45,21 @@ class TimelineProjection;
 class TimelinePlayer : public QObject
 {
     Q_OBJECT
+public:
+    // How big the preview frames are (docs/PERFORMANCE.md, phase 3). Full: as many pixels as the preview area shows
+    // (viewSize), never more than the canvas; Half and Quarter: that divided by 2 or 4 each way. Auto: full, but while
+    // playing, scrubbing or dragging a control, one step smaller each time frames take more than 80 % of a frame's
+    // time (one step back when they take less than 20 %), and the still frame at full size after 250 ms of quiet.
+    enum class PreviewQuality
+    {
+        Auto,
+        Full,
+        Half,
+        Quarter,
+    };
+    Q_ENUM(PreviewQuality)
+
+private:
     Q_PROPERTY(velacut::engine::FrameSink *sink READ sink CONSTANT FINAL)
     Q_PROPERTY(bool ready READ ready NOTIFY formatChanged FINAL)
     Q_PROPERTY(bool playing READ playing NOTIFY stateChanged FINAL)
@@ -75,6 +90,13 @@ class TimelinePlayer : public QObject
     Q_PROPERTY(int statsDropped READ statsDropped NOTIFY statsChanged FINAL)
     Q_PROPERTY(double statsRenderMs READ statsRenderMs NOTIFY statsChanged FINAL)
     Q_PROPERTY(QSize statsRenderSize READ statsRenderSize NOTIFY statsChanged FINAL)
+    // Size of the preview area in device pixels (set by the interface), and the quality chosen (saved in the
+    // preferences by the interface, not in the project).
+    Q_PROPERTY(QSize viewSize READ viewSize WRITE setViewSize NOTIFY renderSizeChanged FINAL)
+    Q_PROPERTY(PreviewQuality previewQuality READ previewQuality WRITE setPreviewQuality NOTIFY renderSizeChanged FINAL)
+    // The frames' size now and its step (1 full, 2 half, 4 quarter), for the indicator.
+    Q_PROPERTY(QSize renderSize READ renderSize NOTIFY renderSizeChanged FINAL)
+    Q_PROPERTY(int renderScale READ renderScale NOTIFY renderSizeChanged FINAL)
 
 public:
     explicit TimelinePlayer(QObject *parent = nullptr);
@@ -123,6 +145,16 @@ public:
     // Render time of the frames of the current graph (any thread writes, read here).
     const FrameTiming &frameTiming() const { return *m_timing; }
 
+    QSize viewSize() const { return m_viewSize; }
+    void setViewSize(const QSize &size);
+    PreviewQuality previewQuality() const { return m_quality; }
+    void setPreviewQuality(PreviewQuality quality);
+    QSize renderSize() const { return m_renderSize; }
+    int renderScale() const;
+    // The frame at `frame` at the full canvas size, from a graph of its own (saving a frame, a cover): the preview may
+    // show smaller frames.
+    QImage renderStill(int frame) const;
+
     Q_INVOKABLE void play();
     Q_INVOKABLE void pause();
     Q_INVOKABLE void togglePlay();
@@ -169,6 +201,7 @@ signals:
     void reverseChanged();
     void smoothChanged();
     void statsChanged();
+    void renderSizeChanged();
     // A smooth slow motion could not be computed (for the snackbar).
     void smoothFailed(const QString &error);
 
@@ -177,6 +210,11 @@ private:
     // The render time of every frame, measured on the tractor (after each build: a rebuild makes a new tractor).
     void attachTiming();
     void updateStats();
+    // Preview frame size (see PreviewQuality).
+    void applyRenderSize();
+    void markInteraction();
+    void onQuiet();
+    void adaptQuality();
     void destroyGraph();
     void rebuildGraph();
     void onProjectChanged(const ChangeSet &changes);
@@ -189,7 +227,8 @@ private:
     // sent when the frame arrives. Purging the consumer for every request, as before, discarded the frame being
     // rendered: with frames slower than the requests (a blur, a transition), nothing was shown until the pointer
     // stopped (docs/PERFORMANCE.md).
-    void requestFrame(int frame);
+    // `interactive`: part of a gesture (Auto quality may lower the frame size meanwhile).
+    void requestFrame(int frame, bool interactive = true);
     void dispatchFrame(int frame);
     // Recovery only, if the answer to a request never comes: the time allowed grows with the render time measured.
     void onRenderWatchdog();
@@ -245,6 +284,15 @@ private:
     std::optional<int> m_pendingFrame;
     int m_skimTarget = 0;
     QTimer m_renderWatchdog;
+    QSize m_viewSize;
+    PreviewQuality m_quality = PreviewQuality::Auto;
+    QSize m_renderSize;
+    std::atomic<int> m_renderWidth{0}; // m_renderSize for the consumer thread
+    std::atomic<int> m_renderHeight{0};
+    int m_autoScale = 1;       // Auto: the step used while interacting
+    bool m_interacting = false; // playing, or a request in the last 250 ms
+    int m_framesAtScale = 0;    // frames shown since the step last changed
+    QTimer m_quietTimer;
     // Audio detached while scrubbing (see setScrubMuted): the drag is silent, the commit is not.
     bool m_isScrubMuted = false;
     bool m_wasPlayingBeforeScrub = false;

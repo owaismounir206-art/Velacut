@@ -1487,7 +1487,7 @@
 <context>
     <name>FullScreenPreview</name>
     <message>
-        <location filename="../src/ui/qml/FullScreenPreview.qml" line="+74"/>
+        <location filename="../src/ui/qml/FullScreenPreview.qml" line="+83"/>
         <source>Position</source>
         <translation>Posizione</translation>
     </message>
@@ -2873,7 +2873,17 @@
         <translation>%1 × %2 · %3 fps</translation>
     </message>
     <message>
-        <location line="+38"/>
+        <location line="+9"/>
+        <source>Preview ½</source>
+        <translation>Anteprima ½</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Preview ¼</source>
+        <translation>Anteprima ¼</translation>
+    </message>
+    <message>
+        <location line="+46"/>
         <source>%1 fps · %2 lost · %3 ms/frame · %4 × %5</source>
         <translation>%1 fps · %2 persi · %3 ms/fotogramma · %4 × %5</translation>
     </message>
@@ -2971,12 +2981,37 @@
         <translation>Ctrl+Maiusc+E</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+10"/>
+        <source>Preview quality: %1</source>
+        <translation>Qualità anteprima: %1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Auto</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Full</source>
+        <translation>Piena</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Half</source>
+        <translation>½</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Quarter</source>
+        <translation>¼</translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>Full screen</source>
         <translation>Schermo intero</translation>
     </message>
     <message>
-        <location line="-69"/>
+        <location line="-94"/>
         <source>Duration</source>
         <translation>Durata</translation>
     </message>
@@ -6488,7 +6523,7 @@
 <context>
     <name>velacut::engine::MediaProducerCache</name>
     <message>
-        <location filename="../src/engine/timeline/MediaProducerCache.cpp" line="+67"/>
+        <location filename="../src/engine/timeline/MediaProducerCache.cpp" line="+68"/>
         <source>The file is missing: %1</source>
         <translation>Il file non c&apos;è più: %1</translation>
     </message>
@@ -6568,7 +6603,7 @@
 <context>
     <name>velacut::engine::TimelinePlayer</name>
     <message>
-        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+140"/>
+        <location filename="../src/engine/playback/TimelinePlayer.cpp" line="+144"/>
         <source>No audio output is available (SDL2).</source>
         <translation>Nessuna uscita audio disponibile (SDL2).</translation>
     </message>
@@ -8274,7 +8309,7 @@
 <context>
     <name>velacut::ui::EditorController</name>
     <message>
-        <location filename="../src/ui/controllers/EditorController.cpp" line="+126"/>
+        <location filename="../src/ui/controllers/EditorController.cpp" line="+136"/>
         <source>The captions cannot be saved in %1.</source>
         <translation>Non è possibile salvare i sottotitoli in %1.</translation>
     </message>
@@ -8633,7 +8668,7 @@
         <translation>Cambia formato</translation>
     </message>
     <message>
-        <location line="+84"/>
+        <location line="+85"/>
         <source>The cover could not be saved.</source>
         <translation>Non è stato possibile salvare la copertina.</translation>
     </message>

@@ -25,11 +25,9 @@ std::unique_ptr<Mlt::Consumer> createPreviewConsumer(Mlt::Profile &profile, doub
     return consumer;
 }
 
-QImage copyFrameImage(Mlt::Frame &frame)
+QImage copyFrameImage(Mlt::Frame &frame, int width, int height)
 {
     mlt_image_format format = mlt_image_rgba;
-    int width = 0;
-    int height = 0;
     const uint8_t *data = frame.get_image(format, width, height);
     if (!data || format != mlt_image_rgba || width <= 0 || height <= 0) {
         return {};
