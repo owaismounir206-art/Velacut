@@ -1,8 +1,29 @@
 # velacut — Stato di avanzamento
 
-Ultimo aggiornamento: 2026-10-05 (Fasi 0-5 ✅ — criteri della Fase 5 verificati; Fase 6 🔶 in corso: sottotitoli
-manuali/da file completi; Fase 8 🔶: preferenze reali, encoding hardware; Fase 7 da fare. L'utente ha dato il via a
-proseguire con l'obiettivo "sistema tutto secondo la SPEC, uguale a CapCut, migliora l'estetica".)
+Ultimo aggiornamento: 2026-10-11 (Fasi 0-4 della missione MISSION-anteprima-timeline.md completate; Fase 4c timeline CapCut: 4c.1, 4c.2, 4c.3, 4c.6 fatte, 4c.4 senza misura formale, 4c.5 predisposta in core/controller, interfaccia da fare).
+
+## Sessione 2026-10-11 — Fasi 0-4 Missione Anteprima fluida & Timeline CapCut
+- **Fase 0 (Benchmark, diagnostica e HUD)**: `tools/bench/preview_bench.cpp`, logging dei tempi per singolo servizio `vedit.*`, HUD con fps, drop e tempi per fotogramma (`VELACUT_PREVIEW_HUD=1`). Baseline registrata in `docs/PERFORMANCE.md`.
+- **Fase 1 (Scheduling anteprima e livelock)**: un solo rendering in volo, l'ultima richiesta vince sempre (`ae87b94`), eliminata la tempesta di `purge()` che bloccava lo scrub e gli slider.
+- **Fase 2 (Ottimizzazione kernel e transizioni)** (`9313d84`, `19aab22`):
+  - Effetti video a fasce (`runSliced`) su tutti i core CPU.
+  - Sfocatura veloce (`fastBlur`) con percorso ridotto per raggi ampi (PSNR ≥ 42 dB) e `zoomBlur`/`radialBlur` ottimizzati in float: **S2 blur passa da 108 ms a 11 ms/frame (9,8× più veloce, target ≥ 5× superato)**; S3 da 544 ms a 74 ms (7,4×).
+  - Trasformazione 1:1 rapida senza interpolazione float quando non ruotata/scalata (S1 da 14 a 6,3 ms).
+  - `vedit.composite` salta la decodifica e il rendering dei livelli sottostanti quando il livello superiore è interamente opaco (`D-60`).
+  - Transizioni: corsie distinte per sorgenti condivise (`D-61`), eliminando il seek thrashing (S4b distant split da 498 ms a 20 ms, **25× più veloce**). Selezione dinamica CPU vs GPU in base al costo misurato.
+- **Fase 3 (Pixel corretti, qualità adattiva, proxy e playhead)** (`2f393b2`, `8ce52f1`, `5dc58d5`):
+  - Anteprima renderizzata alla risoluzione visibile d'anteprima (`Auto`/`Piena`/`½`/`¼`). A 720p sequenziale S1=9,5 ms, S2=13 ms, S6=18 ms con riproduzione stabile a 29–30 fps e drop < 3%.
+  - Proxy automatici in background per video 4K/HEVC 10-bit con `velacut-render --job proxy` (H.264 720p, GOP corto). Con proxy (S7 → S7p): seek da 543 ms a 25 ms, buco massimo scrub da 574 ms a 48 ms, settle da fermo a 58 ms.
+  - Playhead fluido interpolato via `FrameAnimation` in QML durante la riproduzione, con riallineamento dinamico se la deriva supera 1 frame.
+- **Fase 4 (Timeline CapCut)** (`6f5dae4`, `92706ed`, `4e408ca`, `d179c6d`, `da72652`):
+  - **4a (Bug & modelli)**: modelli `cuts`, `tracks`, `markers` basati su `KeyedListModel` (i delegati QML sopravvivono alle modifiche senza ricrearsi); timecode a tempo reale con `RationalTime`; maniglie di trim libere dal "+" dei tagli.
+  - **4b (Prestazioni nodi scena)**: miniature (`MediaThumbnail`), forme d'onda (`WaveformView`) e righello (`TimelineRuler`) ridisegnati a nodi del grafo di scena QSG (anche su backend software). Livelli di densità per zoom; menu contestuale unico condiviso. Stress test: timeline con 300 clip carica ed esegue scroll a 50 fps e zoom a 54 fps senza ricreare alcun delegato.
+  - **4c.1 (Riflusso dal vivo)**: trascinamento sulla traccia principale magnetica con anteprima live calcolata su copia (`EditorController::previewMove`/`previewTrim` via `EditResult::after`), barra verticale di destinazione, animazione `Behavior on x`, riordino con un solo comando al rilascio. Test `tst_ui::liveReflowOnTheMainTrack`.
+  - **4c.2 (Auto-scroll ai bordi)**: timer `edgeScrollTimer` attivo durante drag di clip e trim, con velocità progressiva e ricalcolo continuo del frame sotto il cursore. Test `tst_ui::dragScrollsAtTheEdges`.
+  - **4c.3 (Rotella e touchpad)**: supporto continuo a `pixelDelta`, pinch e Ctrl+rotella per zoom centrato sotto il cursore del mouse, Shift+rotella verticale. Test `tst_ui::arrowsAndWheel`.
+  - **4c.4 (Scrub reattivo)**: eliminato il debounce da 80 ms di `scrubDebounceTimer` (il motore processa sempre l'ultima richiesta scartando quelle superate). Manca misurazione benchmark formale prima/dopo con `preview_bench`.
+  - **4c.5 (Multi-clip selection & move)**: backend core/controller implementato con `TimelineEditor::moveClips` (spostamento in blocco con stop a frame 0, packing su traccia magnetica o creazione tracce overlay sopra/sotto in caso di collisione), `EditorController::moveSelection`, `previewMoveSelection` e `selectArea`. Test unitario `tst_timelineeditor::moveSeveralClips`. Restano da completare il rettangolo di selezione QML e l'interazione drag multi-clip.
+  - **4c.6 (Navigazione da tastiera)**: frecce ±1 fotogramma, Maiusc+frecce ±1 secondo in `EditorScreen.qml`. Test `tst_ui::arrowsAndWheel`.
 
 ## Sessione 2026-10-05 (sera) — Fase 7: montaggio automatico
 - **Montaggio automatico** (SPEC §5.13bis, criterio della Fase 7; `ai/Montage`, `engine::extractShotSamples`,
@@ -734,7 +755,11 @@ Gli smoke test verificano fotogrammi **decodificati e mostrati** dall'anteprima 
   (`docs/GPU_COMPATIBILITY.md`).
 - `tst_theme` impiega ~90 s nella build Debug con sanitizer (140 schemi generati); ~1 s in RelWithDebInfo.
 
-## Bug noti / avvisi
+## Bug noti / problemi aperti
+- **Scrub con GOP lungo senza proxy**: sui file H.264 a GOP lungo senza proxy (S1–S6, keyframe ogni 2 s), lo scrub all'indietro richiede la decodifica dell'intero GOP dal keyframe precedente (~250–300 ms a 1080p). Il buco massimo tra fotogrammi durante lo scrub rapido rimane 400–800 ms (non per debolezza dello scheduling o dei filtri, ma per il costo intrinseco di decodifica del codec). Con i proxy a GOP corto (S7p) il buco scende drasticamente a 48 ms. Proposta: estendere la generazione dei proxy automatici anche per i file con GOP > 1 s.
+- **`tst_ui` (`timelineGestures`) instabile sotto carico**: durante l'esecuzione dell'intera suite o con test pesanti concorrenti su macchina satura, `tst_ui::timelineGestures` è fallito saltuariamente (mentre da solo e in CTest sequenziale passa al 100%, 44/44 verdi). Da indagare e stabilizzare (possibile sensibilità ai tempi dell'animazione `Behavior on x` durante il riposizionamento prima delle maniglie di trim o concorrenza offscreen).
+- **`tst_export` instabile una volta**: in una suite completa parallela è capitato un fallimento sporadico di `tst_export` (timeout o contesa su render concorrenti di `velacut-render`), non più ripresentatosi nelle run successive. Da monitorare sotto carico estremo.
+- **Suite Debug con ASan/UBSan non ancora eseguita**: la suite completa di sanitizzazione (`cmake --preset debug && cmake --build build-debug && ctest --test-dir build-debug`) non è stata ancora eseguita in questa sessione a causa della durata elevata (~15–20 min). Da eseguire prima di concludere il rilascio.
 - **Anteprima nera a player fermo, raro, solo con la macchina satura**: il consumer `sdl2_audio` di MLT in pausa a
   volte non mostra più fotogrammi dopo il primo (riprodotto con 4 test pesanti in parallelo: anche con il codice di
   prima di questa sessione, 3 volte su 5). Lo stack mostra tutti i thread di MLT in attesa; né ripetere il refresh né
@@ -748,6 +773,16 @@ Gli smoke test verificano fotogrammi **decodificati e mostrati** dall'anteprima 
   (velacut non li usa).
 - LeakSanitizer: piccole allocazioni globali in MLT, SDL3, glib e libavcodec sono soppresse con motivazione in
   `tests/lsan.supp`; nessuna perdita nel codice velacut.
+
+## Prossimi passi
+1. **Completare 4c.5 in QML**: rettangolo di selezione elastico (rubber-band) sullo spazio vuoto del canvas della timeline e trascinamento unificato delle clip selezionate collegato a `EditorController::moveSelection` e `previewMoveSelection`.
+2. **Benchmark formale 4c.4**: eseguire `tools/preview_bench` per registrare i numeri esatti dello scrub prima e dopo la rimozione del debounce da 80 ms.
+3. **Indagine e stabilizzazione dei test instabili**: isolare e risolvere l'instabilità sotto carico di `tst_ui::timelineGestures` e monitorare `tst_export`.
+4. **Validazione Debug con ASan**: eseguire la suite con preset debug per verificare l'assenza di memory leak o undefined behavior.
+5. **Gesti di base stile CapCut (§4 di `docs/HANDOFF-timeline-capcut.md`)**:
+   - Fantasma/clip ghost a larghezza reale durante drag da media pool (4.1.1).
+   - Creazione automatica traccia trascinando sopra/sotto con linea guida (4.1.2).
+   - Snap visibile al playhead e ai beat/marker con fermo percettibile (4.1.3).
 
 
 ## Come riprendere
